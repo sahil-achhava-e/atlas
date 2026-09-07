@@ -494,8 +494,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       <label key={p.id} style={{
                         display: 'flex', alignItems: 'center', gap: 10,
                         padding: '8px 10px',
-                        background: sel ? 'var(--cth-mint-light)' : 'var(--cth-paper-100)',
-                        boxShadow: `inset 0 0 0 ${sel ? 2 : 1}px ${sel ? 'var(--cth-mint)' : 'var(--cth-ink-300)'}`,
+                        background: sel ? 'var(--cth-sky-light)' : 'var(--cth-paper-100)',
+                        boxShadow: sel
+                          ? 'inset 0 0 0 2px var(--cth-sky)'
+                          : 'inset 0 0 0 1px var(--cth-ink-300)',
                         cursor: 'pointer'
                       }}>
                         <input
@@ -888,24 +890,49 @@ function PersonaCard({ icon, title, desc, selected, onClick }: {
 }) {
   return (
     <button
+      className="cth-choice"
       onClick={onClick}
+      aria-pressed={selected}
       style={{
         textAlign: 'left', cursor: 'pointer', border: 'none',
-        padding: 12, display: 'flex', flexDirection: 'column', gap: 6,
-        background: selected ? 'var(--cth-mint-light)' : 'var(--cth-paper-100)',
-        boxShadow: `inset 0 0 0 ${selected ? 2 : 1}px ${selected ? 'var(--cth-mint)' : 'var(--cth-ink-300)'}`
+        padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8,
+        // Selection is cyan on purpose. Mint read as "success"; the brand
+        // violet disappeared into an app painted violet everywhere else. The
+        // one colour that is NOT the brand is the one that reads as "chosen".
+        background: selected ? 'var(--cth-sky-light)' : 'var(--cth-paper-100)',
+        boxShadow: selected
+          ? 'inset 0 0 0 2px var(--cth-sky), 0 0 22px -6px var(--cth-sky)'
+          : 'inset 0 0 0 1px var(--cth-ink-300)'
       }}
     >
-      <span style={{
-        width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
-      }}>
-        <Icon name={icon} />
+      <span style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+        <span style={{
+          width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: selected ? 'var(--cth-sky)' : 'var(--cth-cream-200)',
+          color: selected ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)',
+          boxShadow: `inset 0 0 0 1px ${selected ? 'var(--cth-sky)' : 'var(--cth-ink-300)'}`
+        }}>
+          <Icon name={icon} />
+        </span>
+        <span style={{ flex: 1 }} />
+        {/* The tick, and a reserved slot for it: without the empty circle the
+            two cards jump sideways the moment one is picked. */}
+        <span style={{
+          width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+          display: 'grid', placeItems: 'center',
+          fontSize: 11, lineHeight: 1,
+          background: selected ? 'var(--cth-sky)' : 'transparent',
+          color: 'var(--cth-on-accent)',
+          boxShadow: `inset 0 0 0 ${selected ? 0 : 1}px var(--cth-ink-300)`
+        }}>{selected ? '\u2713' : ''}</span>
       </span>
-      <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 14, lineHeight: '19px', color: 'var(--cth-ink-900)' }}>
+      <span style={{
+        fontFamily: 'var(--cth-font-display)', fontSize: 14, lineHeight: '19px',
+        letterSpacing: 0.5, color: 'var(--cth-ink-900)'
+      }}>
         {title}
       </span>
-      <span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--cth-ink-700)' }}>
+      <span style={{ fontSize: 13, lineHeight: '19px', color: 'var(--cth-ink-700)' }}>
         {desc}
       </span>
     </button>
