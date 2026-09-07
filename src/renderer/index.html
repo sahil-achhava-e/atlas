@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <title>Atlas</title>
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://api.openai.com https://*.openai.com wss://api.openai.com wss://*.openai.com; media-src 'self' blob: mediastream:;" />
-    <!-- v0.3.4 type revamp: Press Start 2P stays as the BRAND display face
-         (small caps labels only); body/UI moves to Inter and code/terminal to
-         JetBrains Mono. The pixel body fonts (Pixelify/VT323) read as toy-like
-         and strained at data-dense sizes.
+    <!-- Type: the display face is JetBrains Mono at 700 ("Atlas Display" in
+         fonts.css), body/UI is Inter, code/terminal JetBrains Mono. The splash
+         below paints BEFORE the bundle is parsed, so it can only name faces the
+         OS already has — hence the system mono stack, not "Atlas Display".
          v0.4.6: these three faces are BUNDLED (src/renderer/src/design/fonts.css)
          rather than fetched from fonts.googleapis.com, which is blocked in
          mainland China. The CSP above no longer allows either Google font host. -->
@@ -21,10 +21,14 @@
       #cth-splash .mk {
         display: grid; place-items: center; width: 56px; height: 56px;
         background: #7A5AF0; color: #F4F1EA; border: 4px solid #3D2A9B;
-        font-family: "Press Start 2P", monospace; font-size: 16px; letter-spacing: -2px;
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 18px; font-weight: 700;
         box-shadow: 4px 4px 0 rgba(26,19,32,0.25);
       }
-      #cth-splash .title { font-family: "Press Start 2P", monospace; font-size: 13px; }
+      #cth-splash .title {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 17px; font-weight: 700; letter-spacing: 3px;
+      }
       #cth-splash .hint { font-size: 15px; color: #6B5878; }
     </style>
   </head>
