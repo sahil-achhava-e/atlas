@@ -3080,15 +3080,24 @@ ipcMain.on('app:readClipboardSync', (evt) => {
 // Claude sessions outside the app.
 
 // ─── IPC: folder picker ─────────────────────────────────────────────────────
-ipcMain.handle('dialog:chooseFolder', async (evt) => {
+ipcMain.handle('dialog:chooseFolder', async (evt, opts: unknown) => {
   const win = BrowserWindow.fromWebContents(evt.sender);
   if (!win) return { ok: false as const, error: 'no window' };
+  // Multi-select is opt-in per call. Onboarding's project list wants several
+  // folders in one trip; every other caller (the harness home, an agent's cwd)
+  // takes exactly one, and a picker that lets you choose three for a field that
+  // stores one is a worse picker.
+  const multi = !!(opts && typeof opts === 'object' && (opts as { multi?: unknown }).multi);
+  const properties: Array<'openDirectory' | 'createDirectory' | 'multiSelections'> =
+    multi ? ['openDirectory', 'createDirectory', 'multiSelections']
+          : ['openDirectory', 'createDirectory'];
   const res = await dialog.showOpenDialog(win, {
-    properties: ['openDirectory', 'createDirectory'],
-    title: 'Pick a folder'
+    properties,
+    title: multi ? 'Pick one or more folders' : 'Pick a folder'
   });
   if (res.canceled || res.filePaths.length === 0) return { ok: false as const, error: 'cancelled' };
-  return { ok: true as const, path: res.filePaths[0] };
+  // `path` stays the first pick so every existing caller keeps working untouched.
+  return { ok: true as const, path: res.filePaths[0], paths: res.filePaths };
 });
 
 // ─── IPC: Terminal.app at a folder ──────────────────────────────────────────

@@ -625,8 +625,10 @@ const api = {
   },
 
   // ─── Dialog ──────────────────────────────────────────────────────────────
-  chooseFolder: (): Promise<{ ok: true; path: string } | { ok: false; error: string }> =>
-    ipcRenderer.invoke('dialog:chooseFolder'),
+  chooseFolder: (
+    opts?: { multi?: boolean }
+  ): Promise<{ ok: true; path: string; paths: string[] } | { ok: false; error: string }> =>
+    ipcRenderer.invoke('dialog:chooseFolder', opts),
 
   // ─── Terminal.app ────────────────────────────────────────────────────────
   openTerminalAt: (cwd: string): Promise<{ ok: boolean; error?: string }> =>

@@ -18,11 +18,15 @@
     // plausible path (cycling, so picking twice adds two rows). Without this
     // every list-of-things screen previews only in its empty state.
     chooseFolder: (function () {
-      var paths = ['/Users/you/Desktop/atlas', '/Users/you/code/vms-backend',
-                   '/Users/you/code/epicxp-events', '/Users/you/work/notes'];
+      var pool = ['/Users/you/Desktop/atlas', '/Users/you/code/vms-backend',
+                  '/Users/you/code/epicxp-events', '/Users/you/work/notes'];
       var i = 0;
-      return function () {
-        return Promise.resolve({ ok: true, path: paths[i++ % paths.length] });
+      return function (opts) {
+        // Mirror the real contract: `paths` always, `path` = the first pick.
+        var take = opts && opts.multi ? 2 : 1;
+        var picked = [];
+        for (var n = 0; n < take; n++) picked.push(pool[i++ % pool.length]);
+        return Promise.resolve({ ok: true, path: picked[0], paths: picked });
       };
     })(),
     openExternal: function (url) {

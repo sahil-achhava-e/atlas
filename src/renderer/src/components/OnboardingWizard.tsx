@@ -209,9 +209,17 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
   const pickRepo = async () => {
     setError(undefined);
-    const res = await window.cth.chooseFolder();
-    if (res.ok && !repos.includes(res.path)) setRepos([...repos, res.path]);
-    else if (!res.ok && res.error !== 'cancelled') setError(res.error);
+    // Multi-select: adding four projects used to mean opening the picker four
+    // times. Dedupe against what is already listed, and against itself, so a
+    // repeat pick is a no-op rather than a duplicate row.
+    const res = await window.cth.chooseFolder({ multi: true });
+    if (res.ok) {
+      const picked = res.paths?.length ? res.paths : [res.path];
+      const added = picked.filter((p) => p && !repos.includes(p));
+      if (added.length) setRepos([...repos, ...new Set(added)]);
+    } else if (res.error !== 'cancelled') {
+      setError(res.error);
+    }
   };
 
   const removeRepo = (path: string) => setRepos(repos.filter(r => r !== path));
