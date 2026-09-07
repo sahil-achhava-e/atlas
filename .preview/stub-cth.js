@@ -17,18 +17,32 @@
     // A folder picker cannot open in a browser, so the preview hands back a
     // plausible path (cycling, so picking twice adds two rows). Without this
     // every list-of-things screen previews only in its empty state.
-    chooseFolder: (function () {
-      var pool = ['/Users/you/Desktop/atlas', '/Users/you/code/vms-backend',
-                  '/Users/you/code/epicxp-events', '/Users/you/work/notes'];
-      var i = 0;
-      return function (opts) {
-        // Mirror the real contract: `paths` always, `path` = the first pick.
-        var take = opts && opts.multi ? 2 : 1;
-        var picked = [];
-        for (var n = 0; n < take; n++) picked.push(pool[i++ % pool.length]);
-        return Promise.resolve({ ok: true, path: picked[0], paths: picked });
-      };
-    })(),
+    // The real bridge opens Electron's native folder dialog. A browser cannot,
+    // and the File System Access API deliberately hides absolute paths, so the
+    // honest preview equivalent is to ASK for the path rather than invent one:
+    // canned folders appearing on click looked like the app adding things by
+    // itself. Cancel behaves like cancelling the real dialog.
+    chooseFolder: function (opts) {
+      var multi = !!(opts && opts.multi);
+      var answer = window.prompt(
+        multi
+          ? 'Preview folder picker.\nType one or more absolute paths, separated by commas:'
+          : 'Preview folder picker.\nType an absolute path:',
+        multi ? '' : '~/atlas-data'
+      );
+      if (answer === null) return Promise.resolve({ ok: false, error: 'cancelled' });
+      var picked = answer.split(',').map(function (s) { return s.trim(); })
+        .filter(function (s) { return s.length; });
+      if (!picked.length) return Promise.resolve({ ok: false, error: 'cancelled' });
+      if (!multi) picked = [picked[0]];
+      return Promise.resolve({ ok: true, path: picked[0], paths: picked });
+    },
+    // The real bridge hands the URL to Electron's shell. In a browser preview
+    // the honest equivalent is a new tab: without this, "install instructions"
+    // silently did nothing here and looked like a broken button.
+    // A folder picker cannot open in a browser, so the preview hands back a
+    // plausible path (cycling, so picking twice adds two rows). Without this
+    // every list-of-things screen previews only in its empty state.
     openExternal: function (url) {
       try { window.open(url, '_blank', 'noopener'); } catch (e) { /* popup blocked */ }
       return Promise.resolve(true);
