@@ -102,7 +102,6 @@ const FEATURES: Feature[] = [
 const PROVIDER_BLURB_KEYS: Partial<Record<AgentProvider, string>> = {
   claude: 'onboarding.providerBlurb.claude',
   codex: 'onboarding.providerBlurb.codex',
-  grok: 'onboarding.providerBlurb.grok',
   gemini: 'onboarding.providerBlurb.gemini'
 };
 

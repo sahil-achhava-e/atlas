@@ -23,9 +23,6 @@
         { id: 'engine:claude', found: true,  path: '/opt/homebrew/bin/claude',
           installCommand: 'npm i -g @anthropic-ai/claude-code', docsUrl: 'https://claude.com/claude-code' },
         { id: 'engine:codex',  found: true,  path: '/opt/homebrew/bin/codex', installCommand: '' },
-        // Grok as the presets actually describe it: no installCommand and no
-        // docsUrl, which is the dead-end case worth seeing in a preview.
-        { id: 'engine:grok',   found: false, path: null, installCommand: '' },
         { id: 'engine:gemini', found: false, path: null, installCommand: '',
           docsUrl: 'https://github.com/google-gemini/gemini-cli' },
       ]);

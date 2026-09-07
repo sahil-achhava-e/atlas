@@ -642,8 +642,7 @@
       "antigravity": "Antigravity by Google Gemini",
       "qwen": "Qwen, runs a local Qwen model on your machine",
       "gemini": "Google",
-      "cursor": "Cursor Agent CLI, uses your Cursor credits (Luna, Composer, …)",
-      "grok": "xAI"
+      "cursor": "Cursor Agent CLI, uses your Cursor credits (Luna, Composer, …)"
     },
     "home": {
       "descPlain": "Pick an empty folder for Atlas to keep its notes and settings in. It is created if it does not exist.",

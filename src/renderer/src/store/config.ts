@@ -360,11 +360,16 @@ export function modelProvidersForAgent(isGod = false) {
   );
 }
 
-/** The four engines onboarding offers. The app supports twelve, but a first-run
- *  screen listing all of them is a menu, not a decision: these are the ones with
- *  a frontier model behind them, and any other engine can still be picked per
- *  agent afterwards. Order is the order they are shown in. */
-const ONBOARDING_ENGINES = ['claude', 'codex', 'grok', 'gemini'] as const;
+/** The engines onboarding offers. The app supports twelve, but a first-run
+ *  screen listing all of them is a menu, not a decision. Any other engine can
+ *  still be picked per agent afterwards. Order is the order they are shown in.
+ *
+ *  Grok is deliberately absent: its preset carries neither an `installCommand`
+ *  nor a `docsUrl`, so a machine without it lands on "not installed", Continue
+ *  disabled, and no link or command saying what to do. Offering an engine whose
+ *  failure mode is a dead end is worse than not offering it. Add it back here
+ *  once the preset knows how to install it or where to read about it. */
+const ONBOARDING_ENGINES = ['claude', 'codex', 'gemini'] as const;
 
 /** The onboarding engine step's two groups (issue #355). Hiding inbox-less
  *  engines read as "Copilot isn't supported at all", when the truth is narrower:
