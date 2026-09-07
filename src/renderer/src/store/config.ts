@@ -360,23 +360,30 @@ export function modelProvidersForAgent(isGod = false) {
   );
 }
 
+/** The four engines onboarding offers. The app supports twelve, but a first-run
+ *  screen listing all of them is a menu, not a decision: these are the ones with
+ *  a frontier model behind them, and any other engine can still be picked per
+ *  agent afterwards. Order is the order they are shown in. */
+const ONBOARDING_ENGINES = ['claude', 'codex', 'grok', 'gemini'] as const;
+
 /** The onboarding engine step's two groups (issue #355). Hiding inbox-less
- *  engines there read as "Copilot isn't supported at all", when the truth is
- *  narrower: a print-mode / bridge-less CLI can be HIRED as a worker but cannot
- *  run Michael, because the orchestrator must drain hive mail. So the step now
- *  shows those engines too, as disabled workers-only rows — same god-eligible
- *  set as `modelProvidersForAgent(true)` for the selectable group, and every
- *  other preset except `custom` (bring-your-own command, not an engine) in the
- *  disabled group. */
+ *  engines read as "Copilot isn't supported at all", when the truth is narrower:
+ *  a print-mode / bridge-less CLI can be HIRED as a worker but cannot run the
+ *  orchestrator, because that one must drain hive mail. Any of the four above
+ *  that cannot orchestrate is shown as a disabled workers-only row rather than
+ *  dropped, so the constraint is visible instead of mysterious. */
 export function onboardingEngineChoices(): {
   eligible: AgentProviderPreset[];
   workersOnly: AgentProviderPreset[];
 } {
-  const eligible = modelProvidersForAgent(true);
-  const workersOnly = AGENT_PROVIDER_PRESETS.filter(
-    (preset) => preset.id !== 'custom' && !eligible.includes(preset)
-  );
-  return { eligible, workersOnly };
+  const shown = ONBOARDING_ENGINES
+    .map((id) => AGENT_PROVIDER_PRESETS.find((preset) => preset.id === id))
+    .filter((preset): preset is AgentProviderPreset => !!preset);
+  const godEligible = modelProvidersForAgent(true);
+  return {
+    eligible: shown.filter((preset) => godEligible.includes(preset)),
+    workersOnly: shown.filter((preset) => !godEligible.includes(preset)),
+  };
 }
 
 /** Native <select> values must carry both provider and model because each

@@ -637,12 +637,13 @@
       }
     },
     "providerBlurb": {
-      "claude": "Claude Code by Anthropic",
-      "codex": "Codex by OpenAI",
+      "claude": "Anthropic",
+      "codex": "OpenAI",
       "antigravity": "Antigravity by Google Gemini",
       "qwen": "Qwen, runs a local Qwen model on your machine",
-      "gemini": "Gemini CLI - Google Gemini",
-      "cursor": "Cursor Agent CLI, uses your Cursor credits (Luna, Composer, …)"
+      "gemini": "Google",
+      "cursor": "Cursor Agent CLI, uses your Cursor credits (Luna, Composer, …)",
+      "grok": "xAI"
     },
     "home": {
       "descPlain": "Pick an empty folder for Atlas to keep its notes and settings in. It is created if it does not exist.",
@@ -660,15 +661,17 @@
       "holdsHistory": "history"
     },
     "orchestrator": {
-      "descPlain": "{{godName}} is your clone. It reads your requests, breaks them into tasks, and hands them to the right agent. It runs the floor; you still run it. Choose which AI engine powers it.",
-      "desc": "{{godName}} is your clone, the boss of the floor you just met. It triages your requests, assigns tasks, and manages the team, escalating anything that genuinely needs you. Pick the engine and model that power it; give it a longer-context, higher-capability model.",
-      "cliAgentPlain": "A <strong>CLI agent</strong> is an AI coding assistant that runs on your computer. Popular ones are Claude Code (Anthropic), Codex (OpenAI) and Antigravity (Google Gemini). <strong>Your clone</strong> is the always-on one that runs your whole office. We recommend Claude Code on Opus 4.8 (1M). You can add or switch the others later.",
-      "cliAgent": "Each option is a <strong>CLI engine</strong> (Claude Code, Codex, Antigravity/Gemini, or a local proxy like Qwen). Engines marked INSTALLED are already on this machine; INSTALLS ON FIRST RUN means the app sets it up when {{godName}} first starts. <strong>Your clone</strong> ({{godName}}) is the engine that orchestrates the whole hive. Recommended: Claude Code · Opus 4.8 · 1M. Other providers can be wired per agent later.",
+      "descPlain": "Pick the AI that powers {{godName}}. Give it the best one you have: it is the one deciding what everyone else does.",
+      "desc": "{{godName}} reads everything and decides what the crew does, so give it your strongest engine. Every other agent can run a different one.",
+      "cliAgentPlain": "INSTALLED means you already have it. The rest are set up for you on first run.",
+      "cliAgent": "INSTALLED means it is already on this machine. The rest are set up on first run.",
       "recommended": "RECOMMENDED",
       "workersOnly": "WORKERS ONLY",
-      "workersOnlyHint": "Can't drain hive mail yet, so it can't run your clone. Still available when hiring workers.",
+      "workersOnlyHint": "Cannot run {{godName}}, but can run a worker.",
       "model": "Model",
-      "modelNote": "This only sets {{godName}}'s engine. You can run other providers per agent later."
+      "modelNote": "Only {{godName}}. Other agents pick their own later.",
+      "fieldLabel": "ENGINE",
+      "modelLabel": "MODEL"
     },
     "repos": {
       "descPlain": "Add your projects. A project is simply a folder: it can hold code, documents, notes, or any files you want your agents to work with. You can create a brand-new folder or pick an existing one, and add more anytime.",

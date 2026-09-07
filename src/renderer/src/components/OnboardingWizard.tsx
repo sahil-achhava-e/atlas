@@ -86,15 +86,14 @@ const FEATURES: Feature[] = [
   }
 ];
 
-// One-liner of what each engine is, shown under its row on the orchestrator step
-// so a non-technical user knows what they're picking (item 3).
+// Who makes each engine, shown under its row on the engine step. The row's own
+// label is the product in caps, so the blurb carries the one thing it does not:
+// the vendor. "CLAUDE CODE / Claude Code by Anthropic" was saying it twice.
 const PROVIDER_BLURB_KEYS: Partial<Record<AgentProvider, string>> = {
-  gemini: 'onboarding.providerBlurb.gemini',
   claude: 'onboarding.providerBlurb.claude',
   codex: 'onboarding.providerBlurb.codex',
-  antigravity: 'onboarding.providerBlurb.antigravity',
-  qwen: 'onboarding.providerBlurb.qwen',
-  cursor: 'onboarding.providerBlurb.cursor'
+  grok: 'onboarding.providerBlurb.grok',
+  gemini: 'onboarding.providerBlurb.gemini'
 };
 
 export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
@@ -479,46 +478,30 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             {step === 'orchestrator' && (
               <>
                 <p style={{ margin: 0, lineHeight: '22px' }}>
-                  {plain ? t('onboarding.orchestrator.descPlain') : t('onboarding.orchestrator.desc')}
+                  {plain
+                    ? t('onboarding.orchestrator.descPlain', { godName })
+                    : t('onboarding.orchestrator.desc', { godName })}
                 </p>
 
-                {/* What is a CLI agent / your clone "— item 3 */}
-                <div style={{
-                  display: 'flex', gap: 8, alignItems: 'flex-start', padding: 10,
-                  background: 'var(--cth-lemon-light)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
-                  fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-700)'
-                }}>
-                  <span style={{ flexShrink: 0, marginTop: 1 }}><Icon name="sparkle" /></span>
-                  <span>
-                    {plain ? (
-                      <Trans i18nKey="onboarding.orchestrator.cliAgentPlain" components={{ strong: <strong /> }}>
-                        A <strong>CLI agent</strong> is an AI coding assistant that runs on your
-                        computer — popular ones are Claude Code (Anthropic), Codex (OpenAI) and
-                        Antigravity (Google Gemini). <strong>Your clone</strong> is the always-on
-                        one that runs your whole office. We recommend Claude Code on Opus 4.8 (1M).
-                        You can add or switch the others later.
-                      </Trans>
-                    ) : (
-                      <Trans i18nKey="onboarding.orchestrator.cliAgent" components={{ strong: <strong /> }}>
-                        Each option is a <strong>CLI engine</strong> (Claude Code, Codex,
-                        Antigravity/Gemini, or a local proxy like Qwen). Engines marked
-                        INSTALLED are already on this machine; INSTALLS ON FIRST RUN means the app
-                        sets it up when Michael first starts.
-                        <strong> Your clone</strong> (Michael) is the engine that orchestrates the whole
-                        hive. Recommended: Claude Code · Opus 4.8 · 1M. Other providers can be wired
-                        per agent later.
-                      </Trans>
-                    )}
-                  </span>
+                {/* Was a five-line explainer in a yellow box repeating what the
+                    badges already say. One line is enough; the badges do the rest. */}
+                <div style={{ fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-500)' }}>
+                  {plain ? t('onboarding.orchestrator.cliAgentPlain') : t('onboarding.orchestrator.cliAgent')}
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <FieldLabel>{t('onboarding.orchestrator.fieldLabel')}</FieldLabel>
+                {/* The list scrolls inside itself. Twelve rows above the model
+                    picker meant scrolling past every engine to reach it. */}
+                <div style={{
+                  display: 'flex', flexDirection: 'column', gap: 6,
+                  maxHeight: 268, overflowY: 'auto', paddingRight: 4
+                }}>
                   {onboardingEngineChoices().eligible.map((p) => {
                     const sel = godProvider === p.id;
                     return (
-                      <label key={p.id} style={{
-                        display: 'flex', alignItems: 'center', gap: 10,
-                        padding: '8px 10px',
+                      <label key={p.id} className="cth-choice" style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '10px 12px',
                         background: sel ? 'var(--cth-sky-light)' : 'var(--cth-paper-100)',
                         boxShadow: sel
                           ? 'inset 0 0 0 2px var(--cth-sky)'
@@ -542,17 +525,29 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                           width: 22, height: 22, flexShrink: 0, display: 'flex',
                           alignItems: 'center', justifyContent: 'center', color: 'var(--cth-ink-900)'
                         }}>
-                          <ProviderLogo provider={p.id} size={18} />
+                          <ProviderLogo provider={p.id} size={22} />
                         </span>
                         <span style={{ flex: 1, minWidth: 0 }}>
-                          <span style={{ display: 'block', fontFamily: 'var(--cth-font-display)', fontSize: 11 }}>
+                          <span style={{
+                            display: 'block', fontFamily: 'var(--cth-font-display)',
+                            fontSize: 13, lineHeight: '18px', letterSpacing: 0.5
+                          }}>
                             {p.label.toUpperCase()}
                           </span>
-                          {PROVIDER_BLURB_KEYS[p.id] && (
-                            <span style={{ display: 'block', fontSize: 11, color: 'var(--cth-ink-500)' }}>
-                              {t(PROVIDER_BLURB_KEYS[p.id]!)}
-                            </span>
-                          )}
+                          {/* Two registers want two different facts here. A
+                              technical user wants the command that will actually
+                              run; everyone else wants to know whose AI it is.
+                              The vendor alone read as a repeat of the label on
+                              rows like "GROK · XAI". */}
+                          <span style={{
+                            display: 'block', fontSize: 12, lineHeight: '17px',
+                            color: 'var(--cth-ink-500)',
+                            fontFamily: plain ? 'var(--cth-font-ui)' : 'var(--cth-font-mono)'
+                          }}>
+                            {plain
+                              ? (PROVIDER_BLURB_KEYS[p.id] ? t(PROVIDER_BLURB_KEYS[p.id]!) : '')
+                              : `$ ${p.defaultCommand}`}
+                          </span>
                         </span>
                         {(() => {
                           const a = classifyEngineAvailability(engines, p.id);
@@ -584,7 +579,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       disabled instead of hidden, so "Copilot is missing" reads as the
                       real constraint — no inbox drain path — not as "unsupported". */}
                   {onboardingEngineChoices().workersOnly.map((p) => (
-                    <label key={p.id} aria-disabled title={t('onboarding.orchestrator.workersOnlyHint')} style={{
+                    <label key={p.id} aria-disabled title={t('onboarding.orchestrator.workersOnlyHint', { godName })} style={{
                       display: 'flex', alignItems: 'center', gap: 10,
                       padding: '8px 10px',
                       background: 'var(--cth-paper-100)',
@@ -603,8 +598,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         <span style={{ display: 'block', fontFamily: 'var(--cth-font-display)', fontSize: 11, color: 'var(--cth-ink-500)' }}>
                           {p.label.toUpperCase()}
                         </span>
-                        <span style={{ display: 'block', fontSize: 11, color: 'var(--cth-ink-500)' }}>
-                          {t('onboarding.orchestrator.workersOnlyHint')}
+                        <span style={{ display: 'block', fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-500)' }}>
+                          {t('onboarding.orchestrator.workersOnlyHint', { godName })}
                         </span>
                       </span>
                       <span style={{
@@ -635,8 +630,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     </div>
                   </div>
                 )}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>{t('onboarding.orchestrator.model')}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <FieldLabel>{t('onboarding.orchestrator.modelLabel')}</FieldLabel>
                   <select
                     value={godModel ?? ''}
                     onChange={(e) => setGodModel(e.target.value || undefined)}
@@ -647,7 +642,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     ))}
                   </select>
                   <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
-                    {t('onboarding.orchestrator.modelNote')}
+                    {t('onboarding.orchestrator.modelNote', { godName })}
                   </div>
                 </div>
               </>
