@@ -647,7 +647,7 @@
     "home": {
       "descPlain": "Pick an empty folder for Atlas to keep its notes and settings in. It is created if it does not exist.",
       "desc": "Pick a folder for Atlas to keep its own files: agent memory, logs, and any repos you start from here. It is created if it does not exist.",
-      "placeholder": "~/Atlas",
+      "placeholder": "~/atlas-data",
       "createPick": "choose folder",
       "pick": "choose folder",
       "notePlain": "Nothing you need to open. It is how Atlas remembers after you close the app.",
