@@ -264,21 +264,26 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         width: 880, maxWidth: '94vw', margin: 'auto',
         display: 'flex', flexDirection: 'column', maxHeight: '92vh',
         background: 'var(--cth-cream-50)',
-        boxShadow: 'var(--cth-panel-border-dialog), 6px 6px 0 rgba(0, 0, 0, 0.18)'
+        // A lift off the floor, not a stamped-on slab: a hairline to hold the
+        // edge, then two shadows — a tight one for the seam and a wide soft one
+        // for the height. The old 6px hard offset read as a sticker.
+        boxShadow: `inset 0 0 0 1px var(--cth-ink-300),
+                    0 2px 6px rgba(0, 0, 0, 0.22),
+                    0 28px 64px -12px rgba(0, 0, 0, 0.55)`
       }}>
 
         {/* ── Brand bar: who is asking, and how far in you are ─────────────── */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0,
-          padding: '12px 16px',
-          background: 'var(--cth-cream-200)',
-          boxShadow: 'inset 0 -1px 0 var(--cth-ink-300)'
+          padding: '14px 20px',
+          background: 'var(--cth-cream-100)',
+          boxShadow: 'inset 0 -1px 0 var(--cth-ink-100)'
         }}>
           <span style={{
-            width: 30, height: 30, display: 'grid', placeItems: 'center', flexShrink: 0,
+            width: 32, height: 32, display: 'grid', placeItems: 'center', flexShrink: 0,
             background: 'var(--cth-lilac)', color: 'var(--cth-on-accent)',
-            fontFamily: 'var(--cth-font-display)', fontSize: 12,
-            boxShadow: 'inset 0 0 0 2px var(--cth-ink-900)'
+            fontFamily: 'var(--cth-font-display)', fontSize: 13,
+            boxShadow: '0 0 0 1px var(--cth-ink-900), 0 0 18px -2px var(--cth-lilac)'
           }}>A</span>
           <span style={{
             fontFamily: 'var(--cth-font-display)', fontSize: 11, letterSpacing: 1,
@@ -286,7 +291,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           }}>{t('onboarding.setup.name')}</span>
           <span style={{ flex: 1 }} />
           <span style={{
-            fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)'
+            fontFamily: 'var(--cth-font-mono)', fontSize: 11, letterSpacing: 0.5,
+            color: 'var(--cth-ink-500)'
           }}>{t('onboarding.setup.counter', { n: stepIndex + 1, total: STEP_ORDER.length })}</span>
         </div>
 
@@ -294,10 +300,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
           {/* ── Step rail: the whole shape of the setup, visible at once ───── */}
           <nav style={{
-            width: 186, flexShrink: 0, padding: '14px 0',
+            width: 190, flexShrink: 0, padding: '18px 0',
             background: 'var(--cth-cream-100)',
             boxShadow: 'inset -1px 0 0 var(--cth-ink-100)',
-            display: 'flex', flexDirection: 'column', gap: 2
+            display: 'flex', flexDirection: 'column',
+            position: 'relative'
           }}>
             {STEP_ORDER.map((s, i) => (
               <RailStep
@@ -312,11 +319,14 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
             {/* The step's own name — the rail says where, this says what. */}
             <h2 style={{
-              margin: 0, padding: '18px 24px 0',
-              fontFamily: 'var(--cth-font-display)', fontSize: 13, lineHeight: '20px',
+              margin: 0, padding: '22px 28px 0',
+              fontFamily: 'var(--cth-font-display)', fontSize: 14, lineHeight: '22px',
               color: 'var(--cth-ink-900)'
             }}>{stepTitle}</h2>
-            <div style={{ padding: '14px 24px 20px', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', flex: 1 }}>
+            <div style={{
+              padding: '16px 28px 24px', display: 'flex', flexDirection: 'column', gap: 18,
+              overflowY: 'auto', flex: 1
+            }}>
 
             {step === 'persona' && (
               <>
@@ -803,14 +813,13 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         {/* ── Footer: how far along, and the way forward ───────────────────── */}
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16,
-          flexShrink: 0, padding: '12px 16px',
-          background: 'var(--cth-cream-200)',
-          boxShadow: 'inset 0 1px 0 var(--cth-ink-300)'
+          flexShrink: 0, padding: '14px 20px',
+          background: 'var(--cth-cream-100)',
+          boxShadow: 'inset 0 1px 0 var(--cth-ink-100)'
         }}>
               <div style={{
-                flex: 1, height: 8, maxWidth: 260,
-                background: 'var(--cth-cream-300)',
-                boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                flex: 1, height: 6, maxWidth: 300,
+                background: 'var(--cth-cream-300)'
               }}>
                 <div style={{
                   // The step you are ON counts as progress: a trough that reads empty on
@@ -955,17 +964,31 @@ function RailStep({ n, label, state }: {
   const current = state === 'current';
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 10, padding: '7px 14px',
+      display: 'flex', alignItems: 'center', gap: 11, padding: '9px 18px',
+      position: 'relative',
       background: current ? 'var(--cth-cream-50)' : 'transparent',
-      boxShadow: current ? 'inset 3px 0 0 var(--cth-lilac)' : 'none'
+      boxShadow: current ? 'inset 2px 0 0 var(--cth-lilac)' : 'none'
     }}>
+      {/* The spine, drawn per row as the segment ABOVE this number — so it
+          threads the six chips together and stops at the last one, instead of
+          dangling past it the way one absolute line did. */}
+      {n > 1 && (
+        <span aria-hidden style={{
+          position: 'absolute', left: 28, top: 0, height: 9, width: 1,
+          background: state === 'todo' ? 'var(--cth-ink-100)' : 'var(--cth-ink-300)'
+        }} />
+      )}
       <span style={{
-        width: 20, height: 20, flexShrink: 0, display: 'grid', placeItems: 'center',
+        width: 22, height: 22, flexShrink: 0, display: 'grid', placeItems: 'center',
+        position: 'relative',   // sits ON the spine, so it needs to paint over it
         fontFamily: 'var(--cth-font-display)', fontSize: 8,
         background: state === 'done' ? 'var(--cth-lilac-light)'
-          : current ? 'var(--cth-lilac)' : 'transparent',
-        color: current ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)',
-        boxShadow: `inset 0 0 0 1px ${state === 'todo' ? 'var(--cth-ink-300)' : 'var(--cth-ink-500)'}`
+          : current ? 'var(--cth-lilac)' : 'var(--cth-cream-100)',
+        color: current ? 'var(--cth-on-accent)'
+          : state === 'done' ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
+        boxShadow: current
+          ? '0 0 0 1px var(--cth-lilac), 0 0 14px -2px var(--cth-lilac)'
+          : `inset 0 0 0 1px ${state === 'todo' ? 'var(--cth-ink-100)' : 'var(--cth-ink-300)'}`
       }}>{state === 'done' ? '\u2713' : n}</span>
       <span style={{
         fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '13px',
