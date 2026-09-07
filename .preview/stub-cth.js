@@ -11,23 +11,76 @@
   var OVERRIDES = {
     hiveRegistry: function () { return Promise.resolve({ agents: {} }); },
 
-    // The real bridge opens Electron's native folder dialog. Chrome has its own
-    // directory picker (File System Access API, secure contexts only, which
-    // 127.0.0.1 counts as), so the preview opens a REAL chooser rather than
-    // inventing folders or asking you to type a path. Two honest differences:
-    //   - the browser never exposes an absolute path, so what comes back is the
-    //     folder's NAME, not /Users/you/thing
-    //   - it takes one directory per call; the native dialog can multi-select
-    // Cancelling rejects with AbortError, which maps to the same 'cancelled'
-    // string the real handler returns.
-    chooseFolder: function () {
-      if (typeof window.showDirectoryPicker !== 'function') {
-        return Promise.resolve({ ok: false, error: 'no directory picker in this browser' });
-      }
-      return window.showDirectoryPicker({ mode: 'read' }).then(
-        function (handle) { return { ok: true, path: handle.name, paths: [handle.name] }; },
-        function () { return { ok: false, error: 'cancelled' }; }
-      );
+    // The real bridge opens Electron's native folder dialog, which needs no
+    // permission: the dialog IS the grant. A browser has no equivalent.
+    //   - showDirectoryPicker() makes Chrome ask "allow this site to view and
+    //     copy files?", which is a real grant of read access to a web page, for
+    //     a preview that only ever wanted a path string.
+    //   - <input webkitdirectory> is worse: its confirmation says "upload".
+    //   - window.prompt() is an alert box.
+    // So the preview draws its own small dialog and asks for the path. Nothing
+    // is read, nothing is granted, and it stays inside the page.
+    chooseFolder: function (opts) {
+      var multi = !!(opts && opts.multi);
+      return new Promise(function (resolve) {
+        var wrap = document.createElement('div');
+        wrap.style.cssText = 'position:fixed;inset:0;z-index:99999;display:grid;' +
+          'place-items:center;background:rgba(0,0,0,.55);' +
+          'font:14px system-ui,-apple-system,sans-serif';
+        var card = document.createElement('div');
+        card.style.cssText = 'width:min(520px,92vw);padding:20px;display:flex;' +
+          'flex-direction:column;gap:12px;background:var(--cth-cream-50,#140F26);' +
+          'color:var(--cth-ink-900,#DEDBD6);' +
+          'box-shadow:inset 0 0 0 1px var(--cth-ink-300,#787684),0 24px 60px rgba(0,0,0,.6)';
+        var title = document.createElement('div');
+        title.textContent = multi ? 'Preview: folder paths' : 'Preview: folder path';
+        title.style.cssText = 'font-weight:700;letter-spacing:.5px';
+        var note = document.createElement('div');
+        note.textContent = multi
+          ? 'The packaged app opens the native folder dialog. Type one or more absolute paths, separated by commas.'
+          : 'The packaged app opens the native folder dialog. Type an absolute path.';
+        note.style.cssText = 'font-size:12px;line-height:17px;opacity:.7';
+        var input = document.createElement('input');
+        input.placeholder = multi ? '/Users/you/code/app, /Users/you/code/api' : '/Users/you/code/app';
+        input.style.cssText = 'height:40px;padding:0 12px;border:none;outline:none;' +
+          'font-family:ui-monospace,SF Mono,Menlo,monospace;font-size:14px;' +
+          'background:var(--cth-paper-100,#110D20);color:inherit;' +
+          'box-shadow:inset 0 0 0 1px var(--cth-ink-300,#787684)';
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:8px;justify-content:flex-end';
+        var mkBtn = function (label, primary) {
+          var b = document.createElement('button');
+          b.textContent = label;
+          b.style.cssText = 'height:36px;padding:0 16px;border:none;cursor:pointer;font:inherit;' +
+            (primary
+              ? 'background:var(--cth-lilac,#A896E3);color:#1A1320'
+              : 'background:transparent;color:inherit;box-shadow:inset 0 0 0 1px var(--cth-ink-300,#787684)');
+          return b;
+        };
+        var cancel = mkBtn('Cancel', false);
+        var ok = mkBtn('Add', true);
+        row.append(cancel, ok);
+        card.append(title, note, input, row);
+        wrap.append(card);
+        document.body.append(wrap);
+        input.focus();
+
+        var close = function (result) { wrap.remove(); resolve(result); };
+        var submit = function () {
+          var picked = input.value.split(',').map(function (x) { return x.trim(); })
+            .filter(function (x) { return x.length; });
+          if (!picked.length) return close({ ok: false, error: 'cancelled' });
+          if (!multi) picked = [picked[0]];
+          close({ ok: true, path: picked[0], paths: picked });
+        };
+        cancel.onclick = function () { close({ ok: false, error: 'cancelled' }); };
+        ok.onclick = submit;
+        input.onkeydown = function (e) {
+          if (e.key === 'Enter') submit();
+          if (e.key === 'Escape') close({ ok: false, error: 'cancelled' });
+        };
+        wrap.onclick = function (e) { if (e.target === wrap) close({ ok: false, error: 'cancelled' }); };
+      });
     },
 
     // Without this, "install instructions" silently did nothing and looked like
