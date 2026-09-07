@@ -324,10 +324,12 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         <div style={{ display: 'flex', minHeight: 0, flex: 1 }}>
 
           {/* ── Step rail: the whole shape of the setup, visible at once ───── */}
+          {/* The rail carries no panel of its own. It used to be a lighter fill
+              than the box, so on a short step it ended in a large empty slab of
+              colour. With no fill there is nothing to look empty: the divider
+              and the current row do all the work. */}
           <nav style={{
             width: 190, flexShrink: 0, padding: '18px 0',
-            background: 'var(--cth-cream-100)',
-            boxShadow: 'inset -1px 0 0 var(--cth-ink-100)',
             display: 'flex', flexDirection: 'column',
             position: 'relative'
           }}>
@@ -341,7 +343,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             ))}
           </nav>
 
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{
+            flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column',
+            boxShadow: 'inset 1px 0 0 var(--cth-ink-100)'
+          }}>
             {/* The step's own name — the rail says where, this says what. */}
             <h2 style={{
               margin: 0, padding: '22px 28px 0',
@@ -1098,7 +1103,7 @@ function RailStep({ n, label, state }: {
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px',
       position: 'relative',
-      background: current ? 'var(--cth-cream-50)' : 'transparent',
+      background: current ? 'var(--cth-cream-200)' : 'transparent',
       boxShadow: current ? 'inset 3px 0 0 var(--cth-lilac)' : 'none'
     }}>
       {/* The spine, drawn per row as the segment ABOVE this number — so it
@@ -1117,7 +1122,7 @@ function RailStep({ n, label, state }: {
         // Done is filled and quiet, current is filled and lit, todo is an empty
         // outline. Three states, three different weights of ink.
         background: state === 'done' ? 'var(--cth-lilac-light)'
-          : current ? 'var(--cth-lilac)' : 'var(--cth-cream-100)',
+          : current ? 'var(--cth-lilac)' : 'var(--cth-cream-200)',
         color: current ? 'var(--cth-on-accent)'
           : state === 'done' ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
         boxShadow: current
