@@ -320,11 +320,11 @@ export function expandTilde(p: string): string {
 /**
  * Normalize the hive home and its recent-list in one place (#140).
  *
- * Onboarding SUGGESTS `~/HarnessAgents` in a free-text field, so the single most
+ * Onboarding SUGGESTS `~/Atlas` in a free-text field, so the single most
  * common setup path — accept the default, press Finish — used to persist a literal
  * `~`. Finish immediately creates that directory, and Node's mkdir has no concept
  * of `~`: it tried to create a folder literally named "~" and died with
- * `ENOENT: no such file or directory, mkdir '~/HarnessAgents'`, wedging the wizard
+ * `ENOENT: no such file or directory, mkdir '~/Atlas'`, wedging the wizard
  * on its last step. Expanding at the config-write boundary means every downstream
  * reader — mkdir, the hive root, the launch picker — sees one absolute path.
  *

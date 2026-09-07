@@ -183,12 +183,12 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   // field rendered empty "— leaving the copy above promising a default the user
   // could not accept, and Finish failing with "Pick a harness home folder first."
   //
-  // Suggest the literal `~/HarnessAgents` instead. That is exactly the string
+  // Suggest the literal `~/Atlas` instead. That is exactly the string
   // #140's normalizeHiveHome()/expandTilde() were built to absorb: it is expanded
   // at the config-write boundary AND at ensureHarnessHome's mkdir, so every
   // downstream reader still sees one absolute path. No new IPC surface.
   useEffect(() => {
-    if (!home) setHome('~/HarnessAgents');
+    if (!home) setHome('~/Atlas');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -440,6 +440,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <p style={{ margin: 0, lineHeight: '22px' }}>
                   {plain ? t('onboarding.home.descPlain') : t('onboarding.home.desc')}
                 </p>
+                <FieldLabel>{t('onboarding.home.fieldLabel')}</FieldLabel>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input
                     value={home}
@@ -447,11 +448,27 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     placeholder={t('onboarding.home.placeholder')}
                     style={inputStyle}
                   />
-                  <PixelButton variant="secondary" size="md" onClick={pickHome}>
-                    <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                  <PixelButton variant="secondary" size="lg" onClick={pickHome}>
+                    <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                       <Icon name="folder" /> {plain ? t('onboarding.home.createPick') : t('onboarding.home.pick')}
                     </span>
                   </PixelButton>
+                </div>
+                {/* What actually lands in there. Three words beat a metaphor:
+                    the old copy called it "the town hall", which tells you
+                    nothing about whether you can delete it. */}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {(plain
+                    ? ['onboarding.home.holdsSettings', 'onboarding.home.holdsMemory', 'onboarding.home.holdsHistory']
+                    : ['onboarding.home.holdsState', 'onboarding.home.holdsMemory', 'onboarding.home.holdsLogs']
+                  ).map((k) => (
+                    <span key={k} style={{
+                      padding: '4px 10px', fontSize: 12, lineHeight: '17px',
+                      color: 'var(--cth-ink-700)',
+                      background: 'var(--cth-cream-200)',
+                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+                    }}>{t(k)}</span>
+                  ))}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
                   {plain ? t('onboarding.home.notePlain') : t('onboarding.home.note')}
@@ -890,6 +907,15 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   );
 }
 
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      fontFamily: 'var(--cth-font-display)', fontSize: 11, letterSpacing: 1,
+      color: 'var(--cth-ink-500)', marginBottom: -8
+    }}>{children}</div>
+  );
+}
+
 function PersonaCard({ icon, title, desc, selected, onClick }: {
   icon: IconName;
   title: string;
@@ -1056,12 +1082,13 @@ function prevStep(s: Step): Step {
 
 const inputStyle: React.CSSProperties = {
   flex: 1,
-  padding: '6px 8px 4px',
+  height: 40,
+  padding: '0 12px',
   background: 'var(--cth-paper-100)',
   border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
   fontFamily: 'var(--cth-font-mono)',
-  fontSize: 13,
+  fontSize: 14,
   color: 'var(--cth-ink-900)',
   outline: 'none'
 };

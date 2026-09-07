@@ -645,13 +645,19 @@
       "cursor": "Cursor Agent CLI, uses your Cursor credits (Luna, Composer, …)"
     },
     "home": {
-      "descPlain": "Create a new, empty folder for the app to call home. Everything the app remembers, its own settings and your agents' memory, is stored here. Something like ~/HarnessAgents works well. We'll create it for you if it doesn't exist.",
-      "desc": "Pick a folder where the harness will keep its own files: agent metadata, logs, and any new repos you create from here. Something like ~/HarnessAgents is a fine default. We'll create it if it doesn't exist.",
-      "placeholder": "/path/to/HarnessAgents",
-      "createPick": "create / pick",
-      "pick": "pick",
-      "notePlain": "You won't need to open this folder day-to-day. It's just where the app keeps its notes so nothing is lost when you restart.",
-      "note": "Think of this as the \"town hall.\" The harness pins agent state there so sessions can be picked back up after a restart."
+      "descPlain": "Pick an empty folder for Atlas to keep its notes and settings in. It is created if it does not exist.",
+      "desc": "Pick a folder for Atlas to keep its own files: agent memory, logs, and any repos you start from here. It is created if it does not exist.",
+      "placeholder": "~/Atlas",
+      "createPick": "choose folder",
+      "pick": "choose folder",
+      "notePlain": "Nothing you need to open. It is how Atlas remembers after you close the app.",
+      "note": "Nothing you need to open. It is what lets a session pick back up after a restart.",
+      "fieldLabel": "FOLDER",
+      "holdsState": "agent state",
+      "holdsMemory": "memory",
+      "holdsLogs": "logs",
+      "holdsSettings": "settings",
+      "holdsHistory": "history"
     },
     "orchestrator": {
       "descPlain": "{{godName}} is your clone. It reads your requests, breaks them into tasks, and hands them to the right agent. It runs the floor; you still run it. Choose which AI engine powers it.",
