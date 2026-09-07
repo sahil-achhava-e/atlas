@@ -86,24 +86,30 @@
     // So the preview draws its own small dialog and asks for the path. Nothing
     // is read, nothing is granted, and it stays inside the page.
     chooseFolder: function (opts) {
-      // Chrome's own directory picker. It costs one "allow this site to view
-      // and copy files?" grant per folder, which is Chrome's wording for read
-      // access to a page: the preview reads nothing and keeps only the name.
-      // The browser never exposes an absolute path, so a row shows the folder
-      // name alone. Falls back to the typed dialog where the API is missing
-      // (Safari, Firefox) or blocked.
-      if (typeof window.showDirectoryPicker === 'function') {
-        return window.showDirectoryPicker({ mode: 'read' }).then(
-          function (h) { return { ok: true, path: h.name, paths: [h.name] }; },
-          function (err) {
-            // The user closing the picker is a cancel. Anything else (blocked
-            // by policy, no user activation) falls through to typing a path.
-            if (err && err.name === 'AbortError') return { ok: false, error: 'cancelled' };
-            return typedFolderDialog(!!(opts && opts.multi));
-          }
-        );
-      }
-      return typedFolderDialog(!!(opts && opts.multi));
+      var multi = !!(opts && opts.multi);
+      // Three tiers, best first:
+      //  1. the NATIVE macOS chooser, run by .preview/pick-folder.mjs on the
+      //     host and proxied through Vite. Real dialog, real absolute paths, no
+      //     browser permission at all. Needs that helper running.
+      //  2. Chrome's own picker, which costs an "allow this site to view and
+      //     copy files?" grant and yields only the folder's name.
+      //  3. typing the path into a dialog drawn in the page.
+      return fetch('/__pick?multi=' + (multi ? '1' : '0'))
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('no helper')); })
+        .then(function (out) {
+          if (out && out.ok) return { ok: true, path: out.path, paths: out.paths };
+          return { ok: false, error: 'cancelled' };
+        })
+        .catch(function () {
+          if (typeof window.showDirectoryPicker !== 'function') return typedFolderDialog(multi);
+          return window.showDirectoryPicker({ mode: 'read' }).then(
+            function (h) { return { ok: true, path: h.name, paths: [h.name] }; },
+            function (err) {
+              if (err && err.name === 'AbortError') return { ok: false, error: 'cancelled' };
+              return typedFolderDialog(multi);
+            }
+          );
+        });
     },
 
     // Without this, "install instructions" silently did nothing and looked like

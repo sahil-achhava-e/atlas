@@ -27,5 +27,11 @@ export default defineConfig({
       '@shared': resolve(R, 'src/shared'),
     },
   },
-  server: { host: '0.0.0.0', port: 5199, watch: { usePolling: true } },
+  server: {
+    host: '0.0.0.0', port: 5199, watch: { usePolling: true },
+    // The native folder picker runs on the HOST (pick-folder.mjs): this container
+    // has no macOS and no display. Proxying keeps the page's fetch same-origin,
+    // so the app's CSP (connect-src 'self') needs no exception.
+    proxy: { '/__pick': { target: 'http://host.docker.internal:5198', rewrite: (p: string) => p.replace(/^\/__pick/, '/pick') } },
+  },
 })

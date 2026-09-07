@@ -637,11 +637,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     <span>{engineAvailabilityMessage(selectedEngine, providerPreset(godProvider).label, godName)}</span>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                       <PixelButton variant="secondary" size="sm" onClick={() => { void probeEngines(); }} disabled={probing}>
-                        {probing ? 'checking...' : 'check again'}
+                        {probing ? 'Checking…' : 'Check again'}
                       </PixelButton>
                       {selectedEngine.docsUrl && (
                         <PixelButton variant="ghost" size="sm" onClick={() => { void window.cth.openExternal(selectedEngine.docsUrl!); }}>
-                          install instructions
+                          Install instructions
                         </PixelButton>
                       )}
                     </div>
