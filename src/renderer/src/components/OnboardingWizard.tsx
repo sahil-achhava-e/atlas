@@ -722,11 +722,16 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                             fontSize: 13, lineHeight: '18px', letterSpacing: 0.5,
                             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                           }}>{name}</span>
-                          <span style={{
-                            display: 'block', fontFamily: 'var(--cth-font-mono)',
-                            fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-500)',
-                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                          }}>{parent}</span>
+                          {/* A folder at the filesystem root, or one the browser
+                              preview could only name, has no parent worth a line
+                              of its own. Rendering a lone "/" reads as a bug. */}
+                          {parent !== '/' && (
+                            <span style={{
+                              display: 'block', fontFamily: 'var(--cth-font-mono)',
+                              fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-500)',
+                              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                            }}>{parent}</span>
+                          )}
                         </span>
                         <PixelButton variant="ghost" size="sm" title={t('onboarding.repos.remove')}
                           onClick={() => removeRepo(r)}>

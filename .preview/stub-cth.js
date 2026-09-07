@@ -8,21 +8,11 @@
 // ponytail: hand-written per call. If this grows past a dozen entries it wants
 // a recorded fixture from a real session instead.
 (function () {
-  var OVERRIDES = {
-    hiveRegistry: function () { return Promise.resolve({ agents: {} }); },
-
-    // The real bridge opens Electron's native folder dialog, which needs no
-    // permission: the dialog IS the grant. A browser has no equivalent.
-    //   - showDirectoryPicker() makes Chrome ask "allow this site to view and
-    //     copy files?", which is a real grant of read access to a web page, for
-    //     a preview that only ever wanted a path string.
-    //   - <input webkitdirectory> is worse: its confirmation says "upload".
-    //   - window.prompt() is an alert box.
-    // So the preview draws its own small dialog and asks for the path. Nothing
-    // is read, nothing is granted, and it stays inside the page.
-    chooseFolder: function (opts) {
-      var multi = !!(opts && opts.multi);
-      return new Promise(function (resolve) {
+  /** The fallback picker: a dialog drawn INSIDE the page. Not window.prompt (an
+   *  alert box) and not <input webkitdirectory> (whose confirmation says
+   *  "upload"). Nothing is read and no permission is asked for. */
+  function typedFolderDialog(multi) {
+    return new Promise(function (resolve) {
         var wrap = document.createElement('div');
         wrap.style.cssText = 'position:fixed;inset:0;z-index:99999;display:grid;' +
           'place-items:center;background:rgba(0,0,0,.55);' +
@@ -81,6 +71,39 @@
         };
         wrap.onclick = function (e) { if (e.target === wrap) close({ ok: false, error: 'cancelled' }); };
       });
+  }
+
+  var OVERRIDES = {
+    hiveRegistry: function () { return Promise.resolve({ agents: {} }); },
+
+    // The real bridge opens Electron's native folder dialog, which needs no
+    // permission: the dialog IS the grant. A browser has no equivalent.
+    //   - showDirectoryPicker() makes Chrome ask "allow this site to view and
+    //     copy files?", which is a real grant of read access to a web page, for
+    //     a preview that only ever wanted a path string.
+    //   - <input webkitdirectory> is worse: its confirmation says "upload".
+    //   - window.prompt() is an alert box.
+    // So the preview draws its own small dialog and asks for the path. Nothing
+    // is read, nothing is granted, and it stays inside the page.
+    chooseFolder: function (opts) {
+      // Chrome's own directory picker. It costs one "allow this site to view
+      // and copy files?" grant per folder, which is Chrome's wording for read
+      // access to a page: the preview reads nothing and keeps only the name.
+      // The browser never exposes an absolute path, so a row shows the folder
+      // name alone. Falls back to the typed dialog where the API is missing
+      // (Safari, Firefox) or blocked.
+      if (typeof window.showDirectoryPicker === 'function') {
+        return window.showDirectoryPicker({ mode: 'read' }).then(
+          function (h) { return { ok: true, path: h.name, paths: [h.name] }; },
+          function (err) {
+            // The user closing the picker is a cancel. Anything else (blocked
+            // by policy, no user activation) falls through to typing a path.
+            if (err && err.name === 'AbortError') return { ok: false, error: 'cancelled' };
+            return typedFolderDialog(!!(opts && opts.multi));
+          }
+        );
+      }
+      return typedFolderDialog(!!(opts && opts.multi));
     },
 
     // Without this, "install instructions" silently did nothing and looked like
