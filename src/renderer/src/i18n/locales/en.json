@@ -600,39 +600,39 @@
       "nonTechnicalDesc": "Plain language. No jargon, no command line."
     },
     "welcome": {
-      "headline": "YOUR CLONE AND THE FLOOR IT RUNS",
-      "descPlain": "Your clone runs a small office of AI workers, and you watch it all from one screen. Here's what's inside:",
-      "desc": "Your clone coordinates a hive of AI coding agents: persistent, watchable, all local. Here's what's inside:",
+      "headline": "YOUR CREW AND THE FLOOR THEY RUN",
+      "descPlain": "{{godName}} runs a small crew of AI workers for you, and you watch it from one screen.",
+      "desc": "{{godName}} runs a crew of coding agents on this machine, working while you are not.",
       "features": {
         "engines": {
-          "label": "ELEVEN ENGINES, ONE OFFICE",
-          "desc": "Claude Code, Codex, Grok, Kimi, Antigravity, Qwen, OpenCode, Crush, pi, Copilot & Cursor, live agents on one floor.",
-          "descPlain": "Eleven AI assistants (Claude, Codex, Cursor, Gemini, Grok and more) working side by side in one shared office."
+          "label": "ELEVEN ENGINES, ONE FLOOR",
+          "desc": "Claude Code, Codex, Cursor and eight more. Pick one per agent.",
+          "descPlain": "Eleven AI assistants to choose from. You pick which one does what."
         },
         "clone": {
-          "label": "{{godName}} IS YOUR CLONE",
-          "desc": "Your clone runs the floor. It triages requests, routes tasks, and escalates only what needs you.",
-          "descPlain": "Your clone, {{godName}}, takes your requests, hands work to the right agent, and only interrupts you when it matters."
+          "label": "{{godName}} RUNS THE FLOOR",
+          "desc": "Give it the job. It splits the work and comes back only for your calls.",
+          "descPlain": "Tell it what you want. It only interrupts you when a decision is yours."
         },
         "memory": {
-          "label": "LONG-TERM MEMORY",
-          "desc": "Each agent keeps notes, mined into a shared, searchable MemPalace.",
-          "descPlain": "Agents remember what they've done, so they don't start from scratch every time."
+          "label": "MEMORY THAT CARRIES OVER",
+          "desc": "Agents keep notes as they work, mined into one memory the crew shares.",
+          "descPlain": "Agents remember, so you are not repeating yourself every session."
         },
         "commandCenter": {
-          "label": "COMMAND CENTER",
-          "desc": "Terminal · Floor · Memory · Activity · Tasks · Triggers in one control surface.",
-          "descPlain": "One dashboard to watch the work, the agents' memory, tasks, and triggers."
+          "label": "ONE CONTROL SURFACE",
+          "desc": "Terminal, floor, memory, tasks and triggers in one panel. Watch live or take over.",
+          "descPlain": "One screen for the work, the agents and anything scheduled."
         },
         "guardrails": {
-          "label": "GUARDRAILS",
-          "desc": "Per-agent token budgets, a steer→constrain→stop circuit breaker, and human approvals.",
-          "descPlain": "Spending limits and safety stops keep agents in check, and they can ask you before big actions."
+          "label": "LIMITS THAT HOLD",
+          "desc": "A token budget per agent, a circuit breaker for bad runs, approvals before anything lands.",
+          "descPlain": "Spending caps, safety stops, and a question before anything hard to undo."
         },
         "hires": {
-          "label": "READY-MADE HIRES",
-          "desc": "Grab a pre-configured agent from the Agent Gallery and spawn it in one click.",
-          "descPlain": "Hire a ready-made agent from the gallery in one click. No setup needed."
+          "label": "HIRE, DO NOT CONFIGURE",
+          "desc": "Take an agent from the gallery, drop it on a project, it works.",
+          "descPlain": "Pick a ready-made agent and it starts. Nothing to set up."
         }
       }
     },

@@ -395,7 +395,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       fontSize: 16, lineHeight: '23px'
                     }}>{t('onboarding.welcome.headline')}</div>
                     <div style={{ fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: '20px' }}>
-                      {plain ? t('onboarding.welcome.descPlain') : t('onboarding.welcome.desc')}
+                      {plain
+                        ? t('onboarding.welcome.descPlain', { godName })
+                        : t('onboarding.welcome.desc', { godName })}
                     </div>
                   </div>
                 </div>
@@ -424,7 +426,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                           // the orchestrator's name has to arrive upper-cased too.
                         }}>{t(f.labelKey, { godName: godName.toUpperCase() })}</div>
                         <div style={{ fontSize: 13, lineHeight: '18px', color: 'var(--cth-ink-700)' }}>
-                          {plain ? t(f.descPlainKey) : t(f.descKey)}
+                          {plain ? t(f.descPlainKey, { godName }) : t(f.descKey, { godName })}
                         </div>
                       </div>
                     </div>
