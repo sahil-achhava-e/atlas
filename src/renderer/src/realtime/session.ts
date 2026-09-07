@@ -23,6 +23,7 @@
  *
  * Branch feat/realtime-michael. See board.md "🎙 REALTIME MICHAEL".
  */
+import { DEFAULT_GOD_NAME } from '@shared/godIdentity';
 import { useSyncExternalStore } from 'react';
 import { RealtimeAgent, RealtimeSession, OpenAIRealtimeWebRTC } from '@openai/agents-realtime';
 import { realtimeReadTools, realtimeSessionSummary } from './tools';
@@ -254,7 +255,7 @@ function teardownMedia(): void {
 function micFriendly(msg: string): string {
   const m = msg.toLowerCase();
   if (m.includes('permission') || m.includes('notallowed') || m.includes('denied'))
-    return 'microphone permission denied — allow mic access to talk to Michael';
+    return `microphone permission denied - allow mic access to talk to ${DEFAULT_GOD_NAME}`;
   if (m.includes('notfound') || m.includes('device'))
     return 'no microphone found — check your input device';
   return msg;

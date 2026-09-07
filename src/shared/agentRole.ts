@@ -1,3 +1,4 @@
+import { DEFAULT_GOD_NAME } from './godIdentity';
 /**
  * Durable agent role vs live status.
  *
@@ -43,7 +44,7 @@ export function roleForHiveSpawn(agent: {
 }): string | undefined {
   if (agent.isGod) return preferredAgentRole(agent.description, 'orchestrator (god)', true);
   if (agent.isAssistant) {
-    return preferredAgentRole(agent.description, "Michael's prep assistant");
+    return preferredAgentRole(agent.description, `${DEFAULT_GOD_NAME}'s prep assistant`);
   }
   const role = agent.description?.trim();
   return role && isDurableRole(role) ? role : undefined;
