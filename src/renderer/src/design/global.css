@@ -19,13 +19,26 @@ html, body, #root {
   overflow: hidden;
 }
 
-body {
-  /* tiny diagonal cream noise — pure CSS, no images */
+/* `.cth-ground` is the same floor as <body>, for the full-screen overlays
+   (onboarding, hive picker) that cover it. They used to repaint their own
+   copy of the weave with a hardcoded cream line at double alpha — three
+   copies of one texture, two of them blind to the theme, which is why the
+   dark theme showed loud stripes over everything. One rule now. */
+body, .cth-ground {
+  /* Ground: a tiny diagonal weave over a soft centre-out wash — pure CSS, no
+     images. The wash is what stops a full-screen cream (or near-black) panel
+     reading as a flat slab; both layers are themed tokens, so dark gets its
+     own barely-there line instead of the cream one. */
   background-image:
     repeating-linear-gradient(
       45deg,
-      rgba(232, 217, 160, 0.20) 0 1px,
+      var(--cth-texture-line) 0 1px,
       transparent 1px 6px
+    ),
+    radial-gradient(
+      120% 90% at 50% 22%,
+      var(--cth-ground-centre) 0%,
+      var(--cth-ground-edge) 100%
     );
 }
 

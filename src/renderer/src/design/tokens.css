@@ -8,6 +8,13 @@
   --cth-paper-100: #FCFAF0;
   --cth-paper-200: #F0EAD2;
 
+  /* App ground (global.css) — the texture line and the depth wash behind
+     everything. Tokens, not literals, because the old hardcoded cream line
+     blazed as loud diagonal stripes once the dark theme existed. */
+  --cth-texture-line:  rgba(232, 217, 160, 0.20);
+  --cth-ground-centre: #FFFDF5;
+  --cth-ground-edge:   #F6EBCE;
+
   /* Ink */
   --cth-ink-900: #1A1320;
   --cth-ink-700: #3D2E4A;
@@ -131,6 +138,13 @@
   --cth-cream-300: #313139;
   --cth-paper-100: #1A1A1F;   /* cards, inputs, terminals */
   --cth-paper-200: #222229;
+
+  /* Ground: the texture drops to a whisper (the cream line was ~14x too hot
+     on near-black), and the wash lifts the centre so the floor has depth
+     instead of reading as one flat slab. */
+  --cth-texture-line:  rgba(216, 214, 230, 0.035);
+  --cth-ground-centre: #23232B;
+  --cth-ground-edge:   #131317;
 
   /* Ink → off-white text ramp (never #FFF — glare) */
   --cth-ink-900: #DEDBD6;   /* 10.9-13.0:1 — primary text, warm off-white */
