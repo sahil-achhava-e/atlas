@@ -663,8 +663,8 @@
     "orchestrator": {
       "descPlain": "Pick the AI that powers {{godName}}. Give it the best one you have: it is the one deciding what everyone else does.",
       "desc": "{{godName}} reads everything and decides what the crew does, so give it your strongest engine. Every other agent can run a different one.",
-      "cliAgentPlain": "INSTALLED means you already have it. The rest are set up for you on first run.",
-      "cliAgent": "INSTALLED means it is already on this machine. The rest are set up on first run.",
+      "cliAgentPlain": "INSTALLED means you already have it. The others show what they need first.",
+      "cliAgent": "INSTALLED means it is already here. The others show what they need first.",
       "recommended": "RECOMMENDED",
       "workersOnly": "WORKERS ONLY",
       "workersOnlyHint": "Cannot run {{godName}}, but can run a worker.",

@@ -7,6 +7,20 @@
 (function () {
   var OVERRIDES = {
     hiveRegistry: function () { return Promise.resolve({ agents: {} }); },
+    // The engine step's INSTALLED / INSTALLS ON FIRST RUN / NOT INSTALLED
+    // badges come from here. An empty array means "probe not back", which
+    // renders no badge at all, so a preview of that screen was showing a state
+    // the real app never sits in. These are the three real shapes.
+    toolsStatus: function () {
+      return Promise.resolve([
+        { id: 'engine:claude', found: true,  path: '/opt/homebrew/bin/claude',
+          installCommand: 'npm i -g @anthropic-ai/claude-code', docsUrl: 'https://claude.com/claude-code' },
+        { id: 'engine:codex',  found: true,  path: '/opt/homebrew/bin/codex', installCommand: '' },
+        { id: 'engine:grok',   found: false, path: null, installCommand: 'npm i -g @vibe-kit/grok-cli' },
+        { id: 'engine:gemini', found: false, path: null, installCommand: '',
+          docsUrl: 'https://github.com/google-gemini/gemini-cli' },
+      ]);
+    },
   };
   var isEvent = function (n) { return /^(on|subscribe|off|remove)/i.test(n); };
   // *Sync calls are read at module load and must return a value, not a promise.

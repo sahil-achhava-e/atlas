@@ -26,9 +26,19 @@ type Step = 'persona' | 'welcome' | 'home' | 'orchestrator' | 'repos' | 'permiss
 const NAV_LABEL = { fontFamily: 'var(--cth-font-display)', letterSpacing: 0.6 } as const;
 const NAV_PRIMARY = { ...NAV_LABEL, minWidth: 148 } as const;
 
-/** Every step the rail shows, in order — 'done' is the finish screen, not a
- *  step you sit on, so it is not in here. */
-const STEP_ORDER: Step[] = ['persona', 'welcome', 'home', 'orchestrator', 'repos', 'permissions'];
+/** Every step the rail shows, in order. 'done' is the finish screen, not a step
+ *  you sit on, so it is not in here.
+ *
+ *  This array is the ONLY place the order lives: next/prev walk it by index and
+ *  the footer asks it which step is last. It used to be duplicated in three
+ *  hand-written chains and two `step === 'permissions'` checks, so moving a step
+ *  meant editing five places and the fifth was always a Finish button on the
+ *  wrong screen.
+ *
+ *  Home sits last on purpose: the folder is the one answer that is easier to
+ *  give once you know what is going into it. */
+const STEP_ORDER: Step[] = ['persona', 'welcome', 'orchestrator', 'repos', 'permissions', 'home'];
+const LAST_STEP: Step = STEP_ORDER[STEP_ORDER.length - 1];
 
 // First-run showcase "— the highest-value features a brand-new user should grasp
 // before any setup. Labels and copy live in i18n (two registers: `desc` for the
@@ -852,17 +862,14 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 }} />
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                {step !== 'persona' && step !== 'welcome' && (
+                {/* Two branches used to say this, one of them spelling out the
+                    step it goes back to. prevStep already knows. */}
+                {stepIndex > 0 && (
                   <PixelButton variant="ghost" size="lg" style={NAV_LABEL} onClick={() => setStep(prevStep(step))} disabled={busy}>
                     {t('common.back')}
                   </PixelButton>
                 )}
-                {step === 'welcome' && (
-                  <PixelButton variant="ghost" size="lg" style={NAV_LABEL} onClick={() => setStep('persona')} disabled={busy}>
-                    {t('common.back')}
-                  </PixelButton>
-                )}
-                {step !== 'permissions' && (
+                {step !== LAST_STEP && (
                   <PixelButton
                     variant="primary"
                     size="lg"
@@ -890,7 +897,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     {step === 'welcome' ? t('onboarding.permissions.setItUp') : t('common.next')}
                   </PixelButton>
                 )}
-                {step === 'permissions' && (
+                {step === LAST_STEP && (
                   <PixelButton variant="primary" size="lg" style={NAV_PRIMARY} onClick={finish} disabled={busy}>
                     {busy ? t('common.saving') : t('common.finish')}
                   </PixelButton>
@@ -1059,20 +1066,12 @@ function RailStep({ n, label, state }: {
 }
 
 function nextStep(s: Step): Step {
-  return s === 'persona' ? 'welcome'
-    : s === 'welcome' ? 'home'
-    : s === 'home' ? 'orchestrator'
-    : s === 'orchestrator' ? 'repos'
-    : s === 'repos' ? 'permissions'
-    : 'done';
+  const i = STEP_ORDER.indexOf(s);
+  return i < 0 || i === STEP_ORDER.length - 1 ? 'done' : STEP_ORDER[i + 1];
 }
 function prevStep(s: Step): Step {
-  return s === 'permissions' ? 'repos'
-    : s === 'repos' ? 'orchestrator'
-    : s === 'orchestrator' ? 'home'
-    : s === 'home' ? 'welcome'
-    : s === 'welcome' ? 'persona'
-    : 'persona';
+  const i = STEP_ORDER.indexOf(s);
+  return i <= 0 ? STEP_ORDER[0] : STEP_ORDER[i - 1];
 }
 
 const inputStyle: React.CSSProperties = {
