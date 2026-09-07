@@ -20,26 +20,27 @@ html, body, #root {
 }
 
 /* `.cth-ground` is the same floor as <body>, for the full-screen overlays
-   (onboarding, hive picker) that cover it. They used to repaint their own
-   copy of the weave with a hardcoded cream line at double alpha — three
-   copies of one texture, two of them blind to the theme, which is why the
-   dark theme showed loud stripes over everything. One rule now. */
+   (onboarding, hive picker) that cover it. One rule, so the app never has two
+   different floors on screen at once.
+
+   No texture: the diagonal weave was carried over from the original design and
+   it fought everything placed on top of it. What is left is light — a bloom
+   where the content sits, falling away to the edges, which is what gives a
+   full-screen panel somewhere to sit. */
 body, .cth-ground {
-  /* Ground: a tiny diagonal weave over a soft centre-out wash — pure CSS, no
-     images. The wash is what stops a full-screen cream (or near-black) panel
-     reading as a flat slab; both layers are themed tokens, so dark gets its
-     own barely-there line instead of the cream one. */
+  background-color: var(--cth-ground-edge);
   background-image:
-    repeating-linear-gradient(
-      45deg,
-      var(--cth-texture-line) 0 1px,
-      transparent 1px 6px
+    radial-gradient(
+      70% 55% at 50% 34%,
+      var(--cth-ground-bloom) 0%,
+      transparent 72%
     ),
     radial-gradient(
-      120% 90% at 50% 22%,
+      130% 100% at 50% 8%,
       var(--cth-ground-centre) 0%,
       var(--cth-ground-edge) 100%
     );
+  background-attachment: fixed;
 }
 
 button, input, textarea, select {

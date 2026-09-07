@@ -580,13 +580,13 @@
     "titles": {
       "persona": "WELCOME TO ATLAS",
       "welcome": "MEET YOUR OFFICE",
-      "home": "STEP 1 OF 4 · HARNESS HOME",
-      "homePlain": "STEP 1 OF 4 · A HOME FOR THE APP",
-      "orchestrator": "STEP 2 OF 4 · YOUR CLONE'S ENGINE",
-      "orchestratorPlain": "STEP 2 OF 4 · YOUR CLONE",
-      "repos": "STEP 3 OF 4 · YOUR REPOS",
-      "reposPlain": "STEP 3 OF 4 · YOUR PROJECTS",
-      "permissions": "STEP 4 OF 4 · PERMISSIONS & RELIABILITY",
+      "home": "A HOME FOR ATLAS",
+      "homePlain": "A HOME FOR ATLAS",
+      "orchestrator": "PICK THE ENGINE",
+      "orchestratorPlain": "PICK THE ENGINE",
+      "repos": "YOUR REPOS",
+      "reposPlain": "YOUR PROJECTS",
+      "permissions": "PERMISSIONS & RELIABILITY",
       "done": "ALL SET"
     },
     "persona": {
@@ -704,7 +704,19 @@
     },
     "errPickHome": "Pick a harness home folder first.",
     "errCreateHome": "could not create harness home",
-    "errEngineNotInstalled": "{{label}} is not installed. Install it and press \"check again\", or pick another engine."
+    "errEngineNotInstalled": "{{label}} is not installed. Install it and press \"check again\", or pick another engine.",
+    "setup": {
+      "name": "ATLAS SETUP",
+      "counter": "STEP {{n}} OF {{total}}",
+      "rail": {
+        "persona": "START",
+        "welcome": "OFFICE",
+        "home": "HOME",
+        "orchestrator": "ENGINE",
+        "repos": "PROJECTS",
+        "permissions": "PERMISSIONS"
+      }
+    }
   },
   "office": {
     "gpuError": "The office floor lost its GPU context.\n\nToo many terminals are using the GPU at once.\nClose a few agent terminals, or restart the app, to bring it back.",

@@ -8,12 +8,11 @@
   --cth-paper-100: #F4F1FD;
   --cth-paper-200: #DDD6F2;
 
-  /* App ground (global.css) — the texture line and the depth wash behind
-     everything. Tokens, not literals, because the old hardcoded cream line
-     blazed as loud diagonal stripes once the dark theme existed. */
-  --cth-texture-line: rgba(108, 84, 180, 0.20);
+  /* App ground (global.css) — the wash behind everything, plus the bloom that
+     marks where the content sits. */
   --cth-ground-centre: #EEEAFA;
   --cth-ground-edge: #D8D0F1;
+  --cth-ground-bloom: rgba(122, 90, 240, 0.13);
 
   /* Ink */
   --cth-ink-900: #170F2E;
@@ -132,19 +131,18 @@
 :root[data-cth-theme='dark'] {
   /* Base surfaces — a graded elevation ramp, darkest where light mode was
      lightest. Neutral with a whisper of the brand's violet warmth. */
-  --cth-cream-50: #0E0B1A;   /*  app ground — dark, deliberately NOT black */
+  --cth-cream-50: #0E0B1A;   /*   app ground — dark, deliberately NOT black */
   --cth-cream-100: #140F26;
   --cth-cream-200: #1C1634;
   --cth-cream-300: #282046;
-  --cth-paper-100: #110D20;   /*  cards, inputs, terminals */
+  --cth-paper-100: #110D20;   /*   cards, inputs, terminals */
   --cth-paper-200: #19122E;
 
-  /* Ground: the texture drops to a whisper (the cream line was ~14x too hot
-     on near-black), and the wash lifts the centre so the floor has depth
-     instead of reading as one flat slab. */
-  --cth-texture-line: rgba(186, 170, 250, 0.045);
+  /* Ground: the wash lifts the centre so the floor has depth instead of
+     reading as one flat slab. */
   --cth-ground-centre: #211838;
   --cth-ground-edge: #09070F;
+  --cth-ground-bloom: rgba(122, 90, 240, 0.20);
 
   /* Ink → off-white text ramp (never #FFF — glare) */
   --cth-ink-900: #DEDBD6;   /* 10.9-13.0:1 — primary text, warm off-white */

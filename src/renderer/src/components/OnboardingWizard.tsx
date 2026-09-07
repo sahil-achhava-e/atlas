@@ -20,6 +20,10 @@ export interface OnboardingWizardProps {
 type Audience = 'technical' | 'non-technical';
 type Step = 'persona' | 'welcome' | 'home' | 'orchestrator' | 'repos' | 'permissions' | 'done';
 
+/** Every step the rail shows, in order — 'done' is the finish screen, not a
+ *  step you sit on, so it is not in here. */
+const STEP_ORDER: Step[] = ['persona', 'welcome', 'home', 'orchestrator', 'repos', 'permissions'];
+
 // First-run showcase "— the highest-value features a brand-new user should grasp
 // before any setup. Labels and copy live in i18n (two registers: `desc` for the
 // technical audience, `descPlain` for the plain-language one "— item 1).
@@ -230,6 +234,16 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     onComplete(next);
   };
 
+  const stepTitle =
+    step === 'persona' ? t('onboarding.titles.persona')
+    : step === 'welcome' ? t('onboarding.titles.welcome')
+    : step === 'home' ? (plain ? t('onboarding.titles.homePlain') : t('onboarding.titles.home'))
+    : step === 'orchestrator' ? (plain ? t('onboarding.titles.orchestratorPlain') : t('onboarding.titles.orchestrator'))
+    : step === 'repos' ? (plain ? t('onboarding.titles.reposPlain') : t('onboarding.titles.repos'))
+    : step === 'permissions' ? t('onboarding.titles.permissions')
+    : t('onboarding.titles.done');
+  const stepIndex = Math.max(0, STEP_ORDER.indexOf(step));
+
   return (
     <div className="cth-ground" style={{
       position: 'fixed', inset: 0,
@@ -246,21 +260,63 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           that overflows its container is clipped at the TOP and unreachable by
           scrolling (the overflow spills past the scroll origin); auto margins
           center while it fits and collapse to a normal scroll once it doesn't. */}
-      <div style={{ width: 640, maxWidth: '94vw', margin: 'auto' }}>
-        <PixelPanel
-          variant="dialog"
-          title={
-            step === 'persona' ? t('onboarding.titles.persona')
-            : step === 'welcome' ? t('onboarding.titles.welcome')
-            : step === 'home' ? (plain ? t('onboarding.titles.homePlain') : t('onboarding.titles.home'))
-            : step === 'orchestrator' ? (plain ? t('onboarding.titles.orchestratorPlain') : t('onboarding.titles.orchestrator'))
-            : step === 'repos' ? (plain ? t('onboarding.titles.reposPlain') : t('onboarding.titles.repos'))
-            : step === 'permissions' ? t('onboarding.titles.permissions')
-            : t('onboarding.titles.done')
-          }
-          noPadding
-        >
-          <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, maxHeight: '86vh', overflowY: 'auto' }}>
+      <div style={{
+        width: 880, maxWidth: '94vw', margin: 'auto',
+        display: 'flex', flexDirection: 'column', maxHeight: '92vh',
+        background: 'var(--cth-cream-50)',
+        boxShadow: 'var(--cth-panel-border-dialog), 6px 6px 0 rgba(0, 0, 0, 0.18)'
+      }}>
+
+        {/* ── Brand bar: who is asking, and how far in you are ─────────────── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0,
+          padding: '12px 16px',
+          background: 'var(--cth-cream-200)',
+          boxShadow: 'inset 0 -1px 0 var(--cth-ink-300)'
+        }}>
+          <span style={{
+            width: 30, height: 30, display: 'grid', placeItems: 'center', flexShrink: 0,
+            background: 'var(--cth-lilac)', color: 'var(--cth-on-accent)',
+            fontFamily: 'var(--cth-font-display)', fontSize: 12,
+            boxShadow: 'inset 0 0 0 2px var(--cth-ink-900)'
+          }}>A</span>
+          <span style={{
+            fontFamily: 'var(--cth-font-display)', fontSize: 11, letterSpacing: 1,
+            color: 'var(--cth-ink-900)'
+          }}>{t('onboarding.setup.name')}</span>
+          <span style={{ flex: 1 }} />
+          <span style={{
+            fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)'
+          }}>{t('onboarding.setup.counter', { n: stepIndex + 1, total: STEP_ORDER.length })}</span>
+        </div>
+
+        <div style={{ display: 'flex', minHeight: 0, flex: 1 }}>
+
+          {/* ── Step rail: the whole shape of the setup, visible at once ───── */}
+          <nav style={{
+            width: 186, flexShrink: 0, padding: '14px 0',
+            background: 'var(--cth-cream-100)',
+            boxShadow: 'inset -1px 0 0 var(--cth-ink-100)',
+            display: 'flex', flexDirection: 'column', gap: 2
+          }}>
+            {STEP_ORDER.map((s, i) => (
+              <RailStep
+                key={s}
+                n={i + 1}
+                label={t(`onboarding.setup.rail.${s}`)}
+                state={i < stepIndex ? 'done' : i === stepIndex ? 'current' : 'todo'}
+              />
+            ))}
+          </nav>
+
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+            {/* The step's own name — the rail says where, this says what. */}
+            <h2 style={{
+              margin: 0, padding: '18px 24px 0',
+              fontFamily: 'var(--cth-font-display)', fontSize: 13, lineHeight: '20px',
+              color: 'var(--cth-ink-900)'
+            }}>{stepTitle}</h2>
+            <div style={{ padding: '14px 24px 20px', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', flex: 1 }}>
 
             {step === 'persona' && (
               <>
@@ -740,9 +796,30 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               }}>{error}</div>
             )}
 
-            {/* Footer / nav */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-              <Dots step={step} />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Footer: how far along, and the way forward ───────────────────── */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16,
+          flexShrink: 0, padding: '12px 16px',
+          background: 'var(--cth-cream-200)',
+          boxShadow: 'inset 0 1px 0 var(--cth-ink-300)'
+        }}>
+              <div style={{
+                flex: 1, height: 8, maxWidth: 260,
+                background: 'var(--cth-cream-300)',
+                boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+              }}>
+                <div style={{
+                  // The step you are ON counts as progress: a trough that reads empty on
+                  // step 1 looks like a bar that failed to load, not like a start.
+                  width: `${((stepIndex + 1) / STEP_ORDER.length) * 100}%`, height: '100%',
+                  background: 'var(--cth-lilac)',
+                  transition: 'width 160ms steps(6, end)'
+                }} />
+              </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 {step !== 'persona' && step !== 'welcome' && (
                   <PixelButton variant="ghost" size="md" onClick={() => setStep(prevStep(step))} disabled={busy}>
@@ -787,9 +864,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   </PixelButton>
                 )}
               </div>
-            </div>
-          </div>
-        </PixelPanel>
+        </div>
       </div>
     </div>
   );
@@ -869,17 +944,33 @@ function ToggleRow({ icon, label, desc, on, tint, edge, onChange }: {
   );
 }
 
-function Dots({ step }: { step: Step }) {
-  const order: Step[] = ['persona', 'welcome', 'home', 'orchestrator', 'repos', 'permissions'];
+/** One line of the step rail. Not clickable: a step you have not reached has
+ *  nothing to show yet, and one you have left is validated — jumping either way
+ *  is how a wizard ends up half-filled. */
+function RailStep({ n, label, state }: {
+  n: number;
+  label: string;
+  state: 'done' | 'current' | 'todo';
+}) {
+  const current = state === 'current';
   return (
-    <div style={{ display: 'flex', gap: 4 }}>
-      {order.map((s) => (
-        <span key={s} style={{
-          width: 8, height: 8,
-          background: s === step ? 'var(--cth-ink-900)' : 'var(--cth-cream-300)',
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
-        }} />
-      ))}
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10, padding: '7px 14px',
+      background: current ? 'var(--cth-cream-50)' : 'transparent',
+      boxShadow: current ? 'inset 3px 0 0 var(--cth-lilac)' : 'none'
+    }}>
+      <span style={{
+        width: 20, height: 20, flexShrink: 0, display: 'grid', placeItems: 'center',
+        fontFamily: 'var(--cth-font-display)', fontSize: 8,
+        background: state === 'done' ? 'var(--cth-lilac-light)'
+          : current ? 'var(--cth-lilac)' : 'transparent',
+        color: current ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)',
+        boxShadow: `inset 0 0 0 1px ${state === 'todo' ? 'var(--cth-ink-300)' : 'var(--cth-ink-500)'}`
+      }}>{state === 'done' ? '\u2713' : n}</span>
+      <span style={{
+        fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '13px',
+        color: current ? 'var(--cth-ink-900)' : state === 'done' ? 'var(--cth-ink-700)' : 'var(--cth-ink-500)'
+      }}>{label}</span>
     </div>
   );
 }
