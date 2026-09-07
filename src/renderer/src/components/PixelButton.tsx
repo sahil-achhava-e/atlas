@@ -48,11 +48,16 @@ export function PixelButton({
   const palette = (() => {
     switch (variant) {
       case 'primary':
+        // The main action wears the brand colour. It used to be ink-900, which
+        // is the TEXT token: in light mode that made a near-black button, and in
+        // dark mode the token flips to off-white, so the same button turned pale.
+        // One accent reads the same way in both themes, and it is the one thing
+        // on screen that should look clickable before you read it.
         return {
-          fill:    disabled ? 'var(--cth-cream-300)' : (hover ? 'var(--cth-ink-700)' : 'var(--cth-ink-900)'),
-          text:    disabled ? disabledText : 'var(--cth-cream-50)',
-          border:  'var(--cth-ink-900)',
-          shadow:  'var(--cth-ink-900)'
+          fill:    disabled ? 'var(--cth-cream-300)' : (hover ? 'var(--cth-lilac-hover)' : 'var(--cth-lilac)'),
+          text:    disabled ? disabledText : 'var(--cth-on-accent)',
+          border:  disabled ? 'var(--cth-ink-300)' : 'var(--cth-lilac)',
+          shadow:  'var(--cth-lilac-hover)'
         };
       case 'secondary':
         return {

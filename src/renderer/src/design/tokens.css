@@ -30,6 +30,7 @@
   --cth-sky:   #4F9FAF;       --cth-sky-light:   #CFE5E9;
   --cth-lemon: #DCAB3C;       --cth-lemon-light: #F3E4BC;
   --cth-lilac: #9482D3;       --cth-lilac-light: #E0DAF2;
+  --cth-lilac-hover: #7C68C6;   /* brand accent, one step down: primary button hover */
   --cth-peach: #D99168;       --cth-peach-light: #F3DACA;
 
   /* Status — same recalibration; hue meanings unchanged */
@@ -155,6 +156,8 @@
   --cth-coral: #E08C82;       --cth-mint:  #74C096;
   --cth-sky:   #6FB3C4;       --cth-lemon: #CFAA57;
   --cth-lilac: #A896E3;       --cth-peach: #DFA57F;
+  /* Brand accent, one step along for hover. On dark that step goes UP. */
+  --cth-lilac-hover: #BCACEC;
 
   /* Accent "-light" fills double as chip/selection backgrounds — deep muted
      versions so light text (ink-900) stays readable on top. */

@@ -833,19 +833,20 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 {step !== 'persona' && step !== 'welcome' && (
-                  <PixelButton variant="ghost" size="md" onClick={() => setStep(prevStep(step))} disabled={busy}>
+                  <PixelButton variant="ghost" size="lg" onClick={() => setStep(prevStep(step))} disabled={busy}>
                     {t('common.back')}
                   </PixelButton>
                 )}
                 {step === 'welcome' && (
-                  <PixelButton variant="ghost" size="md" onClick={() => setStep('persona')} disabled={busy}>
+                  <PixelButton variant="ghost" size="lg" onClick={() => setStep('persona')} disabled={busy}>
                     {t('common.back')}
                   </PixelButton>
                 )}
                 {step !== 'permissions' && (
                   <PixelButton
                     variant="primary"
-                    size="md"
+                    size="lg"
+                    style={{ minWidth: 132, letterSpacing: 0.5 }}
                     onClick={() => {
                       // Validate the home step HERE. Without this the only check
                       // lives in finish(), so an empty field walks you through all
@@ -870,7 +871,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   </PixelButton>
                 )}
                 {step === 'permissions' && (
-                  <PixelButton variant="primary" size="md" onClick={finish} disabled={busy}>
+                  <PixelButton variant="primary" size="lg" style={{ minWidth: 132, letterSpacing: 0.5 }} onClick={finish} disabled={busy}>
                     {busy ? t('common.saving') : t('common.finish')}
                   </PixelButton>
                 )}
@@ -991,10 +992,10 @@ function RailStep({ n, label, state }: {
   const current = state === 'current';
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 11, padding: '9px 18px',
+      display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px',
       position: 'relative',
       background: current ? 'var(--cth-cream-50)' : 'transparent',
-      boxShadow: current ? 'inset 2px 0 0 var(--cth-lilac)' : 'none'
+      boxShadow: current ? 'inset 3px 0 0 var(--cth-lilac)' : 'none'
     }}>
       {/* The spine, drawn per row as the segment ABOVE this number — so it
           threads the six chips together and stops at the last one, instead of
@@ -1006,19 +1007,22 @@ function RailStep({ n, label, state }: {
         }} />
       )}
       <span style={{
-        width: 22, height: 22, flexShrink: 0, display: 'grid', placeItems: 'center',
+        width: 24, height: 24, flexShrink: 0, display: 'grid', placeItems: 'center',
         position: 'relative',   // sits ON the spine, so it needs to paint over it
         fontFamily: 'var(--cth-font-display)', fontSize: 11,
+        // Done is filled and quiet, current is filled and lit, todo is an empty
+        // outline. Three states, three different weights of ink.
         background: state === 'done' ? 'var(--cth-lilac-light)'
           : current ? 'var(--cth-lilac)' : 'var(--cth-cream-100)',
         color: current ? 'var(--cth-on-accent)'
           : state === 'done' ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
         boxShadow: current
-          ? '0 0 0 1px var(--cth-lilac), 0 0 14px -2px var(--cth-lilac)'
-          : `inset 0 0 0 1px ${state === 'todo' ? 'var(--cth-ink-100)' : 'var(--cth-ink-300)'}`
+          ? '0 0 0 1px var(--cth-lilac), 0 0 16px -2px var(--cth-lilac)'
+          : `inset 0 0 0 1px ${state === 'todo' ? 'var(--cth-ink-100)' : 'var(--cth-lilac)'}`
       }}>{state === 'done' ? '\u2713' : n}</span>
       <span style={{
-        fontFamily: 'var(--cth-font-display)', fontSize: 12, lineHeight: '16px', letterSpacing: 0.5,
+        fontFamily: 'var(--cth-font-display)', fontSize: 12, lineHeight: '16px',
+        letterSpacing: current ? 1 : 0.5,
         color: current ? 'var(--cth-ink-900)' : state === 'done' ? 'var(--cth-ink-700)' : 'var(--cth-ink-500)'
       }}>{label}</span>
     </div>
