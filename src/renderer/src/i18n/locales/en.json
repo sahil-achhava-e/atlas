@@ -605,34 +605,34 @@
       "desc": "{{godName}} runs a crew of coding agents on this machine, working while you are not.",
       "features": {
         "engines": {
-          "label": "ELEVEN ENGINES, ONE FLOOR",
-          "desc": "Claude Code, Codex, Cursor and eight more. Pick one per agent.",
-          "descPlain": "Eleven AI assistants to choose from. You pick which one does what."
+          "label": "ELEVEN ENGINES",
+          "desc": "Claude Code, Codex, Cursor and eight more.",
+          "descPlain": "Eleven AI assistants. You pick who does what."
         },
         "clone": {
-          "label": "{{godName}} RUNS THE FLOOR",
-          "desc": "Give it the job. It splits the work and comes back only for your calls.",
-          "descPlain": "Tell it what you want. It only interrupts you when a decision is yours."
+          "label": "{{godName}} RUNS IT",
+          "desc": "Hand it the job. It splits the work and delegates.",
+          "descPlain": "Tell it what you want. It handles the rest."
         },
         "memory": {
-          "label": "MEMORY THAT CARRIES OVER",
-          "desc": "Agents keep notes as they work, mined into one memory the crew shares.",
-          "descPlain": "Agents remember, so you are not repeating yourself every session."
+          "label": "THEY REMEMBER",
+          "desc": "Agents keep notes. The crew shares one memory.",
+          "descPlain": "They remember, so you never repeat yourself."
         },
         "commandCenter": {
-          "label": "ONE CONTROL SURFACE",
-          "desc": "Terminal, floor, memory, tasks and triggers in one panel. Watch live or take over.",
-          "descPlain": "One screen for the work, the agents and anything scheduled."
+          "label": "ONE SCREEN",
+          "desc": "Terminal, floor, memory and tasks in one panel.",
+          "descPlain": "One screen for everything they are doing."
         },
         "guardrails": {
           "label": "LIMITS THAT HOLD",
-          "desc": "A token budget per agent, a circuit breaker for bad runs, approvals before anything lands.",
-          "descPlain": "Spending caps, safety stops, and a question before anything hard to undo."
+          "desc": "Budgets, a circuit breaker, and your approval.",
+          "descPlain": "Spending caps, safety stops, and it asks first."
         },
         "hires": {
-          "label": "HIRE, DO NOT CONFIGURE",
-          "desc": "Take an agent from the gallery, drop it on a project, it works.",
-          "descPlain": "Pick a ready-made agent and it starts. Nothing to set up."
+          "label": "HIRE IN ONE CLICK",
+          "desc": "Drop an agent from the gallery onto a project.",
+          "descPlain": "Pick a ready-made agent. Nothing to set up."
         }
       }
     },
