@@ -11,12 +11,21 @@
     // badges come from here. An empty array means "probe not back", which
     // renders no badge at all, so a preview of that screen was showing a state
     // the real app never sits in. These are the three real shapes.
+    // The real bridge hands the URL to Electron's shell. In a browser preview
+    // the honest equivalent is a new tab: without this, "install instructions"
+    // silently did nothing here and looked like a broken button.
+    openExternal: function (url) {
+      try { window.open(url, '_blank', 'noopener'); } catch (e) { /* popup blocked */ }
+      return Promise.resolve(true);
+    },
     toolsStatus: function () {
       return Promise.resolve([
         { id: 'engine:claude', found: true,  path: '/opt/homebrew/bin/claude',
           installCommand: 'npm i -g @anthropic-ai/claude-code', docsUrl: 'https://claude.com/claude-code' },
         { id: 'engine:codex',  found: true,  path: '/opt/homebrew/bin/codex', installCommand: '' },
-        { id: 'engine:grok',   found: false, path: null, installCommand: 'npm i -g @vibe-kit/grok-cli' },
+        // Grok as the presets actually describe it: no installCommand and no
+        // docsUrl, which is the dead-end case worth seeing in a preview.
+        { id: 'engine:grok',   found: false, path: null, installCommand: '' },
         { id: 'engine:gemini', found: false, path: null, installCommand: '',
           docsUrl: 'https://github.com/google-gemini/gemini-cli' },
       ]);
