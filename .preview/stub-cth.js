@@ -14,6 +14,17 @@
     // The real bridge hands the URL to Electron's shell. In a browser preview
     // the honest equivalent is a new tab: without this, "install instructions"
     // silently did nothing here and looked like a broken button.
+    // A folder picker cannot open in a browser, so the preview hands back a
+    // plausible path (cycling, so picking twice adds two rows). Without this
+    // every list-of-things screen previews only in its empty state.
+    chooseFolder: (function () {
+      var paths = ['/Users/you/Desktop/atlas', '/Users/you/code/vms-backend',
+                   '/Users/you/code/epicxp-events', '/Users/you/work/notes'];
+      var i = 0;
+      return function () {
+        return Promise.resolve({ ok: true, path: paths[i++ % paths.length] });
+      };
+    })(),
     openExternal: function (url) {
       try { window.open(url, '_blank', 'noopener'); } catch (e) { /* popup blocked */ }
       return Promise.resolve(true);

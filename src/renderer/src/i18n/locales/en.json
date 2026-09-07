@@ -673,12 +673,15 @@
       "modelLabel": "MODEL"
     },
     "repos": {
-      "descPlain": "Add your projects. A project is simply a folder: it can hold code, documents, notes, or any files you want your agents to work with. You can create a brand-new folder or pick an existing one, and add more anytime.",
-      "desc": "Add the repos you want your agents to work in. Each folder becomes a project (a room on the floor) and multiple agents can share one. You can add more later.",
-      "emptyPlain": "No projects added yet. Optional, you can add one later.",
-      "empty": "No repos added yet. Optional, but recommended.",
+      "descPlain": "Add the folders your agents will work in. Code, documents, notes, anything with files.",
+      "desc": "Add the folders your agents will work in. Each one becomes a project, and several agents can share it.",
+      "emptyPlain": "Nothing added yet. You can skip this and add folders later.",
+      "empty": "Nothing added yet. You can skip this and add repos later.",
       "addProject": "add a project",
-      "addRepo": "add a repo"
+      "addRepo": "add a repo",
+      "fieldLabel": "PROJECTS",
+      "count": "{{count}} added",
+      "remove": "Remove"
     },
     "permissions": {
       "autonomyHead": "HOW MUCH CAN AGENTS DO ON THEIR OWN?",

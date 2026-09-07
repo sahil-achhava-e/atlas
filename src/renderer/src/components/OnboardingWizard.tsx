@@ -662,41 +662,74 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <p style={{ margin: 0, lineHeight: '22px' }}>
                   {plain ? t('onboarding.repos.descPlain') : t('onboarding.repos.desc')}
                 </p>
+
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                  <FieldLabel>{t('onboarding.repos.fieldLabel')}</FieldLabel>
+                  {repos.length > 0 && (
+                    <span style={{ fontSize: 12, color: 'var(--cth-ink-500)', marginBottom: -8 }}>
+                      {t('onboarding.repos.count', { count: repos.length })}
+                    </span>
+                  )}
+                </div>
+
                 <div style={{
                   display: 'flex', flexDirection: 'column', gap: 6,
-                  maxHeight: 200, overflowY: 'auto'
+                  maxHeight: 210, overflowY: 'auto'
                 }}>
                   {repos.length === 0 && (
                     <div style={{
-                      padding: 12,
-                      fontSize: 13,
+                      padding: '20px 12px', fontSize: 13, textAlign: 'center',
                       color: 'var(--cth-ink-500)',
-                      background: 'var(--cth-paper-200)',
-                      textAlign: 'center'
+                      // Dashed, not filled: an empty list should read as a slot
+                      // waiting to be filled, not as a card with a message in it.
+                      border: '1px dashed var(--cth-ink-300)'
                     }}>
                       {plain ? t('onboarding.repos.emptyPlain') : t('onboarding.repos.empty')}
                     </div>
                   )}
-                  {repos.map((r) => (
-                    <div key={r} style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '6px 10px',
-                      background: 'var(--cth-paper-100)',
-                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
-                    }}>
-                      <Icon name="folder" />
-                      <span style={{
-                        flex: 1,
-                        fontFamily: 'var(--cth-font-mono)', fontSize: 13,
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                      }}>{r}</span>
-                      <PixelButton variant="ghost" size="sm" onClick={() => removeRepo(r)}>
-                        <Icon name="x" />
-                      </PixelButton>
-                    </div>
-                  ))}
+                  {repos.map((r) => {
+                    // A full path in a narrow row ellipsises to "/Users/mohammed…"
+                    // and every row looks identical. The folder NAME is what tells
+                    // them apart, so it leads and the path sits under it.
+                    const parts = r.replace(/\/+$/, '').split('/');
+                    const name = parts[parts.length - 1] || r;
+                    const parent = parts.slice(0, -1).join('/') || '/';
+                    return (
+                      <div key={r} style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '10px 12px',
+                        background: 'var(--cth-paper-100)',
+                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+                      }}>
+                        <span style={{
+                          width: 30, height: 30, flexShrink: 0, display: 'grid', placeItems: 'center',
+                          background: 'var(--cth-cream-200)', color: 'var(--cth-ink-700)',
+                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                        }}>
+                          <Icon name="folder" />
+                        </span>
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{
+                            display: 'block', fontFamily: 'var(--cth-font-display)',
+                            fontSize: 13, lineHeight: '18px', letterSpacing: 0.5,
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                          }}>{name}</span>
+                          <span style={{
+                            display: 'block', fontFamily: 'var(--cth-font-mono)',
+                            fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-500)',
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                          }}>{parent}</span>
+                        </span>
+                        <PixelButton variant="ghost" size="sm" title={t('onboarding.repos.remove')}
+                          onClick={() => removeRepo(r)}>
+                          <Icon name="x" />
+                        </PixelButton>
+                      </div>
+                    );
+                  })}
                 </div>
-                <PixelButton variant="secondary" size="md" onClick={pickRepo}>
+
+                <PixelButton variant="secondary" size="lg" fullWidth onClick={pickRepo}>
                   <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                     <Icon name="plus" /> {plain ? t('onboarding.repos.addProject') : t('onboarding.repos.addRepo')}
                   </span>
