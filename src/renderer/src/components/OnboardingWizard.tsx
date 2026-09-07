@@ -20,6 +20,12 @@ export interface OnboardingWizardProps {
 type Audience = 'technical' | 'non-technical';
 type Step = 'persona' | 'welcome' | 'home' | 'orchestrator' | 'repos' | 'permissions' | 'done';
 
+/** The setup's two nav buttons. The display face and a little tracking so a
+ *  one-word label still reads as a control, not as a caption; the primary keeps
+ *  a floor width so "Continue" and "Finish setup" do not resize the footer. */
+const NAV_LABEL = { fontFamily: 'var(--cth-font-display)', letterSpacing: 0.6 } as const;
+const NAV_PRIMARY = { ...NAV_LABEL, minWidth: 148 } as const;
+
 /** Every step the rail shows, in order — 'done' is the finish screen, not a
  *  step you sit on, so it is not in here. */
 const STEP_ORDER: Step[] = ['persona', 'welcome', 'home', 'orchestrator', 'repos', 'permissions'];
@@ -833,12 +839,12 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 {step !== 'persona' && step !== 'welcome' && (
-                  <PixelButton variant="ghost" size="lg" onClick={() => setStep(prevStep(step))} disabled={busy}>
+                  <PixelButton variant="ghost" size="lg" style={NAV_LABEL} onClick={() => setStep(prevStep(step))} disabled={busy}>
                     {t('common.back')}
                   </PixelButton>
                 )}
                 {step === 'welcome' && (
-                  <PixelButton variant="ghost" size="lg" onClick={() => setStep('persona')} disabled={busy}>
+                  <PixelButton variant="ghost" size="lg" style={NAV_LABEL} onClick={() => setStep('persona')} disabled={busy}>
                     {t('common.back')}
                   </PixelButton>
                 )}
@@ -846,7 +852,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   <PixelButton
                     variant="primary"
                     size="lg"
-                    style={{ minWidth: 132, letterSpacing: 0.5 }}
+                    style={NAV_PRIMARY}
                     onClick={() => {
                       // Validate the home step HERE. Without this the only check
                       // lives in finish(), so an empty field walks you through all
@@ -871,7 +877,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   </PixelButton>
                 )}
                 {step === 'permissions' && (
-                  <PixelButton variant="primary" size="lg" style={{ minWidth: 132, letterSpacing: 0.5 }} onClick={finish} disabled={busy}>
+                  <PixelButton variant="primary" size="lg" style={NAV_PRIMARY} onClick={finish} disabled={busy}>
                     {busy ? t('common.saving') : t('common.finish')}
                   </PixelButton>
                 )}
