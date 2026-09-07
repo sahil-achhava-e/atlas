@@ -1,4 +1,10 @@
-// The Office cast — roster metadata + sprite frames.
+// The Atlas crew: roster metadata + sprite frames.
+//
+// The INTERNAL keys below are the original cast names and deliberately stay
+// that way. They are the persisted `agent.character` value, so renaming them
+// would orphan every avatar in a roster already on disk. Only `displayName` is
+// the crew name, and it is what the app shows and what name-to-avatar inference
+// matches on, so "spawn one called Orion" lands on the right sprite.
 //
 // Both the static portraits (cards / picker) and the in-scene walking sprites are
 // now fully custom-drawn from the same per-character recipes in portraitArt.ts:
@@ -25,21 +31,21 @@ export interface CastMember {
 
 /** Selectable roster, in display order. */
 export const OFFICE_CAST: CastMember[] = [
-  { name: 'michael',  displayName: 'Atlas',  shirt: '#9482D3', blurb: 'Runs the floor' },
-  { name: 'jim',      displayName: 'Jim',      shirt: '#6fa8dc', blurb: 'Salesman, prankster' },
-  { name: 'pam',      displayName: 'Pam',      shirt: '#9caf88', blurb: 'Receptionist, artist' },
-  { name: 'dwight',   displayName: 'Dwight',   shirt: '#b89b3e', blurb: 'Assistant (to the) RM' },
-  { name: 'kevin',    displayName: 'Kevin',    shirt: '#4a7ab5', blurb: 'Accounting' },
-  { name: 'angela',   displayName: 'Angela',   shirt: '#8a86a6', blurb: 'Head of accounting' },
-  { name: 'oscar',    displayName: 'Oscar',    shirt: '#7a4b6b', blurb: 'Accountant' },
-  { name: 'stanley',  displayName: 'Stanley',  shirt: '#8c5a4b', blurb: 'Sales, crossword' },
-  { name: 'phyllis',  displayName: 'Phyllis',  shirt: '#b08bbf', blurb: 'Sales' },
-  { name: 'andy',     displayName: 'Andy',     shirt: '#6fae6f', blurb: 'Cornell, a cappella' },
-  { name: 'kelly',    displayName: 'Kelly',    shirt: '#d16ba5', blurb: 'Customer service' },
-  { name: 'ryan',     displayName: 'Ryan',     shirt: '#3a3a44', blurb: 'The temp' },
-  { name: 'toby',     displayName: 'Toby',     shirt: '#9a8c5a', blurb: 'Human resources' },
-  { name: 'creed',    displayName: 'Creed',    shirt: '#6b7a4b', blurb: 'Quality assurance' },
-  { name: 'meredith', displayName: 'Meredith', shirt: '#b5544a', blurb: 'Supplier relations' },
+  { name: 'michael',  displayName: 'Atlas',   shirt: '#9482D3', blurb: 'Runs the floor' },
+  { name: 'jim',      displayName: 'Luffy',   shirt: '#6fa8dc', blurb: 'Ships the work' },
+  { name: 'pam',      displayName: 'Robin',   shirt: '#9caf88', blurb: 'Keeps the notes' },
+  { name: 'dwight',   displayName: 'Zoro',    shirt: '#b89b3e', blurb: 'Checks everything twice' },
+  { name: 'kevin',    displayName: 'Goku',    shirt: '#4a7ab5', blurb: 'Grinds the long jobs' },
+  { name: 'angela',   displayName: 'Mikasa',  shirt: '#8a86a6', blurb: 'Guards the standards' },
+  { name: 'oscar',    displayName: 'Light',   shirt: '#7a4b6b', blurb: 'Follows the numbers' },
+  { name: 'stanley',  displayName: 'Kakashi', shirt: '#8c5a4b', blurb: 'Steady on long runs' },
+  { name: 'phyllis',  displayName: 'Sakura',  shirt: '#b08bbf', blurb: 'Reads the docs' },
+  { name: 'andy',     displayName: 'Naruto',  shirt: '#6fae6f', blurb: 'Wires things together' },
+  { name: 'kelly',    displayName: 'Misa',    shirt: '#d16ba5', blurb: 'Answers first' },
+  { name: 'ryan',     displayName: 'Eren',    shirt: '#3a3a44', blurb: 'Newest on the crew' },
+  { name: 'toby',     displayName: 'Armin',   shirt: '#9a8c5a', blurb: 'Handles the paperwork' },
+  { name: 'creed',    displayName: 'Ryuk',    shirt: '#6b7a4b', blurb: 'Watches the edges' },
+  { name: 'meredith', displayName: 'Nami',    shirt: '#b5544a', blurb: 'Chases supply' },
 ];
 
 export const CAST_BY_NAME: Record<OfficeCharacterName, CastMember> =
