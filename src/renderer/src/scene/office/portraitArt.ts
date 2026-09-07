@@ -473,6 +473,8 @@ interface Recipe {
   /** Accessories. Each is what makes one particular character unmistakable at
    *  this size, so they are flags rather than a generic slot system. */
   blindfold?: boolean; mask?: boolean; hat?: 'straw'; whiskers?: boolean;
+  /** Atlas only: a hood in place of hair, and a lit visor in place of eyes. */
+  hood?: RGB; visor?: RGB;
   /** Heavier build: chubby cheeks, a double chin, and a wider torso. */
   heavy?: boolean;
 }
@@ -524,6 +526,41 @@ function drawMask(buf: Buf): void {
   set(buf, 6, 6, [214, 212, 206]); set(buf, 10, 7, [128, 126, 122]);
 }
 
+/** Atlas's hood. Replaces the hair entirely, so the recipe pairs it with
+ *  'styleBald': the silhouette IS the identity here, and a fringe poking out
+ *  would just make it a person in a hood. */
+function drawHood(buf: Buf, col: RGB): void {
+  const [hi, base, sh] = shades(col);
+  // Crown: narrow at the very top and widening, so it reads as cloth pulled
+  // over a head rather than a box dropped on one.
+  rect(buf, 6, 0, 11, 0, base);
+  rect(buf, 4, 1, 13, 1, base);
+  rect(buf, 3, 2, 14, 6, base);
+  rect(buf, 7, 0, 10, 0, hi);
+  rect(buf, 5, 1, 12, 1, hi);
+  // The sides fall past the jaw and taper in at the bottom.
+  rect(buf, 2, 4, 3, 13, base);
+  rect(buf, 14, 4, 15, 13, base);
+  set(buf, 2, 14, sh); set(buf, 15, 14, sh);
+  set(buf, 3, 14, sh); set(buf, 14, 14, sh);
+  // Inner edge: a dark line all the way round where the hood meets the face,
+  // which is what makes the face sit INSIDE it.
+  for (let x = 4; x <= 13; x++) set(buf, x, 7, sh);
+  for (let y = 7; y <= 13; y++) { set(buf, 4, y, sh); set(buf, 13, y, sh); }
+  set(buf, 5, 7, sh); set(buf, 12, 7, sh);
+}
+
+/** A lit band across the eyes. Not a blindfold: the light is the point, which
+ *  is why it carries a bright core and a halo either side of it. */
+function drawVisor(buf: Buf, col: RGB): void {
+  const shell: RGB = [30, 26, 42];
+  const [hi, base] = shades(col);
+  rect(buf, 3, 8, 14, 10, shell);
+  rect(buf, 4, 9, 13, 9, base);        // the lit strip
+  set(buf, 5, 9, hi); set(buf, 11, 9, hi);
+  set(buf, 4, 8, base); set(buf, 13, 8, base);   // spill onto the shell
+}
+
 /** A straw hat sitting on the hair: crown, brim, and a band. */
 function drawStrawHat(buf: Buf): void {
   const [hi, base, sh] = shades([226, 190, 116]);
@@ -550,7 +587,10 @@ const RECIPES: Record<OfficeCharacterName, Recipe> = {
   // The crew, drawn to read at 16 px wide: hair colour and silhouette do almost
   // all the recognising, clothing colour does the rest. Keys stay the original
   // cast names because they are the persisted `agent.character` value.
-  michael:  { skin: 'light', hairc: [236, 239, 246], hair: 'styleSpiky',  cloth: 'suit', c1: [44, 42, 58], tie: [148, 130, 211], blindfold: true, brow: 'flat', mouth: 'neutral' },   // Atlas / Gojo
+  // Atlas is the only one on this floor who is not from someone else's show:
+  // it is the app itself, so it gets its own silhouette. Hood in the brand
+  // violet, visor in the selection cyan, and no hair at all.
+  michael:  { skin: 'light', hairc: [40, 36, 52], hair: 'styleBald', cloth: 'suit', c1: [46, 40, 68], c2: [120, 100, 190], tie: [96, 214, 226], hood: [108, 88, 178], visor: [96, 214, 226], brow: 'flat', mouth: 'smile' },   // Atlas
   jim:      { skin: 'tan',   hairc: [32, 26, 26],    hair: 'styleMessy',  hairargs: { length: 13 }, cloth: 'polo', c1: [198, 56, 50], c2: [156, 42, 40], hat: 'straw', brow: 'raised', mouth: 'grin' },   // Luffy
   pam:      { skin: 'light', hairc: [26, 22, 28],    hair: 'styleFrame',  hairargs: { length: 20, vol: 1 }, cloth: 'blouse', c1: [124, 84, 150], brow: 'soft', mouth: 'smile', lashes: true },   // Robin
   dwight:   { skin: 'tan',   hairc: [92, 148, 78],   hair: 'styleShort',  hairargs: { part: 'R' }, cloth: 'sweater', c1: [54, 82, 56], brow: 'angry', mouth: 'neutral' },   // Zoro
@@ -578,6 +618,8 @@ function drawHeadGroup(buf: Buf, r: Recipe): void {
   if (r.blindfold) drawBlindfold(buf);
   if (r.mask) drawMask(buf);
   HAIR_FNS[r.hair](buf, r.hairc, skinBase, r.hairargs ?? {});
+  if (r.hood) drawHood(buf, r.hood);
+  if (r.visor) drawVisor(buf, r.visor);
   if (r.glasses) drawGlasses(buf);
   if (r.hat === 'straw') drawStrawHat(buf);
 }
