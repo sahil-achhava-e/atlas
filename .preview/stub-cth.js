@@ -92,6 +92,10 @@
       return Promise.resolve(Object.assign({}, config));
     },
     // Returns the OS's answer, which the real handler reads back from Electron.
+    // Finish calls this before writing the config; an empty answer read as
+    // "could not create harness home". Nothing is created in a browser, so it
+    // reports the success the packaged app would.
+    ensureHarnessHome: function () { return Promise.resolve({ ok: true }); },
     setLoginItem: function (v) {
       config.openAtLogin = v === true;
       return Promise.resolve(config.openAtLogin);
