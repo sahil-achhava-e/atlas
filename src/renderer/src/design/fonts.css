@@ -16,12 +16,21 @@
  * Vite fingerprints and inlines these URLs at build time, so the paths below are
  * source paths, not runtime ones. */
 
+/* The display face. It is the JetBrains Mono file already bundled below, given
+   its own family name and pinned to weight 700 by the descriptor — so every
+   `--cth-font-display` label comes out bold without a single component asking
+   for it, and no fourth font ships.
+
+   It replaces Press Start 2P, which was the original design's arcade identity:
+   a bitmap-grid face that only renders honestly at multiples of its 8px grid,
+   which is why every display label in this app is hardcoded at 8-12px. A real
+   variable face sizes freely, so headings can be headings. */
 @font-face {
-  font-family: 'Press Start 2P';
+  font-family: 'Atlas Display';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 700;
   font-display: swap;
-  src: url('../assets/fonts/press-start-2p-latin-400.woff2') format('woff2');
+  src: url('../assets/fonts/jetbrains-mono-latin-var.woff2') format('woff2');
 }
 
 @font-face {
