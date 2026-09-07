@@ -10,8 +10,9 @@ import pathlib, subprocess, sys
 
 R = pathlib.Path(__file__).resolve().parent.parent
 variant = sys.argv[1] if len(sys.argv) > 1 else 'purple'
-if variant not in ('purple', 'blue'):
-    sys.exit('usage: theme.py purple|blue')
+VARIANTS = ('purple', 'amethyst', 'indigo', 'plum', 'nebula', 'blue')
+if variant not in VARIANTS:
+    sys.exit('usage: theme.py ' + '|'.join(VARIANTS))
 
 # always start from the committed state so variants never stack
 subprocess.run(['git', 'checkout', '--',
@@ -31,6 +32,58 @@ PAL = {
             '--cth-texture-line':'rgba(198, 188, 235, 0.035)',
             '--cth-ground-centre':'#262038','--cth-ground-edge':'#110E19'},
   'mark':  ('#5B3FA8', '#3B2673'),   # splash tile fill, its border
+ },
+ 'amethyst': {   # deeper lavender ground, true violet ink
+  'light': {'--cth-cream-50':'#F6F2FE','--cth-cream-100':'#EDE7FA','--cth-cream-200':'#DED4F4',
+            '--cth-cream-300':'#C7B8EB','--cth-paper-100':'#F7F4FE','--cth-paper-200':'#E7E0F7',
+            '--cth-ink-900':'#1B1136','--cth-ink-700':'#3A2A66','--cth-ink-500':'#665694',
+            '--cth-ink-300':'#A294C8','--cth-ink-100':'#CFC5E6',
+            '--cth-texture-line':'rgba(124, 100, 196, 0.18)',
+            '--cth-ground-centre':'#F4F0FD','--cth-ground-edge':'#E2DAF6'},
+  'dark':  {'--cth-cream-50':'#130E20','--cth-cream-100':'#191330','--cth-cream-200':'#231B3F',
+            '--cth-cream-300':'#2F2551','--cth-paper-100':'#16102A','--cth-paper-200':'#1E1736',
+            '--cth-texture-line':'rgba(190, 176, 240, 0.04)',
+            '--cth-ground-centre':'#251D42','--cth-ground-edge':'#0E0A18'},
+  'mark':  ('#6D4BC4', '#3F2A80'),
+ },
+ 'indigo': {   # violet leaning blue — the coolest of the purple family
+  'light': {'--cth-cream-50':'#F3F4FE','--cth-cream-100':'#E9EAFA','--cth-cream-200':'#D8DAF4',
+            '--cth-cream-300':'#BEC2EB','--cth-paper-100':'#F5F6FE','--cth-paper-200':'#E3E5F8',
+            '--cth-ink-900':'#141433','--cth-ink-700':'#2E3163','--cth-ink-500':'#5A5E90',
+            '--cth-ink-300':'#989CC4','--cth-ink-100':'#C7CAE4',
+            '--cth-texture-line':'rgba(94, 100, 194, 0.17)',
+            '--cth-ground-centre':'#F2F3FD','--cth-ground-edge':'#DDDFF5'},
+  'dark':  {'--cth-cream-50':'#0F1022','--cth-cream-100':'#151732','--cth-cream-200':'#1E2142',
+            '--cth-cream-300':'#2A2E55','--cth-paper-100':'#12142B','--cth-paper-200':'#1A1D38',
+            '--cth-texture-line':'rgba(178, 184, 240, 0.04)',
+            '--cth-ground-centre':'#202445','--cth-ground-edge':'#0B0C18'},
+  'mark':  ('#4B4FC0', '#2A2C78'),
+ },
+ 'plum': {   # warm purple with a mauve lean — the least "screen blue" of them
+  'light': {'--cth-cream-50':'#FBF3FC','--cth-cream-100':'#F2E6F6','--cth-cream-200':'#E6D3ED',
+            '--cth-cream-300':'#D2B6DE','--cth-paper-100':'#FCF6FD','--cth-paper-200':'#EDDFF2',
+            '--cth-ink-900':'#26102E','--cth-ink-700':'#4A2757','--cth-ink-500':'#775285',
+            '--cth-ink-300':'#B291BC','--cth-ink-100':'#DCC7E2',
+            '--cth-texture-line':'rgba(150, 92, 172, 0.17)',
+            '--cth-ground-centre':'#FAF2FB','--cth-ground-edge':'#EBDBF0'},
+  'dark':  {'--cth-cream-50':'#180E1D','--cth-cream-100':'#20142A','--cth-cream-200':'#2C1C38',
+            '--cth-cream-300':'#3A2748','--cth-paper-100':'#1C1124','--cth-paper-200':'#261731',
+            '--cth-texture-line':'rgba(226, 184, 240, 0.04)',
+            '--cth-ground-centre':'#2D1D3A','--cth-ground-edge':'#120A17'},
+  'mark':  ('#7B3F9E', '#4A2260'),
+ },
+ 'nebula': {   # deep space violet — the darkest light theme of the set
+  'light': {'--cth-cream-50':'#F0EDFB','--cth-cream-100':'#E4DFF6','--cth-cream-200':'#D3CBEF',
+            '--cth-cream-300':'#B9AEE4','--cth-paper-100':'#F4F1FD','--cth-paper-200':'#DDD6F2',
+            '--cth-ink-900':'#170F2E','--cth-ink-700':'#332658','--cth-ink-500':'#5E5088',
+            '--cth-ink-300':'#9A8CC0','--cth-ink-100':'#C4B9DF',
+            '--cth-texture-line':'rgba(108, 84, 180, 0.20)',
+            '--cth-ground-centre':'#EEEAFA','--cth-ground-edge':'#D8D0F1'},
+  'dark':  {'--cth-cream-50':'#0E0B1A','--cth-cream-100':'#140F26','--cth-cream-200':'#1C1634',
+            '--cth-cream-300':'#282046','--cth-paper-100':'#110D20','--cth-paper-200':'#19122E',
+            '--cth-texture-line':'rgba(186, 170, 250, 0.045)',
+            '--cth-ground-centre':'#211838','--cth-ground-edge':'#09070F'},
+  'mark':  ('#7A5AF0', '#3D2A9B'),
  },
  'blue': {
   'light': {'--cth-cream-50':'#FBFDFF','--cth-cream-100':'#F1F6FD','--cth-cream-200':'#E0EBF8',

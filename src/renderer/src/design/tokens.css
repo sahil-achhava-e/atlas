@@ -1,26 +1,26 @@
 /* Design tokens — mirrors tokens.ts. Update both together. */
 :root {
   /* Base */
-  --cth-cream-50:  #FFFDF5;
-  --cth-cream-100: #FFF8E7;
-  --cth-cream-200: #F4E9C7;
-  --cth-cream-300: #E8D9A0;
-  --cth-paper-100: #FCFAF0;
-  --cth-paper-200: #F0EAD2;
+  --cth-cream-50: #F0EDFB;
+  --cth-cream-100: #E4DFF6;
+  --cth-cream-200: #D3CBEF;
+  --cth-cream-300: #B9AEE4;
+  --cth-paper-100: #F4F1FD;
+  --cth-paper-200: #DDD6F2;
 
   /* App ground (global.css) — the texture line and the depth wash behind
      everything. Tokens, not literals, because the old hardcoded cream line
      blazed as loud diagonal stripes once the dark theme existed. */
-  --cth-texture-line:  rgba(232, 217, 160, 0.20);
-  --cth-ground-centre: #FFFDF5;
-  --cth-ground-edge:   #F6EBCE;
+  --cth-texture-line: rgba(108, 84, 180, 0.20);
+  --cth-ground-centre: #EEEAFA;
+  --cth-ground-edge: #D8D0F1;
 
   /* Ink */
-  --cth-ink-900: #1A1320;
-  --cth-ink-700: #3D2E4A;
-  --cth-ink-500: #6B5878;
-  --cth-ink-300: #A899B5;
-  --cth-ink-100: #D9CFE0;
+  --cth-ink-900: #170F2E;
+  --cth-ink-700: #332658;
+  --cth-ink-500: #5E5088;
+  --cth-ink-300: #9A8CC0;
+  --cth-ink-100: #C4B9DF;
 
   /* Accents — v0.3.4 recalibration: same hues, professional saturation.
      The originals (#FFD93D, #FF6B6B, …) were full-saturation arcade tones that
@@ -132,19 +132,19 @@
 :root[data-cth-theme='dark'] {
   /* Base surfaces — a graded elevation ramp, darkest where light mode was
      lightest. Neutral with a whisper of the brand's violet warmth. */
-  --cth-cream-50:  #17171B;   /* app ground — dark, deliberately NOT black */
-  --cth-cream-100: #1D1D22;
-  --cth-cream-200: #26262C;
-  --cth-cream-300: #313139;
-  --cth-paper-100: #1A1A1F;   /* cards, inputs, terminals */
-  --cth-paper-200: #222229;
+  --cth-cream-50: #0E0B1A;   /*  app ground — dark, deliberately NOT black */
+  --cth-cream-100: #140F26;
+  --cth-cream-200: #1C1634;
+  --cth-cream-300: #282046;
+  --cth-paper-100: #110D20;   /*  cards, inputs, terminals */
+  --cth-paper-200: #19122E;
 
   /* Ground: the texture drops to a whisper (the cream line was ~14x too hot
      on near-black), and the wash lifts the centre so the floor has depth
      instead of reading as one flat slab. */
-  --cth-texture-line:  rgba(216, 214, 230, 0.035);
-  --cth-ground-centre: #23232B;
-  --cth-ground-edge:   #131317;
+  --cth-texture-line: rgba(186, 170, 250, 0.045);
+  --cth-ground-centre: #211838;
+  --cth-ground-edge: #09070F;
 
   /* Ink → off-white text ramp (never #FFF — glare) */
   --cth-ink-900: #DEDBD6;   /* 10.9-13.0:1 — primary text, warm off-white */
