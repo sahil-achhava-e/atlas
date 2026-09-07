@@ -580,8 +580,8 @@
     "titles": {
       "persona": "WELCOME TO ATLAS",
       "welcome": "MEET YOUR OFFICE",
-      "home": "A HOME FOR ATLAS",
-      "homePlain": "A HOME FOR ATLAS",
+      "home": "LAST THING: A HOME FOR ATLAS",
+      "homePlain": "LAST THING: A HOME FOR ATLAS",
       "orchestrator": "PICK THE ENGINE",
       "orchestratorPlain": "PICK THE ENGINE",
       "repos": "YOUR REPOS",
@@ -657,7 +657,14 @@
       "holdsMemory": "memory",
       "holdsLogs": "logs",
       "holdsSettings": "settings",
-      "holdsHistory": "history"
+      "holdsHistory": "history",
+      "review": "WHAT FINISH WILL SET UP",
+      "reviewEngine": "Engine",
+      "reviewProjects": "Projects",
+      "reviewProjectsNone": "none yet",
+      "reviewMode": "Agents",
+      "reviewModeAsk": "ask first",
+      "reviewModeAuto": "work on their own"
     },
     "orchestrator": {
       "descPlain": "Pick the AI that powers {{godName}}. Give it the best one you have: it is the one deciding what everyone else does.",

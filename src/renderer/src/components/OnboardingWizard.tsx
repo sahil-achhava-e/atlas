@@ -492,6 +492,27 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
                   {plain ? t('onboarding.home.notePlain') : t('onboarding.home.note')}
                 </div>
+
+                {/* This is the LAST step, so Finish should not be a leap of
+                    faith: show back the three answers it is about to write. */}
+                <div style={{ height: 1, background: 'var(--cth-ink-100)', margin: '4px 0' }} />
+                <FieldLabel>{t('onboarding.home.review')}</FieldLabel>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <ReviewRow
+                    label={t('onboarding.home.reviewEngine')}
+                    value={`${providerPreset(godProvider).label}${godModel ? ' · ' + (modelsForProvider(godProvider).find((m) => m.id === godModel)?.label ?? godModel) : ''}`}
+                  />
+                  <ReviewRow
+                    label={t('onboarding.home.reviewProjects')}
+                    value={repos.length
+                      ? repos.map((r) => r.replace(/\/+$/, '').split('/').pop()).join(', ')
+                      : t('onboarding.home.reviewProjectsNone')}
+                  />
+                  <ReviewRow
+                    label={t('onboarding.home.reviewMode')}
+                    value={autoMode ? t('onboarding.home.reviewModeAuto') : t('onboarding.home.reviewModeAsk')}
+                  />
+                </div>
               </>
             )}
 
@@ -938,6 +959,20 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** One line of the finish-step review: what you chose, in the words of the
+ *  step you chose it on. */
+function ReviewRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: 'flex', gap: 12, alignItems: 'baseline', fontSize: 13, lineHeight: '19px' }}>
+      <span style={{ width: 92, flexShrink: 0, color: 'var(--cth-ink-500)' }}>{label}</span>
+      <span style={{
+        minWidth: 0, color: 'var(--cth-ink-900)',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+      }}>{value}</span>
     </div>
   );
 }
