@@ -243,7 +243,35 @@ const styleBald: HairFn = (buf, color, skinBase, a) => {
   for (let y = top; y <= 10; y++) { set(buf, HX0 - 1, y, sh); set(buf, HX1 + 1, y, sh); }
 };
 
-const HAIR_FNS = { styleShort, styleFloppy, styleFrame, styleBun, styleCurly, styleMessy, styleRecede, styleSpiky, styleBald };
+/** Tall spikes standing well clear of the head. Every other style here hugs
+ *  the skull, so this one owns the rows above it: the spikes ARE the
+ *  silhouette, and at 18px wide that is the whole recognition. */
+const styleTallSpikes: HairFn = (buf, color) => {
+  const [hi, base, sh] = shades(color);
+  // The cap the spikes grow out of.
+  rect(buf, HX0, 3, HX1, 6, base);
+  for (let x = HX0 - 1; x <= HX1 + 1; x++) set(buf, x, 4, base);
+  for (let y = 5; y < 9; y++) {
+    set(buf, HX0 - 1, y, base); set(buf, HX0, y, base);
+    set(buf, HX1, y, base); set(buf, HX1 + 1, y, base);
+  }
+  // Only three rows exist above the head, so the mane earns its mass sideways:
+  // the outer spikes overhang the skull the way the straw hat's brim does.
+  // Gaps between spikes are left EMPTY on purpose. Fill them and the whole
+  // thing collapses into a helmet, which is what the first attempt did.
+  const spikes: [number, number][] = [[1, 3], [3, 1], [6, 0], [9, 0], [12, 1], [15, 3]];
+  for (const [x, top] of spikes) {
+    rect(buf, x, top, x + 1, 3, base);
+    set(buf, x, top, hi);          // lit edge
+    set(buf, x + 1, top, sh);      // and its shadowed side
+  }
+  // Sideburns down past the ear, which is what stops the overhang reading as a
+  // hat sitting on top of the head.
+  for (const y of [7, 8, 9]) { set(buf, 2, y, base); set(buf, 15, y, base); }
+  set(buf, 2, 10, sh); set(buf, 15, 10, sh);
+};
+
+const HAIR_FNS = { styleShort, styleFloppy, styleFrame, styleBun, styleCurly, styleMessy, styleRecede, styleSpiky, styleTallSpikes, styleBald };
 type HairStyle = keyof typeof HAIR_FNS;
 
 // ─── facial hair ─────────────────────────────────────────────────────────────
@@ -587,14 +615,11 @@ const RECIPES: Record<OfficeCharacterName, Recipe> = {
   // The crew, drawn to read at 16 px wide: hair colour and silhouette do almost
   // all the recognising, clothing colour does the rest. Keys stay the original
   // cast names because they are the persisted `agent.character` value.
-  // Atlas is the only one on this floor who is not from someone else's show:
-  // it is the app itself, so it gets its own silhouette. Hood in the brand
-  // violet, visor in the selection cyan, and no hair at all.
-  michael:  { skin: 'light', hairc: [40, 36, 52], hair: 'styleBald', cloth: 'suit', c1: [46, 40, 68], c2: [120, 100, 190], tie: [96, 214, 226], hood: [108, 88, 178], visor: [96, 214, 226], brow: 'flat', mouth: 'smile' },   // Atlas
+  michael:  { skin: 'light', hairc: [26, 22, 26], hair: 'styleTallSpikes', cloth: 'polo', c1: [236, 136, 44], c2: [58, 86, 152], brow: 'flat', mouth: 'smile' },   // Atlas / Goku
   jim:      { skin: 'tan',   hairc: [32, 26, 26],    hair: 'styleMessy',  hairargs: { length: 13 }, cloth: 'polo', c1: [198, 56, 50], c2: [156, 42, 40], hat: 'straw', brow: 'raised', mouth: 'grin' },   // Luffy
   pam:      { skin: 'light', hairc: [26, 22, 28],    hair: 'styleFrame',  hairargs: { length: 20, vol: 1 }, cloth: 'blouse', c1: [124, 84, 150], brow: 'soft', mouth: 'smile', lashes: true },   // Robin
   dwight:   { skin: 'tan',   hairc: [92, 148, 78],   hair: 'styleShort',  hairargs: { part: 'R' }, cloth: 'sweater', c1: [54, 82, 56], brow: 'angry', mouth: 'neutral' },   // Zoro
-  kevin:    { skin: 'tan',   hairc: [28, 24, 30],    hair: 'styleSpiky',  cloth: 'polo', c1: [230, 132, 44], c2: [56, 84, 148], brow: 'flat', mouth: 'grin' },   // Goku
+  kevin:    { skin: 'light', hairc: [232, 200, 168], hair: 'styleBald', cloth: 'sweater', c1: [236, 206, 72], c2: [188, 62, 54], brow: 'flat', mouth: 'neutral' },   // Saitama
   angela:   { skin: 'light', hairc: [30, 28, 36],    hair: 'styleFrame',  hairargs: { length: 12, vol: 1 }, cloth: 'dressshirt', c1: [60, 62, 74], tie: [178, 54, 54], brow: 'flat', mouth: 'neutral', lashes: true },   // Mikasa, the tie doubles as the scarf
   oscar:    { skin: 'light', hairc: [122, 86, 54],   hair: 'styleShort',  hairargs: { part: 'R' }, cloth: 'suit', c1: [88, 74, 62], tie: [68, 56, 46], brow: 'flat', mouth: 'neutral' },   // Light
   stanley:  { skin: 'light', hairc: [202, 206, 214], hair: 'styleSpiky',  cloth: 'sweater', c1: [62, 78, 68], mask: true, brow: 'soft', mouth: 'neutral' },   // Kakashi

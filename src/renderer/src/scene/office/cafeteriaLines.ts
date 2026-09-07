@@ -68,7 +68,7 @@ const BY_CHARACTER: Partial<Record<OfficeCharacterName, readonly string[]>> = {
   jim:      ['PR is up', 'merged before lunch', 'shipping the small one first'],                            // Luffy
   pam:      ['wrote it all down', 'the notes are in memory', 'someone will need this later'],               // Robin
   dwight:   ['ran it twice. same result.', 'that test was flaky, not me', 'I read the whole diff'],          // Zoro
-  kevin:    ['still running', 'four hours in', 'let it finish'],                                            // Goku
+  kevin:    ['still running', 'four hours in', 'let it finish'],                                            // Saitama
   angela:   ['that lint rule exists for a reason', 'no direct pushes to main', 'the build was red'],        // Mikasa
   oscar:    ['the token spend is up', 'checked the budget again', 'actually, the numbers say otherwise'],   // Light
   stanley:  ['finished beats fast', 'been on this since morning', 'no rush'],                               // Kakashi
@@ -134,7 +134,7 @@ const KEYED_EXCHANGES: Partial<Record<OfficeCharacterName, Exchange>> = {
   michael:  ['status, everyone.', 'all green.', 'that is what I like to hear.'],          // Atlas
   jim:      ['question.', 'yes.', 'nothing. just checking.'],                              // Luffy
   dwight:   ['I ran it twice.', 'and?', 'same both times. as expected.'],                  // Zoro
-  kevin:    ['still running.', 'how long?', 'do not ask.'],                                // Goku
+  kevin:    ['still running.', 'how long?', 'do not ask.'],                                // Saitama
   angela:   ['this build is red.', 'it is a break room, Mikasa.'],                           // Mikasa
   oscar:    ['actually, the numbers say otherwise.', '...here we go.'],                    // Light
   stanley:  ['is it finished?', 'no.', 'then leave it be.'],                               // Kakashi

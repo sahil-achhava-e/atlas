@@ -31,11 +31,11 @@ export interface CastMember {
 
 /** Selectable roster, in display order. */
 export const OFFICE_CAST: CastMember[] = [
-  { name: 'michael',  displayName: 'Atlas',   shirt: '#9482D3', blurb: 'Runs the floor' },
+  { name: 'michael',  displayName: 'Atlas',   shirt: '#EC882C', blurb: 'Runs the floor' },
   { name: 'jim',      displayName: 'Luffy',   shirt: '#C63832', blurb: 'Ships the work' },
   { name: 'pam',      displayName: 'Robin',   shirt: '#7C5496', blurb: 'Keeps the notes' },
   { name: 'dwight',   displayName: 'Zoro',    shirt: '#5C944E', blurb: 'Checks everything twice' },
-  { name: 'kevin',    displayName: 'Goku',    shirt: '#E6842C', blurb: 'Grinds the long jobs' },
+  { name: 'kevin',    displayName: 'Saitama',    shirt: '#ECCE48', blurb: 'Grinds the long jobs' },
   { name: 'angela',   displayName: 'Mikasa',  shirt: '#B23636', blurb: 'Guards the standards' },
   { name: 'oscar',    displayName: 'Light',   shirt: '#58493E', blurb: 'Follows the numbers' },
   { name: 'stanley',  displayName: 'Kakashi', shirt: '#CACED6', blurb: 'Steady on long runs' },
