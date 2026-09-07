@@ -590,14 +590,14 @@
       "done": "ALL SET"
     },
     "persona": {
-      "headline": "A CLONE OF YOU, WORKING 24/7",
-      "body": "Atlas turns the CLI agent you already use into a clone of you — one that runs an office of long-running agents and keeps working while you're away. It manages everything around them: context, memory, tasks, triggers, environment, files, and integrations.",
-      "bodyLocal": " Everything runs on this machine.",
-      "ask": "FIRST — WHO ARE YOU? (we'll tailor the setup)",
+      "headline": "AGENTS THAT DON'T CLOCK OUT",
+      "body": "Atlas runs the CLI agent you already use — several of them, long-lived, side by side. It holds everything around them: context, memory, tasks, triggers, files, and integrations. You set the work; they keep going while you're away.",
+      "bodyLocal": " Nothing leaves this machine.",
+      "ask": "FIRST — HOW SHOULD ATLAS TALK TO YOU?",
       "technicalTitle": "I'M TECHNICAL",
-      "technicalDesc": "I write code or work in a terminal. Show me CLI commands, flags, and model ids.",
+      "technicalDesc": "Terminal, flags, model ids. Skip the explanations.",
       "nonTechnicalTitle": "I'M NON-TECHNICAL",
-      "nonTechnicalDesc": "I'm in marketing, sales, ops, or just starting out. Explain things in plain language."
+      "nonTechnicalDesc": "Plain language. No jargon, no command line."
     },
     "welcome": {
       "headline": "YOUR CLONE AND THE FLOOR IT RUNS",
