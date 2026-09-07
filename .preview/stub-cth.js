@@ -73,7 +73,29 @@
       });
   }
 
+  // A tiny in-memory config. The toggles are written to reconcile to what the
+  // main process reports rather than trusting their own optimistic flip, which
+  // is right: the OS can refuse. But a stub answering [] means every toggle
+  // reconciles to "off" and looks dead on click.
+  var config = {
+    strongKeepalive: false, notifications: false, openAtLogin: false,
+    onboardingComplete: false, registeredRepos: [],
+  };
+
   var OVERRIDES = {
+    updateConfig: function (patch) {
+      Object.assign(config, patch || {});
+      return Promise.resolve(Object.assign({}, config));
+    },
+    setNotifications: function (v) {
+      config.notifications = v === true;
+      return Promise.resolve(Object.assign({}, config));
+    },
+    // Returns the OS's answer, which the real handler reads back from Electron.
+    setLoginItem: function (v) {
+      config.openAtLogin = v === true;
+      return Promise.resolve(config.openAtLogin);
+    },
     hiveRegistry: function () { return Promise.resolve({ agents: {} }); },
 
     // A VALUE, not a function: the wizard reads `window.cth.platform` directly.

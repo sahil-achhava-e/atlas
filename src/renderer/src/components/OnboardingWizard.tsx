@@ -810,8 +810,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   label={t('onboarding.permissions.notifications')}
                   desc={t('onboarding.permissions.notificationsDesc')}
                   on={notifications}
-                  tint="var(--cth-peach-light)"
-                  edge="var(--cth-peach)"
+                  tint="var(--cth-mint-light)"
+                  edge="var(--cth-mint)"
                   onChange={toggleNotifications}
                 />
 
@@ -820,8 +820,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   label={t('onboarding.permissions.openAtLogin')}
                   desc={t('onboarding.permissions.openAtLoginDesc')}
                   on={openAtLogin}
-                  tint="var(--cth-sky-light)"
-                  edge="var(--cth-sky)"
+                  tint="var(--cth-mint-light)"
+                  edge="var(--cth-mint)"
                   onChange={toggleOpenAtLogin}
                 />
 
