@@ -76,6 +76,11 @@
   var OVERRIDES = {
     hiveRegistry: function () { return Promise.resolve({ agents: {} }); },
 
+    // A VALUE, not a function: the wizard reads `window.cth.platform` directly.
+    // The container is Linux, so without this the permissions step previewed
+    // GNOME power-settings instructions for a macOS app.
+    platform: 'darwin',
+
     // The real bridge opens Electron's native folder dialog, which needs no
     // permission: the dialog IS the grant. A browser has no equivalent.
     //   - showDirectoryPicker() makes Chrome ask "allow this site to view and

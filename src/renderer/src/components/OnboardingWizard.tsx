@@ -118,9 +118,12 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const [home, setHome] = useState<string>('');
   const [repos, setRepos] = useState<string[]>([]);
   const [autoMode, setAutoMode] = useState<boolean>(true);
-  // Anonymous usage stats (TELEMETRY.md). Default ON (opt-out); persisted by
-  // finish() so unchecking before finishing means nothing is ever sent.
-  const [shareStats, setShareStats] = useState<boolean>(true);
+  // Anonymous usage stats (TELEMETRY.md). No longer asked about at first run:
+  // the PostHog key is injected at BUILD time and is empty in a fork build, so
+  // this consent row was asking permission for something that cannot fire. The
+  // flag is still written, and Settings still exposes it, so a build that does
+  // carry a key keeps working.
+  const shareStats = false;
   const [godProvider, setGodProvider] = useState<AgentProvider>('claude');
   const [godModel, setGodModel] = useState<string | undefined>(
     providerPreset('claude').recommendedOrchestratorModel
@@ -752,37 +755,32 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
             {step === 'permissions' && (
               <>
-                {/* AUTONOMY — merged from the old "auto mode" step (item 5). One choice
-                    that maps to each engine's flag (item 6): autoMode → claude
-                    bypassPermissions / codex -a never -s workspace-write (sandbox kept),
-                    etc.; off → each engine's ask-first default. */}
+                {/* AUTONOMY. Was one checkbox that turned MINT GREEN when on,
+                    which reads as "safe" for the option that removes the safety
+                    rail. It is a choice between two postures, so it looks like
+                    one, and selection uses the same cyan as every other pick in
+                    this wizard. Maps to each engine's flag: auto -> claude
+                    bypassPermissions / codex -a never -s workspace-write (sandbox
+                    kept); off -> each engine's ask-first default. */}
                 <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13, letterSpacing: 0.5, color: 'var(--cth-ink-700)' }}>
                   {t('onboarding.permissions.autonomyHead')}
                 </div>
-                <label style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: 12,
-                  background: autoMode ? 'var(--cth-mint-light)' : 'var(--cth-cream-200)',
-                  boxShadow: `inset 0 0 0 2px ${autoMode ? 'var(--cth-mint)' : 'var(--cth-ink-500)'}`,
-                  cursor: 'pointer'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={autoMode}
-                    onChange={(e) => setAutoMode(e.target.checked)}
-                    style={{ width: 18, height: 18, flexShrink: 0 }}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <PersonaCard
+                    icon="pause"
+                    title={t('onboarding.permissions.askTitle')}
+                    desc={plain ? t('onboarding.permissions.askDescPlain') : t('onboarding.permissions.askDesc')}
+                    selected={!autoMode}
+                    onClick={() => setAutoMode(false)}
                   />
-                  <div>
-                    <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 14, lineHeight: '19px' }}>
-                      {plain ? t('onboarding.permissions.autoLabelPlain') : t('onboarding.permissions.autoLabel')}
-                    </div>
-                    <div style={{ fontSize: 13, color: 'var(--cth-ink-700)' }}>
-                      {plain
-                        ? (autoMode ? t('onboarding.permissions.autoOnPlain') : t('onboarding.permissions.autoOffPlain'))
-                        : (autoMode ? t('onboarding.permissions.autoOn') : t('onboarding.permissions.autoOff'))}
-                    </div>
-                  </div>
-                </label>
+                  <PersonaCard
+                    icon="sparkle"
+                    title={t('onboarding.permissions.autoTitle')}
+                    desc={plain ? t('onboarding.permissions.autoDescPlain') : t('onboarding.permissions.autoDesc')}
+                    selected={autoMode}
+                    onClick={() => setAutoMode(true)}
+                  />
+                </div>
                 <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
                   {plain ? t('onboarding.permissions.autoNotePlain') : t('onboarding.permissions.autoNote')}
                 </div>
@@ -825,16 +823,6 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   tint="var(--cth-sky-light)"
                   edge="var(--cth-sky)"
                   onChange={toggleOpenAtLogin}
-                />
-
-                <ToggleRow
-                  icon="info"
-                  label={t('onboarding.permissions.shareStats')}
-                  desc={t('onboarding.permissions.shareStatsDesc')}
-                  on={shareStats}
-                  tint="var(--cth-lemon-light)"
-                  edge="var(--cth-lemon)"
-                  onChange={() => setShareStats(!shareStats)}
                 />
 
                 {/* LEVER 4 "— instruction-only: the OS won't let the app flip its sleep setting itself, so we deep-link the pane where one exists (macOS/Windows) and fall back to text-only guidance on Linux. */}
