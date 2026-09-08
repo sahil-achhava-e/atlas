@@ -1,67 +1,67 @@
 /**
  * The avatar library: thirty faces to pick from, plus Atlas.
  *
- * These are RECIPES, not images. Each one is drawn by the same code that draws
- * Atlas (portraitArt.ts), from the same vocabulary: four skin tones, ten hair
- * styles, clothing, and a few accessories. That is the whole reason a library
- * costs nothing to ship: thirty entries is thirty lines, not thirty PNGs.
+ * These are RECIPES, not images. Each is drawn by the same code that draws
+ * Atlas (portraitArt.ts) from the same vocabulary, so a library costs thirty
+ * lines rather than thirty PNGs.
  *
- * An agent stores its avatar as this `id` string, so a face survives a rename.
- * The persona `name` here is only a suggestion for the name field.
+ * At 18x28 a face cannot look like an actor: there is one pixel row for the
+ * eyes and one for the mouth. What DOES read is a costume, so every entry here
+ * is chosen for a silhouette you can name from across the room: a helmet, a
+ * mask, a hat brim, dark lenses, a colour of hair nobody else has.
  *
- * Fifteen and fifteen, drawn from around the world, so a floor of a dozen
- * agents can look like a room of different people rather than a palette swap.
+ * An agent stores its avatar as this `id`, so a face survives a rename. The
+ * `name` is a label in the picker's tooltip, not the agent's name.
  */
 import type { RGB, Recipe } from './portraitArt';
 
 export interface LibraryFace {
   id: string;
   name: string;
-  gender: 'f' | 'm';
   recipe: Recipe;
 }
 
-const BLACK: RGB = [34, 30, 34];
-const DARKBROWN: RGB = [72, 48, 34];
-const BROWN: RGB = [120, 80, 46];
-const AUBURN: RGB = [156, 78, 44];
-const BLOND: RGB = [222, 190, 110];
-const GREY: RGB = [176, 176, 184];
+const BLACK: RGB = [32, 28, 32];
+const DARKBROWN: RGB = [70, 46, 32];
+const BROWN: RGB = [118, 78, 44];
+const BLOND: RGB = [224, 192, 112];
+const WHITE: RGB = [226, 226, 230];
+const GREY: RGB = [166, 166, 174];
 
 export const AVATAR_LIBRARY: LibraryFace[] = [
-  // ── fifteen ──────────────────────────────────────────────────────────────
-  { id: 'lib-aiko', name: 'Aiko', gender: 'f', recipe: { skin: 'light', hairc: BLACK, hair: 'styleFrame', hairargs: { length: 20, vol: 1 }, cloth: 'blouse', c1: [216, 88, 96], lashes: true, brow: 'soft', mouth: 'smile', eyes: [58, 46, 44] } },
-  { id: 'lib-amara', name: 'Amara', gender: 'f', recipe: { skin: 'dark', hairc: BLACK, hair: 'styleCurly', cloth: 'blouse', c1: [32, 150, 132], lashes: true, brow: 'raised', mouth: 'smile', eyes: [70, 52, 40] } },
-  { id: 'lib-priya', name: 'Priya', gender: 'f', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleBun', cloth: 'cardigan', c1: [156, 90, 176], c2: [238, 232, 226], lashes: true, brow: 'flat', mouth: 'neutral', eyes: [62, 44, 38] } },
-  { id: 'lib-elena', name: 'Elena', gender: 'f', recipe: { skin: 'light', hairc: BROWN, hair: 'styleFrame', hairargs: { length: 17, vol: 2 }, cloth: 'blouse', c1: [226, 96, 140], lashes: true, blush: true, brow: 'soft', mouth: 'smile', eyes: [96, 68, 44] } },
-  { id: 'lib-mei', name: 'Mei', gender: 'f', recipe: { skin: 'light', hairc: BLACK, hair: 'styleShort', hairargs: { part: 'R' }, cloth: 'sweater', c1: [48, 148, 178], lashes: true, brow: 'flat', mouth: 'neutral', eyes: [56, 44, 44] } },
-  { id: 'lib-zara', name: 'Zara', gender: 'f', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleBun', cloth: 'cardigan', c1: [72, 96, 190], c2: [234, 230, 224], lashes: true, brow: 'angry', mouth: 'neutral', eyes: [58, 44, 40] } },
-  { id: 'lib-sofia', name: 'Sofia', gender: 'f', recipe: { skin: 'tan', hairc: AUBURN, hair: 'styleCurly', cloth: 'blouse', c1: [226, 178, 56], lashes: true, blush: true, brow: 'raised', mouth: 'grin', eyes: [104, 66, 40] } },
-  { id: 'lib-ingrid', name: 'Ingrid', gender: 'f', recipe: { skin: 'light', hairc: BLOND, hair: 'styleFrame', hairargs: { length: 18, vol: 1 }, cloth: 'sweater', c1: [122, 134, 150], lashes: true, brow: 'flat', mouth: 'neutral', eyes: [104, 138, 172] } },
-  { id: 'lib-nadia', name: 'Nadia', gender: 'f', recipe: { skin: 'tan', hairc: DARKBROWN, hair: 'styleFrame', hairargs: { length: 19, vol: 2 }, cloth: 'blouse', c1: [138, 156, 68], lashes: true, brow: 'soft', mouth: 'smile', eyes: [70, 50, 38] } },
-  { id: 'lib-yuki', name: 'Yuki', gender: 'f', recipe: { skin: 'light', hairc: BLACK, hair: 'styleFrame', hairargs: { length: 12, vol: 1 }, cloth: 'cardigan', c1: [148, 122, 224], c2: [240, 236, 232], lashes: true, brow: 'flat', mouth: 'smile', eyes: [54, 44, 46] } },
-  { id: 'lib-layla', name: 'Layla', gender: 'f', recipe: { skin: 'tan', hairc: DARKBROWN, hair: 'styleMessy', hairargs: { length: 16 }, cloth: 'blouse', c1: [238, 154, 96], lashes: true, brow: 'raised', mouth: 'smile', eyes: [82, 56, 40] } },
-  { id: 'lib-grace', name: 'Grace', gender: 'f', recipe: { skin: 'dark', hairc: BLACK, hair: 'styleBun', cloth: 'sweater', c1: [58, 178, 122], lashes: true, brow: 'soft', mouth: 'smile', eyes: [74, 54, 42] } },
-  { id: 'lib-anya', name: 'Anya', gender: 'f', recipe: { skin: 'light', hairc: BLOND, hair: 'styleBun', cloth: 'cardigan', c1: [70, 152, 190], c2: [238, 234, 228], lashes: true, brow: 'angry', mouth: 'neutral', eyes: [110, 146, 178] } },
-  { id: 'lib-rosa', name: 'Rosa', gender: 'f', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleFrame', hairargs: { length: 16, vol: 2 }, cloth: 'blouse', c1: [230, 96, 84], lashes: true, blush: true, brow: 'soft', mouth: 'grin', eyes: [66, 48, 38] } },
-  { id: 'lib-hana', name: 'Hana', gender: 'f', recipe: { skin: 'light', hairc: BROWN, hair: 'styleFrame', hairargs: { length: 14, vol: 1 }, cloth: 'blouse', c1: [178, 96, 200], lashes: true, brow: 'flat', mouth: 'smile', eyes: [92, 62, 42] } },
+  // ── streaming series ─────────────────────────────────────────────────────
+  { id: 'lib-eleven', name: 'Eleven', recipe: { skin: 'light', hairc: DARKBROWN, hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'blouse', c1: [226, 148, 176], brow: 'flat', mouth: 'neutral', eyes: [76, 54, 40] } },
+  { id: 'lib-hopper', name: 'Hopper', recipe: { skin: 'light', hairc: [140, 110, 78], hair: 'styleRecede', cloth: 'dressshirt', c1: [176, 154, 112], facial: 'mustache', headwear: { kind: 'cap', c: [122, 100, 62] }, brow: 'angry', mouth: 'neutral' } },
+  { id: 'lib-wednesday', name: 'Wednesday', recipe: { skin: 'light', hairc: BLACK, hair: 'styleFrame', hairargs: { length: 14, vol: 1 }, cloth: 'dressshirt', c1: [34, 32, 40], tie: [232, 230, 226], braids: { c: BLACK }, brow: 'angry', mouth: 'neutral', eyes: [60, 58, 70], lashes: true } },
+  { id: 'lib-professor', name: 'The Professor', recipe: { skin: 'light', hairc: DARKBROWN, hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'suit', c1: [96, 100, 112], tie: [70, 74, 86], beard: DARKBROWN, glasses: true, brow: 'soft', mouth: 'neutral' } },
+  { id: 'lib-tokyo', name: 'Tokyo', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleFrame', hairargs: { length: 18, vol: 2 }, cloth: 'sweater', c1: [214, 58, 52], brow: 'angry', mouth: 'neutral', lashes: true, eyes: [58, 44, 40] } },
+  { id: 'lib-dali', name: 'Dalí mask', recipe: { skin: 'light', hairc: BLACK, hair: 'styleBald', cloth: 'sweater', c1: [214, 58, 52], faceMask: { c: [238, 236, 230], eye: [40, 38, 44] }, beard: [60, 56, 60] } },
+  { id: 'lib-456', name: 'Player 456', recipe: { skin: 'light', hairc: BLACK, hair: 'styleShort', hairargs: { part: 'R' }, cloth: 'polo', c1: [86, 176, 128], c2: [236, 236, 232], brow: 'raised', mouth: 'neutral', eyes: [54, 44, 44] } },
+  { id: 'lib-guard', name: 'Pink guard', recipe: { skin: 'light', hairc: BLACK, hair: 'styleBald', cloth: 'sweater', c1: [232, 96, 152], faceMask: { c: [36, 34, 40], eye: [214, 90, 142], style: 'shapes' } } },
+  { id: 'lib-geralt', name: 'Geralt', recipe: { skin: 'light', hairc: WHITE, hair: 'styleFrame', hairargs: { length: 15, vol: 1 }, cloth: 'sweater', c1: [52, 48, 54], facial: 'stubble', scar: 'left', brow: 'angry', mouth: 'neutral', eyes: [196, 186, 120] } },
+  { id: 'lib-beth', name: 'Beth', recipe: { skin: 'light', hairc: [200, 96, 56], hair: 'styleFrame', hairargs: { length: 13, vol: 2 }, cloth: 'blouse', c1: [72, 132, 96], lashes: true, brow: 'flat', mouth: 'neutral', eyes: [96, 130, 156] } },
+  { id: 'lib-jonas', name: 'Jonas', recipe: { skin: 'light', hairc: BROWN, hair: 'styleMessy', hairargs: { length: 14 }, cloth: 'sweater', c1: [232, 196, 62], c2: [190, 156, 44], brow: 'soft', mouth: 'neutral', eyes: [96, 130, 156] } },
+  { id: 'lib-jinx', name: 'Jinx', recipe: { skin: 'light', hairc: [72, 118, 214], hair: 'styleFrame', hairargs: { length: 20, vol: 1 }, cloth: 'sweater', c1: [58, 54, 72], braids: { c: [72, 118, 214] }, brow: 'raised', mouth: 'grin', eyes: [214, 96, 150], lashes: true } },
+  { id: 'lib-vi', name: 'Vi', recipe: { skin: 'light', hairc: [226, 110, 150], hair: 'styleSpiky', cloth: 'sweater', c1: [116, 92, 68], scar: 'right', brow: 'angry', mouth: 'neutral', eyes: [88, 132, 160] } },
+  { id: 'lib-tommy', name: 'Tommy', recipe: { skin: 'light', hairc: BROWN, hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'suit', c1: [62, 66, 74], tie: [48, 52, 60], headwear: { kind: 'flat', c: [76, 78, 84] }, brow: 'angry', mouth: 'neutral', eyes: [104, 136, 160] } },
+  { id: 'lib-escobar', name: 'Escobar', recipe: { skin: 'tan', hairc: [58, 48, 40], hair: 'styleFloppy', cloth: 'dressshirt', c1: [230, 226, 214], facial: 'mustache', heavy: true, brow: 'flat', mouth: 'neutral', eyes: [64, 46, 38] } },
 
-  // ── and fifteen ──────────────────────────────────────────────────────────
-  { id: 'lib-kenji', name: 'Kenji', gender: 'm', recipe: { skin: 'light', hairc: BLACK, hair: 'styleSpiky', cloth: 'polo', c1: [78, 106, 210], c2: [40, 52, 96], brow: 'flat', mouth: 'neutral', eyes: [52, 44, 46] } },
-  { id: 'lib-omar', name: 'Omar', gender: 'm', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'dressshirt', c1: [232, 230, 226], tie: [96, 108, 126], facial: 'stubble', brow: 'flat', mouth: 'neutral', eyes: [62, 46, 38] } },
-  { id: 'lib-diego', name: 'Diego', gender: 'm', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleMessy', hairargs: { length: 13 }, cloth: 'polo', c1: [232, 182, 54], c2: [186, 138, 36], brow: 'raised', mouth: 'grin', eyes: [78, 52, 38] } },
-  { id: 'lib-chen', name: 'Chen', gender: 'm', recipe: { skin: 'light', hairc: BLACK, hair: 'styleShort', hairargs: { part: 'R' }, cloth: 'dressshirt', c1: [148, 190, 214], tie: [56, 92, 132], brow: 'flat', mouth: 'neutral', eyes: [54, 44, 44] } },
-  { id: 'lib-ravi', name: 'Ravi', gender: 'm', recipe: { skin: 'brown', hairc: BLACK, hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'sweater', c1: [138, 152, 70], glasses: true, brow: 'soft', mouth: 'smile', eyes: [64, 46, 36] } },
-  { id: 'lib-tomas', name: 'Tomas', gender: 'm', recipe: { skin: 'light', hairc: BROWN, hair: 'styleFloppy', cloth: 'polo', c1: [70, 176, 128], c2: [44, 132, 96], brow: 'raised', mouth: 'smile', eyes: [98, 70, 44] } },
-  { id: 'lib-malik', name: 'Malik', gender: 'm', recipe: { skin: 'dark', hairc: BLACK, hair: 'styleBald', cloth: 'dressshirt', c1: [226, 108, 96], tie: [120, 52, 48], facial: 'goatee', brow: 'flat', mouth: 'neutral', eyes: [72, 52, 40] } },
-  { id: 'lib-ali', name: 'Ali', gender: 'm', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'sweater', c1: [110, 122, 138], facial: 'mustache', brow: 'flat', mouth: 'neutral', eyes: [60, 46, 40] } },
-  { id: 'lib-lars', name: 'Lars', gender: 'm', recipe: { skin: 'light', hairc: BLOND, hair: 'styleShort', hairargs: { part: 'R' }, cloth: 'polo', c1: [86, 168, 200], c2: [52, 118, 148], brow: 'flat', mouth: 'smile', eyes: [108, 148, 184] } },
-  { id: 'lib-hugo', name: 'Hugo', gender: 'm', recipe: { skin: 'light', hairc: BROWN, hair: 'styleFloppy', cloth: 'cardigan', c1: [160, 96, 186], c2: [236, 232, 226], glasses: true, brow: 'soft', mouth: 'neutral', eyes: [96, 66, 44] } },
-  { id: 'lib-kwame', name: 'Kwame', gender: 'm', recipe: { skin: 'dark', hairc: BLACK, hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'polo', c1: [40, 162, 142], c2: [26, 116, 102], brow: 'raised', mouth: 'grin', eyes: [76, 54, 42] } },
-  { id: 'lib-nikolai', name: 'Nikolai', gender: 'm', recipe: { skin: 'light', hairc: GREY, hair: 'styleRecede', cloth: 'suit', c1: [86, 94, 110], tie: [72, 82, 100], brow: 'angry', mouth: 'neutral', eyes: [116, 124, 142] } },
-  { id: 'lib-santi', name: 'Santi', gender: 'm', recipe: { skin: 'tan', hairc: DARKBROWN, hair: 'styleMessy', hairargs: { length: 14 }, cloth: 'polo', c1: [230, 108, 148], c2: [176, 74, 110], brow: 'raised', mouth: 'grin', eyes: [86, 58, 40] } },
-  { id: 'lib-faisal', name: 'Faisal', gender: 'm', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleShort', hairargs: { part: 'R' }, cloth: 'dressshirt', c1: [124, 148, 226], tie: [58, 76, 150], facial: 'goatee', brow: 'flat', mouth: 'neutral', eyes: [60, 46, 38] } },
-  { id: 'lib-hiro', name: 'Hiro', gender: 'm', recipe: { skin: 'light', hairc: BLACK, hair: 'styleFloppy', cloth: 'sweater', c1: [238, 158, 104], glasses: true, brow: 'soft', mouth: 'smile', eyes: [54, 44, 46] } },
+  // ── films ────────────────────────────────────────────────────────────────
+  { id: 'lib-neo', name: 'Neo', recipe: { skin: 'light', hairc: BLACK, hair: 'styleShort', hairargs: { part: 'R' }, cloth: 'suit', c1: [30, 30, 36], tie: [26, 26, 32], shades: [46, 122, 78], brow: 'flat', mouth: 'neutral' } },
+  { id: 'lib-morpheus', name: 'Morpheus', recipe: { skin: 'dark', hairc: BLACK, hair: 'styleBald', cloth: 'sweater', c1: [58, 44, 62], shades: [148, 116, 60], facial: 'goatee', brow: 'flat', mouth: 'neutral' } },
+  { id: 'lib-trinity', name: 'Trinity', recipe: { skin: 'light', hairc: BLACK, hair: 'styleBun', cloth: 'sweater', c1: [28, 28, 34], shades: [64, 62, 74], brow: 'angry', mouth: 'neutral', lashes: true } },
+  { id: 'lib-wick', name: 'John Wick', recipe: { skin: 'light', hairc: BLACK, hair: 'styleFrame', hairargs: { length: 12, vol: 1 }, cloth: 'suit', c1: [32, 32, 38], tie: [28, 28, 34], beard: BLACK, brow: 'angry', mouth: 'neutral' } },
+  { id: 'lib-sparrow', name: 'Sparrow', recipe: { skin: 'tan', hairc: [56, 42, 34], hair: 'styleMessy', hairargs: { length: 18 }, cloth: 'blouse', c1: [148, 122, 90], headwear: { kind: 'band', c: [176, 62, 54] }, beard: [56, 42, 34], braids: { c: [56, 42, 34] }, brow: 'raised', mouth: 'grin' } },
+  { id: 'lib-indy', name: 'Indiana', recipe: { skin: 'light', hairc: DARKBROWN, hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'cardigan', c1: [120, 92, 56], c2: [214, 200, 172], headwear: { kind: 'fedora', c: [110, 82, 50] }, facial: 'stubble', brow: 'flat', mouth: 'neutral' } },
+  { id: 'lib-gandalf', name: 'Gandalf', recipe: { skin: 'light', hairc: GREY, hair: 'styleFrame', hairargs: { length: 18, vol: 2 }, cloth: 'sweater', c1: [124, 124, 132], beard: GREY, headwear: { kind: 'pointed', c: [108, 108, 118] }, brow: 'soft', mouth: 'neutral' } },
+  { id: 'lib-batman', name: 'Batman', recipe: { skin: 'light', hairc: BLACK, hair: 'styleBald', cloth: 'sweater', c1: [40, 42, 52], helmet: { c: [40, 42, 52], openJaw: true }, mouth: 'neutral' } },
+  { id: 'lib-joker', name: 'Joker', recipe: { skin: 'light', hairc: [96, 176, 88], hair: 'styleMessy', hairargs: { length: 15 }, cloth: 'suit', c1: [124, 76, 156], tie: [86, 160, 76], facePaint: { skin: [238, 236, 232], mouth: [206, 62, 68] }, brow: 'raised', mouth: 'grin' } },
+  { id: 'lib-harley', name: 'Harley', recipe: { skin: 'light', hairc: BLOND, hair: 'styleFrame', hairargs: { length: 16, vol: 2 }, cloth: 'blouse', c1: [56, 54, 66], braids: { c: [214, 92, 140], long: false }, lashes: true, blush: true, brow: 'raised', mouth: 'grin' } },
+  { id: 'lib-deadpool', name: 'Deadpool', recipe: { skin: 'light', hairc: BLACK, hair: 'styleBald', cloth: 'sweater', c1: [58, 56, 62], faceMask: { c: [196, 54, 48], eye: [236, 234, 230] } } },
+  { id: 'lib-spidey', name: 'Spider-Man', recipe: { skin: 'light', hairc: BLACK, hair: 'styleBald', cloth: 'sweater', c1: [58, 92, 176], faceMask: { c: [196, 54, 48], eye: [236, 236, 240] } } },
+  { id: 'lib-vader', name: 'Vader', recipe: { skin: 'light', hairc: BLACK, hair: 'styleBald', cloth: 'sweater', c1: [30, 30, 34], helmet: { c: [34, 34, 40], visor: [92, 96, 108] } } },
+  { id: 'lib-trooper', name: 'Trooper', recipe: { skin: 'light', hairc: BLACK, hair: 'styleBald', cloth: 'sweater', c1: [232, 232, 236], helmet: { c: [236, 236, 240], visor: [40, 40, 46] } } },
+  { id: 'lib-terminator', name: 'Terminator', recipe: { skin: 'light', hairc: BLACK, hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'sweater', c1: [40, 38, 44], shades: [26, 26, 30], wideShades: true, brow: 'flat', mouth: 'neutral' } },
 ];
 
 export const LIBRARY_BY_ID: Record<string, LibraryFace> =

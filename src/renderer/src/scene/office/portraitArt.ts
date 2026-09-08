@@ -515,6 +515,14 @@ export interface Recipe {
   hood?: RGB; visor?: RGB;
   /** Pupil colour, and a scar through one eye. */
   eyes?: RGB; scar?: 'left' | 'right';
+  /** Costume parts. Each is what makes one character readable at this size. */
+  shades?: RGB; wideShades?: boolean;
+  headwear?: { kind: HatKind; c: RGB };
+  faceMask?: { c: RGB; eye: RGB; style?: 'eyes' | 'shapes' | 'plain' };
+  helmet?: { c: RGB; visor?: RGB; openJaw?: boolean };
+  beard?: RGB;
+  braids?: { c: RGB; long?: boolean };
+  facePaint?: { skin: RGB; mouth: RGB };
   /** Heavier build: chubby cheeks, a double chin, and a wider torso. */
   heavy?: boolean;
 }
@@ -633,6 +641,131 @@ function drawWhiskers(buf: Buf, skin: string): void {
   }
 }
 
+// ─── costume parts ───────────────────────────────────────────────────────────
+// A face at 18px cannot look like an actor. It CAN look like a costume, so
+// these are the pieces that carry a character: a hat brim, dark lenses, a
+// full-face mask, a helmet. Each is parameterised by colour so one primitive
+// serves several characters.
+
+/** Dark lenses. Distinct from `glasses`, which reads as clear eyewear. */
+function drawShades(buf: Buf, lens: RGB, wide = false): void {
+  const frame: RGB = [24, 22, 28];
+  const x0 = wide ? 3 : 4, x1 = wide ? 14 : 13;
+  rect(buf, x0, 8, x1, 10, frame);
+  rect(buf, x0 + 1, 9, 7, 9, lens);
+  rect(buf, 10, 9, x1 - 1, 9, lens);
+  set(buf, x0 + 1, 8, shades(lens)[0]);
+}
+
+type HatKind = 'fedora' | 'pointed' | 'flat' | 'cap' | 'band';
+
+/** Headwear, drawn over the hair. */
+function drawHat(buf: Buf, kind: HatKind, col: RGB): void {
+  const [hi, base, sh] = shades(col);
+  if (kind === 'fedora') {
+    rect(buf, 5, 0, 12, 3, base);            // crown
+    rect(buf, 5, 0, 12, 0, hi);
+    rect(buf, 5, 3, 12, 3, sh);              // band
+    rect(buf, 1, 4, 16, 4, base);            // brim
+    rect(buf, 2, 5, 15, 5, sh);
+  } else if (kind === 'pointed') {
+    rect(buf, 8, 0, 9, 0, base);
+    rect(buf, 7, 1, 10, 1, base);
+    rect(buf, 6, 2, 11, 2, base);
+    rect(buf, 5, 3, 12, 3, base);
+    rect(buf, 1, 4, 16, 4, base);
+    rect(buf, 2, 5, 15, 5, sh);
+  } else if (kind === 'flat') {
+    rect(buf, 4, 2, 13, 4, base);
+    rect(buf, 4, 2, 13, 2, hi);
+    rect(buf, 2, 5, 13, 5, sh);              // short peak, one side
+  } else if (kind === 'cap') {
+    rect(buf, 4, 2, 13, 4, base);
+    rect(buf, 4, 2, 13, 2, hi);
+    rect(buf, 1, 5, 9, 5, sh);
+  } else {
+    rect(buf, 3, 5, 14, 6, base);            // bandana
+    set(buf, 3, 7, sh); set(buf, 2, 7, sh);
+  }
+}
+
+/** A full-face mask: the whole head in one colour with an eye shape cut in. */
+function drawFaceMask(buf: Buf, col: RGB, eye: RGB, style: 'eyes' | 'shapes' | 'plain' = 'eyes'): void {
+  const [hi, base, sh] = shades(col);
+  rect(buf, HX0 - 1, 2, HX1 + 1, 17, base);
+  rect(buf, HX0, 2, HX1, 2, hi);
+  rect(buf, HX0 - 1, 16, HX1 + 1, 17, sh);
+  if (style === 'eyes') {
+    rect(buf, 5, 8, 7, 10, eye);
+    rect(buf, 10, 8, 12, 10, eye);
+  } else if (style === 'shapes') {
+    rect(buf, 5, 9, 7, 11, eye);             // one blank visor band
+    rect(buf, 10, 9, 12, 11, eye);
+    rect(buf, 8, 13, 9, 14, eye);
+  }
+}
+
+/** A rigid helmet: shell, plus an optional visor band across the eyes. */
+function drawHelmet(buf: Buf, col: RGB, visor?: RGB, openJaw = false): void {
+  const [hi, base, sh] = shades(col);
+  // A sealed helmet in one dark colour is a black rectangle with no face in it.
+  // `visor` and `openJaw` are what put a readable feature back: eye slits, or
+  // the wearer's own jaw showing below the cowl.
+  const bottom = openJaw ? 11 : 16;
+  rect(buf, HX0 - 1, 1, HX1 + 1, bottom, base);
+  rect(buf, HX0, 1, HX1, 1, hi);
+  set(buf, HX0 - 1, 6, sh); set(buf, HX1 + 1, 6, sh);
+  if (openJaw) {
+    rect(buf, HX0 - 1, 2, HX0 - 1, 15, base);   // the cowl's cheek pieces
+    rect(buf, HX1 + 1, 2, HX1 + 1, 15, base);
+    rect(buf, 4, 9, 6, 10, [236, 236, 240]);    // lit eye slits
+    rect(buf, 11, 9, 13, 10, [236, 236, 240]);
+    return;
+  }
+  rect(buf, HX0 - 1, 15, HX1 + 1, 16, sh);
+  if (visor) {
+    rect(buf, 4, 8, 13, 10, visor);
+    rect(buf, 4, 8, 13, 8, shades(visor)[0]);
+    rect(buf, 5, 9, 6, 9, shades(visor)[2]);
+    rect(buf, 11, 9, 12, 9, shades(visor)[2]);
+  }
+  rect(buf, 6, 13, 11, 14, sh);
+  for (const x of [6, 8, 10]) set(buf, x, 13, hi);   // grille, so it is not a slab
+}
+
+/** A full beard, jaw to chest. */
+function drawBeard(buf: Buf, col: RGB): void {
+  const [hi, base, sh] = shades(col);
+  rect(buf, 4, 13, 13, 18, base);
+  rect(buf, 5, 19, 12, 20, base);
+  rect(buf, 6, 21, 11, 21, sh);
+  rect(buf, 7, 13, 10, 14, [158, 86, 80]);   // the mouth stays visible
+  set(buf, 4, 13, hi); set(buf, 13, 13, hi);
+}
+
+/** Two braids or pigtails falling either side of the face. */
+function drawBraids(buf: Buf, col: RGB, long = true): void {
+  const [hi, base, sh] = shades(col);
+  const bottom = long ? 24 : 18;
+  for (let y = 8; y <= bottom; y++) {
+    rect(buf, 2, y, 3, y, base);
+    rect(buf, 14, y, 15, y, base);
+    if (y % 3 === 0) { set(buf, 2, y, sh); set(buf, 15, y, sh); }
+  }
+  set(buf, 2, 8, hi); set(buf, 15, 8, hi);
+}
+
+/** Painted face: the skin itself is the costume. */
+function drawFacePaint(buf: Buf, skinCol: RGB, mouth: RGB): void {
+  const [hi, base, sh] = shades(skinCol);
+  rect(buf, HX0, 3, HX1, 17, base);
+  rect(buf, HX0, 3, HX1, 3, hi);
+  rect(buf, HX0, 17, HX1, 17, sh);
+  for (const [x, y] of [[5, 9], [6, 9], [10, 9], [11, 9]] as const) set(buf, x, y, [30, 26, 32]);
+  for (let x = 5; x <= 12; x++) set(buf, x, 14, mouth);
+  set(buf, 4, 13, mouth); set(buf, 13, 13, mouth);
+}
+
 const RECIPES: Record<OfficeCharacterName, Recipe> = {
   // The crew, drawn to read at 16 px wide: hair colour and silhouette do almost
   // all the recognising, clothing colour does the rest. Keys stay the original
@@ -667,7 +800,15 @@ function drawHeadGroup(buf: Buf, r: Recipe): void {
   if (r.whiskers) drawWhiskers(buf, r.skin);
   if (r.blindfold) drawBlindfold(buf);
   if (r.mask) drawMask(buf);
+  if (r.facePaint) drawFacePaint(buf, r.facePaint.skin, r.facePaint.mouth);
   HAIR_FNS[r.hair](buf, r.hairc, skinBase, r.hairargs ?? {});
+  if (r.braids) drawBraids(buf, r.braids.c, r.braids.long ?? true);
+  if (r.beard) drawBeard(buf, r.beard);
+  // A mask or helmet covers everything under it, so it goes on late.
+  if (r.faceMask) drawFaceMask(buf, r.faceMask.c, r.faceMask.eye, r.faceMask.style);
+  if (r.helmet) drawHelmet(buf, r.helmet.c, r.helmet.visor, r.helmet.openJaw);
+  if (r.shades) drawShades(buf, r.shades, r.wideShades);
+  if (r.headwear) drawHat(buf, r.headwear.kind, r.headwear.c);
   // AFTER the hair: drawn before it, the fringe painted straight over it.
   if (r.scar) drawScar(buf, r.scar);
   if (r.hood) drawHood(buf, r.hood);
