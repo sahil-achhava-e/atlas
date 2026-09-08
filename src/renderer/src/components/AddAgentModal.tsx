@@ -1325,7 +1325,7 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
 
           <div style={{
             flex: 1, minWidth: 0, padding: 16,
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(66px, 1fr))',
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(78px, 1fr))',
             gap: 8, alignContent: 'start', overflowY: 'auto'
           }}>
             {AVATAR_LIBRARY.map((f) => {
@@ -1359,10 +1359,11 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
                   }}>
                     <SpritePortrait character={f.id} scale={3} />
                   </span>
+                  {/* Wraps rather than truncating: "The Profess…" tells you
+                      less than two short lines do. */}
                   <span style={{
-                    fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '11px',
-                    color: 'var(--cth-ink-700)', textAlign: 'center',
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%'
+                    fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '12px',
+                    color: 'var(--cth-ink-700)', textAlign: 'center', maxWidth: '100%'
                   }}>{f.name}</span>
                 </button>
               );
