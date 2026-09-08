@@ -15,6 +15,7 @@ import { SkillsTab } from './SkillsTab';
 import { acquireTerminal, disposeTerminal, resetTerminal } from './terminalPool';
 import { terminalInstanceKey } from './terminalRecovery';
 import { Icon } from './Icon';
+import { MemoryPanel } from './MemoryPanel';
 import { MemoryGraphPanel } from './MemoryGraphPanel';
 import { useFleetTelemetry } from '@/hooks/useTelemetry';
 import { COMMAND_GROUPS } from '@shared/claudeCommands';
@@ -1150,6 +1151,12 @@ function MemoryTab({ godId, who: controlledWho, onWho }: { godId: string; who?: 
           </PixelButton>
         </div>
         {searchOut && <Pre>{searchOut}</Pre>}
+      </Section>
+
+      {/* Semantic memory's own state and switch. It used to float over the
+          office floor; this is the tab it belongs to. */}
+      <Section title={t('memoryPanel.title')}>
+        <MemoryPanel docked />
       </Section>
 
       <Section title={t('commandCenter.memoryFile')}>

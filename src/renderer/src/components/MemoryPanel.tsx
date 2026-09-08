@@ -29,10 +29,17 @@ const MODELS: { id: ModelId; titleKey: string; detailKey: string }[] = [
  * it on/off, and pick how it searches. Agents read/write it directly; this is
  * the human-facing window into the same memory.
  */
-export function MemoryPanel() {
+export interface MemoryPanelProps {
+  /** Docked inside the Command Center's Memory tab: no pill, no floating box,
+   *  no Close. It used to hover over the office floor, where it covered the
+   *  agents it was describing and read as a stray popup. */
+  docked?: boolean;
+}
+
+export function MemoryPanel({ docked = false }: MemoryPanelProps) {
   const { t } = useTranslation();
   const rtl = useRtl();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(docked);
   const [status, setStatus] = useState<MemoryStatus | null>(null);
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<string>('');
@@ -79,7 +86,9 @@ export function MemoryPanel() {
   const canSearch = !!status?.available && !!status?.enabled;
 
   return (
-    <div style={{ position: 'absolute', bottom: 12, left: 12, width: open ? 380 : 'auto', zIndex: 40 }}>
+    <div style={docked
+      ? { width: '100%' }
+      : { position: 'absolute', bottom: 12, left: 12, width: open ? 380 : 'auto', zIndex: 40 }}>
       {!open ? (
         <button
           onClick={() => { setOpen(true); refreshStatus(); }}
@@ -98,7 +107,7 @@ export function MemoryPanel() {
           {pill}
         </button>
       ) : (
-        <PixelPanel variant="dialog" title={t('memoryPanel.title')} noPadding>
+        <PixelPanel variant={docked ? 'default' : 'dialog'} title={docked ? undefined : t('memoryPanel.title')} noPadding>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 14 }}>
 
             {/* What this is — one plain line. */}
@@ -196,8 +205,10 @@ export function MemoryPanel() {
               </div>
             )}
 
-            {/* Search the memory. */}
-            {canSearch && (
+            {/* Search the memory. Not when docked: the tab this sits in has its
+                own search, and two boxes asking the same question is worse than
+                one. */}
+            {!docked && canSearch && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <input
@@ -229,9 +240,11 @@ export function MemoryPanel() {
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--cth-ink-300)', paddingTop: 10 }}>
-              <PixelButton variant="ghost" size="sm" onClick={() => setOpen(false)}>{t('common.close')}</PixelButton>
-            </div>
+            {!docked && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--cth-ink-300)', paddingTop: 10 }}>
+                <PixelButton variant="ghost" size="sm" onClick={() => setOpen(false)}>{t('common.close')}</PixelButton>
+              </div>
+            )}
           </div>
         </PixelPanel>
       )}
