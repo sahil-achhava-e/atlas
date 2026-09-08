@@ -429,7 +429,8 @@ export function useHive(config: HarnessConfig | null): void {
         // Red, like every hire's default. Lemon read as a warning strip on the
         // one card that is always on the floor.
         accent: 'coral',
-        description: 'god — runs the floor, triages requests, escalates only critical calls to you',
+        // Short: it is the line under his name on a dock tile, not a job spec.
+        description: 'runs the floor',
         project: 'hive',
         tmuxTarget: '',
         cwd: config.harnessHome!,

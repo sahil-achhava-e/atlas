@@ -2,6 +2,8 @@ import { ClipboardEvent, DragEvent, KeyboardEvent, type MouseEvent as ReactMouse
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { PixelButton } from './PixelButton';
+import { RealtimeMichaelToggle } from './RealtimeMichaelToggle';
+import { CostHud } from '@/realtime/CostHud';
 import { Icon } from './Icon';
 import { useStore, type Agent, type QueuedMessage } from '@/store/store';
 import { clearTerminalDraft, dismissTerminalPicker, terminalAutomationBlockFor } from './terminalPool';
@@ -380,6 +382,12 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             narrow sidebar wraps the buttons onto a second row instead of
             pushing Send off-screen. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, rowGap: 6, flexWrap: 'wrap', minWidth: 0 }}>
+          {/* Talk to the orchestrator. It lives HERE, next to the box you type
+              into, rather than on his floor card: saying something and typing
+              something are the same intent, and the card is a thing you click to
+              open, not a control panel. */}
+          {agent.isGod && <RealtimeMichaelToggle />}
+          {agent.isGod && <CostHud compact />}
           <span style={{ flex: 1 }} />
           <PixelButton variant="secondary" size="sm" onClick={pickFiles}>
             <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>

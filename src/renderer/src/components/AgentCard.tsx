@@ -4,8 +4,6 @@ import { PixelPanel } from './PixelPanel';
 import { PixelBadge, StatusKind } from './PixelBadge';
 import { useHasTerminalDraft } from './terminalPool';
 import { SpritePortrait } from './SpritePortrait';
-import { RealtimeMichaelToggle } from './RealtimeMichaelToggle';
-import { CostHud } from '@/realtime/CostHud';
 import { AccentColorName } from '@/design/tokens';
 import { OfficeCharacterName } from '@/scene/office/cast';
 
@@ -19,6 +17,8 @@ export interface AgentCardProps {
    *  looks identical to an idle agent with nothing to do. */
   ptyId?: string;
   project: string;
+  /** What this agent is FOR, one line — the job title under its name. */
+  description?: string;
   action?: string;
   /** Context gauge: 0..8 segments filled (session context ÷ context limit). */
   progress?: number;
@@ -46,13 +46,18 @@ export interface AgentCardProps {
 
 const fmtK = (n: number): string => `${Math.round(n / 1000)}k`;
 
+/** One card size for every agent — and for the empty slot the strip draws at
+ *  the end of the dock, which has to line up with them. */
+export const CARD_WIDTH = 96;
+export const CARD_HEIGHT = 96;
+
 /**
  * v0.3.4 compact redesign: one identity row (name + status), one context line
  * (action while working, repo while idle — both in the tooltip), one note row,
  * and a slim gauge pinned to the bottom edge. Nothing overlaps anything.
  */
 export function AgentCard({
-  name, character, accent, status, ptyId, project, action, progress = 0,
+  name, character, accent, status, ptyId, project, description, action, progress = 0,
   contextTokens, contextLimit, selected, isGod, onClick,
   doingCount = 0, onTaskNoteClick, draggable, note, onEditNote
 }: AgentCardProps) {
@@ -99,8 +104,8 @@ export function AgentCard({
   // that gets cut. Widened for every card so the dock stays uniform, with enough
   // slack that Talk's info mark (which only appears when the OpenAI key is
   // missing) has somewhere to sit rather than pushing the row apart.
-  const width = 196;
-  const height = 74;
+  const width = CARD_WIDTH;
+  const height = CARD_HEIGHT;
   const lift = (isGod ? -2 : 0) - (hover ? 1 : 0) - (selected ? 1 : 0);
   /** God's distinction: a tinted surface plus a thin accent border all the way
    *  around — NOT the 3px rule that used to sit on the top edge alone. That rule
@@ -149,6 +154,9 @@ export function AgentCard({
       // The ring is the visual answer to "which terminal is open"; this is the
       // same answer for a screen reader. Matches SidebarRow in fullscreen.
       aria-current={selected ? 'true' : undefined}
+      // Everything the card used to spell out in rows, in one tooltip: who,
+      // what it is doing, and your note about it.
+      title={[name, description, infoLine, noteFirstLine].filter(Boolean).join(' — ')}
       className="cth-titlebar-nodrag"
       style={{
         width, minWidth: width, height,
@@ -183,137 +191,90 @@ export function AgentCard({
       )}
       <PixelPanel
         variant="default"
-        style={{ height: '100%', padding: '5px 7px', ...godSurface }}
+        style={{ height: '100%', padding: '6px 6px 5px', ...godSurface }}
         noPadding
       >
-        <div style={{ display: 'flex', gap: 7, height: '100%' }}>
-          {/* Portrait tile — vertically centred so the card reads calm and even. */}
+        <div style={{
+          position: 'relative', height: '100%',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3
+        }}>
+          {/* Presence, in the corner. At tile size the dot IS the status line. */}
+          <PixelBadge
+            status={typing ? 'typing' : status}
+            dotOnly
+            style={{ position: 'absolute', top: 0, right: 0 }}
+          />
+
+          {/* Portrait tile. Anchored to the sprite's TOP: the portrait is taller
+              than the tile, and bottom-anchoring cropped the head — crop feet,
+              not face. */}
           <div style={{
-            width: 36, height: isGod ? 46 : 42, alignSelf: 'center',
-            // God's CARD is now accent-light, so the tile cannot be — it would
-            // vanish into its own background. Paper reads as an inset frame
-            // against the tint, which is what the tile is meant to look like.
+            width: 34, height: 40, flexShrink: 0,
+            // God's CARD carries the accent wash, so his tile cannot — it would
+            // vanish into its own background. Paper reads as an inset frame.
             background: isGod ? 'var(--cth-paper-100)' : `var(--cth-${accent}-light)`,
             boxShadow: `inset 0 0 0 1px var(--cth-ink-${isGod ? '300' : '100'})`,
-            // Anchor the sprite's TOP: the 56px-tall portrait overflows this
-            // tile, and bottom-anchoring cropped the head — crop feet, not face.
-            display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflow: 'hidden',
-            flexShrink: 0
+            display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflow: 'hidden'
           }}>
             <SpritePortrait character={character} scale={2} />
           </div>
 
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-            {/* Identity row: name (+ BOSS tag) + status. */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'space-between', minWidth: 0 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, minWidth: 0, flex: 1 }}>
-                {/* Read-only here. Renaming lives in the agent's own panel: a
-                    card in a dock is something you click to open, and an edit
-                    control inside it is one mis-click away from a rename you
-                    did not mean. */}
-                <span style={{
-                  fontFamily: 'var(--cth-font-display)',
-                  fontSize: 'var(--cth-text-display-sm)',
-                  lineHeight: 'var(--cth-lh-display-sm)',
-                  color: 'var(--cth-ink-900)',
-                  flex: 1, minWidth: 0,
-                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                }}>{name.toUpperCase()}</span>
-                {isGod && (
-                  <span style={{
-                    fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '12px',
-                    background: `var(--cth-${accent})`, color: 'var(--cth-on-accent)',
-                    padding: '1px 4px 0', flexShrink: 0
-                  }}>{t('agentCard.boss')}</span>                )}
-              </span>
-              {/* A presence dot, not a worded chip. The word cost 40-odd pixels
-                  of a 200px card and the browser paid for it by truncating the
-                  NAME; the colour says the only thing you need at dock size —
-                  red busy, yellow stalled, green just finished, pale idle — and
-                  the word is one hover away. */}
-              <PixelBadge status={typing ? 'typing' : status} dotOnly />
-            </div>
+          <span style={{
+            fontFamily: 'var(--cth-font-display)',
+            fontSize: 10, lineHeight: '13px',
+            color: 'var(--cth-ink-900)',
+            width: '100%', textAlign: 'center',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+          }}>{name.toUpperCase()}</span>
 
-            {/* Context line: action while working, repo while idle. */}
-            <div
-              title={`${project}${action && status !== 'idle' ? ` — ${action}` : ''}`}
-              style={{
-                fontSize: 11, lineHeight: '14px',
-                color: 'var(--cth-ink-500)',
-                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-              }}
-            >{infoLine}</div>
+          {/* What it is FOR. Two lines at most — the rest is in the tooltip,
+              and an agent whose job needs a paragraph on a dock tile has a
+              briefing problem, not a layout one. */}
+          {description && (
+            <span style={{
+              width: '100%', textAlign: 'center',
+              fontSize: 9, lineHeight: '11px',
+              color: 'var(--cth-ink-500)',
+              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+              overflow: 'hidden'
+            }}>{description}</span>
+          )}
 
-            {/* God: voice on its own compact row. Workers: the private note row.
-                Both sit ABOVE the gauge, so it is never covered. */}
-            {isGod ? (
-              // Talk grows an info mark when the OpenAI key is missing, so this
-              // row can hold three things instead of two. `overflow: hidden` is
-              // the guard: the toggle's label shrinks first (it has minWidth:0),
-              // and if it still does not fit, the row clips INSIDE the card
-              // instead of spilling over its border.
-              <div
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  minWidth: 0, overflow: 'hidden'
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <RealtimeMichaelToggle />
-                <CostHud compact />
-              </div>
-            ) : (
-              <div
-                onClick={(e) => e.stopPropagation()}
-                style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0, minHeight: 14 }}
-              >
-                {noteFirstLine ? (
-                  <span
-                    title={note}
-                    style={{
-                      flex: 1, minWidth: 0, fontSize: 10.5, lineHeight: '14px',
-                      color: 'var(--cth-ink-500)', fontStyle: 'italic',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                    }}
-                  >{noteFirstLine}</span>
-                ) : <span style={{ flex: 1 }} />}
-                {onEditNote && (
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => { e.stopPropagation(); onEditNote(); }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); onEditNote(); }
-                    }}
-                    title={note ? t('agentCard.editNote') : t('agentCard.addNote')}
-                    aria-label={t('agentCard.editNoteAria', { name })}
-                    style={{
-                      flexShrink: 0, width: 15, height: 14,
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 10, lineHeight: 1, cursor: 'pointer',
-                      // Quiet until the card is hovered — discoverable, not noisy.
-                      color: hover ? 'var(--cth-ink-500)' : 'var(--cth-ink-300)'
-                    }}
-                  >✎</span>
-                )}
-              </div>
-            )}
-
-            {/* Context gauge — slim fill bar pinned to the card's bottom edge.
-                An agent that has not reported yet gets the SPACE but not the
-                rail: an empty bordered bar reads as a progress bar stuck at
-                zero, which is a different and worrying claim. */}
-            <div style={{ marginTop: 'auto' }} title={gaugeTitle}>
-              <div style={{
-                height: 4, width: '100%',
-                background: contextTokens ? 'var(--cth-cream-200)' : 'transparent',
-                boxShadow: contextTokens ? 'inset 0 0 0 1px var(--cth-ink-100)' : 'none',
-                overflow: 'hidden'
-              }}>
-                <div style={{ width: `${pct}%`, height: '100%', background: gaugeColor }} />
-              </div>
+          {/* Context gauge — drawn only once there is a reading. An empty
+              bordered bar reads as progress stuck at zero, which is a different
+              and more worrying claim than "nothing measured yet". */}
+          <div style={{ marginTop: 'auto', width: '100%' }} title={gaugeTitle}>
+            <div style={{
+              height: 3, width: '100%',
+              background: contextTokens ? 'var(--cth-cream-200)' : 'transparent',
+              boxShadow: contextTokens ? 'inset 0 0 0 1px var(--cth-ink-100)' : 'none',
+              overflow: 'hidden'
+            }}>
+              <div style={{ width: `${pct}%`, height: '100%', background: gaugeColor }} />
             </div>
           </div>
+
+          {/* The private note lives in the tooltip at this size; the ✎ appears
+              on hover so it costs no layout. */}
+          {onEditNote && hover && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => { e.stopPropagation(); onEditNote(); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); onEditNote(); }
+              }}
+              title={note ? t('agentCard.editNote') : t('agentCard.addNote')}
+              aria-label={t('agentCard.editNoteAria', { name })}
+              style={{
+                position: 'absolute', left: 0, top: 0,
+                width: 14, height: 14,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10, lineHeight: 1, cursor: 'pointer',
+                color: 'var(--cth-ink-500)'
+              }}
+            >✎</span>
+          )}
         </div>
       </PixelPanel>
     </div>

@@ -19,7 +19,6 @@ import { HivePicker } from '@/components/HivePicker';
 import { QuitWarningModal, type ClosingTimeState } from '@/components/QuitWarningModal';
 import { CompletionToast } from '@/realtime/CompletionToast';
 import { UpdateToast } from '@/components/UpdateToast';
-import { UpdateBadge } from '@/components/UpdateBadge';
 import { useAppTheme, toggleAppTheme } from '@/design/theme';
 import { SettingsModal, type Section as SettingsSection } from '@/components/SettingsModal';
 import { PixelPanel } from '@/components/PixelPanel';
@@ -31,7 +30,6 @@ import { FullscreenTerminal } from '@/components/FullscreenTerminal';
 import { TaskDetailOverlay } from '@/components/TaskDetailOverlay';
 import { IdePanel } from '@/ide/IdePanel';
 import { useHoldOptionToTalk } from '@/freeflow/holdOption';
-import brandLogo from '@brand/logo.png?url';
 import { go, parseRoute, type Route } from '@/routes';
 
 // Injected at build time from package.json (see electron.vite.config.ts).
@@ -364,8 +362,8 @@ export function App() {
         className="cth-titlebar-drag"
         style={{
           height: 36, minHeight: 36,
-          background: 'linear-gradient(180deg, var(--cth-cream-100) 0%, var(--cth-cream-200) 100%)',
-          borderBottom: '1px solid var(--cth-ink-300)',
+          background: 'var(--cth-cream-100)',
+          borderBottom: '1px solid var(--cth-ink-100)',
           display: 'flex',
           alignItems: 'center',
           paddingLeft: 96,
@@ -374,21 +372,20 @@ export function App() {
           userSelect: 'none'
         }}
       >
-        <img
-          src={brandLogo}
-          alt="Atlas"
-          style={{ height: 20, width: 'auto', display: 'block' }}
-        />
-        {/* v0.3.7: the version is no longer inert text — it doubles as the
-            update control (check / download / restart to update). */}
-        <UpdateBadge />
+        {/* The wordmark, and nothing else. This bar held a pixel portrait, a
+            version chip and a running commentary on auto mode — three things
+            competing for the calmest strip in the app, none of them something
+            you act on. Updates live in Settings, and auto mode is a switch in
+            the agent's own header, where it can actually be flipped. */}
         <span style={{
-          fontFamily: 'var(--cth-font-ui)',
-          fontSize: 13,
-          color: 'var(--cth-ink-500)'
-        }}>
-          {config.autoMode ? 'auto mode on' : 'auto mode off'}
-        </span>
+          fontFamily: 'var(--cth-font-display)',
+          fontSize: 'var(--cth-text-display-sm)',
+          lineHeight: 'var(--cth-lh-display-sm)',
+          letterSpacing: '0.14em',
+          color: 'var(--cth-ink-700)',
+          userSelect: 'none'
+        }}>ATLAS</span>
+
         {/* v0.3.4: theme + fullscreen live HERE (top right), not buried in the
             terminal header — and the theme darkens the whole app, terminals
             included (design/theme.ts + tokens.css dark block). */}

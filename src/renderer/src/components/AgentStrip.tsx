@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AgentCard } from './AgentCard';
+import { AgentCard, CARD_HEIGHT, CARD_WIDTH } from './AgentCard';
 import { PixelButton } from './PixelButton';
 import { Icon } from './Icon';
 import { useStore, type Agent } from '@/store/store';
@@ -84,16 +84,16 @@ export function AgentStrip({ config }: AgentStripProps) {
   return (
     <div style={{
       display: 'flex',
-      gap: 12,
-      padding: '14px 16px',
+      gap: 10,
+      padding: '10px 16px',
       overflowX: 'auto',
       overflowY: 'hidden',
       borderTop: '1px solid var(--cth-ink-300)',
       background: 'var(--cth-cream-200)',
       // Tall enough for the god card to stand proud of the row (it's taller and
       // rides a drop shadow) plus the hover-lift on every card, without clipping.
-      height: 112,
-      minHeight: 112,
+      height: 120,
+      minHeight: 120,
       alignItems: 'center'
     }}>
       {agents.map(a => (
@@ -139,6 +139,7 @@ export function AgentStrip({ config }: AgentStripProps) {
             status={a.status}
             ptyId={a.ptyId}
             project={a.project}
+            description={a.description}
             action={a.action}
             progress={a.progress}
             contextTokens={a.contextTokens}
@@ -230,16 +231,7 @@ export function AgentStrip({ config }: AgentStripProps) {
           })()}
         </div>
       ))}
-      <PixelButton
-        variant="secondary"
-        size="lg"
-        style={{ alignSelf: 'center', flexShrink: 0 }}
-        onClick={() => setAddAgentOpen(true)}
-      >
-        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', whiteSpace: 'nowrap' }}>
-          <Icon name="plus" /> {t('agentStrip.addAgent')}
-        </span>
-      </PixelButton>
+      <AddAgentTile label={t('agentStrip.addAgent')} onClick={() => setAddAgentOpen(true)} />
       {/* ONE restore control, pinned to the strip's right edge. Busy (manual OR
           boot auto-restore) collapses to a single disabled "restoring your
           team…"; otherwise the button opens an upward dropdown listing last
@@ -334,5 +326,50 @@ export function AgentStrip({ config }: AgentStripProps) {
         </>
       )}
     </div>
+  );
+}
+
+
+/** The empty desk at the end of the dock.
+ *
+ *  It was a normal button, which made the one control that GROWS the floor the
+ *  smallest thing on it. Card geometry and a dashed edge say what it is without
+ *  a word of explanation: a seat nobody is in yet. */
+function AddAgentTile({ label, onClick }: { label: string; onClick: () => void }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="cth-titlebar-nodrag"
+      title={label}
+      style={{
+        width: CARD_WIDTH, height: CARD_HEIGHT, flexShrink: 0, alignSelf: 'center',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+        boxSizing: 'border-box', padding: 0, cursor: 'pointer',
+        background: hover ? 'var(--cth-cream-100)' : 'transparent',
+        border: `1px dashed var(--cth-ink-${hover ? '500' : '300'})`,
+        transform: hover ? 'translateY(-1px)' : 'none',
+        transition: 'transform 90ms steps(2, end), background 90ms linear, border-color 90ms linear'
+      }}
+    >
+      <span style={{
+        width: 24, height: 24, flexShrink: 0,
+        display: 'grid', placeItems: 'center',
+        background: hover ? 'var(--cth-lilac)' : 'var(--cth-paper-100)',
+        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+        color: hover ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)'
+      }}>
+        <Icon name="plus" />
+      </span>
+      <span style={{
+        fontFamily: 'var(--cth-font-display)',
+        fontSize: 10, lineHeight: '13px',
+        color: hover ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)',
+        width: '100%', textAlign: 'center'
+      }}>{label.toUpperCase()}</span>
+    </button>
   );
 }
