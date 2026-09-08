@@ -478,12 +478,12 @@
     "title": "ADD AGENT",
     "hireImported": "hire imported:",
     "byAuthor": " · by {{author}}",
-    "reviewFields": "review every field — especially the command — before spawning.",
+    "reviewFields": "Review every field, especially the command, before spawning.",
     "hireFlags": "⚠️ flags this hire appends to the command:",
     "hireSkills": "skills this hire activates:",
     "mcpSafe": "MCP servers (safe, pre-enabled):",
-    "mcpConsent": "⚠️ MCP (needs your consent — NOT auto-enabled):",
-    "mcpEnableInSettings": "— enable in Settings → MCP after reviewing",
+    "mcpConsent": "⚠️ MCP (needs your consent, NOT auto-enabled):",
+    "mcpEnableInSettings": "Enable it in Settings → MCP after reviewing",
     "sections": {
       "identity": {
         "label": "Identity",
@@ -508,7 +508,7 @@
     "color": "Color",
     "project": "Project",
     "pickProject": "Pick a project, or add a new one:",
-    "noProjects": "No projects yet — add one to get started:",
+    "noProjects": "No projects yet. Add one to get started.",
     "addProject": "add project",
     "addProjectTitle": "Pick a folder and register it as a project",
     "projectPlaceholder": "/path/to/your/project",
@@ -523,14 +523,14 @@
     "provider": "Provider",
     "providerAntigravity": "Spawn the Antigravity CLI (agy) with a Gemini model",
     "providerCodex": "Spawn the Codex CLI (codex) without Claude-only flags",
-    "providerCustom": "Run any command — no Claude-only flags",
+    "providerCustom": "Run any command. No Claude-only flags.",
     "model": "Model",
     "cliDefaultModel": "CLI default model",
     "fromHire": "{{model}} (from hire)",
     "ossModels": "OSS models",
     "ossLocal": "Local · no key (Ollama / LM Studio)",
     "ossByok": "Via OSS provider · BYOK",
-    "ossLocalTitle": "{{slug}} · needs ~{{ram}} RAM — pull with: ollama pull {{tag}}",
+    "ossLocalTitle": "{{slug}} · needs ~{{ram}} RAM. Pull it with: ollama pull {{tag}}",
     "ossByokTitle": "{{slug}} · set {{keyEnv}} in Settings → AI Engines",
     "byokNote": "BYOK keys & local endpoints for this engine live in Settings → AI Engines. New to local models? Read run on open models or set up on a Mac Mini. Live end-to-end is pending real model calls (verify on-device).",
     "runOnOpenModels": "run on open models",
@@ -556,7 +556,7 @@
       }
     },
     "description": "Description",
-    "descriptionPlaceholder": "job — what this agent is for, not live status",
+    "descriptionPlaceholder": "job: what this agent is for, not live status",
     "goal": "Goal (optional)",
     "goalPlaceholder": "long-running directive injected on every prompt",
     "importHire": "Import hire",
@@ -574,7 +574,7 @@
     "errFolder": "Pick a folder first",
     "errCommand": "Command is required",
     "hireProgress": "hire {{current}} of {{total}}",
-    "skipHire": "skip hire"
+    "skipHire": "Skip hire"
   },
   "onboarding": {
     "titles": {

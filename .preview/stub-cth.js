@@ -162,6 +162,51 @@
         });
     },
 
+    // Import hire. The real handler opens Electron's file dialog and validates
+    // every manifest in the main process (readHireManifestFiles). A browser can
+    // read files the USER picks with no permission prompt at all, so the preview
+    // does the same thing with a file input and a light version of the same
+    // checks: parse, require the spec tag and a name. Anything else is reported
+    // as a skipped file, exactly like the real one.
+    importHireFiles: function () {
+      return new Promise(function (resolve) {
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json,application/json';
+        input.multiple = true;
+        input.style.cssText = 'position:fixed;left:-9999px';
+        document.body.appendChild(input);
+        var done = function (out) { input.remove(); resolve(out); };
+        input.onchange = function () {
+          var files = Array.prototype.slice.call(input.files || []);
+          if (!files.length) return done({ ok: false, manifests: [], errors: [], error: 'cancelled' });
+          Promise.all(files.map(function (f) {
+            return f.text().then(function (text) {
+              var m = JSON.parse(text);
+              if (m.spec !== 'munder-difflin/hire@1') throw new Error('wrong spec');
+              if (!m.name || typeof m.name !== 'string') throw new Error('no name');
+              return { ok: true, manifest: m };
+            }).catch(function (e) { return { ok: false, file: f.name, why: e.message }; });
+          })).then(function (results) {
+            var manifests = results.filter(function (r) { return r.ok; }).map(function (r) { return r.manifest; });
+            var errors = results.filter(function (r) { return !r.ok; })
+              .map(function (r) { return r.file + ' (' + r.why + ')'; });
+            done({
+              ok: manifests.length > 0,
+              manifests: manifests,
+              errors: errors,
+              error: manifests.length ? undefined : 'no valid hire manifests selected',
+            });
+          });
+        };
+        // A cancelled file dialog fires no event in most browsers; `cancel` is
+        // supported in current Chrome, and the promise simply never settles in
+        // one that is not, which is the same as the user changing their mind.
+        input.oncancel = function () { done({ ok: false, manifests: [], errors: [], error: 'cancelled' }); };
+        input.click();
+      });
+    },
+
     // Without this, "install instructions" silently did nothing and looked like
     // a broken button. A new tab is the browser's equivalent of shell.openExternal.
     openExternal: function (url) {
