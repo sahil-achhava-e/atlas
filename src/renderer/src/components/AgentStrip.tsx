@@ -92,8 +92,8 @@ export function AgentStrip({ config }: AgentStripProps) {
       background: 'var(--cth-cream-200)',
       // Tall enough for the god card to stand proud of the row (it's taller and
       // rides a drop shadow) plus the hover-lift on every card, without clipping.
-      height: 120,
-      minHeight: 120,
+      height: 100,
+      minHeight: 100,
       alignItems: 'center'
     }}>
       {agents.map(a => (

@@ -48,8 +48,8 @@ const fmtK = (n: number): string => `${Math.round(n / 1000)}k`;
 
 /** One card size for every agent — and for the empty slot the strip draws at
  *  the end of the dock, which has to line up with them. */
-export const CARD_WIDTH = 96;
-export const CARD_HEIGHT = 96;
+export const CARD_WIDTH = 164;
+export const CARD_HEIGHT = 72;
 
 /**
  * v0.3.4 compact redesign: one identity row (name + status), one context line
@@ -196,7 +196,7 @@ export function AgentCard({
       >
         <div style={{
           position: 'relative', height: '100%',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3
+          display: 'flex', gap: 7
         }}>
           {/* Presence, in the corner. At tile size the dot IS the status line. */}
           <PixelBadge
@@ -209,7 +209,7 @@ export function AgentCard({
               than the tile, and bottom-anchoring cropped the head — crop feet,
               not face. */}
           <div style={{
-            width: 34, height: 40, flexShrink: 0,
+            width: 32, height: 44, flexShrink: 0, alignSelf: 'center',
             // God's CARD carries the accent wash, so his tile cannot — it would
             // vanish into its own background. Paper reads as an inset frame.
             background: isGod ? 'var(--cth-paper-100)' : `var(--cth-${accent}-light)`,
@@ -219,38 +219,39 @@ export function AgentCard({
             <SpritePortrait character={character} scale={2} />
           </div>
 
-          <span style={{
-            fontFamily: 'var(--cth-font-display)',
-            fontSize: 10, lineHeight: '13px',
-            color: 'var(--cth-ink-900)',
-            width: '100%', textAlign: 'center',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-          }}>{name.toUpperCase()}</span>
-
-          {/* What it is FOR. Two lines at most — the rest is in the tooltip,
-              and an agent whose job needs a paragraph on a dock tile has a
-              briefing problem, not a layout one. */}
-          {description && (
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
             <span style={{
-              width: '100%', textAlign: 'center',
-              fontSize: 9, lineHeight: '11px',
-              color: 'var(--cth-ink-500)',
-              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-              overflow: 'hidden'
-            }}>{description}</span>
-          )}
+              fontFamily: 'var(--cth-font-display)',
+              fontSize: 10, lineHeight: '14px',
+              color: 'var(--cth-ink-900)',
+              paddingRight: 12,
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+            }}>{name.toUpperCase()}</span>
 
-          {/* Context gauge — drawn only once there is a reading. An empty
-              bordered bar reads as progress stuck at zero, which is a different
-              and more worrying claim than "nothing measured yet". */}
-          <div style={{ marginTop: 'auto', width: '100%' }} title={gaugeTitle}>
-            <div style={{
-              height: 3, width: '100%',
-              background: contextTokens ? 'var(--cth-cream-200)' : 'transparent',
-              boxShadow: contextTokens ? 'inset 0 0 0 1px var(--cth-ink-100)' : 'none',
-              overflow: 'hidden'
-            }}>
-              <div style={{ width: `${pct}%`, height: '100%', background: gaugeColor }} />
+            {/* What it is FOR. The card is a rectangle so this line has width to
+                land in: three lines hold a real sentence, and the tooltip holds
+                anything longer. */}
+            {description && (
+              <span style={{
+                fontSize: 9.5, lineHeight: '12px',
+                color: 'var(--cth-ink-500)',
+                display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+                overflow: 'hidden', overflowWrap: 'anywhere'
+              }}>{description}</span>
+            )}
+
+            {/* Context gauge — drawn only once there is a reading. An empty
+                bordered bar reads as progress stuck at zero, which is a
+                different and more worrying claim than "nothing measured yet". */}
+            <div style={{ marginTop: 'auto', width: '100%' }} title={gaugeTitle}>
+              <div style={{
+                height: 3, width: '100%',
+                background: contextTokens ? 'var(--cth-cream-200)' : 'transparent',
+                boxShadow: contextTokens ? 'inset 0 0 0 1px var(--cth-ink-100)' : 'none',
+                overflow: 'hidden'
+              }}>
+                <div style={{ width: `${pct}%`, height: '100%', background: gaugeColor }} />
+              </div>
             </div>
           </div>
 
@@ -267,7 +268,7 @@ export function AgentCard({
               title={note ? t('agentCard.editNote') : t('agentCard.addNote')}
               aria-label={t('agentCard.editNoteAria', { name })}
               style={{
-                position: 'absolute', left: 0, top: 0,
+                position: 'absolute', right: 0, bottom: 0,
                 width: 14, height: 14,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 10, lineHeight: 1, cursor: 'pointer',
