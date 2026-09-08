@@ -416,7 +416,7 @@ export function App() {
                     </p>
                     <PixelButton variant="primary" size="md" onClick={() => setAddAgentOpen(true)}>
                       <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-                        <Icon name="plus" /> add agent
+                        <Icon name="plus" /> Add agent
                       </span>
                     </PixelButton>
                   </div>
@@ -469,7 +469,7 @@ export function App() {
               </p>
               <PixelButton variant="secondary" size="md" onClick={() => setAddAgentOpen(true)}>
                 <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-                  <Icon name="plus" /> add agent
+                  <Icon name="plus" /> Add agent
                 </span>
               </PixelButton>
             </PixelPanel>
