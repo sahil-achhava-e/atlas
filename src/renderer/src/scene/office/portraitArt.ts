@@ -79,9 +79,15 @@ function drawHead(buf: Buf, skin: string): void {
 
 type Brow = 'flat' | 'angry' | 'raised' | 'soft';
 type Mouth = 'neutral' | 'smile' | 'frown' | 'grin';
-function drawFace(buf: Buf, skin: string, brow: Brow, mouth: Mouth, blush: boolean, lashes = false): void {
+function drawFace(
+  buf: Buf, skin: string, brow: Brow, mouth: Mouth, blush: boolean,
+  lashes = false, eyes?: RGB
+): void {
   const s = SKIN[skin];
-  const white: RGB = [250, 248, 244], pup: RGB = [46, 38, 42];
+  // The pupil is ONE pixel, which at 3x is a 3x3 block and the only part of the
+  // face that can differ per character: everything else (eye position, nose,
+  // mouth) is fixed by the 18x28 grid. So it is worth colouring.
+  const white: RGB = [250, 248, 244], pup: RGB = eyes ?? [46, 38, 42];
   for (const [a, b, p] of [[5, 6, 6], [10, 11, 10]] as const) {
     set(buf, a, 9, white); set(buf, b, 9, white); set(buf, p, 9, pup);
   }
@@ -506,6 +512,8 @@ interface Recipe {
   blindfold?: boolean; mask?: boolean; hat?: 'straw'; whiskers?: boolean;
   /** Atlas only: a hood in place of hair, and a lit visor in place of eyes. */
   hood?: RGB; visor?: RGB;
+  /** Pupil colour, and a scar through one eye. */
+  eyes?: RGB; scar?: 'left' | 'right';
   /** Heavier build: chubby cheeks, a double chin, and a wider torso. */
   heavy?: boolean;
 }
@@ -604,6 +612,16 @@ function drawStrawHat(buf: Buf): void {
   set(buf, 1, 4, sh); set(buf, 16, 4, sh);
 }
 
+/** A vertical scar through one eye. Drawn after the HAIR: run before it, the
+ *  fringe paints over the top half and the scar reads as a stray pixel. */
+function drawScar(buf: Buf, side: 'left' | 'right'): void {
+  const line: RGB = [150, 96, 84];
+  const hi: RGB = [196, 140, 126];
+  const x = side === 'left' ? 5 : 12;
+  for (let y = 6; y <= 12; y++) set(buf, x, y, line);
+  set(buf, x, 7, hi); set(buf, x, 10, hi);
+}
+
 /** Two short strokes on each cheek. x3/x14 is the outline column, not skin, so
  *  they have to sit inside HX0..HX1 or they vanish into the silhouette. */
 function drawWhiskers(buf: Buf, skin: string): void {
@@ -618,21 +636,21 @@ const RECIPES: Record<OfficeCharacterName, Recipe> = {
   // The crew, drawn to read at 16 px wide: hair colour and silhouette do almost
   // all the recognising, clothing colour does the rest. Keys stay the original
   // cast names because they are the persisted `agent.character` value.
-  michael:  { skin: 'light', hairc: [26, 22, 26], hair: 'styleTallSpikes', cloth: 'polo', c1: [236, 136, 44], c2: [58, 86, 152], brow: 'flat', mouth: 'smile' },   // Atlas / Goku
-  jim:      { skin: 'tan',   hairc: [32, 26, 26],    hair: 'styleMessy',  hairargs: { length: 13 }, cloth: 'polo', c1: [198, 56, 50], c2: [156, 42, 40], hat: 'straw', brow: 'raised', mouth: 'grin' },   // Luffy
-  pam:      { skin: 'light', hairc: [26, 22, 28],    hair: 'styleFrame',  hairargs: { length: 20, vol: 1 }, cloth: 'blouse', c1: [124, 84, 150], brow: 'soft', mouth: 'smile', lashes: true },   // Robin
-  dwight:   { skin: 'tan',   hairc: [92, 148, 78],   hair: 'styleShort',  hairargs: { part: 'R' }, cloth: 'sweater', c1: [54, 82, 56], brow: 'angry', mouth: 'neutral' },   // Zoro
-  kevin:    { skin: 'light', hairc: [232, 200, 168], hair: 'styleBald', cloth: 'sweater', c1: [236, 206, 72], c2: [188, 62, 54], brow: 'flat', mouth: 'neutral' },   // Saitama
-  angela:   { skin: 'light', hairc: [30, 28, 36],    hair: 'styleFrame',  hairargs: { length: 12, vol: 1 }, cloth: 'dressshirt', c1: [60, 62, 74], tie: [178, 54, 54], brow: 'flat', mouth: 'neutral', lashes: true },   // Mikasa, the tie doubles as the scarf
-  oscar:    { skin: 'light', hairc: [122, 86, 54],   hair: 'styleShort',  hairargs: { part: 'R' }, cloth: 'suit', c1: [88, 74, 62], tie: [68, 56, 46], brow: 'flat', mouth: 'neutral' },   // Light
-  stanley:  { skin: 'light', hairc: [202, 206, 214], hair: 'styleSpiky',  cloth: 'sweater', c1: [62, 78, 68], mask: true, brow: 'soft', mouth: 'neutral' },   // Kakashi
-  phyllis:  { skin: 'light', hairc: [238, 146, 178], hair: 'styleFrame',  hairargs: { length: 16, vol: 2 }, cloth: 'blouse', c1: [196, 60, 74], brow: 'soft', mouth: 'smile', blush: true, lashes: true },   // Sakura
-  andy:     { skin: 'light', hairc: [234, 198, 76],  hair: 'styleSpiky',  cloth: 'polo', c1: [226, 124, 44], c2: [44, 56, 88], whiskers: true, brow: 'raised', mouth: 'grin' },   // Naruto
-  kelly:    { skin: 'light', hairc: [240, 214, 120], hair: 'styleFrame',  hairargs: { length: 18, vol: 2 }, cloth: 'blouse', c1: [38, 36, 42], brow: 'soft', mouth: 'smile', blush: true, lashes: true },   // Misa
-  ryan:     { skin: 'light', hairc: [86, 62, 44],    hair: 'styleMessy',  hairargs: { length: 15 }, cloth: 'cardigan', c1: [122, 88, 58], c2: [238, 234, 224], brow: 'angry', mouth: 'neutral' },   // Eren
-  toby:     { skin: 'light', hairc: [226, 204, 138], hair: 'styleFrame',  hairargs: { length: 14, vol: 1 }, cloth: 'cardigan', c1: [132, 110, 74], c2: [236, 232, 222], brow: 'soft', mouth: 'neutral' },   // Armin
-  creed:    { skin: 'light', hairc: [24, 22, 30],    hair: 'styleSpiky',  cloth: 'sweater', c1: [32, 30, 38], brow: 'angry', mouth: 'grin' },   // Ryuk
-  meredith: { skin: 'light', hairc: [232, 138, 58],  hair: 'styleFrame',  hairargs: { length: 18, vol: 2 }, cloth: 'blouse', c1: [242, 240, 236], brow: 'soft', mouth: 'smile', blush: true, lashes: true },   // Nami
+  michael:  { skin: 'light', hairc: [26, 22, 26], hair: 'styleTallSpikes', cloth: 'polo', c1: [236, 136, 44], c2: [58, 86, 152], brow: 'flat', mouth: 'smile', eyes: [58, 62, 92] },   // Atlas / Goku
+  jim:      { skin: 'tan',   hairc: [32, 26, 26],    hair: 'styleMessy',  hairargs: { length: 13 }, cloth: 'polo', c1: [198, 56, 50], c2: [156, 42, 40], hat: 'straw', brow: 'raised', mouth: 'grin', eyes: [72, 46, 32] },   // Luffy
+  pam:      { skin: 'light', hairc: [26, 22, 28],    hair: 'styleFrame',  hairargs: { length: 20, vol: 1 }, cloth: 'blouse', c1: [124, 84, 150], brow: 'soft', mouth: 'smile', lashes: true, eyes: [64, 96, 148] },   // Robin
+  dwight:   { skin: 'tan',   hairc: [92, 148, 78],   hair: 'styleShort',  hairargs: { part: 'R' }, cloth: 'sweater', c1: [54, 82, 56], brow: 'angry', mouth: 'neutral', eyes: [58, 52, 44], scar: 'left' },   // Zoro
+  kevin:    { skin: 'light', hairc: [232, 200, 168], hair: 'styleBald', cloth: 'sweater', c1: [236, 206, 72], c2: [188, 62, 54], brow: 'flat', mouth: 'neutral', eyes: [40, 38, 44] },   // Saitama
+  angela:   { skin: 'light', hairc: [30, 28, 36],    hair: 'styleFrame',  hairargs: { length: 12, vol: 1 }, cloth: 'dressshirt', c1: [60, 62, 74], tie: [178, 54, 54], brow: 'flat', mouth: 'neutral', lashes: true, eyes: [96, 102, 118] },   // Mikasa, the tie doubles as the scarf
+  oscar:    { skin: 'light', hairc: [122, 86, 54],   hair: 'styleShort',  hairargs: { part: 'R' }, cloth: 'suit', c1: [88, 74, 62], tie: [68, 56, 46], brow: 'flat', mouth: 'neutral', eyes: [104, 68, 44] },   // Light
+  stanley:  { skin: 'light', hairc: [202, 206, 214], hair: 'styleSpiky',  cloth: 'sweater', c1: [62, 78, 68], mask: true, brow: 'soft', mouth: 'neutral', eyes: [58, 58, 66] },   // Kakashi
+  phyllis:  { skin: 'light', hairc: [238, 146, 178], hair: 'styleFrame',  hairargs: { length: 16, vol: 2 }, cloth: 'blouse', c1: [196, 60, 74], brow: 'soft', mouth: 'smile', blush: true, lashes: true, eyes: [70, 130, 96] },   // Sakura
+  andy:     { skin: 'light', hairc: [234, 198, 76],  hair: 'styleSpiky',  cloth: 'polo', c1: [226, 124, 44], c2: [44, 56, 88], whiskers: true, brow: 'raised', mouth: 'grin', eyes: [70, 124, 196] },   // Naruto
+  kelly:    { skin: 'light', hairc: [240, 214, 120], hair: 'styleFrame',  hairargs: { length: 18, vol: 2 }, cloth: 'blouse', c1: [38, 36, 42], brow: 'soft', mouth: 'smile', blush: true, lashes: true, eyes: [84, 132, 190] },   // Misa
+  ryan:     { skin: 'light', hairc: [86, 62, 44],    hair: 'styleMessy',  hairargs: { length: 15 }, cloth: 'cardigan', c1: [122, 88, 58], c2: [238, 234, 224], brow: 'angry', mouth: 'neutral', eyes: [86, 122, 108] },   // Eren
+  toby:     { skin: 'light', hairc: [226, 204, 138], hair: 'styleFrame',  hairargs: { length: 14, vol: 1 }, cloth: 'cardigan', c1: [132, 110, 74], c2: [236, 232, 222], brow: 'soft', mouth: 'neutral', eyes: [92, 140, 196] },   // Armin
+  creed:    { skin: 'light', hairc: [24, 22, 30],    hair: 'styleSpiky',  cloth: 'sweater', c1: [32, 30, 38], brow: 'angry', mouth: 'grin', eyes: [226, 178, 46] },   // Ryuk
+  meredith: { skin: 'light', hairc: [232, 138, 58],  hair: 'styleFrame',  hairargs: { length: 18, vol: 2 }, cloth: 'blouse', c1: [242, 240, 236], brow: 'soft', mouth: 'smile', blush: true, lashes: true, eyes: [110, 74, 48] },   // Nami
 };
 
 /** The face/hair group (head → face → facial hair → hair → glasses), no clothing. */
@@ -640,12 +658,14 @@ function drawHeadGroup(buf: Buf, r: Recipe): void {
   const skinBase = SKIN[r.skin].base;
   drawHead(buf, r.skin);
   if (r.heavy) drawHeavyFace(buf, r.skin);
-  drawFace(buf, r.skin, r.brow ?? 'flat', r.mouth ?? 'neutral', r.blush ?? false, r.lashes ?? false);
+  drawFace(buf, r.skin, r.brow ?? 'flat', r.mouth ?? 'neutral', r.blush ?? false, r.lashes ?? false, r.eyes);
   if (r.facial) drawFacial(buf, r.facial, r.hairc);
   if (r.whiskers) drawWhiskers(buf, r.skin);
   if (r.blindfold) drawBlindfold(buf);
   if (r.mask) drawMask(buf);
   HAIR_FNS[r.hair](buf, r.hairc, skinBase, r.hairargs ?? {});
+  // AFTER the hair: drawn before it, the fringe painted straight over it.
+  if (r.scar) drawScar(buf, r.scar);
   if (r.hood) drawHood(buf, r.hood);
   if (r.visor) drawVisor(buf, r.visor);
   if (r.glasses) drawGlasses(buf);
