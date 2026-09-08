@@ -568,13 +568,14 @@
     "copyPrompt": "copy prompt",
     "importHireBtn": "Import hire",
     "importHireBtnTitle": "Import a hire manifest (.json)",
-    "spawn": "Spawn",
-    "spawning": "spawning...",
+    "spawn": "Hire",
+    "spawning": "Hiring…",
     "errName": "Name is required",
     "errFolder": "Pick a folder first",
     "errCommand": "Command is required",
     "hireProgress": "hire {{current}} of {{total}}",
-    "skipHire": "Skip hire"
+    "skipHire": "Skip hire",
+    "next": "Next"
   },
   "onboarding": {
     "titles": {

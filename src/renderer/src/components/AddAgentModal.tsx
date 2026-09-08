@@ -251,6 +251,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   const [busy, setBusy] = useState(false);
   // Which config section the left sidebar index is showing.
   const [section, setSection] = useState<SectionKey>('identity');
+  const sectionIndex = Math.max(0, SECTIONS.findIndex((x) => x.key === section));
   // "Generate a hire with AI" helper — reveals a copy-paste prompt (item 7).
   const [showHirePrompt, setShowHirePrompt] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
@@ -1185,14 +1186,35 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
             {/* Import moved up beside "Generate with AI", where the line
                 explaining both of them is. Two Import hire buttons on one
                 dialog is a coin flip about which one is the real one. */}
+            {/* The four sections are a sequence, so the footer walks it: Back and
+                Next until the last one, then Hire. The rail stays clickable, so
+                an imported hire (every field already filled) can still be sent
+                straight from section 1 by jumping to Briefing. */}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
               {pendingHire && (
                 <PixelButton variant="secondary" size="md" onClick={skipHire} disabled={busy}>{tr('addAgent.skipHire')}</PixelButton>
               )}
               <PixelButton variant="ghost" size="md" onClick={onClose} disabled={busy}>{tr('common.cancel')}</PixelButton>
-              <PixelButton variant="primary" size="md" onClick={submit} disabled={busy}>
-                {busy ? tr('addAgent.spawning') : tr('addAgent.spawn')}
-              </PixelButton>
+              {sectionIndex > 0 && (
+                <PixelButton variant="ghost" size="md" onClick={() => setSection(SECTIONS[sectionIndex - 1].key)} disabled={busy}>
+                  {tr('common.back')}
+                </PixelButton>
+              )}
+              {sectionIndex < SECTIONS.length - 1 ? (
+                <PixelButton
+                  variant="primary"
+                  size="md"
+                  style={{ minWidth: 110 }}
+                  onClick={() => setSection(SECTIONS[sectionIndex + 1].key)}
+                  disabled={busy}
+                >
+                  {tr('addAgent.next')}
+                </PixelButton>
+              ) : (
+                <PixelButton variant="primary" size="md" style={{ minWidth: 110 }} onClick={submit} disabled={busy}>
+                  {busy ? tr('addAgent.spawning') : tr('addAgent.spawn')}
+                </PixelButton>
+              )}
             </div>
           </div>
         </PixelPanel>
