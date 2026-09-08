@@ -175,7 +175,11 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // that step writes; the default command is the fallback for a config that
   // predates it.
   const initialProvider = config.godProvider ?? inferAgentProvider(config.defaultCommand);
-  const initialModel = isClaudeProvider(initialProvider) ? config.defaultModel : undefined;
+  // Opus 4.8 · 1M unless the workspace says otherwise: the long-context model is
+  // the one worth defaulting to for an agent that will run unattended.
+  const initialModel = isClaudeProvider(initialProvider)
+    ? (config.defaultModel ?? providerPreset(initialProvider).recommendedOrchestratorModel)
+    : undefined;
 
   // Empty, not a suggested name: the name is the one thing only you know.
   const [name, setName] = useState(pendingHire?.name ?? '');
