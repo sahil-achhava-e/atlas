@@ -174,10 +174,18 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
   // Empty, not a suggested name: the name is the one thing only you know.
   const [name, setName] = useState(pendingHire?.name ?? '');
-  // '' means "not chosen": the face is then drawn from the name, and only
-  // becomes a stored id if you pick one from the library.
+  // '' means nothing picked yet. The default is DERIVED rather than seeded into
+  // state: the roster hydrates after mount, so a useState initialiser reads an
+  // empty floor and would offer Atlas even when an agent already wears it.
+  const atlasFree = !useStore(s => s.agents.some(a => a.character === 'michael'));
   const [character, setCharacter] = useState<string>(pendingHire?.character ?? '');
-  const faceId = character || name.trim();
+  const effectiveCharacter = character || (atlasFree ? 'michael' : name.trim());
+  /** Atlas first, then the library. One list, used by the grid. */
+  const faceChoices: { id: string; name: string; note?: string }[] = [
+    { id: 'michael', name: 'Atlas', note: tr('addAgent.faceReserved') },
+    ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name })),
+  ];
+  const faceId = effectiveCharacter;
   const [accent, setAccent] = useState<AccentColorName>(knownAccent(pendingHire?.accent));
   const [cwd, setCwd] = useState<string>(config.registeredRepos[0] ?? '');
   // Local mirror of the registered projects so one added from here shows as a
@@ -235,7 +243,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // Which config section the left sidebar index is showing.
   const [section, setSection] = useState<SectionKey>('identity');
   const [showQuickAdd, setShowQuickAdd] = useState(false);
-  const [showFaces, setShowFaces] = useState(false);
   const sectionIndex = Math.max(0, SECTIONS.findIndex((x) => x.key === section));
   // "Generate a hire with AI" helper — reveals a copy-paste prompt (item 7).
 
@@ -352,17 +359,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     if (!next) onClose();
   };
 
-  const importHire = async () => {
-    setError(undefined);
-    const res = await window.cth.importHireFiles();
-    if (res.manifests.length > 0) enqueuePendingHires(res.manifests);
-    if (res.errors.length > 0) {
-      const noun = res.errors.length === 1 ? 'file' : 'files';
-      setError(`Skipped ${res.errors.length} invalid ${noun}: ${res.errors.join(' · ')}`);
-    } else if (!res.ok && res.error && res.error !== 'cancelled') {
-      setError(res.error);
-    }
-  };
 
   const skipHire = () => {
     if (!pendingHire) return;
@@ -435,9 +431,9 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     const agent: Agent = {
       id,
       name: name.trim(),
-      // No face picked means the name is the face, which is what the dialog has
-      // been showing all along. Never store '' as a character.
-      character: character || name.trim(),
+      // Whatever the dialog has been showing: a picked face, Atlas while it is
+      // free, or the name drawing itself. Never store ''.
+      character: effectiveCharacter || name.trim(),
       accent,
       description: description.trim() || 'a fresh harness',
       project: basename(projectCwd),
@@ -668,48 +664,55 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                     </Row>
 
                     <Row label={tr('addAgent.character')}>
-                      {/* The portrait is the button. A picture of the thing you
-                          are changing, next to a button that changes it, is two
-                          controls where one will do. */}
-                      <button
-                        onClick={() => setShowFaces(true)}
-                        title={tr('addAgent.chooseFace')}
-                        className="cth-choice"
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
-                          padding: 8, border: 'none', cursor: 'pointer',
-                          background: 'var(--cth-cream-100)',
-                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
-                        }}
-                      >
-                        <span style={{
-                          width: 62, height: 74, flexShrink: 0, display: 'flex',
-                          alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden',
-                          background: `var(--cth-${accent}-light)`,
-                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
-                        }}>
-                          {faceId
-                            ? <SpritePortrait character={faceId} scale={3} />
-                            : (
-                              // Nothing typed and nothing picked: an empty box
-                              // reads as broken, so say what it is waiting for.
+                      {/* Every face, side by side, rather than one box that
+                          opens a picker: you are choosing between them, so they
+                          belong next to each other. Taken ones stay visible and
+                          dimmed, since a missing tile only looks like a shorter
+                          list. */}
+                      <div style={{
+                        display: 'flex', gap: 6, flexWrap: 'wrap',
+                        maxHeight: 268, overflowY: 'auto', paddingRight: 4
+                      }}>
+                        {faceChoices.map((f) => {
+                          const active = effectiveCharacter === f.id;
+                          const used = takenCharacters.has(f.id) && !active;
+                          return (
+                            <button
+                              key={f.id}
+                              disabled={used}
+                              onClick={() => setCharacter(f.id)}
+                              title={used ? tr('addAgent.faceInUse') : f.name}
+                              aria-pressed={active}
+                              style={{
+                                width: 66, padding: '5px 4px 4px', border: 'none',
+                                cursor: used ? 'not-allowed' : 'pointer',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                                background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
+                                boxShadow: active
+                                  ? `inset 0 0 0 2px var(--cth-${accent})`
+                                  : 'inset 0 0 0 1px var(--cth-ink-100)',
+                                opacity: used ? 0.45 : 1
+                              }}
+                            >
                               <span style={{
-                                alignSelf: 'center',
-                                fontFamily: 'var(--cth-font-display)', fontSize: 20,
-                                color: 'var(--cth-ink-300)'
-                              }}>?</span>
-                            )}
-                        </span>
-                        <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
-                          <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13, lineHeight: '18px' }}>
-                            {LIBRARY_BY_ID[character]?.name
-                              ?? (character ? character : tr('addAgent.faceFromName'))}
-                          </span>
-                          <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
-                            {tr('addAgent.chooseFace')}
-                          </span>
-                        </span>
-                      </button>
+                                width: 54, height: 66, display: 'flex', alignItems: 'flex-end',
+                                justifyContent: 'center', overflow: 'hidden',
+                                background: 'var(--cth-cream-200)'
+                              }}>
+                                <SpritePortrait character={f.id} scale={3} />
+                              </span>
+                              <span style={{
+                                fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '13px',
+                                color: 'var(--cth-ink-900)'
+                              }}>{f.name}</span>
+                              <span style={{
+                                fontSize: 9, lineHeight: '12px',
+                                color: used ? 'var(--cth-coral)' : 'var(--cth-ink-500)'
+                              }}>{used ? tr('addAgent.faceInUse') : (f.note ?? '')}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </Row>
 
                     <Row label={tr('addAgent.color')}>
@@ -1121,16 +1124,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               </PixelButton>
             </div>
 
-            {showFaces && (
-              <FacePicker
-                current={character}
-                taken={takenCharacters}
-                onPick={(id) => { setCharacter(id); setShowFaces(false); }}
-                onCancel={() => setShowFaces(false)}
-                tr={tr}
-              />
-            )}
-
             {showQuickAdd && (
               <QuickAdd
                 defaults={{ name }}
@@ -1140,7 +1133,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                   setCharacter(v.character);
                   setShowQuickAdd(false);
                 }}
-                onLoadFile={() => { setShowQuickAdd(false); void importHire(); }}
                 tr={tr}
               />
             )}
@@ -1218,13 +1210,12 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
  *  popup always the worse one. Identity is the part worth having up front when
  *  adding several; the rest is what the four sections and the manifest are for.
  */
-function QuickAdd({ defaults, onApply, onCancel, onLoadFile, tr }: {
+function QuickAdd({ defaults, onApply, onCancel, tr }: {
   defaults: { name: string };
   /** The character IS the name: an agent with no cast entry draws its own face,
    *  keyed by that string, so nothing extra has to be stored or chosen. */
   onApply: (v: { name: string; character: string }) => void;
   onCancel: () => void;
-  onLoadFile: () => void;
   tr: (k: string) => string;
 }) {
   const [name, setName] = useState(defaults.name);
@@ -1281,9 +1272,6 @@ function QuickAdd({ defaults, onApply, onCancel, onLoadFile, tr }: {
         </div>
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <PixelButton variant="ghost" size="md" onClick={onLoadFile}>
-            {tr('addAgent.quickFromFile')}
-          </PixelButton>
           <div style={{ flex: 1 }} />
           <PixelButton variant="ghost" size="md" onClick={onCancel}>{tr('common.cancel')}</PixelButton>
           <PixelButton variant="primary" size="md" style={{ minWidth: 100 }} disabled={!name.trim()} onClick={apply}>
@@ -1295,103 +1283,3 @@ function QuickAdd({ defaults, onApply, onCancel, onLoadFile, tr }: {
   );
 }
 
-/** The face library: Atlas plus thirty, with the ones already working marked.
- *
- *  A face is an agent's identity on the floor, so a taken one is shown rather
- *  than hidden: seeing "Aiko, in use" tells you why you cannot pick it, where a
- *  missing tile just looks like a shorter list.
- */
-function FacePicker({ current, taken, onPick, onCancel, tr }: {
-  current: string;
-  taken: Set<string>;
-  onPick: (id: string) => void;
-  onCancel: () => void;
-  tr: (k: string) => string;
-}) {
-  // Atlas is shown but locked. It is the orchestrator's own face, so an agent
-  // must not wear it, and hiding it entirely just raises the question of where
-  // it went. Present and unavailable answers that; `locked` keeps it out of
-  // the free count as well.
-  const atlas = OFFICE_CAST.find((c) => c.name === 'michael');
-  const entries: { id: string; name: string; note?: string; locked?: boolean }[] = [
-    ...(atlas ? [{ id: atlas.name, name: atlas.displayName, note: tr('addAgent.faceReserved'), locked: true }] : []),
-    ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name })),
-  ];
-
-  return (
-    <div
-      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 620, display: 'grid', placeItems: 'center',
-        background: 'rgba(0,0,0,0.55)', padding: 24
-      }}
-    >
-      <div style={{
-        width: 860, maxWidth: '95vw', maxHeight: '88vh', padding: 20,
-        display: 'flex', flexDirection: 'column', gap: 14,
-        background: 'var(--cth-cream-50)',
-        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 0 24px 60px rgba(0,0,0,0.5)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-          <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 14, letterSpacing: 0.5 }}>
-            {tr('addAgent.chooseFace')}
-          </span>
-          <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
-            {entries.filter((f) => !f.locked && !taken.has(f.id)).length} {tr('addAgent.facesFree')}
-          </span>
-        </div>
-
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(84px, 1fr))',
-          gap: 8, overflowY: 'auto', paddingRight: 4
-        }}>
-          {entries.map((f) => {
-            const used = f.locked || (taken.has(f.id) && f.id !== current);
-            const active = f.id === current;
-            return (
-              <button
-                key={f.id}
-                disabled={used}
-                onClick={() => onPick(f.id)}
-                title={f.locked ? tr('addAgent.faceReserved') : used ? tr('addAgent.faceInUse') : f.name}
-                aria-pressed={active}
-                style={{
-                  padding: '6px 4px 5px', border: 'none',
-                  cursor: used ? 'not-allowed' : 'pointer',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                  background: active ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
-                  boxShadow: active
-                    ? 'inset 0 0 0 2px var(--cth-sky)'
-                    : 'inset 0 0 0 1px var(--cth-ink-100)',
-                  opacity: used ? 0.45 : 1
-                }}
-              >
-                <span style={{
-                  width: 58, height: 70, display: 'flex', alignItems: 'flex-end',
-                  justifyContent: 'center', overflow: 'hidden',
-                  background: 'var(--cth-cream-200)'
-                }}>
-                  <SpritePortrait character={f.id} scale={3} />
-                </span>
-                <span style={{
-                  fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
-                  color: 'var(--cth-ink-900)'
-                }}>{f.name}</span>
-                <span style={{
-                  fontSize: 10, lineHeight: '13px',
-                  color: used ? 'var(--cth-coral)' : 'var(--cth-ink-500)'
-                }}>
-                  {f.note ?? (used ? tr('addAgent.faceInUse') : tr('addAgent.faceFree'))}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <PixelButton variant="ghost" size="md" onClick={onCancel}>{tr('common.cancel')}</PixelButton>
-        </div>
-      </div>
-    </div>
-  );
-}
