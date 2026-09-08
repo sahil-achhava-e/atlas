@@ -508,7 +508,7 @@
     "color": "Color",
     "project": "Project",
     "pickProject": "Pick a project, or add a new one:",
-    "noProjects": "No projects yet. Add one to get started.",
+    "noProjects": "No projects in this workspace yet. Add one below.",
     "addProject": "add project",
     "addProjectTitle": "Pick a folder and register it as a project",
     "projectPlaceholder": "/path/to/your/project",
@@ -591,7 +591,8 @@
     "customColor": "Mix your own",
     "pickFirst": "Pick a face and give it a name first",
     "pickFace": "Pick a face to continue.",
-    "pickName": "Give this agent a name to continue."
+    "pickName": "Give this agent a name to continue.",
+    "assigned": "assigned"
   },
   "onboarding": {
     "titles": {

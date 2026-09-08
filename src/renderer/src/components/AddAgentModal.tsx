@@ -290,12 +290,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     else setFolderNote(undefined);
   };
 
-  const pickFolder = async () => {
-    setError(undefined);
-    const res = await window.cth.chooseFolder();
-    if (res.ok) setCwd(res.path);
-    else if (res.error !== 'cancelled') setError(res.error);
-  };
 
   /** Register `path` as a project (folder quick-pick) right now: dedupe-prepend,
    *  select it, persist to config, and lift the change up so it sticks. */
@@ -322,15 +316,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
    *  Removes it from the LISTING only. The folder on disk is never touched, which
    *  is the whole point: a project you are done with should stop cluttering the
    *  picker without anything being deleted. */
-  const unregisterProject = async (path: string) => {
-    const next = repos.filter((r) => r !== path);
-    setRepos(next);
-    try {
-      const updated = await window.cth.updateConfig({ registeredRepos: next });
-      setRepos(updated.registeredRepos ?? next);
-      onConfigChange?.(updated);
-    } catch { /* best-effort persist */ }
-  };
 
   /** Pick a brand-new folder and register it as a project in one step. */
   const addProject = async () => {
@@ -800,104 +785,61 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                 {section === 'workspace' && (
                   <>
                     <Row label={tr('addAgent.project')}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-                        <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
-                          {repos.length > 0 ? tr('addAgent.pickProject') : tr('addAgent.noProjects')}
-                        </span>
-                        <button
-                          onClick={addProject}
-                          title={tr('addAgent.addProjectTitle')}
-                          style={{
-                            flexShrink: 0, padding: '2px 8px 1px', border: 'none', cursor: 'pointer',
-                            background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
-                            fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)',
-                            display: 'inline-flex', alignItems: 'center', gap: 4
-                          }}
-                        >
-                          <Icon name="plus" /> {tr('addAgent.addProject')}
-                        </button>
-                      </div>
-                      {repos.length > 0 && (
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
-                          {repos.map((r) => (
-                            /* Two buttons per chip: pick the project, or drop it
-                               from this list. Nested in a span rather than one
-                               button so the remove control is not a button inside
-                               a button. */
-                            <span
-                              key={r}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'stretch',
-                                background: cwd === r ? accentFillCss(accent) : 'var(--cth-cream-100)',
-                                boxShadow: cwd === r
-                                  ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
-                                  : 'inset 0 0 0 1px var(--cth-ink-100)'
-                              }}
-                            >
+                      {/* Just the projects registered to this workspace, listed
+                          by name. The free-text path box and its folder picker
+                          are gone: an agent's folder should be one of the
+                          projects you set up, not any directory on the disk. */}
+                      {repos.length === 0 ? (
+                        <div style={{
+                          padding: '16px 12px', fontSize: 13, textAlign: 'center',
+                          color: 'var(--cth-ink-500)', border: '1px dashed var(--cth-ink-300)'
+                        }}>
+                          {tr('addAgent.noProjects')}
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {repos.map((r) => {
+                            const active = cwd === r;
+                            return (
                               <button
+                                key={r}
                                 onClick={() => setCwd(r)}
                                 title={r}
+                                aria-pressed={active}
+                                className="cth-choice"
                                 style={{
-                                  padding: '3px 4px 1px 8px',
-                                  background: 'transparent',
-                                  fontFamily: 'var(--cth-font-ui)',
-                                  fontSize: 12,
-                                  cursor: 'pointer',
-                                  border: 'none'
+                                  display: 'flex', alignItems: 'center', gap: 12,
+                                  padding: '10px 12px', border: 'none', cursor: 'pointer',
+                                  textAlign: 'left',
+                                  background: active ? accentFillCss(accent) : 'var(--cth-paper-100)',
+                                  boxShadow: active
+                                    ? `inset 0 0 0 2px ${accentCss(accent)}`
+                                    : 'inset 0 0 0 1px var(--cth-ink-100)'
                                 }}
                               >
-                                {basename(r)}
+                                <span style={{
+                                  width: 30, height: 30, flexShrink: 0, display: 'grid', placeItems: 'center',
+                                  background: 'var(--cth-cream-200)', color: 'var(--cth-ink-700)',
+                                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                                }}>
+                                  <Icon name="folder" />
+                                </span>
+                                <span style={{
+                                  flex: 1, minWidth: 0,
+                                  fontFamily: 'var(--cth-font-display)', fontSize: 13, lineHeight: '18px',
+                                  letterSpacing: 0.5
+                                }}>{basename(r)}</span>
+                                {active && (
+                                  <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
+                                    {tr('addAgent.assigned')}
+                                  </span>
+                                )}
                               </button>
-                              <button
-                                onClick={() => unregisterProject(r)}
-                                title={`Remove ${basename(r)} from this list. The folder itself is left alone.`}
-                                aria-label={`Remove ${basename(r)} from the project list`}
-                                style={{
-                                  padding: '3px 6px 1px 2px',
-                                  background: 'transparent',
-                                  fontFamily: 'var(--cth-font-ui)',
-                                  fontSize: 12,
-                                  lineHeight: 1,
-                                  color: 'var(--cth-ink-500)',
-                                  cursor: 'pointer',
-                                  border: 'none'
-                                }}
-                              >
-                                ×
-                              </button>
-                            </span>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                        <input
-                          value={cwd}
-                          onChange={(e) => setCwd(e.target.value)}
-                          placeholder={tr('addAgent.projectPlaceholder')}
-                          style={{ ...inputStyle, flex: 1, fontFamily: 'var(--cth-font-mono)', fontSize: 13 }}
-                        />
-                        <PixelButton variant="secondary" size="md" onClick={pickFolder}>
-                          <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
-                            <Icon name="folder" /> {tr('addAgent.pick')}
-                          </span>
-                        </PixelButton>
-                      </div>
-                      {cwd.trim() && !repos.includes(cwd.trim()) && (
-                        <button
-                          onClick={() => registerProject(cwd)}
-                          title={tr('addAgent.saveAsProjectTitle')}
-                          style={{
-                            alignSelf: 'flex-start', marginTop: 2,
-                            padding: '2px 8px 1px', border: 'none', cursor: 'pointer',
-                            background: 'var(--cth-mint-light)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
-                            fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)',
-                            display: 'inline-flex', alignItems: 'center', gap: 4
-                          }}
-                        >
-                          <Icon name="plus" /> {tr('addAgent.saveAsProject')}
-                        </button>
-                      )}
+
                     </Row>
 
                     <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: resuming ? 'not-allowed' : 'pointer', opacity: resuming ? 0.5 : 1 }}>
@@ -912,26 +854,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                         {tr('addAgent.gitIsolation')}
                       </span>
                     </label>
-
-                    <Row label={tr('addAgent.resumeSession')}>
-                      <input
-                        value={resumeSessionId}
-                        onChange={(e) => { setResumeSessionId(e.target.value); setFolderNote(undefined); }}
-                        onBlur={resolveFolderFromSession}
-                        placeholder={tr('addAgent.resumePlaceholder')}
-                        style={{ ...inputStyle, fontFamily: 'var(--cth-font-mono)', fontSize: 13 }}
-                      />
-                      {folderNote && (
-                        <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-mint, var(--cth-ink-700))' }}>
-                          {folderNote}
-                        </span>
-                      )}
-                      {resuming && (
-                        <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-700)' }}>
-                          {tr('addAgent.resumeNote')}
-                        </span>
-                      )}
-                    </Row>
                   </>
                 )}
 
