@@ -581,7 +581,13 @@
     "quickName": "NAME",
     "quickFromFile": "Load a .json instead",
     "quickApply": "Add",
-    "quickNamePlaceholder": "the name gives it its face"
+    "quickNamePlaceholder": "the name gives it its face",
+    "chooseFace": "Choose a face",
+    "faceInUse": "in use",
+    "faceFree": "free",
+    "faceBuiltIn": "built in",
+    "facesFree": "free",
+    "faceFromName": "drawn from the name"
   },
   "onboarding": {
     "titles": {

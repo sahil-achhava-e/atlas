@@ -6,6 +6,7 @@ import { SpritePortrait } from './SpritePortrait';
 import { Icon } from './Icon';
 import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
+import { AVATAR_LIBRARY, LIBRARY_BY_ID } from '@/scene/office/avatarLibrary';
 import { OFFICE_CAST, DEFAULT_CHARACTER, type OfficeCharacterName } from '@/scene/office/cast';
 import { type AccentColorName } from '@/design/tokens';
 import type { HireManifest } from '@shared/hire';
@@ -171,7 +172,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   const initialProvider = inferAgentProvider(config.defaultCommand);
   const initialModel = isClaudeProvider(initialProvider) ? config.defaultModel : undefined;
 
-  const [name, setName] = useState(pendingHire?.name ?? 'Atlas');
+  // Empty, not a suggested name: the name is the one thing only you know.
+  const [name, setName] = useState(pendingHire?.name ?? '');
   const [character, setCharacter] = useState<string>(knownCharacter(pendingHire?.character));
   const [accent, setAccent] = useState<AccentColorName>(knownAccent(pendingHire?.accent));
   const [cwd, setCwd] = useState<string>(config.registeredRepos[0] ?? '');
@@ -230,6 +232,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // Which config section the left sidebar index is showing.
   const [section, setSection] = useState<SectionKey>('identity');
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [showFaces, setShowFaces] = useState(false);
   const sectionIndex = Math.max(0, SECTIONS.findIndex((x) => x.key === section));
   // "Generate a hire with AI" helper — reveals a copy-paste prompt (item 7).
 
@@ -660,57 +663,25 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                     </Row>
 
                     <Row label={tr('addAgent.character')}>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {/* Atlas is the only built-in face. Everyone else is
-                            created by name in "Add more agents", which draws a
-                            face from the name itself, so the grid is a shortlist
-                            rather than a catalogue: Atlas, plus whatever this
-                            agent already is. */}
-                        {OFFICE_CAST.filter(c =>
-                          c.name === character || (c.name === 'michael' && !takenCharacters.has('michael'))
-                        ).map(c => (
-                          <button
-                            key={c.name}
-                            onClick={() => { setCharacter(c.name); setName(c.displayName); }}
-                            title={c.blurb}
-                            aria-pressed={character === c.name}
-                            className="cth-choice"
-                            style={{
-                              padding: '6px 6px 5px',
-                              // The art is 18x28 pixels. At scale 2 it was 36x56
-                              // in a 44px box, so it read as a smudge. Scale 3
-                              // gives it room, and the portrait sits on the
-                              // character's OWN colour rather than a grey tile,
-                              // which is most of what tells fifteen small faces
-                              // apart at a glance.
-                              background: character === c.name
-                                ? `var(--cth-${accent}-light)`
-                                : 'var(--cth-cream-100)',
-                              boxShadow: character === c.name
-                                ? `inset 0 0 0 2px var(--cth-${accent})`
-                                : 'inset 0 0 0 1px var(--cth-ink-100)',
-                              cursor: 'pointer',
-                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                              border: 'none', width: 74
-                            }}
-                          >
-                            <div style={{
-                              width: 62, height: 74, display: 'flex', alignItems: 'flex-end',
-                              justifyContent: 'center', overflow: 'hidden',
-                              // The cast member's signature colour at low alpha,
-                              // so it tints whatever the tile is sitting on and
-                              // works in both themes. `shirt` is a plain hex.
-                              background: `${c.shirt}24`,
-                              boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
-                            }}>
-                              <SpritePortrait character={c.name} scale={3} />
-                            </div>
-                            <span style={{
-                              fontFamily: 'var(--cth-font-display)', fontSize: 11, lineHeight: '15px',
-                              color: character === c.name ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)'
-                            }}>{c.displayName}</span>
-                          </button>
-                        ))}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{
+                          width: 62, height: 74, flexShrink: 0, display: 'flex',
+                          alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden',
+                          background: `var(--cth-${accent}-light)`,
+                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                        }}>
+                          <SpritePortrait character={character} scale={3} />
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+                          <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13, lineHeight: '18px' }}>
+                            {LIBRARY_BY_ID[character]?.name
+                              ?? OFFICE_CAST.find(c => c.name === character)?.displayName
+                              ?? tr('addAgent.faceFromName')}
+                          </span>
+                          <PixelButton variant="secondary" size="md" onClick={() => setShowFaces(true)}>
+                            {tr('addAgent.chooseFace')}
+                          </PixelButton>
+                        </div>
                       </div>
                     </Row>
 
@@ -1123,6 +1094,16 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               </PixelButton>
             </div>
 
+            {showFaces && (
+              <FacePicker
+                current={character}
+                taken={takenCharacters}
+                onPick={(id) => { setCharacter(id); setShowFaces(false); }}
+                onCancel={() => setShowFaces(false)}
+                tr={tr}
+              />
+            )}
+
             {showQuickAdd && (
               <QuickAdd
                 defaults={{ name }}
@@ -1281,6 +1262,103 @@ function QuickAdd({ defaults, onApply, onCancel, onLoadFile, tr }: {
           <PixelButton variant="primary" size="md" style={{ minWidth: 100 }} disabled={!name.trim()} onClick={apply}>
             {tr('addAgent.quickApply')}
           </PixelButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** The face library: Atlas plus thirty, with the ones already working marked.
+ *
+ *  A face is an agent's identity on the floor, so a taken one is shown rather
+ *  than hidden: seeing "Aiko, in use" tells you why you cannot pick it, where a
+ *  missing tile just looks like a shorter list.
+ */
+function FacePicker({ current, taken, onPick, onCancel, tr }: {
+  current: string;
+  taken: Set<string>;
+  onPick: (id: string) => void;
+  onCancel: () => void;
+  tr: (k: string) => string;
+}) {
+  const atlas = OFFICE_CAST.find((c) => c.name === 'michael');
+  const entries: { id: string; name: string; note?: string }[] = [
+    ...(atlas ? [{ id: atlas.name, name: atlas.displayName, note: tr('addAgent.faceBuiltIn') }] : []),
+    ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name })),
+  ];
+
+  return (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 620, display: 'grid', placeItems: 'center',
+        background: 'rgba(0,0,0,0.55)', padding: 24
+      }}
+    >
+      <div style={{
+        width: 860, maxWidth: '95vw', maxHeight: '88vh', padding: 20,
+        display: 'flex', flexDirection: 'column', gap: 14,
+        background: 'var(--cth-cream-50)',
+        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 0 24px 60px rgba(0,0,0,0.5)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+          <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 14, letterSpacing: 0.5 }}>
+            {tr('addAgent.chooseFace')}
+          </span>
+          <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
+            {entries.length - taken.size} {tr('addAgent.facesFree')}
+          </span>
+        </div>
+
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(84px, 1fr))',
+          gap: 8, overflowY: 'auto', paddingRight: 4
+        }}>
+          {entries.map((f) => {
+            const used = taken.has(f.id) && f.id !== current;
+            const active = f.id === current;
+            return (
+              <button
+                key={f.id}
+                disabled={used}
+                onClick={() => onPick(f.id)}
+                title={used ? tr('addAgent.faceInUse') : f.name}
+                aria-pressed={active}
+                style={{
+                  padding: '6px 4px 5px', border: 'none',
+                  cursor: used ? 'not-allowed' : 'pointer',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                  background: active ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
+                  boxShadow: active
+                    ? 'inset 0 0 0 2px var(--cth-sky)'
+                    : 'inset 0 0 0 1px var(--cth-ink-100)',
+                  opacity: used ? 0.45 : 1
+                }}
+              >
+                <span style={{
+                  width: 58, height: 70, display: 'flex', alignItems: 'flex-end',
+                  justifyContent: 'center', overflow: 'hidden',
+                  background: 'var(--cth-cream-200)'
+                }}>
+                  <SpritePortrait character={f.id} scale={3} />
+                </span>
+                <span style={{
+                  fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
+                  color: 'var(--cth-ink-900)'
+                }}>{f.name}</span>
+                <span style={{
+                  fontSize: 10, lineHeight: '13px',
+                  color: used ? 'var(--cth-coral)' : 'var(--cth-ink-500)'
+                }}>
+                  {used ? tr('addAgent.faceInUse') : (f.note ?? tr('addAgent.faceFree'))}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <PixelButton variant="ghost" size="md" onClick={onCancel}>{tr('common.cancel')}</PixelButton>
         </div>
       </div>
     </div>

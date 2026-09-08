@@ -8,6 +8,7 @@
 // recolor in cast.ts; this module only powers the static portraits in the UI.
 
 import type { OfficeCharacterName } from './cast';
+import { LIBRARY_BY_ID } from './avatarLibrary';
 
 export const PORTRAIT_W = 18;
 export const PORTRAIT_H = 28;
@@ -17,7 +18,7 @@ export const SCENE_H = 32;
 const OUTLINE: RGB = [38, 34, 46];
 const HX0 = 4, HX1 = 13; // head skin columns
 
-type RGB = [number, number, number];
+export type RGB = [number, number, number];
 type Buf = Uint8ClampedArray;
 
 // Current canvas dims — set per compose() so the same drawing primitives serve
@@ -501,7 +502,7 @@ function outlinePass(buf: Buf): void {
 }
 
 // ─── recipes ─────────────────────────────────────────────────────────────────
-interface Recipe {
+export interface Recipe {
   skin: string; hairc: RGB; hair: HairStyle; hairargs?: HairArgs;
   cloth: Cloth; c1: RGB; c2?: RGB; tie?: RGB; pants?: RGB;
   brow?: Brow; mouth?: Mouth; blush?: boolean; facial?: Facial; glasses?: boolean;
@@ -768,12 +769,18 @@ function generatedRecipe(seed: string): Recipe {
   };
 }
 
+/** Cast first, then the pickable library, then a face generated from the name.
+ *  One resolver so the portrait, the walking sprite and every caller agree. */
+function recipeFor(name: string): Recipe {
+  return RECIPES[name as OfficeCharacterName] ?? LIBRARY_BY_ID[name]?.recipe ?? generatedRecipe(name);
+}
+
 function getBuf(name: string): Buf {
   let buf = bufCache.get(name);
   if (!buf) {
     // A name that is not one of the cast gets a face generated from itself,
     // rather than silently falling back to Jim's.
-    buf = compose(RECIPES[name as OfficeCharacterName] ?? generatedRecipe(name));
+    buf = compose(recipeFor(name));
     bufCache.set(name, buf);
   }
   return buf;
@@ -786,7 +793,7 @@ export function sceneFrameBufs(name: string): SceneFrames {
   let frames = sceneCache.get(name);
   if (!frames) {
     // Same rule as the portrait: an unknown name draws itself.
-    const r = RECIPES[name as OfficeCharacterName] ?? generatedRecipe(name);
+    const r = recipeFor(name);
     frames = {
       front: [composeScene(r, 0, false), composeScene(r, 1, false), composeScene(r, 2, false)],
       back: [composeScene(r, 0, true), composeScene(r, 1, true), composeScene(r, 2, true)],
