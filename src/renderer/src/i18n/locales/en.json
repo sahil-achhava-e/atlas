@@ -588,7 +588,10 @@
     "faceReserved": "already added",
     "faceNew": "new",
     "faceFromNameAction": "Use the name instead",
-    "customColor": "Mix your own"
+    "customColor": "Mix your own",
+    "pickFirst": "Pick a face and give it a name first",
+    "pickFace": "Pick a face to continue.",
+    "pickName": "Give this agent a name to continue."
   },
   "onboarding": {
     "titles": {

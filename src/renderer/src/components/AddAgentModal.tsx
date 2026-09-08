@@ -202,6 +202,10 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name })),
   ];
   const faceId = effectiveCharacter;
+  /** Step 1 is done when a face has been PICKED and a name typed. `character`
+   *  rather than `effectiveCharacter`: the latter falls back to Atlas or to the
+   *  name, so it is never empty and would wave you through with nothing chosen. */
+  const identityReady = character.length > 0 && name.trim().length > 0;
   const [accent, setAccent] = useState<string>(knownAccent(pendingHire?.accent));
   const [cwd, setCwd] = useState<string>(config.registeredRepos[0] ?? '');
   // Local mirror of the registered projects so one added from here shows as a
@@ -511,7 +515,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
         zIndex: 500
       }}
     >
-      <div onClick={(e) => e.stopPropagation()} style={{ width: 940, maxWidth: '95vw' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: 1040, maxWidth: '96vw' }}>
         <PixelPanel
           variant="dialog"
           title={tr('addAgent.title')}
@@ -524,7 +528,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               hire-import review banner, the error, and the footer stay pinned
               around the section pane. maxHeight keeps the dialog within the
               viewport (title bar stays pinned). */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, maxHeight: '86vh', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, maxHeight: '90vh', overflowY: 'auto' }}>
             {hireMeta && (
               <div style={{
                 padding: '6px 10px',
@@ -684,7 +688,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           list. */}
                       <div style={{
                         display: 'flex', gap: 6, flexWrap: 'wrap',
-                        maxHeight: 268, overflowY: 'auto', paddingRight: 4
+                        maxHeight: 330, overflowY: 'auto', paddingRight: 4
                       }}>
                         {faceChoices.map((f) => {
                           const active = effectiveCharacter === f.id;
@@ -729,6 +733,12 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                         })}
                       </div>
                     </Row>
+
+                    {!identityReady && (
+                      <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
+                        {!character ? tr('addAgent.pickFace') : tr('addAgent.pickName')}
+                      </div>
+                    )}
 
                     <Row label={tr('addAgent.color')}>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -1163,7 +1173,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                   size="md"
                   style={{ minWidth: 110 }}
                   onClick={() => setSection(SECTIONS[sectionIndex + 1].key)}
-                  disabled={busy}
+                  disabled={busy || (section === 'identity' && !identityReady)}
+                  title={section === 'identity' && !identityReady ? tr('addAgent.pickFirst') : undefined}
                 >
                   {tr('addAgent.next')}
                 </PixelButton>
