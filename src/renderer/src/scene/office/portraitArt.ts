@@ -700,13 +700,77 @@ function composeScene(r: Recipe, phase: number, back: boolean): Buf {
 }
 
 // ─── public render ───────────────────────────────────────────────────────────
-const bufCache = new Map<OfficeCharacterName, Buf>();
-const sceneCache = new Map<OfficeCharacterName, SceneFrames>();
+const bufCache = new Map<string, Buf>();
+const sceneCache = new Map<string, SceneFrames>();
 
-function getBuf(name: OfficeCharacterName): Buf {
+/** A face for a name that is not in the cast.
+ *
+ *  Same name always gives the same face, because every choice is driven by a
+ *  hash of the string rather than a random number. That matters more than the
+ *  art: the avatar is persisted as the NAME, so a stable hash is what makes it
+ *  survive a restart without storing a recipe anywhere.
+ *
+ *  It only ever picks from the vocabulary the renderer already has, so a
+ *  generated face is drawn by exactly the same code as a hand-written one.
+ */
+function generatedRecipe(seed: string): Recipe {
+  // FNV-1a: tiny, stable across runs, and good enough to decorrelate the
+  // fields (Math.random would give a different face on every render).
+  let h = 0x811c9dc5;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  const roll = (n: number, salt: number): number => {
+    let x = (h ^ Math.imul(salt + 1, 0x9e3779b9)) >>> 0;
+    x = Math.imul(x ^ (x >>> 15), 0x85ebca6b) >>> 0;
+    // >>> 0 is load-bearing: XOR in JS yields a SIGNED 32-bit int, so without
+    // it this returns a negative index and every pick is undefined.
+    return ((x ^ (x >>> 13)) >>> 0) % n;
+  };
+  const pick = <T,>(arr: readonly T[], salt: number): T => arr[roll(arr.length, salt)];
+
+  const HAIRC: RGB[] = [
+    [32, 28, 30], [86, 58, 38], [126, 84, 44], [214, 178, 96], [232, 140, 52],
+    [188, 62, 62], [70, 140, 92], [72, 108, 190], [150, 92, 178], [206, 206, 214],
+  ];
+  const CLOTHC: RGB[] = [
+    [214, 92, 84], [232, 140, 60], [226, 178, 46], [122, 170, 78], [58, 158, 138],
+    [62, 132, 184], [96, 96, 176], [162, 88, 176], [206, 96, 142], [104, 116, 132],
+  ];
+  const HAIRS: HairStyle[] = [
+    'styleShort', 'styleFloppy', 'styleFrame', 'styleBun', 'styleCurly',
+    'styleMessy', 'styleRecede', 'styleSpiky', 'styleTallSpikes', 'styleBald',
+  ];
+  const CLOTHS: Cloth[] = ['dressshirt', 'polo', 'sweater', 'cardigan', 'blouse', 'suit'];
+  const SKINS = ['light', 'tan', 'brown', 'dark'] as const;
+
+  const cloth = pick(CLOTHS, 3);
+  const c1 = pick(CLOTHC, 4);
+  return {
+    skin: pick(SKINS, 0),
+    hairc: pick(HAIRC, 1),
+    hair: pick(HAIRS, 2),
+    hairargs: { part: roll(2, 8) ? 'L' : 'R', length: 12 + roll(9, 9), vol: roll(3, 10) },
+    cloth,
+    c1,
+    c2: pick(CLOTHC, 5),
+    tie: cloth === 'suit' || cloth === 'dressshirt' ? pick(CLOTHC, 6) : undefined,
+    eyes: pick([[58, 52, 44], [72, 46, 32], [64, 96, 148], [70, 130, 96], [96, 102, 118]] as RGB[], 7),
+    brow: pick(['flat', 'angry', 'raised', 'soft'] as const, 11),
+    mouth: pick(['neutral', 'smile', 'grin'] as const, 12),
+    glasses: roll(5, 13) === 0,
+    facial: roll(4, 14) === 0 ? pick(['mustache', 'stubble', 'goatee'] as const, 15) : undefined,
+    lashes: roll(2, 16) === 0,
+  };
+}
+
+function getBuf(name: string): Buf {
   let buf = bufCache.get(name);
   if (!buf) {
-    buf = compose(RECIPES[name] ?? RECIPES.jim);
+    // A name that is not one of the cast gets a face generated from itself,
+    // rather than silently falling back to Jim's.
+    buf = compose(RECIPES[name as OfficeCharacterName] ?? generatedRecipe(name));
     bufCache.set(name, buf);
   }
   return buf;
@@ -715,10 +779,11 @@ function getBuf(name: OfficeCharacterName): Buf {
 export interface SceneFrames { front: Buf[]; back: Buf[]; }
 
 /** Walk-phase frames (stand, step-L, step-R) for the in-scene sprite, front + back. */
-export function sceneFrameBufs(name: OfficeCharacterName): SceneFrames {
+export function sceneFrameBufs(name: string): SceneFrames {
   let frames = sceneCache.get(name);
   if (!frames) {
-    const r = RECIPES[name] ?? RECIPES.jim;
+    // Same rule as the portrait: an unknown name draws itself.
+    const r = RECIPES[name as OfficeCharacterName] ?? generatedRecipe(name);
     frames = {
       front: [composeScene(r, 0, false), composeScene(r, 1, false), composeScene(r, 2, false)],
       back: [composeScene(r, 0, true), composeScene(r, 1, true), composeScene(r, 2, true)],
@@ -729,7 +794,7 @@ export function sceneFrameBufs(name: OfficeCharacterName): SceneFrames {
 }
 
 /** Paint a character's procedural portrait onto `ctx`, nearest-neighbor at `scale`. */
-export function paintPortrait(ctx: CanvasRenderingContext2D, name: OfficeCharacterName, scale = 2): void {
+export function paintPortrait(ctx: CanvasRenderingContext2D, name: string, scale = 2): void {
   const buf = getBuf(name);
   // Stage at 1× on an offscreen canvas, then blit scaled with smoothing off.
   const stage = document.createElement('canvas');
