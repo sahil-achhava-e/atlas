@@ -595,7 +595,8 @@
     "assigned": "assigned",
     "gitIsolationDesc": "Gives this agent its own copy of the project folder and its own git branch. It never touches the files you have open, so several agents can work on the same project at the same time, and so can you.",
     "gitIsolationOn": "On: it works at its own desk. You review its branch when it is done.",
-    "gitIsolationOff": "Off: it edits your checkout directly. You see every change live, but only one agent can work here at a time."
+    "gitIsolationOff": "Off: it edits your checkout directly. You see every change live, but only one agent can work here at a time.",
+    "providerFixed": "this workspace's engine"
   },
   "onboarding": {
     "titles": {

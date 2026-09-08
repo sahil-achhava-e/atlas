@@ -171,7 +171,10 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
   // Default provider follows whatever the global default command is (claude
   // unless the user reconfigured it); the model only carries over for Claude.
-  const initialProvider = inferAgentProvider(config.defaultCommand);
+  // The engine chosen for this workspace during setup. `godProvider` is what
+  // that step writes; the default command is the fallback for a config that
+  // predates it.
+  const initialProvider = config.godProvider ?? inferAgentProvider(config.defaultCommand);
   const initialModel = isClaudeProvider(initialProvider) ? config.defaultModel : undefined;
 
   // Empty, not a suggested name: the name is the one thing only you know.
@@ -231,24 +234,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // command from the provider's preset binary (so Antigravity spawns `agy` and
   // Codex spawns `codex`, not the configured `claude`). For 'custom' we keep the
   // user's typed command rather than blanking it.
-  const pickProvider = (id: AgentProvider) => {
-    setProvider(id);
-    // Seed the model: Claude from the global defaultModel; other engines from the
-    // per-engine default set in Settings → AI Engines (providerDefaultModels), else
-    // the CLI default. This is what makes that Settings field live (Dwight NIT-1).
-    const nextModel = isClaudeProvider(id) ? config.defaultModel : config.providerDefaultModels?.[id];
-    setModel(nextModel);
-    const nextPreset = providerPreset(id);
-    if (!isClaudeProvider(id) && !nextPreset.resumeFlag && !nextPreset.resumeSubcommand) {
-      setResumeSessionId('');
-      setFolderNote(undefined);
-    }
-    if (id === 'custom') {
-      setCommand(command.trim() || config.defaultCommand || '');
-      return;
-    }
-    setCommand(buildSpawnCommand(config, nextModel, id));
-  };
   const preset = providerPreset(provider);
   const [goal, setGoal] = useState(pendingHire?.goal ?? '');
   const [isolate, setIsolate] = useState(pendingHire?.isolate ?? false);
@@ -879,39 +864,25 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
                 {section === 'engine' && (
                   <>
+                    {/* The workspace picked its engine during setup, so this is
+                        a statement rather than a choice: twelve options here
+                        invited an agent that runs on something the workspace is
+                        not set up for. Change it in Settings, once, and every
+                        agent follows. */}
                     <Row label={tr('addAgent.provider')}>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {AGENT_PROVIDER_PRESETS.map((p) => {
-                          const active = provider === p.id;
-                          return (
-                            <button
-                              key={p.id}
-                              onClick={() => pickProvider(p.id)}
-                              title={
-                                p.id === 'antigravity'
-                                  ? tr('addAgent.providerAntigravity')
-                                  : p.id === 'codex'
-                                    ? tr('addAgent.providerCodex')
-                                    : p.id === 'custom'
-                                      ? tr('addAgent.providerCustom')
-                                      : p.label
-                              }
-                              style={{
-                                padding: '3px 8px 1px',
-                                background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
-                                boxShadow: active
-                                  ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
-                                  : 'inset 0 0 0 1px var(--cth-ink-100)',
-                                fontFamily: 'var(--cth-font-ui)', fontSize: 12,
-                                color: 'var(--cth-ink-900)', cursor: 'pointer', border: 'none',
-                                display: 'inline-flex', alignItems: 'center', gap: 6
-                              }}
-                            >
-                              <ProviderLogo provider={p.id} size={14} />
-                              {p.label}
-                            </button>
-                          );
-                        })}
+                      <div style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
+                        padding: '8px 12px',
+                        background: 'var(--cth-cream-100)',
+                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+                      }}>
+                        <ProviderLogo provider={provider} size={16} />
+                        <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)' }}>
+                          {providerPreset(provider).label}
+                        </span>
+                        <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
+                          {tr('addAgent.providerFixed')}
+                        </span>
                       </div>
                     </Row>
 
