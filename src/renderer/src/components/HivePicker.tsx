@@ -19,6 +19,12 @@ function folderName(path: string): string {
   return path.split('/').filter(Boolean).pop() ?? path;
 }
 
+/** Everything above the folder, for the muted second line. */
+function parentPath(path: string): string {
+  const parts = path.replace(/\/+$/, '').split('/');
+  return parts.slice(0, -1).join('/') || '/';
+}
+
 /**
  * HivePicker — the launch-time workspace selector. A "hive" is a harness home
  * folder: its own agents, memory, tasks, and history. On reopen the user can open
@@ -71,37 +77,46 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
       padding: 32
     }}>
       <div style={{ width: 560, maxWidth: '94vw' }}>
-        <PixelPanel variant="dialog" title="SELECT A HARNESS CONFIG" noPadding>
+        <PixelPanel variant="dialog" title="CHOOSE A WORKSPACE" noPadding>
           <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <p style={{ margin: 0, fontSize: 12, lineHeight: '19px', color: 'var(--cth-ink-700)' }}>
-              A <strong>harness config</strong> is the folder where the app keeps everything for one
-              workspace — its settings, your agents and their memory, tasks, triggers, and history.
-              Each config is separate and self-contained, so you can run different setups side by side.
-              Open the one you were working in, switch to another, or start a new one.
+            <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-700)' }}>
+              A workspace is one folder holding one crew: its agents, their memory, the task board
+              and the history. They are separate, so you can keep work apart and switch between them.
             </p>
 
             {/* CURRENT — the last-used home, the one-click default. */}
             {current && (
               <div>
-                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 9, color: 'var(--cth-ink-500)', marginBottom: 4 }}>
-                  CURRENT
+                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 11, letterSpacing: 1, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
+                  CURRENT WORKSPACE
                 </div>
                 <div style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-                  background: 'var(--cth-mint-light)', boxShadow: 'inset 0 0 0 2px var(--cth-mint)'
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+                  background: 'var(--cth-sky-light)', boxShadow: 'inset 0 0 0 2px var(--cth-sky)'
                 }}>
-                  <Icon name="folder" />
+                  <span style={{
+                    width: 32, height: 32, flexShrink: 0, display: 'grid', placeItems: 'center',
+                    background: 'var(--cth-cream-50)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                  }}>
+                    <Icon name="folder" />
+                  </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 11, lineHeight: '15px' }}>
+                    <div style={{
+                      fontFamily: 'var(--cth-font-display)', fontSize: 14, lineHeight: '19px',
+                      letterSpacing: 0.5
+                    }}>
                       {folderName(current)}
                     </div>
                     <div style={{
-                      fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', direction: 'rtl', textAlign: 'left'
-                    }}>{current}</div>
+                      fontFamily: 'var(--cth-font-mono)', fontSize: 12, color: 'var(--cth-ink-500)',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                      // NOT `direction: rtl`. That truncates a long path from the
+                      // START, which is what you want, but it also REORDERS the
+                      // string: "~/atlas-data" rendered as "atlas-data/~".
+                    }}>{parentPath(current)}</div>
                   </div>
                   <PixelButton variant="primary" size="md" onClick={onOpenCurrent} disabled={!!busy}>
-                    open
+                    Open
                   </PixelButton>
                 </div>
               </div>
@@ -110,8 +125,8 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             {/* RECENTS — other homes this install has opened before. */}
             {recents.length > 0 && (
               <div>
-                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 9, color: 'var(--cth-ink-500)', marginBottom: 4 }}>
-                  RECENT
+                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 11, letterSpacing: 1, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
+                  RECENT WORKSPACES
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 220, overflowY: 'auto' }}>
                   {recents.map((h) => (
@@ -133,9 +148,9 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                           {folderName(h)}
                         </div>
                         <div style={{
-                          fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)',
-                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', direction: 'rtl', textAlign: 'left'
-                        }}>{h}</div>
+                          fontFamily: 'var(--cth-font-mono)', fontSize: 12, color: 'var(--cth-ink-500)',
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                        }}>{parentPath(h)}</div>
                       </div>
                       <span style={{ fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>
                         {busy === h ? 'opening…' : 'switch →'}
@@ -155,7 +170,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
 
             {busy && (
               <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
-                Opening {folderName(busy)} — the app will reload…
+                Opening {folderName(busy)}. The app will reload.
               </div>
             )}
 
@@ -164,12 +179,12 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <PixelButton variant="secondary" size="md" onClick={browse} disabled={!!busy}>
                 <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-                  <Icon name="folder" /> open existing config…
+                  <Icon name="folder" /> Open another folder
                 </span>
               </PixelButton>
               <PixelButton variant="secondary" size="md" onClick={browse} disabled={!!busy}>
                 <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-                  <Icon name="plus" /> create new config…
+                  <Icon name="plus" /> New workspace
                 </span>
               </PixelButton>
             </div>
