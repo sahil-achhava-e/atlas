@@ -165,6 +165,28 @@ function firstWords(prompt: string | undefined, maxWords = 6, maxChars = 42): st
   return out;
 }
 
+/** The colour behind the map: the letterboxing you see when the floor does not
+ *  fill its box.
+ *
+ *  The theme bundle names a token for this, but it resolves through the STATIC
+ *  JS mirror of the design tokens, so it is frozen at the light theme's value
+ *  and stays a near-black slab in every theme. Worse, the token it names is
+ *  `ink[900]`, which is the TEXT colour: in dark mode that flips to off-white,
+ *  so the "correct" value would have been a white surround.
+ *
+ *  Read the app's own ground from CSS at call time instead. That follows the
+ *  live theme, and falls back to the bundle's value if the variable is missing.
+ */
+function canvasClearColor(fallback: number): number {
+  try {
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue('--cth-cream-50').trim();
+    const m = /^#?([0-9a-f]{6})$/i.exec(raw);
+    if (m) return parseInt(m[1], 16);
+  } catch { /* fall through */ }
+  return hexNum(fallback);
+}
+
 export function OfficeFloor() {
   const { t, i18n } = useTranslation();
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -245,7 +267,7 @@ export function OfficeFloor() {
       // Load the active theme bundle (falls back to 'office' on a bad/absent bundle).
       const theme = await loadTheme(officeTheme);
       await app.init({
-        background: hexNum(theme.palette.background),
+        background: canvasClearColor(theme.palette.background),
         antialias: false,
         roundPixels: true,
         // resolution: 1 let the OS/browser upscale the canvas on scaled and
