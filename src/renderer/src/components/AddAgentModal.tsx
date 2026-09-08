@@ -1325,7 +1325,7 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
 
           <div style={{
             flex: 1, minWidth: 0, padding: 16,
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))',
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(66px, 1fr))',
             gap: 8, alignContent: 'start', overflowY: 'auto'
           }}>
             {AVATAR_LIBRARY.map((f) => {
@@ -1335,13 +1335,17 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
                 <button
                   key={f.id}
                   disabled={used}
-                  onClick={() => setFace(f.id)}
+                  // Picking a face ALWAYS names it, overwriting whatever was
+                  // there. Filling only when empty was worse: pick one, then
+                  // change your mind, and the field kept the first one's name
+                  // beside the second one's face.
+                  onClick={() => { setFace(f.id); setName(f.name); }}
                   title={used ? `${f.name} · ${tr('addAgent.faceInUse')}` : f.name}
                   aria-pressed={active}
                   style={{
-                    padding: 3, border: 'none', cursor: used ? 'not-allowed' : 'pointer',
-                    display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-                    height: 70, overflow: 'hidden',
+                    padding: '4px 3px 3px', border: 'none',
+                    cursor: used ? 'not-allowed' : 'pointer',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
                     background: active ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
                     boxShadow: active
                       ? 'inset 0 0 0 2px var(--cth-sky)'
@@ -1349,7 +1353,17 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
                     opacity: used ? 0.35 : 1
                   }}
                 >
-                  <SpritePortrait character={f.id} scale={3} />
+                  <span style={{
+                    height: 66, display: 'flex', alignItems: 'flex-end',
+                    justifyContent: 'center', overflow: 'hidden'
+                  }}>
+                    <SpritePortrait character={f.id} scale={3} />
+                  </span>
+                  <span style={{
+                    fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '11px',
+                    color: 'var(--cth-ink-700)', textAlign: 'center',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%'
+                  }}>{f.name}</span>
                 </button>
               );
             })}
