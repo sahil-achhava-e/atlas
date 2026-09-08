@@ -42,7 +42,9 @@ export interface Agent {
   id: string;
   name: string;
   /** which Office character represents this agent on the floor */
-  character: OfficeCharacterName;
+  /** A cast key ('jim'), or any other string, which draws a face generated
+   *  from itself. Not narrowed to the cast: agents are created by name now. */
+  character: string;
   accent: AccentColorName;
   /** persistent job / hire one-liner — same string as hive registry `role`.
    *  Live status belongs on `status` / `action`, never here. */

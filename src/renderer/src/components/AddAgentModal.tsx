@@ -37,6 +37,8 @@ const ACCENTS: AccentColorName[] = [
   'coral', 'rose', 'peach', 'lemon', 'olive', 'mint',
   'jade', 'sky', 'indigo', 'lilac', 'plum', 'slate',
 ];
+/** Red leads the row and is what a fresh dialog opens on. */
+const DEFAULT_ACCENT: AccentColorName = 'coral';
 
 // OSS quick-pick chip styling (ondev-c) — mirrors the model-picker chips.
 const ossChip = (active: boolean, accent: AccentColorName): CSSProperties => ({
@@ -134,10 +136,11 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   const pendingHire = hireQueue.pending[0];
   const reviewProgress = hireQueueProgress(hireQueue);
 
-  const knownCharacter = (c?: string): OfficeCharacterName =>
-    (OFFICE_CAST.some(m => m.name === c) ? (c as OfficeCharacterName) : DEFAULT_CHARACTER);
+  // Any non-empty string is a valid character now: a cast key draws that cast
+  // member, anything else draws a face generated from the string.
+  const knownCharacter = (c?: string): string => (c && c.trim() ? c : DEFAULT_CHARACTER);
   const knownAccent = (a?: string): AccentColorName =>
-    (ACCENTS.includes(a as AccentColorName) ? (a as AccentColorName) : 'sky');
+    (ACCENTS.includes(a as AccentColorName) ? (a as AccentColorName) : DEFAULT_ACCENT);
   /** The cast member a typed name refers to, if any.
    *
    *  The character tiles already set the name (clicking Nami names the agent
@@ -168,8 +171,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   const initialProvider = inferAgentProvider(config.defaultCommand);
   const initialModel = isClaudeProvider(initialProvider) ? config.defaultModel : undefined;
 
-  const [name, setName] = useState(pendingHire?.name ?? 'Luffy');
-  const [character, setCharacter] = useState<OfficeCharacterName>(knownCharacter(pendingHire?.character));
+  const [name, setName] = useState(pendingHire?.name ?? 'Atlas');
+  const [character, setCharacter] = useState<string>(knownCharacter(pendingHire?.character));
   const [accent, setAccent] = useState<AccentColorName>(knownAccent(pendingHire?.accent));
   const [cwd, setCwd] = useState<string>(config.registeredRepos[0] ?? '');
   // Local mirror of the registered projects so one added from here shows as a
@@ -658,7 +661,14 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
                     <Row label={tr('addAgent.character')}>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {OFFICE_CAST.filter(c => c.name === character || !takenCharacters.has(c.name)).map(c => (
+                        {/* Atlas is the only built-in face. Everyone else is
+                            created by name in "Add more agents", which draws a
+                            face from the name itself, so the grid is a shortlist
+                            rather than a catalogue: Atlas, plus whatever this
+                            agent already is. */}
+                        {OFFICE_CAST.filter(c =>
+                          c.name === character || (c.name === 'michael' && !takenCharacters.has('michael'))
+                        ).map(c => (
                           <button
                             key={c.name}
                             onClick={() => { setCharacter(c.name); setName(c.displayName); }}
@@ -1115,8 +1125,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
             {showQuickAdd && (
               <QuickAdd
-                defaults={{ name, character }}
-                taken={takenCharacters}
+                defaults={{ name }}
                 onCancel={() => setShowQuickAdd(false)}
                 onApply={(v) => {
                   setName(v.name);
@@ -1201,18 +1210,17 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
  *  popup always the worse one. Identity is the part worth having up front when
  *  adding several; the rest is what the four sections and the manifest are for.
  */
-function QuickAdd({ defaults, taken, onApply, onCancel, onLoadFile, tr }: {
-  defaults: { name: string; character: OfficeCharacterName };
-  /** Characters already working. Hidden, so a face is never hired twice. */
-  taken: Set<string>;
-  onApply: (v: { name: string; character: OfficeCharacterName }) => void;
+function QuickAdd({ defaults, onApply, onCancel, onLoadFile, tr }: {
+  defaults: { name: string };
+  /** The character IS the name: an agent with no cast entry draws its own face,
+   *  keyed by that string, so nothing extra has to be stored or chosen. */
+  onApply: (v: { name: string; character: string }) => void;
   onCancel: () => void;
   onLoadFile: () => void;
   tr: (k: string) => string;
 }) {
   const [name, setName] = useState(defaults.name);
-  const [character, setCharacter] = useState<OfficeCharacterName>(defaults.character);
-  const apply = (): void => { if (name.trim()) onApply({ name: name.trim(), character }); };
+  const apply = (): void => { if (name.trim()) onApply({ name: name.trim(), character: name.trim() }); };
 
   return (
     <div
@@ -1232,58 +1240,35 @@ function QuickAdd({ defaults, taken, onApply, onCancel, onLoadFile, tr }: {
           {tr('addAgent.quickAddTitle')}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{
-            fontFamily: 'var(--cth-font-display)', fontSize: 10, letterSpacing: 1,
-            color: 'var(--cth-ink-500)', marginBottom: 4
-          }}>{tr('addAgent.quickName')}</span>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') apply(); }}
-            autoFocus
-            style={{
-              height: 38, padding: '0 10px', border: 'none', outline: 'none',
-              background: 'var(--cth-paper-100)', color: 'var(--cth-ink-900)',
-              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
-              fontFamily: 'var(--cth-font-ui)', fontSize: 13
-            }}
-          />
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{
-            fontFamily: 'var(--cth-font-display)', fontSize: 10, letterSpacing: 1,
-            color: 'var(--cth-ink-500)', marginBottom: 6
-          }}>{tr('addAgent.character')}</span>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {OFFICE_CAST.filter((c) => !taken.has(c.name)).map((c) => (
-              <button
-                key={c.name}
-                title={c.blurb}
-                aria-pressed={character === c.name}
-                onClick={() => { setCharacter(c.name); setName(c.displayName); }}
-                style={{
-                  width: 58, padding: '5px 5px 4px', border: 'none', cursor: 'pointer',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                  background: character === c.name ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
-                  boxShadow: character === c.name
-                    ? 'inset 0 0 0 2px var(--cth-sky)'
-                    : 'inset 0 0 0 1px var(--cth-ink-100)'
-                }}
-              >
-                <span style={{
-                  width: 46, height: 56, display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-                  overflow: 'hidden', background: `${c.shirt}24`
-                }}>
-                  <SpritePortrait character={c.name} scale={2} />
-                </span>
-                <span style={{
-                  fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '13px',
-                  color: 'var(--cth-ink-700)'
-                }}>{c.displayName}</span>
-              </button>
-            ))}
+        {/* The face is drawn FROM the name, so it updates as you type and the
+            same name always gives the same face. Nothing to choose. */}
+        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-end' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <span style={{
+              fontFamily: 'var(--cth-font-display)', fontSize: 10, letterSpacing: 1,
+              color: 'var(--cth-ink-500)', marginBottom: 4
+            }}>{tr('addAgent.quickName')}</span>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') apply(); }}
+              autoFocus
+              placeholder={tr('addAgent.quickNamePlaceholder')}
+              style={{
+                height: 40, padding: '0 12px', border: 'none', outline: 'none',
+                background: 'var(--cth-paper-100)', color: 'var(--cth-ink-900)',
+                boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                fontFamily: 'var(--cth-font-ui)', fontSize: 14
+              }}
+            />
+          </div>
+          <div style={{
+            width: 74, height: 88, flexShrink: 0,
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden',
+            background: 'var(--cth-cream-200)',
+            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+          }}>
+            {name.trim() ? <SpritePortrait character={name.trim()} scale={3} /> : null}
           </div>
         </div>
 

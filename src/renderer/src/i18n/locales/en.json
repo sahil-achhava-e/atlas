@@ -580,7 +580,8 @@
     "quickAddTitle": "NEW AGENT",
     "quickName": "NAME",
     "quickFromFile": "Load a .json instead",
-    "quickApply": "Add"
+    "quickApply": "Add",
+    "quickNamePlaceholder": "the name gives it its face"
   },
   "onboarding": {
     "titles": {

@@ -34,7 +34,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
   const [config, setConfig] = useState<HarnessConfig | null>(null);
 
   const [name, setName] = useState(agent.name);
-  const [character, setCharacter] = useState<OfficeCharacterName>(agent.character);
+  const [character, setCharacter] = useState<string>(agent.character);
   const [accent, setAccent] = useState<AccentColorName>(agent.accent);
   const [provider, setProvider] = useState<AgentProvider>(
     inferAgentProvider(agent.command, agent.provider)

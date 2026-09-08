@@ -84,8 +84,8 @@ const BY_CHARACTER: Partial<Record<OfficeCharacterName, readonly string[]>> = {
 /** A solo break-room line. Character flavour ~60% of the time, else the line
  *  fits the spot the agent is standing at. `seed` keeps it deterministic per
  *  call site (avoids Math.random, which Pixi/Electron CSP-safe code prefers). */
-export function pickSoloLine(character: OfficeCharacterName, spot: BreakSpot, seed: number): string {
-  const flavour = BY_CHARACTER[character];
+export function pickSoloLine(character: string, spot: BreakSpot, seed: number): string {
+  const flavour = BY_CHARACTER[character as OfficeCharacterName];
   if (flavour && seed % 5 < 3) return pick(flavour, Math.floor(seed / 5));
   return pick(SPOT_POOL[spot], seed);
 }
@@ -145,8 +145,8 @@ const KEYED_EXCHANGES: Partial<Record<OfficeCharacterName, Exchange>> = {
 
 /** A multi-beat exchange for two agents sharing a table. Beats alternate:
  *  index 0 = `speaker`, 1 = the table-mate, 2 = speaker, … */
-export function pickExchange(speaker: OfficeCharacterName, seed: number): Exchange {
-  const keyed = KEYED_EXCHANGES[speaker];
+export function pickExchange(speaker: string, seed: number): Exchange {
+  const keyed = KEYED_EXCHANGES[speaker as OfficeCharacterName];
   if (keyed && seed % 4 === 0) return keyed;
   return pick(PAIR_POOL, seed);
 }

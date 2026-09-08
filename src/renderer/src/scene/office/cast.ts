@@ -31,7 +31,7 @@ export interface CastMember {
 
 /** Selectable roster, in display order. */
 export const OFFICE_CAST: CastMember[] = [
-  { name: 'michael',  displayName: 'Atlas',   shirt: '#EC882C', blurb: 'Runs the floor' },
+  { name: 'michael',  displayName: 'Atlas',   shirt: '#F2685C', blurb: 'Runs the floor' },
   { name: 'jim',      displayName: 'Luffy',   shirt: '#C63832', blurb: 'Ships the work' },
   { name: 'pam',      displayName: 'Robin',   shirt: '#7C5496', blurb: 'Keeps the notes' },
   { name: 'dwight',   displayName: 'Zoro',    shirt: '#5C944E', blurb: 'Checks everything twice' },
@@ -51,7 +51,9 @@ export const OFFICE_CAST: CastMember[] = [
 export const CAST_BY_NAME: Record<OfficeCharacterName, CastMember> =
   Object.fromEntries(OFFICE_CAST.map((c) => [c.name, c])) as Record<OfficeCharacterName, CastMember>;
 
-export const DEFAULT_CHARACTER: OfficeCharacterName = 'jim';
+// Atlas. Every other face is either picked deliberately or generated from a
+// name, so the one a fresh dialog opens on should be the one that is built in.
+export const DEFAULT_CHARACTER: OfficeCharacterName = 'michael';
 
 export function hexToNumber(hex: string): number {
   return parseInt(hex.replace('#', ''), 16);
