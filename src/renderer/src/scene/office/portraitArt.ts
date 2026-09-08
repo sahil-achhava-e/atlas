@@ -259,7 +259,10 @@ const styleTallSpikes: HairFn = (buf, color) => {
   // the outer spikes overhang the skull the way the straw hat's brim does.
   // Gaps between spikes are left EMPTY on purpose. Fill them and the whole
   // thing collapses into a helmet, which is what the first attempt did.
-  const spikes: [number, number][] = [[1, 3], [3, 1], [6, 0], [9, 0], [12, 1], [15, 3]];
+  // x1 and x15 sit OUTSIDE the head (skin runs 4..13). Spikes there poke out at
+  // the temples and read as horns at any size above 2x, which is what they did.
+  // The mane keeps its width from the sideburns below instead.
+  const spikes: [number, number][] = [[3, 2], [5, 0], [8, 0], [11, 0], [13, 2]];
   for (const [x, top] of spikes) {
     rect(buf, x, top, x + 1, 3, base);
     set(buf, x, top, hi);          // lit edge

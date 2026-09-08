@@ -695,21 +695,42 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                             key={c.name}
                             onClick={() => { setCharacter(c.name); setName(c.displayName); }}
                             title={c.blurb}
+                            aria-pressed={character === c.name}
+                            className="cth-choice"
                             style={{
-                              padding: 4,
-                              background: character === c.name ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
+                              padding: '6px 6px 5px',
+                              // The art is 18x28 pixels. At scale 2 it was 36x56
+                              // in a 44px box, so it read as a smudge. Scale 3
+                              // gives it room, and the portrait sits on the
+                              // character's OWN colour rather than a grey tile,
+                              // which is most of what tells fifteen small faces
+                              // apart at a glance.
+                              background: character === c.name
+                                ? `var(--cth-${accent}-light)`
+                                : 'var(--cth-cream-100)',
                               boxShadow: character === c.name
-                                ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
+                                ? `inset 0 0 0 2px var(--cth-${accent})`
                                 : 'inset 0 0 0 1px var(--cth-ink-100)',
                               cursor: 'pointer',
-                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                              border: 'none', width: 56
+                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                              border: 'none', width: 74
                             }}
                           >
-                            <div style={{ width: 44, height: 56, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden' }}>
-                              <SpritePortrait character={c.name} scale={2} />
+                            <div style={{
+                              width: 62, height: 74, display: 'flex', alignItems: 'flex-end',
+                              justifyContent: 'center', overflow: 'hidden',
+                              // The cast member's signature colour at low alpha,
+                              // so it tints whatever the tile is sitting on and
+                              // works in both themes. `shirt` is a plain hex.
+                              background: `${c.shirt}24`,
+                              boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+                            }}>
+                              <SpritePortrait character={c.name} scale={3} />
                             </div>
-                            <span style={{ fontSize: 11, color: 'var(--cth-ink-700)' }}>{c.displayName}</span>
+                            <span style={{
+                              fontFamily: 'var(--cth-font-display)', fontSize: 11, lineHeight: '15px',
+                              color: character === c.name ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)'
+                            }}>{c.displayName}</span>
                           </button>
                         ))}
                       </div>
