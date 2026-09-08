@@ -636,7 +636,10 @@ const RECIPES: Record<OfficeCharacterName, Recipe> = {
   // The crew, drawn to read at 16 px wide: hair colour and silhouette do almost
   // all the recognising, clothing colour does the rest. Keys stay the original
   // cast names because they are the persisted `agent.character` value.
-  michael:  { skin: 'light', hairc: [26, 22, 26], hair: 'styleTallSpikes', cloth: 'polo', c1: [236, 136, 44], c2: [58, 86, 152], brow: 'flat', mouth: 'smile', eyes: [58, 62, 92] },   // Atlas / Goku
+  // Atlas: black suit, red tie, neat side part and glasses. It is the one face
+  // that is not a character from anything, and it runs the floor, so it reads
+  // as the person in the room who has read everything.
+  michael:  { skin: 'light', hairc: [38, 34, 40], hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'suit', c1: [32, 32, 40], tie: [216, 74, 66], glasses: true, eyes: [58, 62, 92], brow: 'flat', mouth: 'neutral' },   // Atlas
   jim:      { skin: 'tan',   hairc: [32, 26, 26],    hair: 'styleMessy',  hairargs: { length: 13 }, cloth: 'polo', c1: [198, 56, 50], c2: [156, 42, 40], hat: 'straw', brow: 'raised', mouth: 'grin', eyes: [72, 46, 32] },   // Luffy
   pam:      { skin: 'light', hairc: [26, 22, 28],    hair: 'styleFrame',  hairargs: { length: 20, vol: 1 }, cloth: 'blouse', c1: [124, 84, 150], brow: 'soft', mouth: 'smile', lashes: true, eyes: [64, 96, 148] },   // Robin
   dwight:   { skin: 'tan',   hairc: [92, 148, 78],   hair: 'styleShort',  hairargs: { part: 'R' }, cloth: 'sweater', c1: [54, 82, 56], brow: 'angry', mouth: 'neutral', eyes: [58, 52, 44], scar: 'left' },   // Zoro
