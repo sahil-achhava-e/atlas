@@ -515,7 +515,7 @@
     "pick": "pick",
     "saveAsProject": "save as project",
     "saveAsProjectTitle": "Save this folder to your projects so it's a one-click pick next time",
-    "gitIsolation": "Git isolation (own worktree)",
+    "gitIsolation": "WORK ON ITS OWN BRANCH",
     "resumeSession": "Resume session ID (optional)",
     "resumePlaceholder": "paste a Claude session id to continue its conversation",
     "folderFromSession": "folder set from session: {{path}}",
@@ -592,7 +592,10 @@
     "pickFirst": "Pick a face and give it a name first",
     "pickFace": "Pick a face to continue.",
     "pickName": "Give this agent a name to continue.",
-    "assigned": "assigned"
+    "assigned": "assigned",
+    "gitIsolationDesc": "Gives this agent its own copy of the project folder and its own git branch. It never touches the files you have open, so several agents can work on the same project at the same time, and so can you.",
+    "gitIsolationOn": "On: it works at its own desk. You review its branch when it is done.",
+    "gitIsolationOff": "Off: it edits your checkout directly. You see every change live, but only one agent can work here at a time."
   },
   "onboarding": {
     "titles": {

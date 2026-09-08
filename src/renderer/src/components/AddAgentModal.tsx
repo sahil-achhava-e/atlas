@@ -842,16 +842,36 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
                     </Row>
 
-                    <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: resuming ? 'not-allowed' : 'pointer', opacity: resuming ? 0.5 : 1 }}>
+                    {/* Not a checkbox in a row of checkboxes. This is the
+                        setting that decides whether you can run four agents at
+                        once, so it gets the room to say so. */}
+                    <label style={{
+                      display: 'flex', gap: 12, alignItems: 'flex-start', padding: 14,
+                      cursor: resuming ? 'not-allowed' : 'pointer', opacity: resuming ? 0.5 : 1,
+                      background: isolate && !resuming ? 'var(--cth-mint-light)' : 'var(--cth-cream-100)',
+                      boxShadow: isolate && !resuming
+                        ? 'inset 0 0 0 2px var(--cth-mint)'
+                        : 'inset 0 0 0 1px var(--cth-ink-300)'
+                    }}>
                       <input
                         type="checkbox"
                         checked={resuming ? false : isolate}
                         disabled={resuming}
                         onChange={(e) => setIsolate(e.target.checked)}
-                        style={{ width: 16, height: 16, cursor: resuming ? 'not-allowed' : 'pointer' }}
+                        style={{ width: 18, height: 18, marginTop: 3, flexShrink: 0, cursor: resuming ? 'not-allowed' : 'pointer' }}
                       />
-                      <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)' }}>
-                        {tr('addAgent.gitIsolation')}
+                      <span style={{ minWidth: 0 }}>
+                        <span style={{
+                          display: 'block', fontFamily: 'var(--cth-font-display)',
+                          fontSize: 14, lineHeight: '19px', letterSpacing: 0.5, marginBottom: 5
+                        }}>{tr('addAgent.gitIsolation')}</span>
+                        <span style={{
+                          display: 'block', fontSize: 13, lineHeight: '19px', color: 'var(--cth-ink-700)'
+                        }}>{tr('addAgent.gitIsolationDesc')}</span>
+                        <span style={{
+                          display: 'block', fontSize: 12, lineHeight: '18px', marginTop: 6,
+                          color: 'var(--cth-ink-500)'
+                        }}>{isolate ? tr('addAgent.gitIsolationOn') : tr('addAgent.gitIsolationOff')}</span>
                       </span>
                     </label>
                   </>
