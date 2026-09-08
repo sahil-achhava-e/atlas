@@ -43,16 +43,21 @@
   --cth-slate: #78859A;   --cth-slate-light: #DDE2E8;
 
   /* Status — same recalibration; hue meanings unchanged */
-  --cth-status-idle:     #A199AB;
-  --cth-status-thinking: #4F9FAF;
-  --cth-status-working:  #DCAB3C;
-  --cth-status-waiting:  #6D87D6;
-  --cth-status-blocked:  #D96A62;
-  --cth-status-success:  #5CA97A;
-  --cth-status-ghost:    #D9D3DE;
-  --cth-status-compacting: #8F7CC7; /* #5C — mid-/compact, "boxing up context" */
-  --cth-status-looping:    #D6903F; /* #5C — circuit-breaker armed (runaway) */
-  --cth-status-typing:     #C89838; /* unsent text on the prompt — queue is held */
+  /* Presence, read the way everyone already reads presence in a chat app:
+     RED busy (it is running), YELLOW away (it is stalled and someone has to
+     act), GREEN available (it just finished and is free), pale grey idle.
+     Ten states share four colours on purpose — the colour answers "can I give
+     it work", the label beside it answers "what exactly is it doing". */
+  --cth-status-idle:     #B8B2C0;   /* idle    — free, nothing in hand */
+  --cth-status-thinking: #D64550;   /* busy */
+  --cth-status-working:  #D64550;   /* busy */
+  --cth-status-compacting: #D64550; /* busy    — boxing up its own context */
+  --cth-status-waiting:  #E0A32E;   /* away    — stalled on another agent */
+  --cth-status-blocked:  #E0A32E;   /* away    — stalled on YOU */
+  --cth-status-typing:   #E0A32E;   /* away    — your unsent text holds its queue */
+  --cth-status-looping:  #E0A32E;   /* away    — circuit breaker armed */
+  --cth-status-success:  #4CA362;   /* available — just finished */
+  --cth-status-ghost:    #D9D3DE;   /* offline */
 
   /* Spacing */
   --cth-space-0: 0px;
@@ -184,18 +189,18 @@
   --cth-slate: #9BA6B3;   --cth-slate-light: #262B31;
 
   /* Status — dark-tuned counterparts (same hue language) */
-  --cth-status-idle:     #6F6C77;
-  --cth-status-thinking: #64ACBB;
-  --cth-status-working:  #D8B052;
-  --cth-status-waiting:  #8095DC;
-  --cth-status-blocked:  #DF8078;
-  --cth-status-success:  #6FB88B;
+  --cth-status-idle:     #7A7684;
+  --cth-status-thinking: #E0666F;
+  --cth-status-working:  #E0666F;
+  --cth-status-waiting:  #E8B44C;
+  --cth-status-blocked:  #E8B44C;
+  --cth-status-success:  #68BE7E;
   /* The quietest status, but still a MARK the user must be able to find — at
      the old #3D3C44 it measured 1.54:1 on the new ground and simply vanished. */
   --cth-status-ghost:    #6C6A76;
-  --cth-status-compacting: #9D8BD2;
-  --cth-status-looping:    #D69A55;
-  --cth-status-typing:     #CBA24A;
+  --cth-status-compacting: #E0666F;
+  --cth-status-looping:    #E8B44C;
+  --cth-status-typing:     #E8B44C;
 
   /* Hard shadow reads as depth, not void */
   --cth-shadow-hard: 4px 4px 0 rgba(0, 0, 0, 0.45);

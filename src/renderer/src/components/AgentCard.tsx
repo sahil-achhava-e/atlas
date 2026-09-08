@@ -8,7 +8,6 @@ import { RealtimeMichaelToggle } from './RealtimeMichaelToggle';
 import { CostHud } from '@/realtime/CostHud';
 import { AccentColorName } from '@/design/tokens';
 import { OfficeCharacterName } from '@/scene/office/cast';
-import { AgentNameEditor } from './AgentNameEditor';
 
 export interface AgentCardProps {
   name: string;
@@ -32,8 +31,6 @@ export interface AgentCardProps {
    *  (`isGod` / the `god` agent id stay as-is internally; this is display only.) */
   isGod?: boolean;
   onClick?: () => void;
-  /** Persists an inline display-name edit; identity and hive paths stay unchanged. */
-  onRename?: (name: string) => Promise<{ ok: boolean; error?: string }>;
   /** Number of ledger tasks this agent is actively DOING — rendered as a blue
    *  sticky note stuck to the card. Clicking it opens the first task's detail. */
   doingCount?: number;
@@ -56,7 +53,7 @@ const fmtK = (n: number): string => `${Math.round(n / 1000)}k`;
  */
 export function AgentCard({
   name, character, accent, status, ptyId, project, action, progress = 0,
-  contextTokens, contextLimit, selected, isGod, onClick, onRename,
+  contextTokens, contextLimit, selected, isGod, onClick,
   doingCount = 0, onTaskNoteClick, draggable, note, onEditNote
 }: AgentCardProps) {
   const { t } = useTranslation();
@@ -102,8 +99,8 @@ export function AgentCard({
   // that gets cut. Widened for every card so the dock stays uniform, with enough
   // slack that Talk's info mark (which only appears when the OpenAI key is
   // missing) has somewhere to sit rather than pushing the row apart.
-  const width = 220;
-  const height = 78;
+  const width = 196;
+  const height = 74;
   const lift = (isGod ? -2 : 0) - (hover ? 1 : 0) - (selected ? 1 : 0);
   /** God's distinction: a tinted surface plus a thin accent border all the way
    *  around — NOT the 3px rule that used to sit on the top edge alone. That rule
@@ -113,7 +110,11 @@ export function AgentCard({
    *  unchanged and the selection ring still means exactly one thing everywhere. */
   const godSurface: React.CSSProperties = isGod
     ? {
-        background: `var(--cth-${accent}-light)`,
+        // A WASH, not the full accent-light: at full strength the boss card was
+        // a block of colour that pulled the eye away from whatever is actually
+        // working. Mixed toward the app's own surface so it reads as "this card
+        // is different" rather than as an alert.
+        background: `color-mix(in srgb, var(--cth-${accent}-light) 55%, var(--cth-cream-100))`,
         boxShadow: `inset 0 0 0 1px var(--cth-${accent})`
       }
     : {};
@@ -125,7 +126,9 @@ export function AgentCard({
     .filter(Boolean).join(', ') || 'none';
 
   // One context line: what it's DOING while working, WHERE it lives while idle.
-  const infoLine = (status !== 'idle' && action) ? action : project;
+  // God's `project` is the internal hive id — the card said "hive", which names
+  // nothing you can look at. What he does is the useful line, in both states.
+  const infoLine = isGod ? (action ?? project) : ((status !== 'idle' && action) ? action : project);
   const noteFirstLine = (note ?? '').split('\n').find((l) => l.trim()) ?? '';
 
   return (
@@ -180,13 +183,13 @@ export function AgentCard({
       )}
       <PixelPanel
         variant="default"
-        style={{ height: '100%', padding: '6px 8px', ...godSurface }}
+        style={{ height: '100%', padding: '5px 7px', ...godSurface }}
         noPadding
       >
-        <div style={{ display: 'flex', gap: 8, height: '100%' }}>
+        <div style={{ display: 'flex', gap: 7, height: '100%' }}>
           {/* Portrait tile — vertically centred so the card reads calm and even. */}
           <div style={{
-            width: 36, height: isGod ? 50 : 46, alignSelf: 'center',
+            width: 36, height: isGod ? 46 : 42, alignSelf: 'center',
             // God's CARD is now accent-light, so the tile cannot be — it would
             // vanish into its own background. Paper reads as an inset frame
             // against the tint, which is what the tile is meant to look like.
@@ -204,30 +207,31 @@ export function AgentCard({
             {/* Identity row: name (+ BOSS tag) + status. */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'space-between', minWidth: 0 }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, minWidth: 0, flex: 1 }}>
-                {onRename ? (
-                  <AgentNameEditor name={name} onCommit={onRename} uppercase />
-                ) : (
-                  <span style={{
-                    fontFamily: 'var(--cth-font-display)',
-                    fontSize: 'var(--cth-text-display-sm)',
-                    lineHeight: 'var(--cth-lh-display-sm)',
-                    color: 'var(--cth-ink-900)',
-                    flex: 1, minWidth: 0,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                  }}>{name.toUpperCase()}</span>
-                )}
+                {/* Read-only here. Renaming lives in the agent's own panel: a
+                    card in a dock is something you click to open, and an edit
+                    control inside it is one mis-click away from a rename you
+                    did not mean. */}
+                <span style={{
+                  fontFamily: 'var(--cth-font-display)',
+                  fontSize: 'var(--cth-text-display-sm)',
+                  lineHeight: 'var(--cth-lh-display-sm)',
+                  color: 'var(--cth-ink-900)',
+                  flex: 1, minWidth: 0,
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                }}>{name.toUpperCase()}</span>
                 {isGod && (
                   <span style={{
-                    fontFamily: 'var(--cth-font-display)', fontSize: 7, lineHeight: '11px',
-                    background: `var(--cth-${accent})`, color: 'var(--cth-ink-900)',
+                    fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '12px',
+                    background: `var(--cth-${accent})`, color: 'var(--cth-on-accent)',
                     padding: '1px 4px 0', flexShrink: 0
                   }}>{t('agentCard.boss')}</span>                )}
               </span>
-              {/* flexShrink:0 — the badge is a fixed 2-to-5 character chip; when
-                  it was allowed to shrink, the browser resolved the overflow by
-                  eating the NAME instead. Truncation should land on the longest,
-                  most redundant thing, not on the identity. */}
-              <PixelBadge status={typing ? 'typing' : status} style={{ flexShrink: 0 }} />
+              {/* A presence dot, not a worded chip. The word cost 40-odd pixels
+                  of a 200px card and the browser paid for it by truncating the
+                  NAME; the colour says the only thing you need at dock size —
+                  red busy, yellow stalled, green just finished, pale idle — and
+                  the word is one hover away. */}
+              <PixelBadge status={typing ? 'typing' : status} dotOnly />
             </div>
 
             {/* Context line: action while working, repo while idle. */}
@@ -295,12 +299,15 @@ export function AgentCard({
               </div>
             )}
 
-            {/* Context gauge — slim fill bar pinned to the card's bottom edge. */}
+            {/* Context gauge — slim fill bar pinned to the card's bottom edge.
+                An agent that has not reported yet gets the SPACE but not the
+                rail: an empty bordered bar reads as a progress bar stuck at
+                zero, which is a different and worrying claim. */}
             <div style={{ marginTop: 'auto' }} title={gaugeTitle}>
               <div style={{
                 height: 4, width: '100%',
-                background: 'var(--cth-cream-200)',
-                boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+                background: contextTokens ? 'var(--cth-cream-200)' : 'transparent',
+                boxShadow: contextTokens ? 'inset 0 0 0 1px var(--cth-ink-100)' : 'none',
                 overflow: 'hidden'
               }}>
                 <div style={{ width: `${pct}%`, height: '100%', background: gaugeColor }} />

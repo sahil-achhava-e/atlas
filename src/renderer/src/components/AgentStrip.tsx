@@ -146,7 +146,6 @@ export function AgentStrip({ config }: AgentStripProps) {
             selected={a.id === selectedId}
             isGod={a.isGod}
             onClick={() => select(a.id)}
-            onRename={(name) => renameAgent(a.id, name)}
             doingCount={doingByAgent[a.id]?.length ?? 0}
             onTaskNoteClick={() => {
               const first = doingByAgent[a.id]?.[0];

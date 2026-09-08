@@ -205,18 +205,21 @@ export function RealtimeMichaelToggle({ compact = false }: RealtimeMichaelToggle
         style={!noKey && view.activeBg ? { background: view.activeBg, color: 'var(--cth-ink-900)' } : undefined}
       >
         <span style={{ display: 'inline-flex', gap: 5, alignItems: 'center' }}>
-          {/* Live-state indicator dot — color + animation reflect the loop status. */}
-          <span
-            aria-hidden
-            style={{
-              width: 6,
-              height: 6,
-              flexShrink: 0,
-              background: noKey ? 'var(--cth-ink-300)' : view.dot,
-              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
-              animation: noKey ? 'none' : view.anim
-            }}
-          />
+          {/* Live-state dot — only while something IS live. Off, it was a grey
+              square sitting beside a mic icon saying the same nothing twice. */}
+          {!noKey && status !== 'off' && (
+            <span
+              aria-hidden
+              style={{
+                width: 6,
+                height: 6,
+                flexShrink: 0,
+                background: view.dot,
+                boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                animation: view.anim
+              }}
+            />
+          )}
           <Icon name="mic" />
           {!compact && (
             <span style={{ fontFamily: 'var(--cth-font-ui)' }}>

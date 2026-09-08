@@ -426,7 +426,9 @@ export function useHive(config: HarnessConfig | null): void {
         id: GOD_ID,
         name: godName,
         character: 'michael',
-        accent: 'lemon',
+        // Red, like every hire's default. Lemon read as a warning strip on the
+        // one card that is always on the floor.
+        accent: 'coral',
         description: 'god — runs the floor, triages requests, escalates only critical calls to you',
         project: 'hive',
         tmuxTarget: '',

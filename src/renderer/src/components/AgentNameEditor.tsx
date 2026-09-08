@@ -6,6 +6,9 @@ export interface AgentNameEditorProps {
   onCommit: (name: string) => Promise<{ ok: boolean; error?: string }>;
   /** Cards render names in their established all-caps display style. */
   uppercase?: boolean;
+  /** Fade the ✎ until the row is hovered. A card carries several small marks
+   *  already; a permanently lit one competes with the name it belongs to. */
+  quiet?: boolean;
   fontSize?: number | string;
 }
 
@@ -14,6 +17,7 @@ export function AgentNameEditor({
   name,
   onCommit,
   uppercase = false,
+  quiet = false,
   fontSize = 'var(--cth-text-display-sm)'
 }: AgentNameEditorProps) {
   const [editing, setEditing] = useState(false);
@@ -118,7 +122,9 @@ export function AgentNameEditor({
           flexShrink: 0, width: 14, height: 14, padding: 0,
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           border: 'none', background: 'transparent', cursor: 'text',
-          color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-ui)', fontSize: 9, lineHeight: 1
+          color: quiet ? 'var(--cth-ink-300)' : 'var(--cth-ink-500)',
+          fontFamily: 'var(--cth-font-ui)', fontSize: 9, lineHeight: 1,
+          transition: 'color 90ms linear'
         }}
       >✎</button>
     </span>

@@ -46,12 +46,14 @@ export const colors = {
     slate: 0x78859a,
     slateLight: 0xdde2e8
   },
+  // Presence: busy red, away yellow, available green, idle pale.
+  // Mirrors the --cth-status-* tokens; keep the two in step.
   status: {
-    idle: 0xa199ab,
-    thinking: 0x4f9faf,
-    working: 0xdcab3c,
-    blocked: 0xd96a62,
-    success: 0x5ca97a,
+    idle: 0xb8b2c0,
+    thinking: 0xd64550,
+    working: 0xd64550,
+    blocked: 0xe0a32e,
+    success: 0x4ca362,
     ghost: 0xd9d3de
   },
   world: {

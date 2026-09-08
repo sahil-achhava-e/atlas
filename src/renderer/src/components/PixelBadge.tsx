@@ -16,6 +16,10 @@ export interface PixelBadgeProps {
   status: StatusKind;
   label?: string;
   style?: CSSProperties;
+  /** Presence dot alone, no chip and no word. For rows where the space is
+   *  better spent on the agent's NAME — the word repeats on hover and in the
+   *  panel that opens when you click through. */
+  dotOnly?: boolean;
 }
 
 const colorByStatus: Record<StatusKind, string> = {
@@ -49,10 +53,25 @@ const labelKeyByStatus: Record<StatusKind, string> = {
   typing:     'badge.typing'
 };
 
-export function PixelBadge({ status, label, style }: PixelBadgeProps) {
+export function PixelBadge({ status, label, style, dotOnly }: PixelBadgeProps) {
   const { t } = useTranslation();
   const key = labelKeyByStatus[status];
   const text = label ?? (key ? t(key) : status);
+  if (dotOnly) {
+    return (
+      <span
+        title={text}
+        aria-label={text}
+        role="img"
+        style={{
+          width: 9, height: 9, flexShrink: 0, display: 'inline-block',
+          background: colorByStatus[status],
+          boxShadow: 'inset 0 0 0 1px rgba(26,19,32,0.28)',
+          ...style
+        }}
+      />
+    );
+  }
   return (
     <span
       style={{
