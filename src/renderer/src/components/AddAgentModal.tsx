@@ -122,6 +122,10 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   const { t: tr } = useTranslation();
   const rtl = useRtl();
   const addAgent = useStore(s => s.addAgent);
+  // Faces already on the floor. A character is one agent's identity, so
+  // offering a face that is already working reads as "add a second Zoro" and
+  // gives you two agents nothing on screen can tell apart.
+  const takenCharacters = useStore(s => new Set(s.agents.map(a => a.character)));
   // Deep links and file batches share one FIFO. The head alone seeds the form;
   // every item still requires an explicit spawn or skip.
   const hireQueue = useStore(s => s.hireQueue);
@@ -654,7 +658,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
                     <Row label={tr('addAgent.character')}>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {OFFICE_CAST.map(c => (
+                        {OFFICE_CAST.filter(c => c.name === character || !takenCharacters.has(c.name)).map(c => (
                           <button
                             key={c.name}
                             onClick={() => { setCharacter(c.name); setName(c.displayName); }}
@@ -1112,6 +1116,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
             {showQuickAdd && (
               <QuickAdd
                 defaults={{ name, character }}
+                taken={takenCharacters}
                 onCancel={() => setShowQuickAdd(false)}
                 onApply={(v) => {
                   setName(v.name);
@@ -1196,8 +1201,10 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
  *  popup always the worse one. Identity is the part worth having up front when
  *  adding several; the rest is what the four sections and the manifest are for.
  */
-function QuickAdd({ defaults, onApply, onCancel, onLoadFile, tr }: {
+function QuickAdd({ defaults, taken, onApply, onCancel, onLoadFile, tr }: {
   defaults: { name: string; character: OfficeCharacterName };
+  /** Characters already working. Hidden, so a face is never hired twice. */
+  taken: Set<string>;
   onApply: (v: { name: string; character: OfficeCharacterName }) => void;
   onCancel: () => void;
   onLoadFile: () => void;
@@ -1250,7 +1257,7 @@ function QuickAdd({ defaults, onApply, onCancel, onLoadFile, tr }: {
             color: 'var(--cth-ink-500)', marginBottom: 6
           }}>{tr('addAgent.character')}</span>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {OFFICE_CAST.map((c) => (
+            {OFFICE_CAST.filter((c) => !taken.has(c.name)).map((c) => (
               <button
                 key={c.name}
                 title={c.blurb}
