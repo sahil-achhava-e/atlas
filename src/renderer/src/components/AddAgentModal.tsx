@@ -1268,7 +1268,7 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
       }}
     >
       <div style={{
-        width: 660, maxWidth: '94vw', maxHeight: '88vh', padding: 20,
+        width: 880, maxWidth: '95vw', maxHeight: '90vh', padding: 24,
         display: 'flex', flexDirection: 'column', gap: 14,
         background: 'var(--cth-cream-50)',
         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 0 24px 60px rgba(0,0,0,0.5)'
@@ -1282,7 +1282,7 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
             accident, which is backwards for a roster of thirty. */}
         <div style={{
           display: 'flex', gap: 6, flexWrap: 'wrap',
-          maxHeight: 300, overflowY: 'auto', paddingRight: 4
+          maxHeight: 440, overflowY: 'auto', paddingRight: 6
         }}>
           {AVATAR_LIBRARY.map((f) => {
             const used = taken.has(f.id);
@@ -1291,11 +1291,11 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
               <button
                 key={f.id}
                 disabled={used}
-                onClick={() => { setFace(f.id); if (!name.trim()) setName(f.name); }}
+                onClick={() => setFace(f.id)}
                 title={used ? tr('addAgent.faceInUse') : f.name}
                 aria-pressed={active}
                 style={{
-                  width: 64, padding: '5px 4px 4px', border: 'none',
+                  width: 82, padding: '6px 5px 5px', border: 'none',
                   cursor: used ? 'not-allowed' : 'pointer',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
                   background: active ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
@@ -1306,17 +1306,17 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
                 }}
               >
                 <span style={{
-                  width: 52, height: 64, display: 'flex', alignItems: 'flex-end',
+                  width: 70, height: 86, display: 'flex', alignItems: 'flex-end',
                   justifyContent: 'center', overflow: 'hidden', background: 'var(--cth-cream-200)'
                 }}>
-                  <SpritePortrait character={f.id} scale={3} />
+                  <SpritePortrait character={f.id} scale={4} />
                 </span>
-                <span style={{
-                  fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '12px',
-                  color: 'var(--cth-ink-900)'
-                }}>{f.name}</span>
+                {/* No name under the face. A face labelled "Aiko" reads as an
+                    agent called Aiko, and picking a second one left the field
+                    holding the first one's name. The face is a picture; the
+                    name is yours. */}
                 {used && (
-                  <span style={{ fontSize: 9, lineHeight: '12px', color: 'var(--cth-coral)' }}>
+                  <span style={{ fontSize: 10, lineHeight: '13px', color: 'var(--cth-coral)' }}>
                     {tr('addAgent.faceInUse')}
                   </span>
                 )}
@@ -1327,13 +1327,13 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
 
         <div style={{ display: 'flex', gap: 14, alignItems: 'flex-end' }}>
           <span style={{
-            width: 62, height: 74, flexShrink: 0, display: 'flex',
+            width: 74, height: 90, flexShrink: 0, display: 'flex',
             alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden',
             background: 'var(--cth-cream-200)',
             boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
           }}>
             {shown
-              ? <SpritePortrait character={shown} scale={3} />
+              ? <SpritePortrait character={shown} scale={4} />
               : <span style={{
                   alignSelf: 'center', fontFamily: 'var(--cth-font-display)',
                   fontSize: 20, color: 'var(--cth-ink-300)'
