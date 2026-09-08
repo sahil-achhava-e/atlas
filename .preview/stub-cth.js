@@ -77,18 +77,36 @@
   // main process reports rather than trusting their own optimistic flip, which
   // is right: the OS can refuse. But a stub answering [] means every toggle
   // reconciles to "off" and looks dead on click.
-  var config = {
+  // Persisted in localStorage so a refresh does not throw you back into the
+  // setup wizard. The real app writes this to a config.json in userData; the
+  // preview has no disk, and an in-memory config meant `onboardingComplete`
+  // reset on every reload. Clear it with `localStorage.clear()` to see setup
+  // again on purpose.
+  var CONFIG_KEY = 'atlas.preview.config';
+  var DEFAULT_CONFIG = {
     strongKeepalive: false, notifications: false, openAtLogin: false,
     onboardingComplete: false, registeredRepos: [],
   };
+  var config = (function () {
+    try {
+      var raw = localStorage.getItem(CONFIG_KEY);
+      return raw ? Object.assign({}, DEFAULT_CONFIG, JSON.parse(raw)) : Object.assign({}, DEFAULT_CONFIG);
+    } catch (e) { return Object.assign({}, DEFAULT_CONFIG); }
+  })();
+  var save = function () {
+    try { localStorage.setItem(CONFIG_KEY, JSON.stringify(config)); } catch (e) { /* private window */ }
+  };
 
   var OVERRIDES = {
+    getConfig: function () { return Promise.resolve(Object.assign({}, config)); },
     updateConfig: function (patch) {
       Object.assign(config, patch || {});
+      save();
       return Promise.resolve(Object.assign({}, config));
     },
     setNotifications: function (v) {
       config.notifications = v === true;
+      save();
       return Promise.resolve(Object.assign({}, config));
     },
     // Returns the OS's answer, which the real handler reads back from Electron.
@@ -98,6 +116,7 @@
     ensureHarnessHome: function () { return Promise.resolve({ ok: true }); },
     setLoginItem: function (v) {
       config.openAtLogin = v === true;
+      save();
       return Promise.resolve(config.openAtLogin);
     },
     hiveRegistry: function () { return Promise.resolve({ agents: {} }); },
