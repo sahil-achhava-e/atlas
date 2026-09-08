@@ -586,7 +586,8 @@
     "facesFree": "free",
     "faceFromName": "drawn from the name",
     "faceReserved": "orchestrator",
-    "faceNew": "new"
+    "faceNew": "new",
+    "faceFromNameAction": "Use the name instead"
   },
   "onboarding": {
     "titles": {
