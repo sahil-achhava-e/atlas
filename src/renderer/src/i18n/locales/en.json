@@ -596,7 +596,14 @@
     "gitIsolationDesc": "Gives this agent its own copy of the project folder and its own git branch. It never touches the files you have open, so several agents can work on the same project at the same time, and so can you.",
     "gitIsolationOn": "On: it works at its own desk. You review its branch when it is done.",
     "gitIsolationOff": "Off: it edits your checkout directly. You see every change live, but only one agent can work here at a time.",
-    "providerFixed": "this workspace's engine"
+    "providerFixed": "this workspace's engine",
+    "jobLabel": "WHAT DOES IT DO?",
+    "jobHint": "The work it repeats, not one task. This is added to every prompt it ever gets.",
+    "jobPlaceholder": "Example: Own backend work in this repo: API endpoints, services, jobs and the queries they need. Read neighbouring code first and match its conventions. Reproduce a bug before fixing it. Run the project checks and quote what they said.",
+    "doneLabel": "WHEN IS IT FINISHED?",
+    "doneHint": "What it has to hand you before it stops.",
+    "askLabel": "WHEN SHOULD IT ASK YOU?",
+    "askHint": "Everything below this bar it handles on its own."
   },
   "onboarding": {
     "titles": {

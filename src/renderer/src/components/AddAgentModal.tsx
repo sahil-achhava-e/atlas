@@ -42,6 +42,11 @@ const ACCENTS: AccentColorName[] = [
 /** Red leads the row and is what a fresh dialog opens on. */
 const DEFAULT_ACCENT: AccentColorName = 'coral';
 
+/** Sensible answers already filled in, because most agents want these and a
+ *  first-time user has no idea they are the right answers. Both are editable. */
+const DEFAULT_DONE = 'a pushed branch and an open pull request, never merged, with a note on what you verified';
+const DEFAULT_ASK = 'something destructive, a schema change against real data, spending money, or a conflict you cannot resolve';
+
 // OSS quick-pick chip styling (ondev-c) — mirrors the model-picker chips.
 const ossChip = (active: boolean, accent: string): CSSProperties => ({
   padding: '3px 8px 1px',
@@ -211,7 +216,22 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // Codex spawns `codex`, not the configured `claude`). For 'custom' we keep the
   // user's typed command rather than blanking it.
   const preset = providerPreset(provider);
-  const [goal, setGoal] = useState(pendingHire?.goal ?? '');
+  // The goal is assembled from three questions rather than typed into a blank
+  // box. "Goal (optional)" told a first-time user nothing, so goals came out
+  // empty or one vague line; these ask for the parts that actually make an
+  // agent behave: its loop, what finished means, and when to interrupt you.
+  const [jobText, setJobText] = useState('');
+  const [doneText, setDoneText] = useState(DEFAULT_DONE);
+  const [askText, setAskText] = useState(DEFAULT_ASK);
+  /** A hire manifest arrives with a goal already written; keep it verbatim
+   *  rather than trying to take it apart. */
+  const [rawGoal, setRawGoal] = useState(pendingHire?.goal ?? '');
+  const composedGoal = rawGoal.trim() || [
+    jobText.trim(),
+    cwd ? `You work only in ${basename(cwd)}. If something belongs to another project, send it to Atlas rather than doing it yourself.` : '',
+    doneText.trim() ? `Done means: ${doneText.trim()}` : '',
+    askText.trim() ? `Ask the human when: ${askText.trim()}` : '',
+  ].filter(Boolean).join('\n\n');
   const [isolate, setIsolate] = useState(pendingHire?.isolate ?? false);
   // #2 — optional Claude session id to continue. When set, the spawn seeds that
   // session's transcript into the cwd's project dir and launches `--resume`.
@@ -300,7 +320,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     setModel(m.model);
     setCommand(hireCommand(m));
     setDescription(m.description ?? 'a fresh harness');
-    setGoal(m.goal ?? '');
+    setRawGoal(m.goal ?? '');
     setIsolate(m.isolate ?? false);
     setResumeSessionId('');
     setFolderNote(undefined);
@@ -404,7 +424,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
       project: basename(projectCwd),
       tmuxTarget: '',
       cwd: spawnedCwd,
-      goal: goal.trim() || undefined,
+      goal: composedGoal.trim() || undefined,
       status: 'idle',
       action: resuming && spawnRes.resumeNotFound ? 'session not found — fresh start' : 'starting up',
       progress: 0,
@@ -994,23 +1014,64 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                       />
                     </Row>
 
-                    <Row label={tr('addAgent.goal')}>
-                      {/* The goal is the payload: it is injected into every
-                          prompt this agent ever gets, so it deserves room to
-                          write something specific rather than two lines. */}
-                      <textarea
-                        dir={rtl ? 'auto' : undefined}
-                        value={goal}
-                        onChange={(e) => setGoal(e.target.value)}
-                        placeholder={tr('addAgent.goalPlaceholder')}
-                        rows={10}
-                        style={{
-                          ...inputStyle, height: 'auto', minHeight: 220, padding: 14,
-                          fontFamily: 'var(--cth-font-ui)', fontSize: 14, lineHeight: '21px',
-                          resize: 'vertical'
-                        }}
-                      />
-                    </Row>
+                    {rawGoal.trim() ? (
+                      <Row label={tr('addAgent.goal')}>
+                        <textarea
+                          dir={rtl ? 'auto' : undefined}
+                          value={rawGoal}
+                          onChange={(e) => setRawGoal(e.target.value)}
+                          rows={10}
+                          style={{
+                            ...inputStyle, height: 'auto', minHeight: 220, padding: 14,
+                            fontFamily: 'var(--cth-font-ui)', fontSize: 14, lineHeight: '21px',
+                            resize: 'vertical'
+                          }}
+                        />
+                      </Row>
+                    ) : (
+                      <>
+                        <Row label={tr('addAgent.jobLabel')}>
+                          <span style={{ fontSize: 12, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
+                            {tr('addAgent.jobHint')}
+                          </span>
+                          <textarea
+                            dir={rtl ? 'auto' : undefined}
+                            value={jobText}
+                            onChange={(e) => setJobText(e.target.value)}
+                            placeholder={tr('addAgent.jobPlaceholder')}
+                            rows={7}
+                            style={{
+                              ...inputStyle, height: 'auto', minHeight: 150, padding: 14,
+                              fontFamily: 'var(--cth-font-ui)', fontSize: 14, lineHeight: '21px',
+                              resize: 'vertical'
+                            }}
+                          />
+                        </Row>
+
+                        <Row label={tr('addAgent.doneLabel')}>
+                          <span style={{ fontSize: 12, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
+                            {tr('addAgent.doneHint')}
+                          </span>
+                          <input
+                            value={doneText}
+                            onChange={(e) => setDoneText(e.target.value)}
+                            style={{ ...inputStyle, height: 44 }}
+                          />
+                        </Row>
+
+                        <Row label={tr('addAgent.askLabel')}>
+                          <span style={{ fontSize: 12, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
+                            {tr('addAgent.askHint')}
+                          </span>
+                          <input
+                            value={askText}
+                            onChange={(e) => setAskText(e.target.value)}
+                            style={{ ...inputStyle, height: 44 }}
+                          />
+                        </Row>
+                      </>
+                    )}
+
                   </>
                 )}
               </div>
