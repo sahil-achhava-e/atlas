@@ -1245,16 +1245,15 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
  */
 function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
   defaults: { name: string };
-  /** Faces already worn, marked so one is never picked twice. */
+  /** Faces already worn, dimmed so one is never picked twice. */
   taken: Set<string>;
   onApply: (v: { name: string; character: string }) => void;
   onCancel: () => void;
   tr: (k: string) => string;
 }) {
   const [name, setName] = useState(defaults.name);
-  /** '' means the face follows the name. Clicking one from the library pins it. */
+  /** '' means no face chosen yet, and the name draws one instead. */
   const [face, setFace] = useState('');
-  const [picking, setPicking] = useState(false);
   const shown = face || name.trim();
   const apply = (): void => {
     if (name.trim()) onApply({ name: name.trim(), character: face || name.trim() });
@@ -1269,7 +1268,7 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
       }}
     >
       <div style={{
-        width: 620, maxWidth: '94vw', maxHeight: '88vh', padding: 20,
+        width: 660, maxWidth: '94vw', maxHeight: '88vh', padding: 20,
         display: 'flex', flexDirection: 'column', gap: 14,
         background: 'var(--cth-cream-50)',
         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 0 24px 60px rgba(0,0,0,0.5)'
@@ -1278,7 +1277,68 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
           {tr('addAgent.quickAddTitle')}
         </div>
 
+        {/* Faces first: you pick one, then call it whatever you like. Hiding
+            them behind a button made choosing the deliberate act and naming the
+            accident, which is backwards for a roster of thirty. */}
+        <div style={{
+          display: 'flex', gap: 6, flexWrap: 'wrap',
+          maxHeight: 300, overflowY: 'auto', paddingRight: 4
+        }}>
+          {AVATAR_LIBRARY.map((f) => {
+            const used = taken.has(f.id);
+            const active = face === f.id;
+            return (
+              <button
+                key={f.id}
+                disabled={used}
+                onClick={() => { setFace(f.id); if (!name.trim()) setName(f.name); }}
+                title={used ? tr('addAgent.faceInUse') : f.name}
+                aria-pressed={active}
+                style={{
+                  width: 64, padding: '5px 4px 4px', border: 'none',
+                  cursor: used ? 'not-allowed' : 'pointer',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                  background: active ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
+                  boxShadow: active
+                    ? 'inset 0 0 0 2px var(--cth-sky)'
+                    : 'inset 0 0 0 1px var(--cth-ink-100)',
+                  opacity: used ? 0.45 : 1
+                }}
+              >
+                <span style={{
+                  width: 52, height: 64, display: 'flex', alignItems: 'flex-end',
+                  justifyContent: 'center', overflow: 'hidden', background: 'var(--cth-cream-200)'
+                }}>
+                  <SpritePortrait character={f.id} scale={3} />
+                </span>
+                <span style={{
+                  fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '12px',
+                  color: 'var(--cth-ink-900)'
+                }}>{f.name}</span>
+                {used && (
+                  <span style={{ fontSize: 9, lineHeight: '12px', color: 'var(--cth-coral)' }}>
+                    {tr('addAgent.faceInUse')}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
         <div style={{ display: 'flex', gap: 14, alignItems: 'flex-end' }}>
+          <span style={{
+            width: 62, height: 74, flexShrink: 0, display: 'flex',
+            alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden',
+            background: 'var(--cth-cream-200)',
+            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+          }}>
+            {shown
+              ? <SpritePortrait character={shown} scale={3} />
+              : <span style={{
+                  alignSelf: 'center', fontFamily: 'var(--cth-font-display)',
+                  fontSize: 20, color: 'var(--cth-ink-300)'
+                }}>?</span>}
+          </span>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <span style={{
               fontFamily: 'var(--cth-font-display)', fontSize: 10, letterSpacing: 1,
@@ -1298,92 +1358,9 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
               }}
             />
           </div>
-          {/* The photo box is a button: click it to choose a face instead of
-              letting the name draw one. */}
-          <button
-            onClick={() => setPicking((v) => !v)}
-            title={tr('addAgent.chooseFace')}
-            className="cth-choice"
-            style={{
-              width: 74, padding: 0, border: 'none', cursor: 'pointer',
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              background: 'var(--cth-cream-200)',
-              boxShadow: picking
-                ? 'inset 0 0 0 2px var(--cth-sky)'
-                : 'inset 0 0 0 1px var(--cth-ink-300)'
-            }}
-          >
-            <span style={{
-              width: 74, height: 78, display: 'flex', alignItems: 'flex-end',
-              justifyContent: 'center', overflow: 'hidden'
-            }}>
-              {shown
-                ? <SpritePortrait character={shown} scale={3} />
-                : <span style={{
-                    alignSelf: 'center', fontFamily: 'var(--cth-font-display)',
-                    fontSize: 20, color: 'var(--cth-ink-300)'
-                  }}>?</span>}
-            </span>
-            <span style={{
-              width: '100%', padding: '3px 0 4px', fontSize: 10, lineHeight: '13px',
-              color: 'var(--cth-ink-500)', background: 'var(--cth-cream-100)'
-            }}>{tr('addAgent.chooseFace')}</span>
-          </button>
         </div>
 
-        {picking && (
-          <div style={{
-            display: 'flex', gap: 6, flexWrap: 'wrap',
-            maxHeight: 260, overflowY: 'auto', paddingRight: 4
-          }}>
-            {AVATAR_LIBRARY.map((f) => {
-              const used = taken.has(f.id);
-              const active = face === f.id;
-              return (
-                <button
-                  key={f.id}
-                  disabled={used}
-                  onClick={() => { setFace(f.id); if (!name.trim()) setName(f.name); setPicking(false); }}
-                  title={used ? tr('addAgent.faceInUse') : f.name}
-                  aria-pressed={active}
-                  style={{
-                    width: 62, padding: '5px 4px 4px', border: 'none',
-                    cursor: used ? 'not-allowed' : 'pointer',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                    background: active ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
-                    boxShadow: active
-                      ? 'inset 0 0 0 2px var(--cth-sky)'
-                      : 'inset 0 0 0 1px var(--cth-ink-100)',
-                    opacity: used ? 0.45 : 1
-                  }}
-                >
-                  <span style={{
-                    width: 50, height: 62, display: 'flex', alignItems: 'flex-end',
-                    justifyContent: 'center', overflow: 'hidden', background: 'var(--cth-cream-200)'
-                  }}>
-                    <SpritePortrait character={f.id} scale={3} />
-                  </span>
-                  <span style={{
-                    fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '12px',
-                    color: 'var(--cth-ink-900)'
-                  }}>{f.name}</span>
-                  {used && (
-                    <span style={{ fontSize: 9, lineHeight: '12px', color: 'var(--cth-coral)' }}>
-                      {tr('addAgent.faceInUse')}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {face && (
-            <PixelButton variant="ghost" size="md" onClick={() => setFace('')}>
-              {tr('addAgent.faceFromNameAction')}
-            </PixelButton>
-          )}
           <div style={{ flex: 1 }} />
           <PixelButton variant="ghost" size="md" onClick={onCancel}>{tr('common.cancel')}</PixelButton>
           <PixelButton variant="primary" size="md" style={{ minWidth: 100 }} disabled={!name.trim()} onClick={apply}>
