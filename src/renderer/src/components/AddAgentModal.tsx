@@ -1264,85 +1264,49 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
       onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
       style={{
         position: 'fixed', inset: 0, zIndex: 600, display: 'grid', placeItems: 'center',
-        background: 'rgba(0,0,0,0.5)', padding: 24
+        background: 'rgba(0,0,0,0.55)', padding: 24
       }}
     >
       <div style={{
-        width: 880, maxWidth: '95vw', maxHeight: '90vh', padding: 24,
-        display: 'flex', flexDirection: 'column', gap: 14,
+        width: 760, maxWidth: '95vw', maxHeight: '88vh',
+        display: 'flex', flexDirection: 'column',
         background: 'var(--cth-cream-50)',
         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 0 24px 60px rgba(0,0,0,0.5)'
       }}>
-        <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 14, letterSpacing: 0.5 }}>
+        <div style={{
+          padding: '14px 20px', flexShrink: 0,
+          background: 'var(--cth-cream-100)',
+          boxShadow: 'inset 0 -1px 0 var(--cth-ink-100)',
+          fontFamily: 'var(--cth-font-display)', fontSize: 13, letterSpacing: 1
+        }}>
           {tr('addAgent.quickAddTitle')}
         </div>
 
-        {/* Faces first: you pick one, then call it whatever you like. Hiding
-            them behind a button made choosing the deliberate act and naming the
-            accident, which is backwards for a roster of thirty. */}
-        <div style={{
-          display: 'flex', gap: 6, flexWrap: 'wrap',
-          maxHeight: 440, overflowY: 'auto', paddingRight: 6
-        }}>
-          {AVATAR_LIBRARY.map((f) => {
-            const used = taken.has(f.id);
-            const active = face === f.id;
-            return (
-              <button
-                key={f.id}
-                disabled={used}
-                onClick={() => setFace(f.id)}
-                title={used ? tr('addAgent.faceInUse') : f.name}
-                aria-pressed={active}
-                style={{
-                  width: 82, padding: '6px 5px 5px', border: 'none',
-                  cursor: used ? 'not-allowed' : 'pointer',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                  background: active ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
-                  boxShadow: active
-                    ? 'inset 0 0 0 2px var(--cth-sky)'
-                    : 'inset 0 0 0 1px var(--cth-ink-100)',
-                  opacity: used ? 0.45 : 1
-                }}
-              >
-                <span style={{
-                  width: 70, height: 86, display: 'flex', alignItems: 'flex-end',
-                  justifyContent: 'center', overflow: 'hidden', background: 'var(--cth-cream-200)'
-                }}>
-                  <SpritePortrait character={f.id} scale={4} />
-                </span>
-                {/* No name under the face. A face labelled "Aiko" reads as an
-                    agent called Aiko, and picking a second one left the field
-                    holding the first one's name. The face is a picture; the
-                    name is yours. */}
-                {used && (
-                  <span style={{ fontSize: 10, lineHeight: '13px', color: 'var(--cth-coral)' }}>
-                    {tr('addAgent.faceInUse')}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-end' }}>
-          <span style={{
-            width: 74, height: 90, flexShrink: 0, display: 'flex',
-            alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden',
-            background: 'var(--cth-cream-200)',
-            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+        {/* Left: the agent being made. Right: what it could look like. The grid
+            used to fill the whole box with the name stranded underneath, so the
+            thing you were building was the least prominent part of the dialog. */}
+        <div style={{ display: 'flex', minHeight: 0, flex: 1 }}>
+          <div style={{
+            width: 208, flexShrink: 0, padding: 20,
+            display: 'flex', flexDirection: 'column', gap: 10,
+            boxShadow: 'inset -1px 0 0 var(--cth-ink-100)'
           }}>
-            {shown
-              ? <SpritePortrait character={shown} scale={4} />
-              : <span style={{
-                  alignSelf: 'center', fontFamily: 'var(--cth-font-display)',
-                  fontSize: 20, color: 'var(--cth-ink-300)'
-                }}>?</span>}
-          </span>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <span style={{
+              width: 130, height: 158, alignSelf: 'center', display: 'flex',
+              alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden',
+              background: 'var(--cth-cream-200)',
+              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+            }}>
+              {shown
+                ? <SpritePortrait character={shown} scale={5} />
+                : <span style={{
+                    alignSelf: 'center', fontFamily: 'var(--cth-font-display)',
+                    fontSize: 28, color: 'var(--cth-ink-300)'
+                  }}>?</span>}
+            </span>
             <span style={{
               fontFamily: 'var(--cth-font-display)', fontSize: 10, letterSpacing: 1,
-              color: 'var(--cth-ink-500)', marginBottom: 4
+              color: 'var(--cth-ink-500)'
             }}>{tr('addAgent.quickName')}</span>
             <input
               value={name}
@@ -1358,12 +1322,48 @@ function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
               }}
             />
           </div>
+
+          <div style={{
+            flex: 1, minWidth: 0, padding: 16,
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))',
+            gap: 8, alignContent: 'start', overflowY: 'auto'
+          }}>
+            {AVATAR_LIBRARY.map((f) => {
+              const used = taken.has(f.id);
+              const active = face === f.id;
+              return (
+                <button
+                  key={f.id}
+                  disabled={used}
+                  onClick={() => setFace(f.id)}
+                  title={used ? `${f.name} · ${tr('addAgent.faceInUse')}` : f.name}
+                  aria-pressed={active}
+                  style={{
+                    padding: 3, border: 'none', cursor: used ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+                    height: 70, overflow: 'hidden',
+                    background: active ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
+                    boxShadow: active
+                      ? 'inset 0 0 0 2px var(--cth-sky)'
+                      : 'inset 0 0 0 1px var(--cth-ink-100)',
+                    opacity: used ? 0.35 : 1
+                  }}
+                >
+                  <SpritePortrait character={f.id} scale={3} />
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <div style={{ flex: 1 }} />
+        <div style={{
+          display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end',
+          padding: '12px 20px', flexShrink: 0,
+          background: 'var(--cth-cream-100)',
+          boxShadow: 'inset 0 1px 0 var(--cth-ink-100)'
+        }}>
           <PixelButton variant="ghost" size="md" onClick={onCancel}>{tr('common.cancel')}</PixelButton>
-          <PixelButton variant="primary" size="md" style={{ minWidth: 100 }} disabled={!name.trim()} onClick={apply}>
+          <PixelButton variant="primary" size="md" style={{ minWidth: 110 }} disabled={!name.trim()} onClick={apply}>
             {tr('addAgent.quickApply')}
           </PixelButton>
         </div>
