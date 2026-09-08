@@ -88,35 +88,6 @@ const DESCRIPTION_TEMPLATES: { labelKey: string; description: string; goal: stri
 // the exact JSON shape the importer accepts and ends with a fill-in section so the
 // user adds their own details (item 7). Kept in sync with the HireManifest schema
 // (src/shared/hire.ts) — provider allowlist is claude | codex | antigravity | cursor.
-const HIRE_PROMPT = `You are designing a "hire" — a ready-to-spawn AI agent for Atlas, an app that runs a team of CLI coding agents. Output ONE JSON object (a hire manifest) and nothing else.
-
-Make the agent genuinely useful: give it a sharp role, a concrete standing goal, and a description that makes it behave like an expert operator of its CLI engine (Claude Code, Codex, or Antigravity/Gemini). It should know how to use the terminal, read and edit files, run and inspect commands, lean on available skills and MCP tools, keep notes in memory, and work autonomously toward its goal without hand-holding.
-
-Return EXACTLY this shape (omit optional fields you don't need; keep the spec string verbatim):
-
-{
-  "spec": "munder-difflin/hire@1",
-  "name": "Luffy",
-  "description": "one-line role — what this agent is for",
-  "goal": "standing directive injected on every prompt — specific and outcome-oriented",
-  "provider": "claude",
-  "model": "claude-opus-4-8[1m]",
-  "capabilities": ["code-review", "docs"],
-  "isolate": false,
-  "tokenCap": 2000000,
-  "author": "your name"
-}
-
-Rules:
-- "provider" MUST be one of: cursor | claude | codex | antigravity. "model" must be a real model id for that provider (e.g. gpt-5.6-luna-high, claude-opus-4-8[1m], gpt-5-codex, "Gemini 3.1 Pro (High)").
-- Do NOT include shell commands or any flags beyond these fields.
-- Make "description" + "goal" concrete enough that the agent knows exactly what to do on its first turn.
-
---- ADD YOUR DETAILS BELOW (the AI should use these) ---
-Role / what I want this agent to do:
-Preferred engine (claude / codex / antigravity), if any:
-Repos, tools, style, or constraints to respect:
-`;
 
 // The Add Agent form has 11+ fields, so it's grouped into sections the user jumps
 // between via a left sidebar index (one section shown at a time). Engine carries
@@ -251,17 +222,9 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   const [busy, setBusy] = useState(false);
   // Which config section the left sidebar index is showing.
   const [section, setSection] = useState<SectionKey>('identity');
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const sectionIndex = Math.max(0, SECTIONS.findIndex((x) => x.key === section));
   // "Generate a hire with AI" helper — reveals a copy-paste prompt (item 7).
-  const [showHirePrompt, setShowHirePrompt] = useState(false);
-  const [copiedPrompt, setCopiedPrompt] = useState(false);
-  const copyHirePrompt = async () => {
-    try {
-      await navigator.clipboard.writeText(HIRE_PROMPT);
-      setCopiedPrompt(true);
-      setTimeout(() => setCopiedPrompt(false), 1500);
-    } catch { /* clipboard blocked — the textarea below is selectable as a fallback */ }
-  };
 
   // Close only the modal on Esc. Capture prevents the fullscreen terminal's
   // window-level handler from also closing the view underneath.
@@ -1126,62 +1089,43 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               </div>
             )}
 
-            {/* Import-hire explainer + AI prompt generator (item 7) */}
+            {/* One button. "Generate with AI" only ever copied a prompt for
+                  you to paste into another app and bring a file back, which is
+                  three hops to fill four fields. This asks for them directly,
+                  and still loads a .json for anything already written. */}
             <div style={{
-              padding: '8px 10px',
+              display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+              padding: '10px 12px',
               background: 'var(--cth-cream-100)',
-              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
-              display: 'flex', flexDirection: 'column', gap: 6
+              boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
             }}>
-              {/* Two ways to fill this form without typing, side by side, with
-                  one line saying what they do. It used to be a paragraph with a
-                  single button floated to the right of it. */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ flex: 1, minWidth: 220, fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: '17px' }}>
-                  {tr('addAgent.importHireDesc')}
+              <span style={{ flex: 1, minWidth: 220, fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: '17px' }}>
+                {tr('addAgent.importHireDesc')}
+              </span>
+              <PixelButton variant="secondary" size="md" onClick={() => setShowQuickAdd(true)} disabled={busy}>
+                <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                  <Icon name="plus" /> {tr('addAgent.quickAdd')}
                 </span>
-                <PixelButton variant="secondary" size="md" onClick={importHire}
-                  disabled={busy} title={tr('addAgent.importHireBtnTitle')}>
-                  <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-                    <Icon name="folder" /> {tr('addAgent.importHireBtn')}
-                  </span>
-                </PixelButton>
-                <PixelButton
-                  variant={showHirePrompt ? 'primary' : 'secondary'}
-                  size="md"
-                  onClick={() => setShowHirePrompt((v) => !v)}
-                >
-                  <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-                    <Icon name="sparkle" />
-                    {showHirePrompt ? tr('addAgent.hideAIPrompt') : tr('addAgent.generateWithAI')}
-                  </span>
-                </PixelButton>
-              </div>
-              {showHirePrompt && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 12, color: 'var(--cth-ink-500)', lineHeight: '16px' }}>
-                    {tr('addAgent.aiPromptHint')}
-                  </span>
-                  <textarea
-                    readOnly
-                    value={HIRE_PROMPT}
-                    onFocus={(e) => e.currentTarget.select()}
-                    rows={10}
-                    style={{
-                      ...inputStyle,
-                      width: '100%',
-                      fontFamily: 'var(--cth-font-mono)', fontSize: 12, lineHeight: '16px',
-                      resize: 'vertical', background: 'var(--cth-paper-100)'
-                    }}
-                  />
-                  <div>
-                    <PixelButton variant="secondary" size="sm" onClick={copyHirePrompt}>
-                      {copiedPrompt ? tr('addAgent.copied') : tr('addAgent.copyPrompt')}
-                    </PixelButton>
-                  </div>
-                </div>
-              )}
+              </PixelButton>
             </div>
+
+            {showQuickAdd && (
+              <QuickAdd
+                repos={repos}
+                defaults={{ name, cwd, description, goal }}
+                onCancel={() => setShowQuickAdd(false)}
+                onApply={(v) => {
+                  setName(v.name);
+                  setCwd(v.cwd);
+                  setDescription(v.description);
+                  setGoal(v.goal);
+                  setShowQuickAdd(false);
+                  setSection('briefing');
+                }}
+                onLoadFile={() => { setShowQuickAdd(false); void importHire(); }}
+                tr={tr}
+              />
+            )}
 
             {/* Import moved up beside "Generate with AI", where the line
                 explaining both of them is. Two Import hire buttons on one
@@ -1246,5 +1190,110 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       }}>{label}</span>
       {children}
     </label>
+  );
+}
+
+/** The four things an agent actually needs, asked in one place.
+ *
+ *  The long form has four sections and twenty controls, which is right when you
+ *  are tuning one agent and wrong when you are adding five. This asks for the
+ *  identity, the folder and the job, then drops you on Briefing to press Hire.
+ */
+function QuickAdd({ repos, defaults, onApply, onCancel, onLoadFile, tr }: {
+  repos: string[];
+  defaults: { name: string; cwd: string; description: string; goal: string };
+  onApply: (v: { name: string; cwd: string; description: string; goal: string }) => void;
+  onCancel: () => void;
+  onLoadFile: () => void;
+  tr: (k: string) => string;
+}) {
+  const [name, setName] = useState(defaults.name);
+  const [cwd, setCwd] = useState(defaults.cwd || repos[0] || '');
+  const [description, setDescription] = useState(defaults.description);
+  const [goal, setGoal] = useState(defaults.goal);
+  const ready = name.trim().length > 0 && description.trim().length > 0;
+
+  const field: CSSProperties = {
+    height: 38, padding: '0 10px', border: 'none', outline: 'none',
+    background: 'var(--cth-paper-100)', color: 'var(--cth-ink-900)',
+    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+    fontFamily: 'var(--cth-font-ui)', fontSize: 13
+  };
+  const label: CSSProperties = {
+    fontFamily: 'var(--cth-font-display)', fontSize: 10, letterSpacing: 1,
+    color: 'var(--cth-ink-500)', marginBottom: 4
+  };
+
+  return (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 600, display: 'grid', placeItems: 'center',
+        background: 'rgba(0,0,0,0.5)', padding: 24
+      }}
+    >
+      <div style={{
+        width: 520, maxWidth: '94vw', padding: 20,
+        display: 'flex', flexDirection: 'column', gap: 14,
+        background: 'var(--cth-cream-50)',
+        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 0 24px 60px rgba(0,0,0,0.5)'
+      }}>
+        <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 14, letterSpacing: 0.5 }}>
+          {tr('addAgent.quickAddTitle')}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={label}>{tr('addAgent.quickName')}</span>
+          <input style={field} value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={label}>{tr('addAgent.quickProject')}</span>
+          <select style={field} value={cwd} onChange={(e) => setCwd(e.target.value)}>
+            {repos.length === 0 && <option value="">{tr('addAgent.noProjects')}</option>}
+            {repos.map((r) => (
+              <option key={r} value={r}>{r.replace(/\/+$/, '').split('/').pop()}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={label}>{tr('addAgent.quickRole')}</span>
+          <input
+            style={field}
+            value={description}
+            placeholder={tr('addAgent.quickRolePlaceholder')}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={label}>{tr('addAgent.quickGoal')}</span>
+          <textarea
+            value={goal}
+            placeholder={tr('addAgent.quickGoalPlaceholder')}
+            onChange={(e) => setGoal(e.target.value)}
+            style={{ ...field, height: 96, padding: 10, lineHeight: '19px', resize: 'vertical' }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <PixelButton variant="ghost" size="md" onClick={onLoadFile}>
+            {tr('addAgent.quickFromFile')}
+          </PixelButton>
+          <div style={{ flex: 1 }} />
+          <PixelButton variant="ghost" size="md" onClick={onCancel}>{tr('common.cancel')}</PixelButton>
+          <PixelButton
+            variant="primary"
+            size="md"
+            style={{ minWidth: 100 }}
+            disabled={!ready}
+            onClick={() => onApply({ name: name.trim(), cwd, description: description.trim(), goal: goal.trim() })}
+          >
+            {tr('addAgent.quickApply')}
+          </PixelButton>
+        </div>
+      </div>
+    </div>
   );
 }
