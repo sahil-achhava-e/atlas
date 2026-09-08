@@ -60,34 +60,6 @@ const ossLink: CSSProperties = { color: 'var(--cth-ink-900)', textDecoration: 'u
 // role so a user isn't staring at a blank field (item 7). The template BRIEFINGS
 // stay English (they become agent prompts — see the i18n report); only the
 // picker labels are translated.
-const DESCRIPTION_TEMPLATES: { labelKey: string; description: string; goal: string }[] = [
-  {
-    labelKey: 'addAgent.templatesHint.repoJanitor.label',
-    description: 'keeps the codebase tidy and healthy',
-    goal: 'Continuously hunt for dead code, lint errors, flaky tests, and small safe refactors. Fix the safe ones and leave a note for anything risky. Never change behavior without flagging it.'
-  },
-  {
-    labelKey: 'addAgent.templatesHint.docsWriter.label',
-    description: 'keeps docs in sync with the code',
-    goal: 'Watch for code changes that outdate the README and docs, then update them. Write for newcomers and prefer concrete examples over prose.'
-  },
-  {
-    labelKey: 'addAgent.templatesHint.bugTriager.label',
-    description: 'investigates and root-causes bugs',
-    goal: 'For each reported issue: reproduce it, find the root cause, then propose a minimal fix with evidence. No fixes without a confirmed root cause.'
-  },
-  {
-    labelKey: 'addAgent.templatesHint.researchAssistant.label',
-    description: 'gathers and summarizes information',
-    goal: 'Research the questions you are given across multiple sources, verify the key claims, and return a concise, cited summary.'
-  },
-  {
-    labelKey: 'addAgent.templatesHint.releaseManager.label',
-    description: 'prepares and ships releases',
-    goal: 'Track what has shipped since the last release, update the changelog and version, and draft clear release notes.'
-  }
-];
-
 // Copy-paste prompt the user hands to any AI to generate a hire manifest. It pins
 // the exact JSON shape the importer accepts and ends with a fill-in section so the
 // user adds their own details (item 7). Kept in sync with the HireManifest schema
@@ -1013,44 +985,30 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
                 {section === 'briefing' && (
                   <>
-                    <Row label={tr('addAgent.templates')}>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {DESCRIPTION_TEMPLATES.map((t) => (
-                          <button
-                            key={t.labelKey}
-                            onClick={() => { setDescription(t.description); setGoal(t.goal); }}
-                            title={t.goal}
-                            style={{
-                              padding: '3px 8px 1px',
-                              background: 'var(--cth-cream-100)',
-                              boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
-                              fontFamily: 'var(--cth-font-ui)', fontSize: 12,
-                              color: 'var(--cth-ink-900)', cursor: 'pointer', border: 'none'
-                            }}
-                          >
-                            {tr(t.labelKey)}
-                          </button>
-                        ))}
-                      </div>
-                    </Row>
-
                     <Row label={tr('addAgent.description')}>
                       <input
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder={tr('addAgent.descriptionPlaceholder')}
-                        style={inputStyle}
+                        style={{ ...inputStyle, height: 46, fontSize: 15 }}
                       />
                     </Row>
 
                     <Row label={tr('addAgent.goal')}>
+                      {/* The goal is the payload: it is injected into every
+                          prompt this agent ever gets, so it deserves room to
+                          write something specific rather than two lines. */}
                       <textarea
                         dir={rtl ? 'auto' : undefined}
                         value={goal}
                         onChange={(e) => setGoal(e.target.value)}
                         placeholder={tr('addAgent.goalPlaceholder')}
-                        rows={2}
-                        style={{ ...inputStyle, fontFamily: 'var(--cth-font-ui)', resize: 'none' }}
+                        rows={10}
+                        style={{
+                          ...inputStyle, height: 'auto', minHeight: 220, padding: 14,
+                          fontFamily: 'var(--cth-font-ui)', fontSize: 14, lineHeight: '21px',
+                          resize: 'vertical'
+                        }}
                       />
                     </Row>
                   </>
