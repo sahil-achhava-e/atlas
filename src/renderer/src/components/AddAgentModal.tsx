@@ -7,6 +7,7 @@ import { Icon } from './Icon';
 import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
 import { AVATAR_LIBRARY, LIBRARY_BY_ID } from '@/scene/office/avatarLibrary';
+import { accentCss, accentFillCss } from '@/design/tokens';
 import { OFFICE_CAST, DEFAULT_CHARACTER, type OfficeCharacterName } from '@/scene/office/cast';
 import { type AccentColorName } from '@/design/tokens';
 import type { HireManifest } from '@shared/hire';
@@ -42,9 +43,9 @@ const ACCENTS: AccentColorName[] = [
 const DEFAULT_ACCENT: AccentColorName = 'coral';
 
 // OSS quick-pick chip styling (ondev-c) — mirrors the model-picker chips.
-const ossChip = (active: boolean, accent: AccentColorName): CSSProperties => ({
+const ossChip = (active: boolean, accent: string): CSSProperties => ({
   padding: '3px 8px 1px',
-  background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
+  background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
   boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-ink-500)' : 'inset 0 0 0 1px var(--cth-ink-100)',
   fontFamily: 'var(--cth-font-ui)', fontSize: 12,
   color: 'var(--cth-ink-900)', cursor: 'pointer', border: 'none'
@@ -140,8 +141,9 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // Any non-empty string is a valid character now: a cast key draws that cast
   // member, anything else draws a face generated from the string.
   const knownCharacter = (c?: string): string => (c && c.trim() ? c : DEFAULT_CHARACTER);
-  const knownAccent = (a?: string): AccentColorName =>
-    (ACCENTS.includes(a as AccentColorName) ? (a as AccentColorName) : DEFAULT_ACCENT);
+  // A named token, a custom '#rrggbb', or the default.
+  const knownAccent = (a?: string): string =>
+    (a && (a.startsWith('#') || ACCENTS.includes(a as AccentColorName)) ? a : DEFAULT_ACCENT);
   /** The cast member a typed name refers to, if any.
    *
    *  The character tiles already set the name (clicking Nami names the agent
@@ -191,33 +193,16 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     || LIBRARY_BY_ID[effectiveCharacter]?.name
     || OFFICE_CAST.find(c => c.name === effectiveCharacter)?.displayName
     || '';
-  /** The crew, not a catalogue.
-   *
-   *  On a first run that is Atlas alone. Every agent you add puts its face here
-   *  too, so the row grows one at a time and shows who is on the floor rather
-   *  than thirty costumes nobody is wearing. The face for the name currently
-   *  typed is appended last, so you can see what you are about to hire before
-   *  you hire it. */
-  const roster = useStore(s => s.agents);
-  const faceChoices: { id: string; name: string; note?: string }[] = (() => {
-    const out: { id: string; name: string; note?: string }[] = [
-      { id: 'michael', name: 'Atlas', note: tr('addAgent.faceReserved') },
-    ];
-    for (const a of roster) {
-      if (a.character === 'michael' || out.some((f) => f.id === a.character)) continue;
-      out.push({ id: a.character, name: a.name });
-    }
-    if (effectiveCharacter && !out.some((f) => f.id === effectiveCharacter)) {
-      out.push({
-        id: effectiveCharacter,
-        name: LIBRARY_BY_ID[effectiveCharacter]?.name ?? name.trim() ?? '',
-        note: tr('addAgent.faceNew'),
-      });
-    }
-    return out;
-  })();
+  /** Atlas, then the whole library. Step 1 IS the picker now, so the roster
+   *  view (crew only) went with the popup that needed it. */
+  const faceChoices: { id: string; name: string; note?: string; locked?: boolean }[] = [
+    // Locked: it is the orchestrator's own face. Shown rather than hidden, so
+    // "where is Atlas" has a visible answer.
+    { id: 'michael', name: 'Atlas', note: tr('addAgent.faceReserved'), locked: true },
+    ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name })),
+  ];
   const faceId = effectiveCharacter;
-  const [accent, setAccent] = useState<AccentColorName>(knownAccent(pendingHire?.accent));
+  const [accent, setAccent] = useState<string>(knownAccent(pendingHire?.accent));
   const [cwd, setCwd] = useState<string>(config.registeredRepos[0] ?? '');
   // Local mirror of the registered projects so one added from here shows as a
   // quick-pick immediately (the `config` prop is a snapshot taken at open time).
@@ -273,7 +258,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   const [busy, setBusy] = useState(false);
   // Which config section the left sidebar index is showing.
   const [section, setSection] = useState<SectionKey>('identity');
-  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const sectionIndex = Math.max(0, SECTIONS.findIndex((x) => x.key === section));
   // "Generate a hire with AI" helper — reveals a copy-paste prompt (item 7).
 
@@ -653,7 +637,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                       onClick={() => setSection(s.key)}
                       style={{
                         textAlign: 'left', padding: '6px 9px 5px', border: 'none', cursor: 'pointer',
-                        background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
+                        background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
                         boxShadow: active
                           ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
                           : 'inset 0 0 0 1px var(--cth-ink-100)',
@@ -680,19 +664,16 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               <div style={{ flex: 1, minWidth: 0, minHeight: 260, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {section === 'identity' && (
                   <>
-                    {/* Read-only. Naming happens in "Add more agents", or comes
-                        from the face you pick, so there is one place to set it
-                        rather than two that can disagree. */}
+                    {/* Always editable. Picking a face fills it, and you can
+                        type over that: the face suggests a name, it does not
+                        own one. */}
                     <Row label={tr('addAgent.name')}>
-                      <div style={{
-                        height: 40, display: 'flex', alignItems: 'center', padding: '0 12px',
-                        background: 'var(--cth-cream-100)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
-                        fontFamily: 'var(--cth-font-ui)', fontSize: 14,
-                        color: effectiveName ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)'
-                      }}>
-                        {effectiveName || tr('addAgent.namePlaceholder')}
-                      </div>
+                      <input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder={tr('addAgent.namePlaceholder')}
+                        style={inputStyle}
+                      />
                     </Row>
 
                     <Row label={tr('addAgent.character')}>
@@ -707,19 +688,21 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                       }}>
                         {faceChoices.map((f) => {
                           const active = effectiveCharacter === f.id;
-                          const used = takenCharacters.has(f.id) && !active;
+                          const used = f.locked || (takenCharacters.has(f.id) && !active);
                           return (
                             <button
                               key={f.id}
                               disabled={used}
-                              onClick={() => setCharacter(f.id)}
+                              // Picking names it too, overwriting what was
+                              // there, so the field always matches the face.
+                              onClick={() => { setCharacter(f.id); setName(f.name); }}
                               title={used ? tr('addAgent.faceInUse') : f.name}
                               aria-pressed={active}
                               style={{
                                 width: 66, padding: '5px 4px 4px', border: 'none',
                                 cursor: used ? 'not-allowed' : 'pointer',
                                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                                background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
+                                background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
                                 boxShadow: active
                                   ? `inset 0 0 0 2px var(--cth-${accent})`
                                   : 'inset 0 0 0 1px var(--cth-ink-100)',
@@ -740,7 +723,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               <span style={{
                                 fontSize: 9, lineHeight: '12px',
                                 color: used ? 'var(--cth-coral)' : 'var(--cth-ink-500)'
-                              }}>{used ? tr('addAgent.faceInUse') : (f.note ?? '')}</span>
+                              }}>{f.note ?? (used ? tr('addAgent.faceInUse') : '')}</span>
                             </button>
                           );
                         })}
@@ -748,7 +731,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                     </Row>
 
                     <Row label={tr('addAgent.color')}>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                         {ACCENTS.map(a => (
                           <button
                             key={a}
@@ -760,23 +743,47 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               width: 34, height: 34, padding: 0,
                               display: 'grid', placeItems: 'center',
                               background: `var(--cth-${a})`,
-                              // The old selected ring was ink-900, which is the
-                              // text token: near-black in light, near-WHITE in
-                              // dark, so on dark the ring vanished into the pale
-                              // swatch. A tick in the on-accent ink reads on
-                              // every swatch in both themes.
                               boxShadow: accent === a
                                 ? `0 0 0 2px var(--cth-cream-50), 0 0 0 4px var(--cth-${a})`
                                 : 'inset 0 0 0 1px var(--cth-ink-300)',
                               color: 'var(--cth-on-accent)',
                               fontSize: 15, lineHeight: 1,
-                              cursor: 'pointer',
-                              border: 'none'
+                              cursor: 'pointer', border: 'none'
                             }}
                           >{accent === a ? '\u2713' : ''}</button>
                         ))}
+
+                        {/* Anything outside the twelve. The native colour input
+                            is the whole feature: a hand-rolled picker would be
+                            worse and bigger. A custom accent is stored as the
+                            hex itself, which every accent consumer now accepts. */}
+                        <label
+                          title={tr('addAgent.customColor')}
+                          style={{
+                            width: 34, height: 34, display: 'grid', placeItems: 'center',
+                            cursor: 'pointer', position: 'relative',
+                            background: accent.startsWith('#') ? accent : 'var(--cth-cream-200)',
+                            boxShadow: accent.startsWith('#')
+                              ? `0 0 0 2px var(--cth-cream-50), 0 0 0 4px ${accent}`
+                              : 'inset 0 0 0 1px var(--cth-ink-300)',
+                            color: accent.startsWith('#') ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)',
+                            fontFamily: 'var(--cth-font-display)', fontSize: 13
+                          }}
+                        >
+                          {accent.startsWith('#') ? '\u2713' : '+'}
+                          <input
+                            type="color"
+                            value={accent.startsWith('#') ? accent : '#F2685C'}
+                            onChange={(e) => setAccent(e.target.value)}
+                            style={{
+                              position: 'absolute', inset: 0, opacity: 0,
+                              width: '100%', height: '100%', cursor: 'pointer', border: 'none', padding: 0
+                            }}
+                          />
+                        </label>
                       </div>
                     </Row>
+
                   </>
                 )}
 
@@ -812,7 +819,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               style={{
                                 display: 'inline-flex',
                                 alignItems: 'stretch',
-                                background: cwd === r ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
+                                background: cwd === r ? accentFillCss(accent) : 'var(--cth-cream-100)',
                                 boxShadow: cwd === r
                                   ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
                                   : 'inset 0 0 0 1px var(--cth-ink-100)'
@@ -939,7 +946,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               }
                               style={{
                                 padding: '3px 8px 1px',
-                                background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
+                                background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
                                 boxShadow: active
                                   ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
                                   : 'inset 0 0 0 1px var(--cth-ink-100)',
@@ -976,7 +983,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               title={m.id ?? tr('addAgent.cliDefaultModel')}
                               style={{
                                 padding: '3px 8px 1px',
-                                background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
+                                background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
                                 boxShadow: active
                                   ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
                                   : 'inset 0 0 0 1px var(--cth-ink-100)',
@@ -1136,43 +1143,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               </div>
             )}
 
-            {/* One button. "Generate with AI" only ever copied a prompt for
-                  you to paste into another app and bring a file back, which is
-                  three hops to fill four fields. This asks for them directly,
-                  and still loads a .json for anything already written. */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-              padding: '10px 12px',
-              background: 'var(--cth-cream-100)',
-              boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
-            }}>
-              <span style={{ flex: 1, minWidth: 220, fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: '17px' }}>
-                {tr('addAgent.importHireDesc')}
-              </span>
-              <PixelButton variant="secondary" size="md" onClick={() => setShowQuickAdd(true)} disabled={busy}>
-                <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-                  <Icon name="plus" /> {tr('addAgent.quickAdd')}
-                </span>
-              </PixelButton>
-            </div>
-
-            {showQuickAdd && (
-              <QuickAdd
-                defaults={{ name }}
-                taken={takenCharacters}
-                onCancel={() => setShowQuickAdd(false)}
-                onApply={(v) => {
-                  setName(v.name);
-                  setCharacter(v.character);
-                  setShowQuickAdd(false);
-                }}
-                tr={tr}
-              />
-            )}
-
-            {/* Import moved up beside "Generate with AI", where the line
-                explaining both of them is. Two Import hire buttons on one
-                dialog is a coin flip about which one is the real one. */}
             {/* The four sections are a sequence, so the footer walks it: Back and
                 Next until the last one, then Hire. The rail stays clickable, so
                 an imported hire (every field already filled) can still be sent
@@ -1233,156 +1203,5 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       }}>{label}</span>
       {children}
     </label>
-  );
-}
-
-/** Name and face, and nothing else.
- *
- *  It asked for the project, the role and the goal too, which is most of the
- *  long form in a smaller box: two places to fill the same fields, and the
- *  popup always the worse one. Identity is the part worth having up front when
- *  adding several; the rest is what the four sections and the manifest are for.
- */
-function QuickAdd({ defaults, taken, onApply, onCancel, tr }: {
-  defaults: { name: string };
-  /** Faces already worn, dimmed so one is never picked twice. */
-  taken: Set<string>;
-  onApply: (v: { name: string; character: string }) => void;
-  onCancel: () => void;
-  tr: (k: string) => string;
-}) {
-  const [name, setName] = useState(defaults.name);
-  /** '' means no face chosen yet, and the name draws one instead. */
-  const [face, setFace] = useState('');
-  const shown = face || name.trim();
-  const apply = (): void => {
-    if (name.trim()) onApply({ name: name.trim(), character: face || name.trim() });
-  };
-
-  return (
-    <div
-      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 600, display: 'grid', placeItems: 'center',
-        background: 'rgba(0,0,0,0.55)', padding: 24
-      }}
-    >
-      <div style={{
-        width: 760, maxWidth: '95vw', maxHeight: '88vh',
-        display: 'flex', flexDirection: 'column',
-        background: 'var(--cth-cream-50)',
-        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 0 24px 60px rgba(0,0,0,0.5)'
-      }}>
-        <div style={{
-          padding: '14px 20px', flexShrink: 0,
-          background: 'var(--cth-cream-100)',
-          boxShadow: 'inset 0 -1px 0 var(--cth-ink-100)',
-          fontFamily: 'var(--cth-font-display)', fontSize: 13, letterSpacing: 1
-        }}>
-          {tr('addAgent.quickAddTitle')}
-        </div>
-
-        {/* Left: the agent being made. Right: what it could look like. The grid
-            used to fill the whole box with the name stranded underneath, so the
-            thing you were building was the least prominent part of the dialog. */}
-        <div style={{ display: 'flex', minHeight: 0, flex: 1 }}>
-          <div style={{
-            width: 208, flexShrink: 0, padding: 20,
-            display: 'flex', flexDirection: 'column', gap: 10,
-            boxShadow: 'inset -1px 0 0 var(--cth-ink-100)'
-          }}>
-            <span style={{
-              width: 130, height: 158, alignSelf: 'center', display: 'flex',
-              alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden',
-              background: 'var(--cth-cream-200)',
-              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
-            }}>
-              {shown
-                ? <SpritePortrait character={shown} scale={5} />
-                : <span style={{
-                    alignSelf: 'center', fontFamily: 'var(--cth-font-display)',
-                    fontSize: 28, color: 'var(--cth-ink-300)'
-                  }}>?</span>}
-            </span>
-            <span style={{
-              fontFamily: 'var(--cth-font-display)', fontSize: 10, letterSpacing: 1,
-              color: 'var(--cth-ink-500)'
-            }}>{tr('addAgent.quickName')}</span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') apply(); }}
-              autoFocus
-              placeholder={tr('addAgent.quickNamePlaceholder')}
-              style={{
-                height: 40, padding: '0 12px', border: 'none', outline: 'none',
-                background: 'var(--cth-paper-100)', color: 'var(--cth-ink-900)',
-                boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
-                fontFamily: 'var(--cth-font-ui)', fontSize: 14
-              }}
-            />
-          </div>
-
-          <div style={{
-            flex: 1, minWidth: 0, padding: 16,
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(78px, 1fr))',
-            gap: 8, alignContent: 'start', overflowY: 'auto'
-          }}>
-            {AVATAR_LIBRARY.map((f) => {
-              const used = taken.has(f.id);
-              const active = face === f.id;
-              return (
-                <button
-                  key={f.id}
-                  disabled={used}
-                  // Picking a face ALWAYS names it, overwriting whatever was
-                  // there. Filling only when empty was worse: pick one, then
-                  // change your mind, and the field kept the first one's name
-                  // beside the second one's face.
-                  onClick={() => { setFace(f.id); setName(f.name); }}
-                  title={used ? `${f.name} · ${tr('addAgent.faceInUse')}` : f.name}
-                  aria-pressed={active}
-                  style={{
-                    padding: '4px 3px 3px', border: 'none',
-                    cursor: used ? 'not-allowed' : 'pointer',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                    background: active ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
-                    boxShadow: active
-                      ? 'inset 0 0 0 2px var(--cth-sky)'
-                      : 'inset 0 0 0 1px var(--cth-ink-100)',
-                    opacity: used ? 0.35 : 1
-                  }}
-                >
-                  <span style={{
-                    height: 66, display: 'flex', alignItems: 'flex-end',
-                    justifyContent: 'center', overflow: 'hidden'
-                  }}>
-                    <SpritePortrait character={f.id} scale={3} />
-                  </span>
-                  {/* Wraps rather than truncating: "The Profess…" tells you
-                      less than two short lines do. */}
-                  <span style={{
-                    fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '12px',
-                    color: 'var(--cth-ink-700)', textAlign: 'center', maxWidth: '100%'
-                  }}>{f.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div style={{
-          display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end',
-          padding: '12px 20px', flexShrink: 0,
-          background: 'var(--cth-cream-100)',
-          boxShadow: 'inset 0 1px 0 var(--cth-ink-100)'
-        }}>
-          <PixelButton variant="ghost" size="md" onClick={onCancel}>{tr('common.cancel')}</PixelButton>
-          <PixelButton variant="primary" size="md" style={{ minWidth: 110 }} disabled={!name.trim()} onClick={apply}>
-            {tr('addAgent.quickApply')}
-          </PixelButton>
-        </div>
-      </div>
-    </div>
   );
 }

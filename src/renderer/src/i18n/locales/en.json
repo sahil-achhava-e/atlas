@@ -503,7 +503,7 @@
       }
     },
     "name": "Name",
-    "namePlaceholder": "name it in \"Add more agents\"",
+    "namePlaceholder": "name this agent",
     "character": "Character",
     "color": "Color",
     "project": "Project",
@@ -585,9 +585,10 @@
     "faceBuiltIn": "built in",
     "facesFree": "free",
     "faceFromName": "drawn from the name",
-    "faceReserved": "orchestrator",
+    "faceReserved": "already added",
     "faceNew": "new",
-    "faceFromNameAction": "Use the name instead"
+    "faceFromNameAction": "Use the name instead",
+    "customColor": "Mix your own"
   },
   "onboarding": {
     "titles": {

@@ -110,6 +110,21 @@ export const accentLightByName: Record<AccentColorName, number> = {
   slate: colors.accent.slateLight
 };
 
+/** An agent's accent: one of the twelve token names, or a literal '#rrggbb'
+ *  the user mixed themselves. Everything that paints an accent goes through
+ *  here, so a custom colour works anywhere a named one does. */
+export function accentCss(a: string): string {
+  return a.startsWith('#') ? a : `var(--cth-${a})`;
+}
+export function accentFillCss(a: string): string {
+  // A custom colour has no matching '-light' token, so it is faded here instead.
+  return a.startsWith('#') ? `${a}33` : `var(--cth-${a}-light)`;
+}
+export function accentNumber(a: string): number | undefined {
+  if (a.startsWith('#')) return parseInt(a.slice(1), 16);
+  return (accentByName as Record<string, number>)[a];
+}
+
 // Convert 0xRRGGBB to "#RRGGBB"
 export function hex(c: number): string {
   return '#' + c.toString(16).padStart(6, '0').toUpperCase();

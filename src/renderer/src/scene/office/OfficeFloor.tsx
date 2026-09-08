@@ -11,7 +11,7 @@ import { DeskScreen } from './DeskScreen';
 import { MessageEnvelope, type MessageAct } from './MessageEnvelope';
 import { hexToNumber, DEFAULT_CHARACTER } from './cast';
 import { pickSoloLine, pickExchange, type BreakSpot } from './cafeteriaLines';
-import { colors } from '@/design/tokens';
+import { colors, accentNumber } from '@/design/tokens';
 import { loadTheme, resolveThemeMap, themeTilesetUrls } from './themeLoader';
 import {
   installContextLossRecovery, planInitFailure, DEFAULT_MAX_INIT_RETRIES
@@ -1421,7 +1421,7 @@ export function OfficeFloor() {
           seatTile,
           seatDirection: facingForSeat(seatTile),
           spawnTile: entrance, // walk in from the office door
-          glowColor: hexNum(colors.accent[agent.accent]) ?? hexToNumber(member.shirt),
+          glowColor: accentNumber(agent.accent) ?? hexToNumber(member.shirt),
           onClick: (id) => useStore.getState().select(id),
         });
         character.show(charLayer);

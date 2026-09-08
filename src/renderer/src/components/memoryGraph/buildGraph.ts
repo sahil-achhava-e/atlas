@@ -14,7 +14,7 @@ export interface AgentNode {
   kind: 'agent';
   id: string;
   label: string;
-  accent: AccentColorName;
+  accent: string;
   status: StatusKind;
   isGod: boolean;
   /** number of message edges touching this agent (drives node size) */
@@ -60,7 +60,7 @@ export interface GraphData {
 export interface MinimalAgent {
   id: string;
   name: string;
-  accent: AccentColorName;
+  accent: string;
   status: StatusKind;
   isGod?: boolean;
 }

@@ -14,7 +14,7 @@ const TABS: { key: SidebarTab; labelKey: string; icon: IconName }[] = [
 
 export interface SidebarTabsProps {
   current: SidebarTab;
-  accent: AccentColorName;
+  accent: string;
   onChange: (tab: SidebarTab) => void;
 }
 

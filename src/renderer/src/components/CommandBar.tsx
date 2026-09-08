@@ -9,7 +9,7 @@ import { isComposingKey } from '@shared/imeGuard';
 type Mode = 'free' | 'slash' | 'quick';
 
 export interface CommandBarProps {
-  accent: AccentColorName;
+  accent: string;
   busy?: boolean;
   blocked?: boolean;
   onSend?: (text: string) => void;

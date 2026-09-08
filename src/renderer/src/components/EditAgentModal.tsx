@@ -35,7 +35,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
 
   const [name, setName] = useState(agent.name);
   const [character, setCharacter] = useState<string>(agent.character);
-  const [accent, setAccent] = useState<AccentColorName>(agent.accent);
+  const [accent, setAccent] = useState<string>(agent.accent);
   const [provider, setProvider] = useState<AgentProvider>(
     inferAgentProvider(agent.command, agent.provider)
   );

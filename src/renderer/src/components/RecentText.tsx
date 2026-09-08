@@ -2,7 +2,7 @@ import { useTypewriter } from '@/hooks/useTypewriter';
 import type { AccentColorName } from '@/design/tokens';
 
 export interface RecentTextProps {
-  accent: AccentColorName;
+  accent: string;
   text: string;
   seed: number | undefined;
 }

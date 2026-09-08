@@ -45,7 +45,8 @@ export interface Agent {
   /** A cast key ('jim'), or any other string, which draws a face generated
    *  from itself. Not narrowed to the cast: agents are created by name now. */
   character: string;
-  accent: AccentColorName;
+  /** One of the twelve accent tokens, or a literal '#rrggbb' the user mixed. */
+  accent: string;
   /** persistent job / hire one-liner — same string as hive registry `role`.
    *  Live status belongs on `status` / `action`, never here. */
   description: string;

@@ -13,7 +13,7 @@ import { AgentNameEditor } from './AgentNameEditor';
 export interface AgentCardProps {
   name: string;
   character: string;
-  accent: AccentColorName;
+  accent: string;
   status: StatusKind;
   /** This agent's pty, if it has one. Only used to notice that the USER has
    *  unsent text on its prompt — which holds the agent's queue, and otherwise
