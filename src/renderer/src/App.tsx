@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore, selectedAgent } from '@/store/store';
 import { startMockLoop, stopMockLoop } from '@/store/mockEvents';
 import type { HarnessConfig } from '@/store/config';
@@ -32,6 +32,7 @@ import { TaskDetailOverlay } from '@/components/TaskDetailOverlay';
 import { IdePanel } from '@/ide/IdePanel';
 import { useHoldOptionToTalk } from '@/freeflow/holdOption';
 import brandLogo from '@brand/logo.png?url';
+import { go, parseRoute, type Route } from '@/routes';
 
 // Injected at build time from package.json (see electron.vite.config.ts).
 declare const __APP_VERSION__: string;
@@ -57,21 +58,31 @@ export function App() {
   const setSidebarWidth = useStore(s => s.setSidebarWidth);
   const ideOpen = useStore(s => s.ideOpen);
   const setIdeOpen = useStore(s => s.setIdeOpen);
+  const ideAgentId = useStore(s => s.ideAgentId);
+  const selectedId = useStore(s => s.selectedId);
+  const sidebarTab = useStore(s => s.sidebarTab);
 
   const [config, setConfig] = useState<HarnessConfig | null>(null);
   // Whether the user has passed the launch-time hive picker this session. Starts
   // true (skip the picker) right after a hive SWITCH — changeHome relaunches and
   // leaves a one-shot localStorage flag so we don't bounce back onto the picker for
   // the hive we just chose. Also set true on onboarding completion (below).
-  const [hiveOpened, setHiveOpened] = useState<boolean>(() => {
+  const [hiveOpened, setHiveOpenedState] = useState<boolean>(() => {
     try {
       if (window.localStorage.getItem('cth.skipHivePickerOnce')) {
         window.localStorage.removeItem('cth.skipHivePickerOnce');
         return true;
       }
     } catch { /* localStorage unavailable — show the picker */ }
-    return false;
+    // Arriving on a link to a screen INSIDE a hive is a request to open it.
+    return parseRoute()?.screen === 'office' || parseRoute()?.screen === 'focus'
+      || parseRoute()?.screen === 'ide';
   });
+  // A mirror the route code can read synchronously. React state is one render
+  // behind inside an effect that just set it, and the address bar is written
+  // from an effect — a stale read there put the picker's URL on the office.
+  const hiveOpenedRef = useRef(hiveOpened);
+  const setHiveOpened = (v: boolean): void => { hiveOpenedRef.current = v; setHiveOpenedState(v); };
   const [settingsOpen, setSettingsOpen] = useState(false);
   /** Which tab Settings opens on. Set by a `cth:open-settings` deep link, reset
    *  to undefined (→ General) whenever the modal is opened the normal way. */
@@ -244,6 +255,74 @@ export function App() {
     if (!config?.onboardingComplete) return;
     useStore.getState().restoreFocusMode();
   }, [config?.onboardingComplete, agents]);
+
+  // ── Screen routes ─────────────────────────────────────────────────────────
+  // The address bar names the screen you are on, and back/forward walk them.
+  // Modals stay out of it: a dialog is something you opened on top of a screen.
+  //
+  // One writer, `syncBar`, and it reads the STORE rather than this render's
+  // props — a link applied in an effect changes the store immediately, and a
+  // write from stale closure values would overwrite the link just followed.
+  const deepLink = useRef<Route | null>(null);
+
+  const syncBar = (correcting = false): void => {
+    const st = useStore.getState();
+    go(
+      !hiveOpenedRef.current ? { screen: 'workspaces' }
+        : st.fullscreenAgentId ? { screen: 'focus', agentId: st.fullscreenAgentId }
+        : st.ideOpen ? { screen: 'ide', agentId: st.ideAgentId ?? undefined }
+        : st.selectedId ? { screen: 'office', agentId: st.selectedId, tab: st.sidebarTab }
+        : { screen: 'office' },
+      // Correcting a hash nothing answers is not a place you navigated to, so
+      // it must not become one you can go back to.
+      { replace: correcting }
+    );
+  };
+
+  useEffect(() => {
+    if (!config?.onboardingComplete) return;
+    const apply = (): void => {
+      const r = parseRoute();
+      // Nothing answers this hash (empty, mistyped, or a setup step long past):
+      // put the screen we are actually on back in the bar.
+      if (!r || r.screen === 'setup') { syncBar(true); return; }
+      if (r.screen === 'workspaces') { setHiveOpened(false); return; }
+      setHiveOpened(true);
+      const st = useStore.getState();
+      if (r.agentId && !st.agents.some((a) => a.id === r.agentId)) {
+        // Roster still loading: hold the link and retry when it lands. If the
+        // roster HAS loaded and that agent is simply gone, drop the link and let
+        // the correction below name the screen we are really on.
+        deepLink.current = st.agents.length ? null : r;
+        if (deepLink.current) return;
+      } else {
+        deepLink.current = null;
+        // Every setter is guarded on a real difference: setFullscreen persists a
+        // focus-mode preference, so calling it redundantly would rewrite it.
+        const focus = r.screen === 'focus' ? r.agentId : null;
+        if (st.fullscreenAgentId !== focus) st.setFullscreen(focus);
+        const ide = r.screen === 'ide';
+        if (st.ideOpen !== ide) st.setIdeOpen(ide, ide ? (r.agentId ?? null) : null);
+        if (r.agentId && st.selectedId !== r.agentId) st.select(r.agentId);
+        if (r.screen === 'office' && r.tab && st.sidebarTab !== r.tab) st.setSidebarTab(r.tab);
+      }
+      syncBar(true);
+    };
+    apply();
+    window.addEventListener('hashchange', apply);
+    return () => window.removeEventListener('hashchange', apply);
+  }, [config?.onboardingComplete]);
+
+  // A held link, retried as the roster arrives.
+  useEffect(() => {
+    if (deepLink.current && agents.length) window.dispatchEvent(new Event('hashchange'));
+  }, [agents]);
+
+  // Moving around the app writes the bar.
+  useEffect(() => {
+    if (!config?.onboardingComplete || deepLink.current) return;
+    syncBar();
+  }, [config?.onboardingComplete, hiveOpened, fullscreenAgentId, ideOpen, ideAgentId, selectedId, sidebarTab]);
 
   // Track viewport width for splitter clamping
   useEffect(() => {

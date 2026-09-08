@@ -125,6 +125,9 @@
     // The container is Linux, so without this the permissions step previewed
     // GNOME power-settings instructions for a macOS app.
     platform: 'darwin',
+  // The generic fallback answers [] , which is TRUTHY — GitTab then read a
+  // status object off it and threw. A preview folder is not a repo.
+  gitIsRepo: async () => false,
 
     // The real bridge opens Electron's native folder dialog, which needs no
     // permission: the dialog IS the grant. A browser has no equivalent.

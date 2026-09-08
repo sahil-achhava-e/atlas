@@ -12,6 +12,7 @@ import {
 } from '@shared/engineAvailability';
 import type { ToolStatus } from '@shared/toolCatalog';
 import { useResolvedGodName } from '@/hooks/useResolvedGodName';
+import { go, parseRoute } from '@/routes';
 
 export interface OnboardingWizardProps {
   onComplete: (config: HarnessConfig) => void;
@@ -110,6 +111,21 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   // Onboarding runs before god exists in the store, so read the persisted name.
   const godName = useResolvedGodName();
   const [step, setStep] = useState<Step>('persona');
+
+  // Setup names its step in the address bar (#/setup/repos), and back and
+  // forward walk the steps. Only a name in STEP_ORDER is honoured, so a typed
+  // hash cannot land you on a screen the wizard holds no state for.
+  useEffect(() => {
+    const apply = (): void => {
+      const r = parseRoute();
+      const next = r?.screen === 'setup' ? r.step : undefined;
+      if (next && (STEP_ORDER as string[]).includes(next)) setStep(next as Step);
+    };
+    apply();
+    window.addEventListener('hashchange', apply);
+    return () => window.removeEventListener('hashchange', apply);
+  }, []);
+  useEffect(() => { if (step !== 'done') go({ screen: 'setup', step }); }, [step]);
   // Self-identified audience (item 1). Undefined until chosen on the first screen;
   // the rest of the wizard reads `plain` to swap copy registers.
   const [audience, setAudience] = useState<Audience | undefined>();

@@ -202,7 +202,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   const [command, setCommand] = useState(
     pendingHire ? hireCommand(pendingHire) : buildSpawnCommand(config, initialModel, initialProvider)
   );
-  const [description, setDescription] = useState(pendingHire?.description ?? 'a fresh harness');
+  const [description, setDescription] = useState(pendingHire?.description ?? '');
   const [hireMeta, setHireMeta] = useState<HireManifest | null>(pendingHire);
 
   // Picking a model rebuilds the command; the command field stays editable for
@@ -222,7 +222,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // agent behave: its loop, what finished means, and when to interrupt you.
   const [jobText, setJobText] = useState('');
   const [doneText, setDoneText] = useState(DEFAULT_DONE);
-  const [askText, setAskText] = useState(DEFAULT_ASK);
   /** A hire manifest arrives with a goal already written; keep it verbatim
    *  rather than trying to take it apart. */
   const [rawGoal, setRawGoal] = useState(pendingHire?.goal ?? '');
@@ -230,7 +229,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     jobText.trim(),
     cwd ? `You work only in ${basename(cwd)}. If something belongs to another project, send it to Atlas rather than doing it yourself.` : '',
     doneText.trim() ? `Done means: ${doneText.trim()}` : '',
-    askText.trim() ? `Ask the human when: ${askText.trim()}` : '',
+    `Ask the human when: ${DEFAULT_ASK}`,
   ].filter(Boolean).join('\n\n');
   const [isolate, setIsolate] = useState(pendingHire?.isolate ?? false);
   // #2 — optional Claude session id to continue. When set, the spawn seeds that
@@ -319,7 +318,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     setProvider(m.provider ?? initialProvider);
     setModel(m.model);
     setCommand(hireCommand(m));
-    setDescription(m.description ?? 'a fresh harness');
+    setDescription(m.description ?? '');
     setRawGoal(m.goal ?? '');
     setIsolate(m.isolate ?? false);
     setResumeSessionId('');
@@ -1005,70 +1004,53 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
                 {section === 'briefing' && (
                   <>
-                    <Row label={tr('addAgent.description')}>
+                    <Question q={tr('addAgent.description')} hint={tr('addAgent.descriptionHint')}>
                       <input
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder={tr('addAgent.descriptionPlaceholder')}
-                        style={{ ...inputStyle, height: 46, fontSize: 15 }}
+                        style={{ ...inputStyle, height: 40, fontSize: 14 }}
                       />
-                    </Row>
+                    </Question>
 
                     {rawGoal.trim() ? (
-                      <Row label={tr('addAgent.goal')}>
+                      <Question q={tr('addAgent.jobLabel')} hint={tr('addAgent.jobHint')}>
                         <textarea
                           dir={rtl ? 'auto' : undefined}
                           value={rawGoal}
                           onChange={(e) => setRawGoal(e.target.value)}
-                          rows={10}
+                          rows={8}
                           style={{
-                            ...inputStyle, height: 'auto', minHeight: 220, padding: 14,
-                            fontFamily: 'var(--cth-font-ui)', fontSize: 14, lineHeight: '21px',
+                            ...inputStyle, height: 'auto', minHeight: 170, padding: 12,
+                            fontFamily: 'var(--cth-font-ui)', fontSize: 14, lineHeight: '20px',
                             resize: 'vertical'
                           }}
                         />
-                      </Row>
+                      </Question>
                     ) : (
                       <>
-                        <Row label={tr('addAgent.jobLabel')}>
-                          <span style={{ fontSize: 12, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
-                            {tr('addAgent.jobHint')}
-                          </span>
+                        <Question q={tr('addAgent.jobLabel')} hint={tr('addAgent.jobHint')}>
                           <textarea
                             dir={rtl ? 'auto' : undefined}
                             value={jobText}
                             onChange={(e) => setJobText(e.target.value)}
                             placeholder={tr('addAgent.jobPlaceholder')}
-                            rows={7}
+                            rows={6}
                             style={{
-                              ...inputStyle, height: 'auto', minHeight: 150, padding: 14,
-                              fontFamily: 'var(--cth-font-ui)', fontSize: 14, lineHeight: '21px',
+                              ...inputStyle, height: 'auto', minHeight: 128, padding: 12,
+                              fontFamily: 'var(--cth-font-ui)', fontSize: 14, lineHeight: '20px',
                               resize: 'vertical'
                             }}
                           />
-                        </Row>
+                        </Question>
 
-                        <Row label={tr('addAgent.doneLabel')}>
-                          <span style={{ fontSize: 12, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
-                            {tr('addAgent.doneHint')}
-                          </span>
+                        <Question q={tr('addAgent.doneLabel')} hint={tr('addAgent.doneHint')}>
                           <input
                             value={doneText}
                             onChange={(e) => setDoneText(e.target.value)}
-                            style={{ ...inputStyle, height: 44 }}
+                            style={{ ...inputStyle, height: 40, fontSize: 14 }}
                           />
-                        </Row>
-
-                        <Row label={tr('addAgent.askLabel')}>
-                          <span style={{ fontSize: 12, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
-                            {tr('addAgent.askHint')}
-                          </span>
-                          <input
-                            value={askText}
-                            onChange={(e) => setAskText(e.target.value)}
-                            style={{ ...inputStyle, height: 44 }}
-                          />
-                        </Row>
+                        </Question>
                       </>
                     )}
 
@@ -1138,6 +1120,25 @@ const inputStyle: React.CSSProperties = {
   color: 'var(--cth-ink-900)',
   outline: 'none'
 };
+
+/** A briefing question. The 8px display caps the rest of the form uses are a
+ *  field NAME; these are sentences you have to read, so they get the UI font at
+ *  a readable size and the hint sits directly under them at one step down. */
+function Question({ q, hint, children }: { q: string; hint: string; children: React.ReactNode }) {
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <span style={{
+        fontFamily: 'var(--cth-font-ui)', fontSize: 14, fontWeight: 600,
+        lineHeight: '19px', color: 'var(--cth-ink-900)'
+      }}>{q}</span>
+      <span style={{
+        fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '17px',
+        color: 'var(--cth-ink-500)', marginBottom: 2
+      }}>{hint}</span>
+      {children}
+    </label>
+  );
+}
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (

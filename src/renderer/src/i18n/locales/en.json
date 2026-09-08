@@ -499,7 +499,7 @@
       },
       "briefing": {
         "label": "Briefing",
-        "hint": "description · goal"
+        "hint": "what it does · done"
       }
     },
     "name": "Name",
@@ -555,8 +555,9 @@
         "label": "Release manager"
       }
     },
-    "description": "Description",
-    "descriptionPlaceholder": "job: what this agent is for, not live status",
+    "description": "One line about it",
+    "descriptionHint": "Shown under its name on the floor, so you can tell your agents apart.",
+    "descriptionPlaceholder": "Example: Backend engineer on the VMS API",
     "goal": "Goal (optional)",
     "goalPlaceholder": "long-running directive injected on every prompt",
     "importHire": "Import hire",
@@ -597,13 +598,11 @@
     "gitIsolationOn": "On: it works at its own desk. You review its branch when it is done.",
     "gitIsolationOff": "Off: it edits your checkout directly. You see every change live, but only one agent can work here at a time.",
     "providerFixed": "this workspace's engine",
-    "jobLabel": "WHAT DOES IT DO?",
-    "jobHint": "The work it repeats, not one task. This is added to every prompt it ever gets.",
+    "jobLabel": "What does it do?",
+    "jobHint": "The work it repeats, not one task. Added to every prompt it ever gets.",
     "jobPlaceholder": "Example: Own backend work in this repo: API endpoints, services, jobs and the queries they need. Read neighbouring code first and match its conventions. Reproduce a bug before fixing it. Run the project checks and quote what they said.",
-    "doneLabel": "WHEN IS IT FINISHED?",
-    "doneHint": "What it has to hand you before it stops.",
-    "askLabel": "WHEN SHOULD IT ASK YOU?",
-    "askHint": "Everything below this bar it handles on its own."
+    "doneLabel": "When is it finished?",
+    "doneHint": "What it hands you before it stops. Leave this unless you have a reason."
   },
   "onboarding": {
     "titles": {
