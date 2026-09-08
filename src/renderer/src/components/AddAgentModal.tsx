@@ -1111,16 +1111,12 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
             {showQuickAdd && (
               <QuickAdd
-                repos={repos}
-                defaults={{ name, cwd, description, goal }}
+                defaults={{ name, character }}
                 onCancel={() => setShowQuickAdd(false)}
                 onApply={(v) => {
                   setName(v.name);
-                  setCwd(v.cwd);
-                  setDescription(v.description);
-                  setGoal(v.goal);
+                  setCharacter(v.character);
                   setShowQuickAdd(false);
-                  setSection('briefing');
                 }}
                 onLoadFile={() => { setShowQuickAdd(false); void importHire(); }}
                 tr={tr}
@@ -1193,36 +1189,23 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-/** The four things an agent actually needs, asked in one place.
+/** Name and face, and nothing else.
  *
- *  The long form has four sections and twenty controls, which is right when you
- *  are tuning one agent and wrong when you are adding five. This asks for the
- *  identity, the folder and the job, then drops you on Briefing to press Hire.
+ *  It asked for the project, the role and the goal too, which is most of the
+ *  long form in a smaller box: two places to fill the same fields, and the
+ *  popup always the worse one. Identity is the part worth having up front when
+ *  adding several; the rest is what the four sections and the manifest are for.
  */
-function QuickAdd({ repos, defaults, onApply, onCancel, onLoadFile, tr }: {
-  repos: string[];
-  defaults: { name: string; cwd: string; description: string; goal: string };
-  onApply: (v: { name: string; cwd: string; description: string; goal: string }) => void;
+function QuickAdd({ defaults, onApply, onCancel, onLoadFile, tr }: {
+  defaults: { name: string; character: OfficeCharacterName };
+  onApply: (v: { name: string; character: OfficeCharacterName }) => void;
   onCancel: () => void;
   onLoadFile: () => void;
   tr: (k: string) => string;
 }) {
   const [name, setName] = useState(defaults.name);
-  const [cwd, setCwd] = useState(defaults.cwd || repos[0] || '');
-  const [description, setDescription] = useState(defaults.description);
-  const [goal, setGoal] = useState(defaults.goal);
-  const ready = name.trim().length > 0 && description.trim().length > 0;
-
-  const field: CSSProperties = {
-    height: 38, padding: '0 10px', border: 'none', outline: 'none',
-    background: 'var(--cth-paper-100)', color: 'var(--cth-ink-900)',
-    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
-    fontFamily: 'var(--cth-font-ui)', fontSize: 13
-  };
-  const label: CSSProperties = {
-    fontFamily: 'var(--cth-font-display)', fontSize: 10, letterSpacing: 1,
-    color: 'var(--cth-ink-500)', marginBottom: 4
-  };
+  const [character, setCharacter] = useState<OfficeCharacterName>(defaults.character);
+  const apply = (): void => { if (name.trim()) onApply({ name: name.trim(), character }); };
 
   return (
     <div
@@ -1233,7 +1216,7 @@ function QuickAdd({ repos, defaults, onApply, onCancel, onLoadFile, tr }: {
       }}
     >
       <div style={{
-        width: 520, maxWidth: '94vw', padding: 20,
+        width: 560, maxWidth: '94vw', padding: 20,
         display: 'flex', flexDirection: 'column', gap: 14,
         background: 'var(--cth-cream-50)',
         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 0 24px 60px rgba(0,0,0,0.5)'
@@ -1243,38 +1226,58 @@ function QuickAdd({ repos, defaults, onApply, onCancel, onLoadFile, tr }: {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={label}>{tr('addAgent.quickName')}</span>
-          <input style={field} value={name} onChange={(e) => setName(e.target.value)} autoFocus />
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={label}>{tr('addAgent.quickProject')}</span>
-          <select style={field} value={cwd} onChange={(e) => setCwd(e.target.value)}>
-            {repos.length === 0 && <option value="">{tr('addAgent.noProjects')}</option>}
-            {repos.map((r) => (
-              <option key={r} value={r}>{r.replace(/\/+$/, '').split('/').pop()}</option>
-            ))}
-          </select>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={label}>{tr('addAgent.quickRole')}</span>
+          <span style={{
+            fontFamily: 'var(--cth-font-display)', fontSize: 10, letterSpacing: 1,
+            color: 'var(--cth-ink-500)', marginBottom: 4
+          }}>{tr('addAgent.quickName')}</span>
           <input
-            style={field}
-            value={description}
-            placeholder={tr('addAgent.quickRolePlaceholder')}
-            onChange={(e) => setDescription(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') apply(); }}
+            autoFocus
+            style={{
+              height: 38, padding: '0 10px', border: 'none', outline: 'none',
+              background: 'var(--cth-paper-100)', color: 'var(--cth-ink-900)',
+              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+              fontFamily: 'var(--cth-font-ui)', fontSize: 13
+            }}
           />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={label}>{tr('addAgent.quickGoal')}</span>
-          <textarea
-            value={goal}
-            placeholder={tr('addAgent.quickGoalPlaceholder')}
-            onChange={(e) => setGoal(e.target.value)}
-            style={{ ...field, height: 96, padding: 10, lineHeight: '19px', resize: 'vertical' }}
-          />
+          <span style={{
+            fontFamily: 'var(--cth-font-display)', fontSize: 10, letterSpacing: 1,
+            color: 'var(--cth-ink-500)', marginBottom: 6
+          }}>{tr('addAgent.character')}</span>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {OFFICE_CAST.map((c) => (
+              <button
+                key={c.name}
+                title={c.blurb}
+                aria-pressed={character === c.name}
+                onClick={() => { setCharacter(c.name); setName(c.displayName); }}
+                style={{
+                  width: 58, padding: '5px 5px 4px', border: 'none', cursor: 'pointer',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                  background: character === c.name ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
+                  boxShadow: character === c.name
+                    ? 'inset 0 0 0 2px var(--cth-sky)'
+                    : 'inset 0 0 0 1px var(--cth-ink-100)'
+                }}
+              >
+                <span style={{
+                  width: 46, height: 56, display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+                  overflow: 'hidden', background: `${c.shirt}24`
+                }}>
+                  <SpritePortrait character={c.name} scale={2} />
+                </span>
+                <span style={{
+                  fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '13px',
+                  color: 'var(--cth-ink-700)'
+                }}>{c.displayName}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -1283,13 +1286,7 @@ function QuickAdd({ repos, defaults, onApply, onCancel, onLoadFile, tr }: {
           </PixelButton>
           <div style={{ flex: 1 }} />
           <PixelButton variant="ghost" size="md" onClick={onCancel}>{tr('common.cancel')}</PixelButton>
-          <PixelButton
-            variant="primary"
-            size="md"
-            style={{ minWidth: 100 }}
-            disabled={!ready}
-            onClick={() => onApply({ name: name.trim(), cwd, description: description.trim(), goal: goal.trim() })}
-          >
+          <PixelButton variant="primary" size="md" style={{ minWidth: 100 }} disabled={!name.trim()} onClick={apply}>
             {tr('addAgent.quickApply')}
           </PixelButton>
         </div>
