@@ -1,0 +1,13 @@
+{
+  "spec": "munder-difflin/hire@1",
+  "name": "Saitama",
+  "description": "",
+  "goal": "",
+  "character": "kevin",
+  "accent": "olive",
+  "provider": "claude",
+  "model": "claude-opus-4-8[1m]",
+  "capabilities": [],
+  "isolate": true,
+  "tokenCap": 1000000
+}

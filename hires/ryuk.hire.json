@@ -1,0 +1,13 @@
+{
+  "spec": "munder-difflin/hire@1",
+  "name": "Ryuk",
+  "description": "",
+  "goal": "",
+  "character": "creed",
+  "accent": "slate",
+  "provider": "claude",
+  "model": "claude-opus-4-8[1m]",
+  "capabilities": [],
+  "isolate": true,
+  "tokenCap": 1000000
+}

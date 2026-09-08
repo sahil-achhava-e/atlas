@@ -43,7 +43,25 @@ Those are the same goal with a different engine, so they are not restored here.
 
 ## Ours
 
-Our manifests go in this folder, one per role. The crew is defined by the work,
-not by the cast list: several backend, a couple of frontend, one reviewer, as
-many as the projects need. The plan is to read the reference set, take what is
-good, and write better ones rather than adopt theirs.
+One file per crew member, named after them: `luffy.hire.json`, `zoro.hire.json`
+and so on. Fourteen of them; Atlas has none because the orchestrator is not
+hired, it is spawned as god.
+
+Each is scaffolded with the mechanical fields already right and the job left
+blank, waiting to be written:
+
+| Filled in | Left empty |
+|---|---|
+| `spec`, `name`, `character`, `accent` | `description` |
+| `provider`, `model` | `goal` |
+| `isolate: true`, `tokenCap` | `capabilities` |
+
+`character` maps each crew name to its cast key (Luffy is `jim`, Zoro is
+`dwight`), which is the internal id the app persists. Accents are unique per
+agent except two pairs: there are fourteen of us and twelve colours.
+
+Defaults worth knowing before they get overridden: `isolate: true` means an
+agent works in its own git worktree rather than your live checkout, and
+`tokenCap` is 1M rather than the 2.5M the reference set uses.
+
+All fourteen pass the app's own `validateHireManifest`.
