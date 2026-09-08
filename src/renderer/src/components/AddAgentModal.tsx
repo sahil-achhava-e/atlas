@@ -179,12 +179,36 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // empty floor and would offer Atlas even when an agent already wears it.
   const atlasFree = !useStore(s => s.agents.some(a => a.character === 'michael'));
   const [character, setCharacter] = useState<string>(pendingHire?.character ?? '');
-  const effectiveCharacter = character || (atlasFree ? 'michael' : name.trim());
-  /** Atlas first, then the library. One list, used by the grid. */
-  const faceChoices: { id: string; name: string; note?: string }[] = [
-    { id: 'michael', name: 'Atlas', note: tr('addAgent.faceReserved') },
-    ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name })),
-  ];
+  // A face you clicked wins; otherwise the name draws itself; and with neither,
+  // an empty dialog shows Atlas while no agent wears it. Atlas last, not first:
+  // it was overriding the typed name, so the face never followed what you were
+  // typing.
+  const effectiveCharacter = character || name.trim() || (atlasFree ? 'michael' : '');
+  /** The crew, not a catalogue.
+   *
+   *  On a first run that is Atlas alone. Every agent you add puts its face here
+   *  too, so the row grows one at a time and shows who is on the floor rather
+   *  than thirty costumes nobody is wearing. The face for the name currently
+   *  typed is appended last, so you can see what you are about to hire before
+   *  you hire it. */
+  const roster = useStore(s => s.agents);
+  const faceChoices: { id: string; name: string; note?: string }[] = (() => {
+    const out: { id: string; name: string; note?: string }[] = [
+      { id: 'michael', name: 'Atlas', note: tr('addAgent.faceReserved') },
+    ];
+    for (const a of roster) {
+      if (a.character === 'michael' || out.some((f) => f.id === a.character)) continue;
+      out.push({ id: a.character, name: a.name });
+    }
+    if (effectiveCharacter && !out.some((f) => f.id === effectiveCharacter)) {
+      out.push({
+        id: effectiveCharacter,
+        name: LIBRARY_BY_ID[effectiveCharacter]?.name ?? name.trim() ?? '',
+        note: tr('addAgent.faceNew'),
+      });
+    }
+    return out;
+  })();
   const faceId = effectiveCharacter;
   const [accent, setAccent] = useState<AccentColorName>(knownAccent(pendingHire?.accent));
   const [cwd, setCwd] = useState<string>(config.registeredRepos[0] ?? '');

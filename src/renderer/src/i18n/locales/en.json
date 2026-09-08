@@ -585,7 +585,8 @@
     "faceBuiltIn": "built in",
     "facesFree": "free",
     "faceFromName": "drawn from the name",
-    "faceReserved": "orchestrator"
+    "faceReserved": "orchestrator",
+    "faceNew": "new"
   },
   "onboarding": {
     "titles": {
