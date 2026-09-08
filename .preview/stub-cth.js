@@ -97,6 +97,10 @@
     try { localStorage.setItem(CONFIG_KEY, JSON.stringify(config)); } catch (e) { /* private window */ }
   };
 
+  /** Terminals the preview pretends to have spawned. Lost on reload, which is
+   *  right: the app re-spawns whatever is missing. */
+  var ptys = {};
+
   var OVERRIDES = {
     getConfig: function () { return Promise.resolve(Object.assign({}, config)); },
     updateConfig: function (patch) {
@@ -125,6 +129,19 @@
     // The container is Linux, so without this the permissions step previewed
     // GNOME power-settings instructions for a macOS app.
     platform: 'darwin',
+
+    // A fake terminal, so the floor is not empty. The real bridge spawns a PTY;
+    // here nothing runs, but the spawn has to REPORT success or the app decides
+    // Atlas failed to clock in and shows EMPTY FLOOR — a state the packaged app
+    // never sits in, because it always brings Atlas up on landing.
+    spawnPty: function (opts) {
+      if (opts && opts.id) ptys[opts.id] = { id: opts.id, cwd: opts.cwd || '' };
+      return Promise.resolve({ ok: true, resumed: false });
+    },
+    listPtys: function () {
+      return Promise.resolve(Object.keys(ptys).map(function (id) { return ptys[id]; }));
+    },
+    killPty: function (id) { delete ptys[id]; return Promise.resolve(true); },
   // The generic fallback answers [] , which is TRUTHY — GitTab then read a
   // status object off it and threw. A preview folder is not a repo.
   gitIsRepo: async () => false,
