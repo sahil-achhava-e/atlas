@@ -32,7 +32,19 @@ export const colors = {
     lilac: 0x9482d3,
     lilacLight: 0xe0daf2,
     peach: 0xd99168,
-    peachLight: 0xf3daca
+    peachLight: 0xf3daca,
+    rose: 0xd0658e,
+    roseLight: 0xf3d5e3,
+    plum: 0xa05fb8,
+    plumLight: 0xe6d6ee,
+    indigo: 0x5f7fd6,
+    indigoLight: 0xd6def5,
+    jade: 0x43a38e,
+    jadeLight: 0xc9e6df,
+    olive: 0x8b9b4e,
+    oliveLight: 0xe0e6c9,
+    slate: 0x7c8794,
+    slateLight: 0xdce1e6
   },
   status: {
     idle: 0xa199ab,
@@ -65,7 +77,8 @@ export const type = {
 export const tileSize = 32; // px — the world is built from 32×32 tiles
 
 export type AccentColorName =
-  | 'coral' | 'mint' | 'sky' | 'lemon' | 'lilac' | 'peach';
+  | 'coral' | 'mint' | 'sky' | 'lemon' | 'lilac' | 'peach'
+  | 'rose' | 'plum' | 'indigo' | 'jade' | 'olive' | 'slate';
 
 export const accentByName: Record<AccentColorName, number> = {
   coral: colors.accent.coral,
@@ -73,7 +86,13 @@ export const accentByName: Record<AccentColorName, number> = {
   sky:   colors.accent.sky,
   lemon: colors.accent.lemon,
   lilac: colors.accent.lilac,
-  peach: colors.accent.peach
+  peach: colors.accent.peach,
+  rose: colors.accent.rose,
+  plum: colors.accent.plum,
+  indigo: colors.accent.indigo,
+  jade: colors.accent.jade,
+  olive: colors.accent.olive,
+  slate: colors.accent.slate
 };
 
 export const accentLightByName: Record<AccentColorName, number> = {
@@ -82,7 +101,13 @@ export const accentLightByName: Record<AccentColorName, number> = {
   sky:   colors.accent.skyLight,
   lemon: colors.accent.lemonLight,
   lilac: colors.accent.lilacLight,
-  peach: colors.accent.peachLight
+  peach: colors.accent.peachLight,
+  rose: colors.accent.roseLight,
+  plum: colors.accent.plumLight,
+  indigo: colors.accent.indigoLight,
+  jade: colors.accent.jadeLight,
+  olive: colors.accent.oliveLight,
+  slate: colors.accent.slateLight
 };
 
 // Convert 0xRRGGBB to "#RRGGBB"

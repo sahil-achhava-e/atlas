@@ -31,7 +31,12 @@ import {
 } from '@/store/config';
 import { useRtl } from '@/i18n/useDirection';
 
-const ACCENTS: AccentColorName[] = ['coral', 'mint', 'sky', 'lemon', 'lilac', 'peach'];
+// Twelve, in hue order, so the row reads as a spectrum rather than a bag of
+// colours. Six was not enough to tell a dozen agents apart on the floor.
+const ACCENTS: AccentColorName[] = [
+  'coral', 'rose', 'peach', 'lemon', 'olive', 'mint',
+  'jade', 'sky', 'indigo', 'lilac', 'plum', 'slate',
+];
 
 // OSS quick-pick chip styling (ondev-c) — mirrors the model-picker chips.
 const ossChip = (active: boolean, accent: AccentColorName): CSSProperties => ({
@@ -711,22 +716,32 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                     </Row>
 
                     <Row label={tr('addAgent.color')}>
-                      <div style={{ display: 'flex', gap: 6 }}>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {ACCENTS.map(a => (
                           <button
                             key={a}
                             onClick={() => setAccent(a)}
+                            title={a}
+                            aria-label={a}
+                            aria-pressed={accent === a}
                             style={{
-                              width: 32, height: 32,
+                              width: 34, height: 34, padding: 0,
+                              display: 'grid', placeItems: 'center',
                               background: `var(--cth-${a})`,
+                              // The old selected ring was ink-900, which is the
+                              // text token: near-black in light, near-WHITE in
+                              // dark, so on dark the ring vanished into the pale
+                              // swatch. A tick in the on-accent ink reads on
+                              // every swatch in both themes.
                               boxShadow: accent === a
-                                ? 'inset 0 0 0 1.5px var(--cth-ink-500), 0 0 0 2px var(--cth-ink-900)'
+                                ? `0 0 0 2px var(--cth-cream-50), 0 0 0 4px var(--cth-${a})`
                                 : 'inset 0 0 0 1px var(--cth-ink-300)',
+                              color: 'var(--cth-on-accent)',
+                              fontSize: 15, lineHeight: 1,
                               cursor: 'pointer',
                               border: 'none'
                             }}
-                            aria-label={a}
-                          />
+                          >{accent === a ? '\u2713' : ''}</button>
                         ))}
                       </div>
                     </Row>
@@ -1096,22 +1111,29 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
               display: 'flex', flexDirection: 'column', gap: 6
             }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: '17px' }}>
+              {/* Two ways to fill this form without typing, side by side, with
+                  one line saying what they do. It used to be a paragraph with a
+                  single button floated to the right of it. */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ flex: 1, minWidth: 220, fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: '17px' }}>
                   {tr('addAgent.importHireDesc')}
                 </span>
-                <button
+                <PixelButton variant="secondary" size="md" onClick={importHire}
+                  disabled={busy} title={tr('addAgent.importHireBtnTitle')}>
+                  <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                    <Icon name="folder" /> {tr('addAgent.importHireBtn')}
+                  </span>
+                </PixelButton>
+                <PixelButton
+                  variant={showHirePrompt ? 'primary' : 'secondary'}
+                  size="md"
                   onClick={() => setShowHirePrompt((v) => !v)}
-                  style={{
-                    flexShrink: 0,
-                    padding: '2px 8px 1px', border: 'none', cursor: 'pointer',
-                    background: showHirePrompt ? 'var(--cth-lemon-light)' : 'var(--cth-cream-200)',
-                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
-                    fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)'
-                  }}
                 >
-                  {showHirePrompt ? tr('addAgent.hideAIPrompt') : tr('addAgent.generateWithAI')}
-                </button>
+                  <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                    <Icon name="sparkle" />
+                    {showHirePrompt ? tr('addAgent.hideAIPrompt') : tr('addAgent.generateWithAI')}
+                  </span>
+                </PixelButton>
               </div>
               {showHirePrompt && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -1139,17 +1161,10 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               )}
             </div>
 
+            {/* Import moved up beside "Generate with AI", where the line
+                explaining both of them is. Two Import hire buttons on one
+                dialog is a coin flip about which one is the real one. */}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
-              <PixelButton
-                variant="secondary"
-                size="md"
-                onClick={importHire}
-                disabled={busy}
-                title={tr('addAgent.importHireBtnTitle')}
-              >
-                {tr('addAgent.importHireBtn')}
-              </PixelButton>
-              <div style={{ flex: 1 }} />
               {pendingHire && (
                 <PixelButton variant="secondary" size="md" onClick={skipHire} disabled={busy}>{tr('addAgent.skipHire')}</PixelButton>
               )}

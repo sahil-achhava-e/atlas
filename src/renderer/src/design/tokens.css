@@ -32,6 +32,15 @@
   --cth-lilac: #9482D3;       --cth-lilac-light: #E0DAF2;
   --cth-lilac-hover: #7C68C6;   /* brand accent, one step down: primary button hover */
   --cth-peach: #D99168;       --cth-peach-light: #F3DACA;
+  /* Six more so a floor of a dozen agents can all look different. Same
+     saturation band as the originals, filling the hues they skipped:
+     pink, magenta, true blue, emerald, olive and a neutral. */
+  --cth-rose: #D0658E;    --cth-rose-light: #F3D5E3;
+  --cth-plum: #A05FB8;    --cth-plum-light: #E6D6EE;
+  --cth-indigo: #5F7FD6;  --cth-indigo-light: #D6DEF5;
+  --cth-jade: #43A38E;    --cth-jade-light: #C9E6DF;
+  --cth-olive: #8B9B4E;   --cth-olive-light: #E0E6C9;
+  --cth-slate: #7C8794;   --cth-slate-light: #DCE1E6;
 
   /* Status — same recalibration; hue meanings unchanged */
   --cth-status-idle:     #A199AB;
@@ -167,6 +176,12 @@
   --cth-lemon-light: #332C1D;
   --cth-lilac-light: #2B2740;
   --cth-peach-light: #352822;
+  --cth-rose: #E08BAD;    --cth-rose-light: #3B2530;
+  --cth-plum: #BB8ACF;    --cth-plum-light: #2F2438;
+  --cth-indigo: #8CA3E6;  --cth-indigo-light: #232B45;
+  --cth-jade: #6FC3B0;    --cth-jade-light: #1E332F;
+  --cth-olive: #AFBE72;   --cth-olive-light: #2C3120;
+  --cth-slate: #9BA6B3;   --cth-slate-light: #262B31;
 
   /* Status — dark-tuned counterparts (same hue language) */
   --cth-status-idle:     #6F6C77;
