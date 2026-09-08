@@ -174,7 +174,10 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
   // Empty, not a suggested name: the name is the one thing only you know.
   const [name, setName] = useState(pendingHire?.name ?? '');
-  const [character, setCharacter] = useState<string>(knownCharacter(pendingHire?.character));
+  // '' means "not chosen": the face is then drawn from the name, and only
+  // becomes a stored id if you pick one from the library.
+  const [character, setCharacter] = useState<string>(pendingHire?.character ?? '');
+  const faceId = character || name.trim();
   const [accent, setAccent] = useState<AccentColorName>(knownAccent(pendingHire?.accent));
   const [cwd, setCwd] = useState<string>(config.registeredRepos[0] ?? '');
   // Local mirror of the registered projects so one added from here shows as a
@@ -319,7 +322,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     setName(m.name);
     // A manifest that names an agent but omits `character` should get the
     // matching avatar rather than the Jim default (issue #191).
-    setCharacter(m.character ? knownCharacter(m.character) : (characterForName(m.name ?? '') ?? knownCharacter(undefined)));
+    setCharacter(m.character ? knownCharacter(m.character) : (characterForName(m.name ?? '') ?? ''));
     setAccent(knownAccent(m.accent));
     setProvider(m.provider ?? initialProvider);
     setModel(m.model);
@@ -432,7 +435,9 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     const agent: Agent = {
       id,
       name: name.trim(),
-      character,
+      // No face picked means the name is the face, which is what the dialog has
+      // been showing all along. Never store '' as a character.
+      character: character || name.trim(),
       accent,
       description: description.trim() || 'a fresh harness',
       project: basename(projectCwd),
@@ -663,26 +668,48 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                     </Row>
 
                     <Row label={tr('addAgent.character')}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      {/* The portrait is the button. A picture of the thing you
+                          are changing, next to a button that changes it, is two
+                          controls where one will do. */}
+                      <button
+                        onClick={() => setShowFaces(true)}
+                        title={tr('addAgent.chooseFace')}
+                        className="cth-choice"
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
+                          padding: 8, border: 'none', cursor: 'pointer',
+                          background: 'var(--cth-cream-100)',
+                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                        }}
+                      >
                         <span style={{
                           width: 62, height: 74, flexShrink: 0, display: 'flex',
                           alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden',
                           background: `var(--cth-${accent}-light)`,
-                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
                         }}>
-                          <SpritePortrait character={character} scale={3} />
+                          {faceId
+                            ? <SpritePortrait character={faceId} scale={3} />
+                            : (
+                              // Nothing typed and nothing picked: an empty box
+                              // reads as broken, so say what it is waiting for.
+                              <span style={{
+                                alignSelf: 'center',
+                                fontFamily: 'var(--cth-font-display)', fontSize: 20,
+                                color: 'var(--cth-ink-300)'
+                              }}>?</span>
+                            )}
                         </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+                        <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
                           <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13, lineHeight: '18px' }}>
                             {LIBRARY_BY_ID[character]?.name
-                              ?? OFFICE_CAST.find(c => c.name === character)?.displayName
-                              ?? tr('addAgent.faceFromName')}
+                              ?? (character ? character : tr('addAgent.faceFromName'))}
                           </span>
-                          <PixelButton variant="secondary" size="md" onClick={() => setShowFaces(true)}>
+                          <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
                             {tr('addAgent.chooseFace')}
-                          </PixelButton>
-                        </div>
-                      </div>
+                          </span>
+                        </span>
+                      </button>
                     </Row>
 
                     <Row label={tr('addAgent.color')}>
@@ -1281,9 +1308,13 @@ function FacePicker({ current, taken, onPick, onCancel, tr }: {
   onCancel: () => void;
   tr: (k: string) => string;
 }) {
+  // Atlas is shown but locked. It is the orchestrator's own face, so an agent
+  // must not wear it, and hiding it entirely just raises the question of where
+  // it went. Present and unavailable answers that; `locked` keeps it out of
+  // the free count as well.
   const atlas = OFFICE_CAST.find((c) => c.name === 'michael');
-  const entries: { id: string; name: string; note?: string }[] = [
-    ...(atlas ? [{ id: atlas.name, name: atlas.displayName, note: tr('addAgent.faceBuiltIn') }] : []),
+  const entries: { id: string; name: string; note?: string; locked?: boolean }[] = [
+    ...(atlas ? [{ id: atlas.name, name: atlas.displayName, note: tr('addAgent.faceReserved'), locked: true }] : []),
     ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name })),
   ];
 
@@ -1306,7 +1337,7 @@ function FacePicker({ current, taken, onPick, onCancel, tr }: {
             {tr('addAgent.chooseFace')}
           </span>
           <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
-            {entries.length - taken.size} {tr('addAgent.facesFree')}
+            {entries.filter((f) => !f.locked && !taken.has(f.id)).length} {tr('addAgent.facesFree')}
           </span>
         </div>
 
@@ -1315,14 +1346,14 @@ function FacePicker({ current, taken, onPick, onCancel, tr }: {
           gap: 8, overflowY: 'auto', paddingRight: 4
         }}>
           {entries.map((f) => {
-            const used = taken.has(f.id) && f.id !== current;
+            const used = f.locked || (taken.has(f.id) && f.id !== current);
             const active = f.id === current;
             return (
               <button
                 key={f.id}
                 disabled={used}
                 onClick={() => onPick(f.id)}
-                title={used ? tr('addAgent.faceInUse') : f.name}
+                title={f.locked ? tr('addAgent.faceReserved') : used ? tr('addAgent.faceInUse') : f.name}
                 aria-pressed={active}
                 style={{
                   padding: '6px 4px 5px', border: 'none',
@@ -1350,7 +1381,7 @@ function FacePicker({ current, taken, onPick, onCancel, tr }: {
                   fontSize: 10, lineHeight: '13px',
                   color: used ? 'var(--cth-coral)' : 'var(--cth-ink-500)'
                 }}>
-                  {used ? tr('addAgent.faceInUse') : (f.note ?? tr('addAgent.faceFree'))}
+                  {f.note ?? (used ? tr('addAgent.faceInUse') : tr('addAgent.faceFree'))}
                 </span>
               </button>
             );
