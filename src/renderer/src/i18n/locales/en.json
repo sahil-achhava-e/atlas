@@ -503,7 +503,7 @@
       }
     },
     "name": "Name",
-    "namePlaceholder": "Ada",
+    "namePlaceholder": "name it in \"Add more agents\"",
     "character": "Character",
     "color": "Color",
     "project": "Project",
@@ -568,7 +568,7 @@
     "copyPrompt": "copy prompt",
     "spawn": "Hire",
     "spawning": "Hiring…",
-    "errName": "Name is required",
+    "errName": "Give the agent a name in \"Add more agents\" first.",
     "errFolder": "Pick a folder first",
     "errCommand": "Command is required",
     "hireProgress": "hire {{current}} of {{total}}",

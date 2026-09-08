@@ -184,6 +184,13 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // it was overriding the typed name, so the face never followed what you were
   // typing.
   const effectiveCharacter = character || name.trim() || (atlasFree ? 'michael' : '');
+  /** Typed name first, else the persona of the face that is showing. Removing
+   *  the name field would otherwise make it possible to reach Hire with nothing
+   *  to call the agent, and no field on screen to fix it. */
+  const effectiveName = name.trim()
+    || LIBRARY_BY_ID[effectiveCharacter]?.name
+    || OFFICE_CAST.find(c => c.name === effectiveCharacter)?.displayName
+    || '';
   /** The crew, not a catalogue.
    *
    *  On a first run that is Atlas alone. Every agent you add puts its face here
@@ -394,7 +401,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     setError(undefined);
     // A required field can live in a section the user hasn't opened, so jump to
     // the offending section as we surface the error — the field is never hidden.
-    if (!name.trim()) { setError(tr('addAgent.errName')); setSection('identity'); return; }
+    if (!effectiveName) { setError(tr('addAgent.errName')); setSection('identity'); return; }
     if (!cwd) { setError(tr('addAgent.errFolder')); setSection('workspace'); return; }
     if (!command.trim()) { setError(tr('addAgent.errCommand')); setSection('engine'); return; }
 
@@ -454,7 +461,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     const projectCwd = (!resuming && isolate) ? cwd.trim() : spawnedCwd;
     const agent: Agent = {
       id,
-      name: name.trim(),
+      name: effectiveName,
       // Whatever the dialog has been showing: a picked face, Atlas while it is
       // free, or the name drawing itself. Never store ''.
       character: effectiveCharacter || name.trim(),
@@ -673,18 +680,19 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               <div style={{ flex: 1, minWidth: 0, minHeight: 260, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {section === 'identity' && (
                   <>
+                    {/* Read-only. Naming happens in "Add more agents", or comes
+                        from the face you pick, so there is one place to set it
+                        rather than two that can disagree. */}
                     <Row label={tr('addAgent.name')}>
-                      <input
-                        value={name}
-                        onChange={(e) => {
-                          const next = e.target.value;
-                          setName(next);
-                          const match = characterForName(next);
-                          if (match) setCharacter(match);
-                        }}
-                        placeholder={tr('addAgent.namePlaceholder')}
-                        style={inputStyle}
-                      />
+                      <div style={{
+                        height: 40, display: 'flex', alignItems: 'center', padding: '0 12px',
+                        background: 'var(--cth-cream-100)',
+                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+                        fontFamily: 'var(--cth-font-ui)', fontSize: 14,
+                        color: effectiveName ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)'
+                      }}>
+                        {effectiveName || tr('addAgent.namePlaceholder')}
+                      </div>
                     </Row>
 
                     <Row label={tr('addAgent.character')}>
