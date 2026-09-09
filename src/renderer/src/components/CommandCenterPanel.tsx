@@ -16,6 +16,7 @@ import { acquireTerminal, disposeTerminal, resetTerminal } from './terminalPool'
 import { terminalInstanceKey } from './terminalRecovery';
 import { Icon } from './Icon';
 import { ErrorBoundary } from './ErrorBoundary';
+import { useOpenAsks } from '@/hooks/useOpenAsks';
 import { MemoryPanel } from './MemoryPanel';
 import { MemoryGraphPanel } from './MemoryGraphPanel';
 import { useFleetTelemetry } from '@/hooks/useTelemetry';
@@ -68,34 +69,32 @@ interface GHIssue {
 
 const fmtK = (n: number): string => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : `${Math.round(n / 1000)}k`);
 
-/** Canonical tab order. Not every entry is always shown — see `visibleTabs`. */
-const TABS: { key: CCTab; labelKey: string; icon: Parameters<typeof Icon>[0]['name'] }[] = [
-  { key: 'terminal', labelKey: 'commandCenter.tabs.terminal', icon: 'terminal' },
-  { key: 'floor', labelKey: 'commandCenter.tabs.floor', icon: 'mcp' },
-  { key: 'tasks', labelKey: 'commandCenter.tabs.tasks', icon: 'check' },
-  { key: 'human', labelKey: 'commandCenter.tabs.human', icon: 'bell' },
-  { key: 'triggers', labelKey: 'commandCenter.tabs.triggers', icon: 'clock' },
-  { key: 'trigger-history', labelKey: 'commandCenter.tabs.history', icon: 'ledger' },
-  { key: 'memory', labelKey: 'commandCenter.tabs.memory', icon: 'sparkle' },
-  { key: 'graph', labelKey: 'commandCenter.tabs.graph', icon: 'web' },
-  { key: 'activity', labelKey: 'commandCenter.tabs.activity', icon: 'bell' },
-  { key: 'skills', labelKey: 'commandCenter.tabs.skills', icon: 'sparkle' },
-  { key: 'workers', labelKey: 'commandCenter.tabs.workers', icon: 'gear' }
-];
-
-/** Five groups over those eleven tabs.
+/** Tab order is FREQUENCY, not category.
  *
- *  Eleven content-sized tabs wrapped onto three rows in the docked sidebar —
- *  77px of chrome before any content, in an order nobody could predict, so you
- *  scanned every label to find one. Grouping answers "where would I look for
- *  this" instead: the tabs themselves are unchanged and every one is still one
- *  or two clicks away, under the sub-toggle its group carries. */
-const GROUPS: { key: string; labelKey: string; icon: Parameters<typeof Icon>[0]['name']; tabs: CCTab[] }[] = [
-  { key: 'terminal', labelKey: 'commandCenter.groups.terminal', icon: 'terminal', tabs: ['terminal'] },
-  { key: 'floor',    labelKey: 'commandCenter.groups.floor',    icon: 'mcp',      tabs: ['floor', 'workers', 'activity'] },
-  { key: 'work',     labelKey: 'commandCenter.groups.work',     icon: 'check',    tabs: ['tasks', 'human'] },
-  { key: 'memory',   labelKey: 'commandCenter.groups.memory',   icon: 'sparkle',  tabs: ['memory', 'graph'] },
-  { key: 'setup',    labelKey: 'commandCenter.groups.setup',    icon: 'gear',     tabs: ['triggers', 'trigger-history', 'skills'] }
+ *  The first four are the ones you open all day, and they lead — "Needs you"
+ *  above all, because it is the only screen where the floor is waiting on YOU
+ *  and every hour it sits unseen is an hour of work not happening. The rest sit
+ *  in a second, quieter row: still one click, never competing.
+ *
+ *  Labels say what the screen is FOR rather than what it is called internally:
+ *  "monitor" became Team, "workers" became Jobs, "graph" became Memory map. Each
+ *  carries a one-line hint on hover, because a two-word tab cannot explain
+ *  itself and a first-time reader should not have to click all eleven to learn
+ *  the app. */
+const PRIMARY: CCTab[] = ['terminal', 'human', 'tasks', 'floor'];
+
+const TABS: { key: CCTab; labelKey: string; hintKey: string; icon: Parameters<typeof Icon>[0]['name'] }[] = [
+  { key: 'terminal',        labelKey: 'commandCenter.tabs.terminal', hintKey: 'commandCenter.tabHints.terminal', icon: 'terminal' },
+  { key: 'human',           labelKey: 'commandCenter.tabs.human',    hintKey: 'commandCenter.tabHints.human',    icon: 'bell' },
+  { key: 'tasks',           labelKey: 'commandCenter.tabs.tasks',    hintKey: 'commandCenter.tabHints.tasks',    icon: 'check' },
+  { key: 'floor',           labelKey: 'commandCenter.tabs.floor',    hintKey: 'commandCenter.tabHints.floor',    icon: 'mcp' },
+  { key: 'memory',          labelKey: 'commandCenter.tabs.memory',   hintKey: 'commandCenter.tabHints.memory',   icon: 'sparkle' },
+  { key: 'graph',           labelKey: 'commandCenter.tabs.graph',    hintKey: 'commandCenter.tabHints.graph',    icon: 'web' },
+  { key: 'activity',        labelKey: 'commandCenter.tabs.activity', hintKey: 'commandCenter.tabHints.activity', icon: 'ledger' },
+  { key: 'workers',         labelKey: 'commandCenter.tabs.workers',  hintKey: 'commandCenter.tabHints.workers',  icon: 'git' },
+  { key: 'triggers',        labelKey: 'commandCenter.tabs.triggers', hintKey: 'commandCenter.tabHints.triggers', icon: 'clock' },
+  { key: 'trigger-history', labelKey: 'commandCenter.tabs.history',  hintKey: 'commandCenter.tabHints.history',  icon: 'ledger' },
+  { key: 'skills',          labelKey: 'commandCenter.tabs.skills',   hintKey: 'commandCenter.tabHints.skills',   icon: 'sparkle' }
 ];
 
 /** @param fullscreen this instance IS the fullscreen overlay, so it owns the pty
@@ -117,17 +116,10 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
     if (!showHistory && tab === 'trigger-history') setTab('terminal');
   }, [showHistory, tab]);
   const visibleTabs = TABS.filter((t) => t.key !== 'trigger-history' || showHistory);
-  const visibleKeys = new Set(visibleTabs.map((x) => x.key));
-  const groups = GROUPS
-    .map((g) => ({ ...g, tabs: g.tabs.filter((k) => visibleKeys.has(k)) }))
-    .filter((g) => g.tabs.length > 0);
-  const activeGroup = groups.find((g) => g.tabs.includes(tab)) ?? groups[0];
-  const labelOf = (key: CCTab): string => t(TABS.find((x) => x.key === key)?.labelKey ?? key);
-  // Re-opening a group returns you to the screen you left it on. Without this,
-  // every visit to `floor` dropped you back on monitor no matter that you were
-  // reading activity a second ago.
-  const lastLeaf = useRef<Record<string, CCTab>>({});
-  useEffect(() => { if (activeGroup) lastLeaf.current[activeGroup.key] = tab; }, [tab, activeGroup?.key]);
+  const primaryTabs = visibleTabs.filter((x) => PRIMARY.includes(x.key));
+  const secondaryTabs = visibleTabs.filter((x) => !PRIMARY.includes(x.key));
+  // The one number on this panel that is about the human, not the machines.
+  const openAsks = useOpenAsks();
 
   // External tab requests (the office task board → 'tasks', the boss-room
   // calendar → 'triggers'). seq-keyed so clicking again re-opens the tab even
@@ -241,74 +233,79 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         </PixelButton>
       </div>
 
-      {/* Group strip. One row, content-sized, scrolling rather than wrapping in
-          the wide fullscreen panel — `.cth-tabbar` in global.css hides that
-          scrollbar. Five entries fit the narrow sidebar without either. */}
+      {/* Row one: the four screens you open all day, in the accent when active.
+          Row two: everything else, quieter and smaller, still one click. */}
       <div className="cth-tabbar" style={{
         display: 'flex', gap: 4,
         flexWrap: fullscreen ? 'nowrap' : 'wrap',
         overflowX: fullscreen ? 'auto' : 'visible',
-        padding: '6px 8px', background: 'var(--cth-cream-100)',
-        borderBottom: activeGroup && activeGroup.tabs.length > 1
-          ? '1px solid var(--cth-ink-100)'
-          : '1px solid var(--cth-ink-700)',
-        flexShrink: 0
+        padding: '6px 8px 4px', background: 'var(--cth-cream-100)', flexShrink: 0
       }}>
-        {groups.map((g) => {
-          const on = g.key === activeGroup?.key;
+        {primaryTabs.map((d) => {
+          const on = d.key === tab;
+          const badge = d.key === 'human' ? openAsks : 0;
           return (
             <button
-              key={g.key}
-              onClick={() => setTab(lastLeaf.current[g.key] ?? g.tabs[0])}
-              title={g.tabs.map(labelOf).join(' · ')}
+              key={d.key}
+              onClick={() => setTab(d.key)}
+              className="cth-tip cth-tip-wrap"
+              data-tip={t(d.hintKey)}
               style={{
-                whiteSpace: 'nowrap',
-                flex: '1 0 auto',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                padding: '4px 8px 3px', border: 'none', cursor: 'pointer',
+                position: 'relative', whiteSpace: 'nowrap', flex: '1 0 auto',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                padding: '5px 10px 4px', border: 'none', cursor: 'pointer',
                 background: on ? `var(--cth-${agent.accent})` : 'var(--cth-cream-200)',
-                // The selected tab is filled with the agent's accent, a LIGHT
-                // colour in both themes; ink-900 flips to near-white in dark, so
-                // the one tab you most need to read went pale-on-pale.
+                // The active tab is filled with the agent's accent, a LIGHT colour
+                // in both themes; ink-900 flips to near-white in dark, so the one
+                // tab you most need to read went pale-on-pale.
                 color: on ? 'var(--cth-on-accent)' : 'var(--cth-ink-900)',
                 boxShadow: on ? 'inset 0 0 0 1px var(--cth-ink-300)' : 'inset 0 0 0 1px var(--cth-ink-100)',
                 fontFamily: 'var(--cth-font-ui)', fontSize: 13
               }}
             >
-              <Icon name={g.icon} /> {t(g.labelKey)}
+              <Icon name={d.icon} /> {t(d.labelKey)}
+              {badge > 0 && (
+                <span style={{
+                  minWidth: 16, height: 15, padding: '0 4px',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'var(--cth-status-blocked)', color: 'var(--cth-on-accent)',
+                  fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: 1
+                }}>{badge}</span>
+              )}
             </button>
           );
         })}
       </div>
 
-      {/* Sub-toggle — only for a group that holds more than one screen. Text,
-          not filled chips: it is a second level and must not compete with the
-          strip above it. */}
-      {activeGroup && activeGroup.tabs.length > 1 && (
-        <div className="cth-tabbar" style={{
-          display: 'flex', gap: 2, alignItems: 'center',
-          padding: '3px 8px 4px', background: 'var(--cth-cream-100)',
-          borderBottom: '1px solid var(--cth-ink-700)', flexShrink: 0,
-          overflowX: 'auto'
-        }}>
-          {activeGroup.tabs.map((key) => {
-            const on = key === tab;
-            return (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                style={{
-                  whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
-                  padding: '2px 8px 3px', background: 'transparent',
-                  color: on ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
-                  boxShadow: on ? `inset 0 -2px 0 0 var(--cth-${agent.accent})` : 'none',
-                  fontFamily: 'var(--cth-font-ui)', fontSize: 12
-                }}
-              >{labelOf(key)}</button>
-            );
-          })}
-        </div>
-      )}
+      <div className="cth-tabbar" style={{
+        display: 'flex', gap: 2, alignItems: 'center',
+        flexWrap: fullscreen ? 'nowrap' : 'wrap',
+        overflowX: fullscreen ? 'auto' : 'visible',
+        padding: '0 8px 5px', background: 'var(--cth-cream-100)',
+        borderBottom: '1px solid var(--cth-ink-700)', flexShrink: 0
+      }}>
+        {secondaryTabs.map((d) => {
+          const on = d.key === tab;
+          return (
+            <button
+              key={d.key}
+              onClick={() => setTab(d.key)}
+              className="cth-tip cth-tip-wrap"
+              data-tip={t(d.hintKey)}
+              style={{
+                whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                padding: '2px 7px 3px', background: 'transparent',
+                color: on ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
+                boxShadow: on ? `inset 0 -2px 0 0 var(--cth-${agent.accent})` : 'none',
+                fontFamily: 'var(--cth-font-ui)', fontSize: 12
+              }}
+            >
+              {t(d.labelKey)}
+            </button>
+          );
+        })}
+      </div>
 
       {/* Body. Boundaried per tab: a crash in one screen must not take the
           terminal, the queue and the rest of the window with it — which is
