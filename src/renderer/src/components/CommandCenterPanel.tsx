@@ -157,6 +157,17 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
     : (agent.cwd ? agent.cwd.split('/').filter(Boolean).pop() ?? agent.project : agent.project);
   // Context as a number, not a bar: in a header the useful question is how much
   // room is left before a compaction, and a 4px rail cannot answer it.
+  // What is actually running in the terminal below, in the words the picker
+  // used when it was chosen — not the raw model id, and not the pty handle the
+  // header used to print.
+  const agentProvider = agent.provider ?? 'claude';
+  const engineLabel = [
+    providerPreset(agentProvider).label,
+    agent.model
+      ? (modelsForProvider(agentProvider).find((m) => m.id === agent.model)?.label ?? agent.model)
+      : ''
+  ].filter(Boolean).join(' · ');
+
   // Below 1k there is nothing to report and the rounding says "0k", which reads
   // as a broken gauge rather than as a session that has barely started.
   const contextLine = (agent.contextTokens ?? 0) >= 1000
@@ -322,6 +333,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                 <PtyTerminalView
                   key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}
                   ptyId={agent.ptyId}
+                  label={engineLabel}
                   onStreamData={onPtyStream}
                   onUserPrompt={(t) => {
                     updateAgent(agent.id, { lastPrompt: t });

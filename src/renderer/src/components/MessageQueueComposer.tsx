@@ -346,10 +346,13 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
 
       {/* Composer — full-width input above a single tidy control bar (cc-ui-polish),
           with file/image attachment chips + paste-to-attach (rich-composer). */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div className="cth-field" style={{
+        display: 'flex', flexDirection: 'column',
+        background: 'var(--cth-paper-100)'
+      }}>
         <textarea
           dir={rtl ? 'auto' : undefined}
-          className="cth-input"
+          className="cth-input cth-input-bare"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKey}
@@ -378,23 +381,41 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             boxSizing: 'border-box'
           }}
         />
-        {/* Control bar: Attach + voice + Send aligned right. flexWrap so a
-            narrow sidebar wraps the buttons onto a second row instead of
-            pushing Send off-screen. */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, rowGap: 6, flexWrap: 'wrap', minWidth: 0 }}>
-          {/* Talk to the orchestrator. It lives HERE, next to the box you type
-              into, rather than on his floor card: saying something and typing
-              something are the same intent, and the card is a thing you click to
-              open, not a control panel. */}
+        {/* The control bar is INSIDE the field, under the text, so speaking,
+            attaching and sending all read as things you do to this message.
+            flexWrap so a narrow sidebar wraps rather than pushing Send off the
+            edge. */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 6, rowGap: 6,
+          flexWrap: 'wrap', minWidth: 0,
+          padding: '5px 6px 6px',
+          borderTop: '1px solid var(--cth-ink-100)'
+        }}>
+          {/* Talk to the orchestrator. It lives HERE, at the message you would
+              otherwise type, rather than on his floor card: speaking and typing
+              are the same intent. */}
           {agent.isGod && <RealtimeMichaelToggle />}
+          {freeflowEnabled && <FreeFlowButton agentId={agent.id} hasGroqKey={hasGroqKey} />}
+          <button
+            onClick={pickFiles}
+            title={t('queueComposer.files')}
+            aria-label={t('queueComposer.files')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 26, height: 24, padding: 0, border: 'none', cursor: 'pointer',
+              background: 'transparent', color: 'var(--cth-ink-500)'
+            }}
+          ><Icon name="plus" /></button>
           {agent.isGod && <CostHud compact />}
           <span style={{ flex: 1 }} />
-          <PixelButton variant="secondary" size="sm" onClick={pickFiles}>
-            <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-              <Icon name="plus" /> {t('queueComposer.files')}
-            </span>
-          </PixelButton>
-          {freeflowEnabled && <FreeFlowButton agentId={agent.id} hasGroqKey={hasGroqKey} />}
+          {/* The one keystroke everybody gets wrong on a box that also takes
+              multi-line input. Hidden while empty: it is instruction, not decor. */}
+          {canSend && (
+            <span style={{
+              fontSize: 11, color: 'var(--cth-ink-500)', whiteSpace: 'nowrap',
+              fontFamily: 'var(--cth-font-ui)'
+            }}>{t('queueComposer.enterHint')}</span>
+          )}
           <PixelButton variant="primary" size="sm" onClick={queueIt} disabled={!canSend}>
             <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
               {t('commandBar.send')} <Icon name="arrow-right" />

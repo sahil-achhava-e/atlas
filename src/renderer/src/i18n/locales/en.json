@@ -1365,6 +1365,9 @@
     "assign": "assign",
     "priority": "Priority {{level}}/5"
   },
+  "terminal": {
+    "live": "live"
+  },
   "queueComposer": {
     "recording": "● recording — click stop to transcribe",
     "transcribing": "transcribing…",
@@ -1377,6 +1380,7 @@
     "sendingOneByOne": "sending to {{name}} one-by-one…",
     "pausedTitle": "Auto-delivery is paused for the whole floor. Resume it in the Command Center, or use \"send now\" on a message below.",
     "dropToAttach": "DROP TO ATTACH",
+    "enterHint": "Enter sends, Shift+Enter for a new line",
     "queue": "QUEUE",
     "closePicker": "close picker",
     "recoverPrompt": "recover prompt",

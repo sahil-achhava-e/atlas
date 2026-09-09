@@ -113,6 +113,17 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
 .cth-input:focus,
 .cth-input:focus-visible { box-shadow: inset 0 0 0 2px var(--cth-ink-700); }
 
+/* A composer is ONE field: the box you type in and the row of controls under it
+   share a border, and focusing the text lights the whole thing. The textarea
+   inside carries `.cth-input-bare` so it draws no border of its own — two
+   nested rectangles read as a box inside a box, which is what this looked like
+   before. */
+.cth-field { box-shadow: inset 0 0 0 1px var(--cth-ink-100); }
+.cth-field:focus-within { box-shadow: inset 0 0 0 2px var(--cth-ink-700); }
+.cth-input-bare { box-shadow: none; }
+.cth-input-bare:focus,
+.cth-input-bare:focus-visible { box-shadow: none; }
+
 /* Custom scrollbar — chunky, pixel-feel */
 ::-webkit-scrollbar { width: 12px; height: 12px; }
 ::-webkit-scrollbar-track {

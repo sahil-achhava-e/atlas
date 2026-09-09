@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CSSProperties } from 'react';
 import '@xterm/xterm/css/xterm.css';
 import { Icon } from './Icon';
@@ -117,6 +118,11 @@ export interface PtyTerminalViewProps {
   onStreamData?: (chunk: string) => void;
   /** Fires with the trimmed text whenever the user submits a line (Enter). */
   onUserPrompt?: (text: string) => void;
+  /** What is RUNNING in here, e.g. "Claude Code · Opus 4.8 · 1M". The header
+   *  used to print the pty id (`pty-god`), which is an internal handle: it told
+   *  you nothing, and the one thing you actually want to check from a terminal
+   *  is which engine and model you are talking to. */
+  label?: string;
   /** When provided, render an expand/minimize button in the header. */
   onToggleFullscreen?: () => void;
   fullscreen?: boolean;
@@ -124,12 +130,14 @@ export interface PtyTerminalViewProps {
   embedded?: boolean;
 }
 
-export function PtyTerminalView({ ptyId, onStreamData, onUserPrompt, onToggleFullscreen, fullscreen, embedded }: PtyTerminalViewProps) {
+export function PtyTerminalView({ ptyId, label, onStreamData, onUserPrompt, onToggleFullscreen, fullscreen, embedded }: PtyTerminalViewProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const onStreamDataRef = useRef(onStreamData);
   onStreamDataRef.current = onStreamData;
   const onUserPromptRef = useRef(onUserPrompt);
   onUserPromptRef.current = onUserPrompt;
+  const { t } = useTranslation();
+  const [hovered, setHovered] = useState(false);
   const fontSize = useTerminalFontSize();
   const fontSizeRef = useRef(fontSize);
   const ptyTheme: PtyTheme = useAppTheme();
@@ -360,12 +368,17 @@ export function PtyTerminalView({ ptyId, onStreamData, onUserPrompt, onToggleFul
       display: 'flex',
       flexDirection: 'column'
     }}>
-      <div style={{
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
         display: 'flex', alignItems: 'center', gap: 6,
         fontFamily: 'var(--cth-font-ui)',
         fontSize: 12,
         color: 'var(--cth-ink-500)',
-        borderBottom: '1px dashed var(--cth-ink-300)',
+        // A hairline, not a dashed rule: dashes read as "unfinished" on the one
+        // surface that is always on screen.
+        borderBottom: '1px solid var(--cth-ink-100)',
         paddingBottom: 4,
         marginBottom: 4,
         paddingLeft: embedded ? 8 : 0,
@@ -377,8 +390,17 @@ export function PtyTerminalView({ ptyId, onStreamData, onUserPrompt, onToggleFul
           boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
           animation: 'cth-pulse 1200ms steps(2, end) infinite'
         }} />
-        live · pty {ptyId}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 2 }}>
+        <span style={{
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0
+        }}>{label ?? t('terminal.live')}</span>
+        {/* Zoom is a once-a-year control sitting beside the thing you read all
+            day: it fades in on hover (and stays while focused), and Cmd +/- and
+            Cmd 0 work whether it is visible or not. */}
+        <div style={{
+          marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 2,
+          opacity: hovered ? 1 : 0,
+          transition: 'opacity 120ms linear'
+        }}>
           {/* v0.3.4: the theme + enter-fullscreen buttons moved to the TITLE BAR
               (top right) — more accessible, and the theme now darkens the whole
               app. Only the EXIT affordance stays here, in fullscreen. */}
