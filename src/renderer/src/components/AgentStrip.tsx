@@ -81,6 +81,27 @@ export function AgentStrip({ config }: AgentStripProps) {
     return () => { cancelled = true; clearInterval(iv); };
   }, []);
 
+  // ONE floor-wide auto-delivery switch. Seeded from god's control state: this
+  // is the only control that changes it, so any agent's state reflects the
+  // floor's.
+  const [deliveryPaused, setDeliveryPaused] = useState(false);
+  useEffect(() => {
+    const seed = agents.find((a) => a.isGod) ?? agents[0];
+    if (!seed) return;
+    let alive = true;
+    window.cth.controlSnapshot(seed.id)
+      .then((snap) => { if (alive && snap) setDeliveryPaused(snap.autoDeliveryPaused); })
+      .catch(() => { /* none */ });
+    return () => { alive = false; };
+  }, [agents.length]);
+  const toggleFloorDelivery = async (): Promise<void> => {
+    const next = !deliveryPaused;
+    setDeliveryPaused(next);
+    await Promise.all(
+      useStore.getState().agents.map((a) => window.cth.controlAutoDelivery(a.id, next).catch(() => null))
+    );
+  };
+
   return (
     <div style={{
       display: 'flex',
@@ -232,6 +253,34 @@ export function AgentStrip({ config }: AgentStripProps) {
         </div>
       ))}
       <AddAgentTile label={t('agentStrip.addAgent')} onClick={() => setAddAgentOpen(true)} />
+
+      {/* Auto-delivery, for the WHOLE floor. It used to sit inside Atlas's own
+          header, where it read as "Atlas is on auto" while actually holding
+          every agent's queue. The dock is the floor-wide surface, so the
+          floor-wide switch belongs here. */}
+      <span
+        style={{ alignSelf: 'center', flexShrink: 0, marginInlineStart: 'auto' }}
+        className="cth-tip cth-tip-wrap"
+        data-tip={deliveryPaused
+          ? t('commandCenter.deliveryPausedTitle')
+          : t('commandCenter.deliveryOnTitle')}
+      >
+        <PixelButton
+          variant={deliveryPaused ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={() => { void toggleFloorDelivery(); }}
+        >
+          <span
+            aria-label={deliveryPaused
+              ? t('commandCenter.deliveryResumeAria')
+              : t('commandCenter.deliveryHoldAria')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}
+          >
+            <Icon name={deliveryPaused ? 'pause' : 'play'} />
+            {deliveryPaused ? t('commandCenter.deliveryPaused') : t('commandCenter.deliveryAuto')}
+          </span>
+        </PixelButton>
+      </span>
       {/* ONE restore control, pinned to the strip's right edge. Busy (manual OR
           boot auto-restore) collapses to a single disabled "restoring your
           team…"; otherwise the button opens an upward dropdown listing last

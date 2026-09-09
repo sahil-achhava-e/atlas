@@ -65,6 +65,8 @@ interface GHIssue {
   assignees: string[];
 }
 
+const fmtK = (n: number): string => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : `${Math.round(n / 1000)}k`);
+
 /** Canonical tab order. Not every entry is always shown — see `visibleTabs`. */
 const TABS: { key: CCTab; labelKey: string; icon: Parameters<typeof Icon>[0]['name'] }[] = [
   { key: 'terminal', labelKey: 'commandCenter.tabs.terminal', icon: 'terminal' },
@@ -130,24 +132,17 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
   const onPtyStream = usePtyParser(agent.id);
   // True only for the DOCKED panel while the overlay holds this agent.
   const isFullscreenedHere = fullscreenAgentId === agent.id && !fullscreen;
-  // v0.3.4: ONE floor-wide auto-delivery switch, moved off the per-agent
-  // control strips — toggling applies to every live agent, god included.
-  // Seeded from the god's own control state (the floor is kept in sync by
-  // this single control, so any agent's state reflects the floor's).
-  const [floorDeliveryPaused, setFloorDeliveryPaused] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    window.cth.controlSnapshot(agent.id)
-      .then((s) => { if (alive && s) setFloorDeliveryPaused(s.autoDeliveryPaused); })
-      .catch(() => { /* none */ });
-    return () => { alive = false; };
-  }, [agent.id]);
-  const toggleFloorDelivery = async () => {
-    const next = !floorDeliveryPaused;
-    setFloorDeliveryPaused(next);
-    const all = useStore.getState().agents;
-    await Promise.all(all.map((a) => window.cth.controlAutoDelivery(a.id, next).catch(() => null)));
-  };
+  // What it is doing NOW while it works; where it lives when it is not.
+  const headerLine = (agent.status !== 'idle' && agent.action)
+    ? agent.action
+    : (agent.cwd ? agent.cwd.split('/').filter(Boolean).pop() ?? agent.project : agent.project);
+  // Context as a number, not a bar: in a header the useful question is how much
+  // room is left before a compaction, and a 4px rail cannot answer it.
+  // Below 1k there is nothing to report and the rounding says "0k", which reads
+  // as a broken gauge rather than as a session that has barely started.
+  const contextLine = (agent.contextTokens ?? 0) >= 1000
+    ? `${fmtK(agent.contextTokens as number)}/${fmtK(agent.contextLimit ?? (/1m/i.test(agent.model ?? '') ? 1_000_000 : 200_000))}`
+    : '';
 
   return (
     <PixelPanel
@@ -155,7 +150,11 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
       noPadding
       style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0, overflow: 'hidden' }}
     >
-      {/* Header */}
+      {/* Header — two lines, and both of them say something you cannot read
+          anywhere else on screen: WHO plus how full its context is, then what
+          it is doing at this moment. It used to spend the big line on the words
+          COMMAND CENTER (identical on every render) and the small one on a
+          fixed sentence about the agent's role. */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
         padding: '6px 8px', background: 'var(--cth-cream-100)',
@@ -168,63 +167,51 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         }}>
           <SpritePortrait character={agent.character} scale={1} />
         </div>
-        {/* Title + subtitle truncate; the control cluster never shrinks. At
-            sidebar width the old header wrapped its 24-char display-font title
-            onto three lines and "runs the floor" word-per-line under the two
-            wide buttons — everything here is single-line by construction. */}
+
+        {/* Both lines truncate; the control cluster never shrinks. At sidebar
+            width the old header wrapped its display-font title onto three lines
+            and put "runs the floor" word-per-line under the buttons. */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px', color: 'var(--cth-ink-900)',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-          }}>{t('commandCenter.title')}</div>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 1, minWidth: 0 }}>
-            <PixelBadge status={agent.status} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
             <span style={{
-              fontSize: 12, color: 'var(--cth-ink-500)',
+              fontFamily: 'var(--cth-font-display)', fontSize: 11, lineHeight: '15px',
+              color: 'var(--cth-ink-900)',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-            }}>{t('commandCenter.runsTheFloor', { name: agent.name })}</span>
+            }}>{agent.name.toUpperCase()}</span>
+            <PixelBadge status={agent.status} dotOnly />
+            {contextLine && (
+              <span
+                title={t('agentCard.contextGaugeTitle')}
+                style={{
+                  marginInlineStart: 'auto', flexShrink: 0,
+                  fontFamily: 'var(--cth-font-mono)', fontSize: 11, lineHeight: '15px',
+                  color: 'var(--cth-ink-500)'
+                }}
+              >{contextLine}</span>
+            )}
           </div>
+          <div style={{
+            fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+          }}>{headerLine}</div>
         </div>
-        {/* v0.3.4: floor-wide auto-delivery lives HERE (one switch for every
-            agent's queue), and the IDE opens from agent level, not the toolbar.
-            Short labels — the tooltips carry the full explanation. */}
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-          <PixelButton
-            variant={floorDeliveryPaused ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => { void toggleFloorDelivery(); }}
+
+        {/* Floor-level surface with no agent of its own: the honest target is
+            whoever is selected, stated explicitly rather than left to the IDE's
+            fallback so the intent is visible at the call site. */}
+        <PixelButton variant="secondary" size="sm" onClick={() => {
+          const s = useStore.getState();
+          s.setIdeOpen(true, s.selectedId);
+        }}>
+          <span
+            className="cth-tip cth-tip-wrap"
+            data-tip={t('commandCenter.ideTitle')}
+            aria-label={t('commandCenter.openIdeAria')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
           >
-            <span
-              className="cth-tip cth-tip-wrap"
-              data-tip={floorDeliveryPaused
-                ? t('commandCenter.deliveryPausedTitle')
-                : t('commandCenter.deliveryOnTitle')}
-              aria-label={floorDeliveryPaused
-                ? t('commandCenter.deliveryResumeAria')
-                : t('commandCenter.deliveryHoldAria')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-            >
-              <Icon name={floorDeliveryPaused ? 'pause' : 'play'} />
-              {floorDeliveryPaused ? t('commandCenter.deliveryPaused') : t('commandCenter.deliveryAuto')}
-            </span>
-          </PixelButton>
-          {/* Floor-level surface with no agent of its own: the honest target is
-              whoever is selected, stated explicitly rather than left to the
-              IDE's fallback so the intent is visible at the call site. */}
-          <PixelButton variant="secondary" size="sm" onClick={() => {
-            const s = useStore.getState();
-            s.setIdeOpen(true, s.selectedId);
-          }}>
-            <span
-              className="cth-tip cth-tip-wrap"
-              data-tip={t('commandCenter.ideTitle')}
-              aria-label={t('commandCenter.openIdeAria')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-            >
-              <Icon name="code" /> {t('commandCenter.ide')}
-            </span>
-          </PixelButton>
-        </div>
+            <Icon name="code" /> {t('commandCenter.ide')}
+          </span>
+        </PixelButton>
       </div>
 
       {/* Tab bar — ONE row, tabs at their natural width, scrolling only if the
