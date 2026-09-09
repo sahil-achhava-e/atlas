@@ -15,6 +15,7 @@ import { SkillsTab } from './SkillsTab';
 import { acquireTerminal, disposeTerminal, resetTerminal } from './terminalPool';
 import { terminalInstanceKey } from './terminalRecovery';
 import { Icon } from './Icon';
+import { ErrorBoundary } from './ErrorBoundary';
 import { MemoryPanel } from './MemoryPanel';
 import { MemoryGraphPanel } from './MemoryGraphPanel';
 import { useFleetTelemetry } from '@/hooks/useTelemetry';
@@ -309,7 +310,11 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         </div>
       )}
 
-      {/* Body */}
+      {/* Body. Boundaried per tab: a crash in one screen must not take the
+          terminal, the queue and the rest of the window with it — which is
+          exactly what happened when the Triggers panel read a field that was
+          not there. `key={tab}` re-arms it when you switch away. */}
+      <ErrorBoundary key={tab} label={tab}>
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         {tab === 'terminal' && (
           isFullscreenedHere ? (
@@ -357,6 +362,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         {tab === 'skills' && <SkillsTab agentCwd={agent.cwd} />}
         {tab === 'workers' && <WorkersTab />}
       </div>
+      </ErrorBoundary>
     </PixelPanel>
   );
 }

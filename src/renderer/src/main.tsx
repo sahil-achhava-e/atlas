@@ -20,11 +20,15 @@ if (splashMark) {
   splashMark.replaceWith(img);
 }
 
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+
 const root = document.getElementById('root');
 if (!root) throw new Error('No root element');
 
 createRoot(root).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary label="Atlas" onReset={() => window.location.reload()}>
+      <App />
+    </ErrorBoundary>
   </StrictMode>
 );

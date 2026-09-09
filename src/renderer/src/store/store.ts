@@ -891,7 +891,10 @@ export const useStore = create<State>((set, get) => ({
   // care (withTriggerDefaults), and handing the module-level default out is how
   // one careless mutation rewrites the default for everyone.
   orgTrigger: { ...DEFAULT_ORG_TRIGGER },
-  setOrgTrigger: (cfg) => set({ orgTrigger: cfg }),
+  // Deep-filled on the way IN. Callers mirror whatever a config read handed
+  // them, and a legacy or partial object used to reach `cfg.apiKey.trim()` in
+  // the Triggers panel and blank the window.
+  setOrgTrigger: (cfg) => set({ orgTrigger: { ...DEFAULT_ORG_TRIGGER, ...(cfg ?? {}) } }),
   enqueueMessage: (agentId, text, meta) =>
     set((s) => {
       const trimmed = text.trim();
