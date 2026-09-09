@@ -146,6 +146,11 @@
   // status object off it and threw. A preview folder is not a repo.
   gitIsRepo: async () => false,
 
+  // The generic [] answered these too, and a list where an OBJECT belongs put
+  // `undefined.trim()` in the Triggers tab and took the window down with it.
+  getOrgTrigger: async () => ({ apiKey: '', enabled: false, mode: 'inbox' }),
+  listWebhooks: async () => [],
+
     // The real bridge opens Electron's native folder dialog, which needs no
     // permission: the dialog IS the grant. A browser has no equivalent.
     //   - showDirectoryPicker() makes Chrome ask "allow this site to view and

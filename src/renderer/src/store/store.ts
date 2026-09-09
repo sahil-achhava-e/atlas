@@ -1047,5 +1047,8 @@ export function selectedAgent(s: State): Agent | undefined {
  *  the two mirrors rather than stored beside them, so it cannot fall out of step
  *  with the thing it describes. Use as `useStore(triggerHistoryVisible)`. */
 export function triggerHistoryVisible(s: State): boolean {
-  return s.webhookTriggers.length > 0 || s.orgTrigger.apiKey.trim() !== '';
+  // Defensive on both fields: a selector runs on every render, so one that
+  // throws takes the whole window with it — and `orgTrigger` arrives from a
+  // config read that may not have been deep-filled yet.
+  return (s.webhookTriggers?.length ?? 0) > 0 || (s.orgTrigger?.apiKey ?? '').trim() !== '';
 }

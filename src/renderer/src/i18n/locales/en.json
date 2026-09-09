@@ -386,6 +386,13 @@
     "deliveryOnTitle": "Queued messages are delivered to every agent automatically. Click to hold the whole floor.",
     "ideTitle": "Open the IDE: browse and edit files in the selected agent's workspace, and see uncommitted changes as a diff.",
     "ide": "IDE",
+    "groups": {
+      "terminal": "terminal",
+      "floor": "floor",
+      "work": "work",
+      "memory": "memory",
+      "setup": "setup"
+    },
     "tabs": {
       "terminal": "terminal",
       "floor": "monitor",

@@ -82,6 +82,21 @@ const TABS: { key: CCTab; labelKey: string; icon: Parameters<typeof Icon>[0]['na
   { key: 'workers', labelKey: 'commandCenter.tabs.workers', icon: 'gear' }
 ];
 
+/** Five groups over those eleven tabs.
+ *
+ *  Eleven content-sized tabs wrapped onto three rows in the docked sidebar —
+ *  77px of chrome before any content, in an order nobody could predict, so you
+ *  scanned every label to find one. Grouping answers "where would I look for
+ *  this" instead: the tabs themselves are unchanged and every one is still one
+ *  or two clicks away, under the sub-toggle its group carries. */
+const GROUPS: { key: string; labelKey: string; icon: Parameters<typeof Icon>[0]['name']; tabs: CCTab[] }[] = [
+  { key: 'terminal', labelKey: 'commandCenter.groups.terminal', icon: 'terminal', tabs: ['terminal'] },
+  { key: 'floor',    labelKey: 'commandCenter.groups.floor',    icon: 'mcp',      tabs: ['floor', 'workers', 'activity'] },
+  { key: 'work',     labelKey: 'commandCenter.groups.work',     icon: 'check',    tabs: ['tasks', 'human'] },
+  { key: 'memory',   labelKey: 'commandCenter.groups.memory',   icon: 'sparkle',  tabs: ['memory', 'graph'] },
+  { key: 'setup',    labelKey: 'commandCenter.groups.setup',    icon: 'gear',     tabs: ['triggers', 'trigger-history', 'skills'] }
+];
+
 /** @param fullscreen this instance IS the fullscreen overlay, so it owns the pty
  *  and renders the real terminal. The docked instance renders the "open in
  *  fullscreen" placeholder instead — two live xterms on one pty fight over its
@@ -101,6 +116,17 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
     if (!showHistory && tab === 'trigger-history') setTab('terminal');
   }, [showHistory, tab]);
   const visibleTabs = TABS.filter((t) => t.key !== 'trigger-history' || showHistory);
+  const visibleKeys = new Set(visibleTabs.map((x) => x.key));
+  const groups = GROUPS
+    .map((g) => ({ ...g, tabs: g.tabs.filter((k) => visibleKeys.has(k)) }))
+    .filter((g) => g.tabs.length > 0);
+  const activeGroup = groups.find((g) => g.tabs.includes(tab)) ?? groups[0];
+  const labelOf = (key: CCTab): string => t(TABS.find((x) => x.key === key)?.labelKey ?? key);
+  // Re-opening a group returns you to the screen you left it on. Without this,
+  // every visit to `floor` dropped you back on monitor no matter that you were
+  // reading activity a second ago.
+  const lastLeaf = useRef<Record<string, CCTab>>({});
+  useEffect(() => { if (activeGroup) lastLeaf.current[activeGroup.key] = tab; }, [tab, activeGroup?.key]);
 
   // External tab requests (the office task board → 'tasks', the boss-room
   // calendar → 'triggers'). seq-keyed so clicking again re-opens the tab even
@@ -214,68 +240,74 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         </PixelButton>
       </div>
 
-      {/* Tab bar — ONE row, tabs at their natural width, scrolling only if the
-          panel is genuinely too narrow for all of them.
-
-          This was an auto-fit grid of equal-width cells, which had a failure mode
-          the equal widths caused: every column is sized to the WIDEST tab, so the
-          track count is set by the longest label rather than by the total width
-          the labels actually need. Adding a 12th tab tipped it over at fullscreen
-          width and dropped `setup` onto a second row with most of the first row's
-          space still unused — the tabs need ~1320px of content and had ~1610px.
-
-          Content-sized tabs fit all twelve on one line with room to spare, and the
-          `.cth-tabbar` rules in global.css (scrollbar-width: none, ::-webkit-
-          scrollbar { height: 0 }) already exist for exactly this: a single row that
-          scrolls with the scrollbar hidden. The grid never scrolled, so those rules
-          have been dead code since it landed.
-
-          Trade-off, deliberate: in the NARROW docked panel the far-right tabs now
-          scroll out of view instead of wrapping to a visible second row. One row
-          that sometimes needs a scroll beats two rows where one is nearly empty —
-          and the grid's own reason for existing (keeping wrapped rows aligned)
-          stops applying the moment there is only ever one row. */}
+      {/* Group strip. One row, content-sized, scrolling rather than wrapping in
+          the wide fullscreen panel — `.cth-tabbar` in global.css hides that
+          scrollbar. Five entries fit the narrow sidebar without either. */}
       <div className="cth-tabbar" style={{
         display: 'flex', gap: 4,
-        // Docked in the sidebar the panel is narrow, so tabs WRAP: a second row
-        // costs a few pixels of a tall column, while a horizontal scroll there
-        // would hide half the tabs behind a gesture with no affordance.
-        // In focus mode the panel is wide and vertical space is the scarce
-        // resource, so it stays ONE row and scrolls instead. `.cth-tabbar` in
-        // global.css already hides that scrollbar.
         flexWrap: fullscreen ? 'nowrap' : 'wrap',
         overflowX: fullscreen ? 'auto' : 'visible',
         padding: '6px 8px', background: 'var(--cth-cream-100)',
-        borderBottom: '1px solid var(--cth-ink-700)', flexShrink: 0
+        borderBottom: activeGroup && activeGroup.tabs.length > 1
+          ? '1px solid var(--cth-ink-100)'
+          : '1px solid var(--cth-ink-700)',
+        flexShrink: 0
       }}>
-        {visibleTabs.map((tabDef) => (
-          <button
-            key={tabDef.key}
-            onClick={() => setTab(tabDef.key)}
-            style={{
-              whiteSpace: 'nowrap',
-              // grow to share any spare width (so the strip still spans the panel
-              // exactly as the old grid did), never shrink below the label (a
-              // squashed tab is unreadable — overflow into the scroll instead).
-              flex: '1 0 auto',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-              padding: '4px 8px 3px', border: 'none', cursor: 'pointer',
-              background: tab === tabDef.key ? `var(--cth-${agent.accent})` : 'var(--cth-cream-200)',
-              // The selected tab is filled with the agent's accent, which is a
-              // LIGHT colour in both themes. ink-900 flips to near-white in dark
-              // mode, so the active tab's label was pale-on-pale — the one tab
-              // you most need to read. On-accent text is dark in both themes.
-              color: tab === tabDef.key ? 'var(--cth-on-accent)' : 'var(--cth-ink-900)',
-              boxShadow: tab === tabDef.key
-                ? 'inset 0 0 0 1px var(--cth-ink-300)'
-                : 'inset 0 0 0 1px var(--cth-ink-100)',
-              fontFamily: 'var(--cth-font-ui)', fontSize: 13
-            }}
-          >
-            <Icon name={tabDef.icon} /> {t(tabDef.labelKey)}
-          </button>
-        ))}
+        {groups.map((g) => {
+          const on = g.key === activeGroup?.key;
+          return (
+            <button
+              key={g.key}
+              onClick={() => setTab(lastLeaf.current[g.key] ?? g.tabs[0])}
+              title={g.tabs.map(labelOf).join(' · ')}
+              style={{
+                whiteSpace: 'nowrap',
+                flex: '1 0 auto',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                padding: '4px 8px 3px', border: 'none', cursor: 'pointer',
+                background: on ? `var(--cth-${agent.accent})` : 'var(--cth-cream-200)',
+                // The selected tab is filled with the agent's accent, a LIGHT
+                // colour in both themes; ink-900 flips to near-white in dark, so
+                // the one tab you most need to read went pale-on-pale.
+                color: on ? 'var(--cth-on-accent)' : 'var(--cth-ink-900)',
+                boxShadow: on ? 'inset 0 0 0 1px var(--cth-ink-300)' : 'inset 0 0 0 1px var(--cth-ink-100)',
+                fontFamily: 'var(--cth-font-ui)', fontSize: 13
+              }}
+            >
+              <Icon name={g.icon} /> {t(g.labelKey)}
+            </button>
+          );
+        })}
       </div>
+
+      {/* Sub-toggle — only for a group that holds more than one screen. Text,
+          not filled chips: it is a second level and must not compete with the
+          strip above it. */}
+      {activeGroup && activeGroup.tabs.length > 1 && (
+        <div className="cth-tabbar" style={{
+          display: 'flex', gap: 2, alignItems: 'center',
+          padding: '3px 8px 4px', background: 'var(--cth-cream-100)',
+          borderBottom: '1px solid var(--cth-ink-700)', flexShrink: 0,
+          overflowX: 'auto'
+        }}>
+          {activeGroup.tabs.map((key) => {
+            const on = key === tab;
+            return (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                style={{
+                  whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
+                  padding: '2px 8px 3px', background: 'transparent',
+                  color: on ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
+                  boxShadow: on ? `inset 0 -2px 0 0 var(--cth-${agent.accent})` : 'none',
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 12
+                }}
+              >{labelOf(key)}</button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Body */}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
