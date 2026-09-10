@@ -23,7 +23,6 @@ const BACKENDS: Array<{ id: string; label: string; envVar: string }> = [
   { id: 'anthropic', label: 'Anthropic', envVar: 'ANTHROPIC_API_KEY' },
   { id: 'openai', label: 'OpenAI', envVar: 'OPENAI_API_KEY' },
   { id: 'google', label: 'Google · Gemini', envVar: 'GEMINI_API_KEY' },
-  { id: 'openrouter', label: 'OpenRouter', envVar: 'OPENROUTER_API_KEY' },
   { id: 'groq', label: 'Groq', envVar: 'GROQ_API_KEY' }
 ];
 
@@ -129,13 +128,6 @@ export function AiEnginesSettings({ config }: { config: HarnessConfig }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div>
-        <div style={headStyle}>{t('aiEngines.providers')}</div>
-        <div style={{ fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: '18px' }}>
-          {t('aiEngines.providersDesc')}
-        </div>
-      </div>
-
       {/* Backend API keys (write-only) */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={headStyle}>{t('aiEngines.apiKeys')}</div>
@@ -163,54 +155,11 @@ export function AiEnginesSettings({ config }: { config: HarnessConfig }) {
         ))}
       </div>
 
-      {/* Per-CLI local endpoint + default model */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={headStyle}>{t('aiEngines.localEndpoint')}</div>
-        {CLIS.map((c) => (
-          <div key={c.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <ProviderLogo provider={c.id} size={12} /> {c.label}
-            </label>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <input
-                placeholder={`base-URL — ${c.hint}`}
-                defaultValue={baseUrls[c.id] ?? ''}
-                onBlur={(e) => saveBaseUrl(c.id, e.target.value)}
-                style={inputStyle}
-              />
-              <input
-                placeholder={t('aiEngines.defaultModelPlaceholder')}
-                defaultValue={models[c.id] ?? ''}
-                onBlur={(e) => saveModel(c.id, e.target.value)}
-                style={{ ...inputStyle, maxWidth: 220 }}
-              />
-            </div>
-          </div>
-        ))}
-        {/* Local-setup guides (ondev-c part-3) — link the two how-to blogs. */}
-        <div style={{ fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: '17px' }}>
-          {t('aiEngines.runningOpenModels')}{' '}
-          <a
-            href={OSS_BLOG_LINKS.openModels}
-            onClick={(e) => { e.preventDefault(); void window.cth.openExternal(OSS_BLOG_LINKS.openModels); }}
-            style={linkStyle}
-          >{t('aiEngines.runOnOpenModels')}</a>
-          {' '}·{' '}
-          <a
-            href={OSS_BLOG_LINKS.macMini}
-            onClick={(e) => { e.preventDefault(); void window.cth.openExternal(OSS_BLOG_LINKS.macMini); }}
-            style={linkStyle}
-          >{t('aiEngines.setUpMacMini')}</a>.
-        </div>
-      </div>
+      {/* No per-CLI endpoint or per-engine default model: this floor runs
+          hosted Claude, and the boxes were an invitation to point an agent at a
+          local server nobody here has. The floor-wide default model lives in
+          Agents & Models above. */}
 
-      {/* Unsandboxed-in-auto caveat (Pam guardrail #6) */}
-      <div style={{
-        fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: '17px',
-        padding: 8, boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', background: 'var(--cth-paper-100)'
-      }}>
-        {t('aiEngines.autoModeCaveat')}
-      </div>
     </div>
   );
 }

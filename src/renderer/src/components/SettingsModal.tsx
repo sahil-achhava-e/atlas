@@ -1114,24 +1114,9 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
 
                       <AiEnginesSettings config={config} />
 
-                      <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
-
-                      {/* Advanced */}
-                      <div>
-                        <div style={sectionHead}>
-                          {t('settings.agentsModels.advanced')}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <span style={{ fontSize: 13, color: 'var(--cth-ink-900)' }}>{t('settings.agentsModels.maxTurns')}</span>
-                          <input
-                            type="number" min="1" step="10" value={maxTurnsVal}
-                            onChange={(e) => setMaxTurnsVal(e.target.value)}
-                            placeholder={t('settings.agentsModels.unlimited')}
-                            style={{ ...slackInputStyle, width: 120 }}
-                          />
-                          <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>{t('settings.agentsModels.blankUnlimited')}</span>
-                        </div>
-                      </div>
+                      {/* No Advanced/max-turns box: a cap that stops an agent
+                          mid-task is a worse failure than a long run, and the
+                          token budget and the breaker already bound spend. */}
                     </>
                   )}
 
