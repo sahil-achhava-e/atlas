@@ -170,15 +170,17 @@ const sectionHeadFlush = { ...sectionHead, marginBottom: 0 } as const;
 /** The 2px rule between Settings sections. */
 const sectionRule = { height: 2, background: 'var(--cth-ink-300)' } as const;
 
-export type Section = 'General' | 'Prerequisites' | 'Agents & Models' | 'Autonomy & Budgets' | 'Connections' | 'Voice' | 'Memory & Knowledge';
-const NAV_SECTIONS: Section[] = ['General', 'Prerequisites', 'Agents & Models', 'Autonomy & Budgets', 'Connections', 'Voice', 'Memory & Knowledge'];
+export type Section = 'General' | 'Prerequisites' | 'Agents & Models' | 'Connections' | 'Voice' | 'Memory & Knowledge';
+// No Autonomy & Budgets tab: autonomy and who-may-hire moved next to the
+// model and the keys, and the circuit breaker is gone — it only ticked inside
+// the heartbeat, which ships disabled, so it governed nothing.
+const NAV_SECTIONS: Section[] = ['General', 'Prerequisites', 'Agents & Models', 'Connections', 'Voice', 'Memory & Knowledge'];
 /** i18n key for each nav section's label — the Section values themselves stay
  *  as stable identifiers (tab state, deep links). */
 const NAV_SECTION_KEYS: Record<Section, string> = {
   'General': 'settings.nav.general',
   'Prerequisites': 'settings.nav.prerequisites',
   'Agents & Models': 'settings.nav.agentsModels',
-  'Autonomy & Budgets': 'settings.nav.autonomyBudgets',
   'Connections': 'settings.nav.connections',
   'Voice': 'settings.nav.voice',
   'Memory & Knowledge': 'settings.nav.memoryKnowledge'
@@ -1114,15 +1116,11 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
 
                       <AiEnginesSettings config={config} />
 
-                      {/* No Advanced/max-turns box: a cap that stops an agent
-                          mid-task is a worse failure than a long run, and the
-                          token budget and the breaker already bound spend. */}
-                    </>
-                  )}
+                      <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
 
-                  {/* AUTONOMY & BUDGETS — the safety tab */}
-                  {activeSection === 'Autonomy & Budgets' && (
-                    <>
+                      {/* Autonomy and who may hire live HERE, next to the model
+                          and the keys: all four are decisions about how an agent
+                          runs, and they were a tab away from each other. */}
                       <div>
                         <div style={sectionHead}>
                           {t('settings.autonomy.autonomy')}
@@ -1164,76 +1162,9 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
 
                       <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
 
-                      {/* Circuit breaker — the FULL unit (v0.3.4: all fields have UI) */}
-                      <div>
-                        <div style={sectionHead}>
-                          {t('settings.autonomy.breaker')}
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                            <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
-                              {t('settings.autonomy.breakerDesc')}
-                            </span>
-                            <PixelButton variant={brkEnabled ? 'primary' : 'secondary'} size="sm"
-                              onClick={() => { setBrkEnabled(!brkEnabled); }}>
-                              {brkEnabled ? t('common.on') : t('common.off')}
-                            </PixelButton>
-                          </div>
-                          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, ...slackLabelStyle }}>
-                              {t('settings.autonomy.floorBudget')}
-                              <input
-                                type="number" min="0" step="100000" value={agentBudget}
-                                onChange={(e) => setAgentBudget(e.target.value)}
-                                placeholder={t('settings.autonomy.budgetPlaceholder')}
-                                style={{ ...slackInputStyle, width: 180 }}
-                              />
-                              <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>
-                                {fmtBudgetTokens(agentBudget) ? t('settings.autonomy.budgetEquals', { value: fmtBudgetTokens(agentBudget) }) : t('settings.autonomy.budgetTotal')}
-                              </span>
-                            </label>
-                            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, ...slackLabelStyle }}>
-                              {t('settings.autonomy.velocity')}
-                              <input
-                                type="number" min="0" step="1000" value={velocityCeiling}
-                                onChange={(e) => setVelocityCeiling(e.target.value)}
-                                placeholder={t('settings.autonomy.velocityPlaceholder')}
-                                style={{ ...slackInputStyle, width: 180 }}
-                              />
-                            </label>
-                            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, ...slackLabelStyle }}>
-                              {t('settings.autonomy.repeatedLimit')}
-                              <input
-                                type="number" min="0" step="5" value={brkRepeated}
-                                onChange={(e) => setBrkRepeated(e.target.value)}
-                                placeholder={t('settings.autonomy.defaultPlaceholder')}
-                                style={{ ...slackInputStyle, width: 140 }}
-                              />
-                            </label>
-                            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, ...slackLabelStyle }}>
-                              {t('settings.autonomy.errorStormLimit')}
-                              <input
-                                type="number" min="0" step="5" value={brkErrStorm}
-                                onChange={(e) => setBrkErrStorm(e.target.value)}
-                                placeholder={t('settings.autonomy.defaultPlaceholder')}
-                                style={{ ...slackInputStyle, width: 140 }}
-                              />
-                            </label>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>{t('settings.autonomy.hardStop')}</span>
-                              <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
-                                {t('settings.autonomy.hardStopDesc')}
-                              </span>
-                            </div>
-                            <PixelButton variant={brkHardStop ? 'destructive' : 'secondary'} size="sm"
-                              onClick={() => { setBrkHardStop(!brkHardStop); }}>
-                              {brkHardStop ? t('settings.autonomy.killOnTrip') : t('settings.autonomy.steerFirst')}
-                            </PixelButton>
-                          </div>
-                        </div>
-                      </div>
+                      {/* No Advanced/max-turns box: a cap that stops an agent
+                          mid-task is a worse failure than a long run, and the
+                          token budget and the breaker already bound spend. */}
                     </>
                   )}
 
