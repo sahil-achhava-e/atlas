@@ -47,7 +47,7 @@ import { resolveGodName } from '../shared/godIdentity';
 /** The subset of HarnessConfig the hive consumes for the default-MCP merge.
  *  Kept as a local shape so hive.ts never imports the foundation-owned config
  *  module just for a type. */
-type McpDefaultsMap = { [id: string]: { enabled: boolean } } | undefined;
+type McpDefaultsMap = { [id: string]: { enabled: boolean; env?: Record<string, string> } } | undefined;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -686,7 +686,7 @@ export class HiveManager {
       theme?: 'light' | 'dark';
       /** Consent state for the default-MCP bundle (W3). Threaded from the live
        *  HarnessConfig by the caller; undefined → catalog defaults apply. */
-      mcpDefaults?: { [id: string]: { enabled: boolean } };
+      mcpDefaults?: { [id: string]: { enabled: boolean; env?: Record<string, string> } };
       /** App-resources `skills/` source dir (W3). The bundled read-only skills are
        *  copied into the agent's `.claude/skills/` per spawn; undefined or missing
        *  is a no-op (tolerated until Kevin populates the resource dir). */
@@ -1232,10 +1232,19 @@ export class HiveManager {
       // Replace the `<cwd>` placeholder (filesystem/git) with the agent cwd at merge
       // time so these stay strictly workspace-scoped.
       const args = e.spec.args.map((a) => (a === '<cwd>' ? cwd : a));
+      // A keyed server without its credential is worse than a missing one: the
+      // agent sees the tools, calls them, and gets a connection error it cannot
+      // fix. Leave it out until the credential exists.
+      const env = { ...(e.spec.env ?? {}), ...(cfg?.[e.id]?.env ?? {}) };
+      const missing = Object.entries(env).filter(([, v]) => !v).map(([k]) => k);
+      if (missing.length) {
+        console.warn('[mcp] skipping', e.id, '— no value for', missing.join(', '));
+        continue;
+      }
       out[`munder-${e.id}`] = {
         command: e.spec.command,
         args,
-        ...(e.spec.env ? { env: e.spec.env } : {})
+        ...(Object.keys(env).length ? { env } : {})
       };
     }
     return out;

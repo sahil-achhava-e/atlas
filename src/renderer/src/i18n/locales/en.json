@@ -329,7 +329,7 @@
       "sure": "sure?",
       "url": "URL",
       "endpointPlaceholder": "starts once the webhook server is listening",
-      "secret": "Secret",
+      "secret": "Needs a credential",
       "rotate": "rotate",
       "mode": "Mode",
       "webhooksHint": "Callers POST to a webhook's URL with its secret in the x-md-webhook-secret header. Each one checks bodies against its own JSON schema — edit that in the Triggers tab of {{godName}}'s Command Center, where the history of everything that arrived lives too.",
@@ -912,10 +912,10 @@
     "tiers": {
       "safeReadonly": "Safe & Read-Only (on by default)",
       "write": "Write Access (consent required)",
-      "secret": "Requires Secret / API Key (consent required)",
+      "secret": "Database access (needs a connection string)",
       "safeReadonlyNote": "These servers read data only, need no secrets, and are scoped to the agent workspace. They are enabled for every new agent.",
       "writeNote": "These servers can mutate state beyond the workspace. Off by default — enable only after reviewing.",
-      "secretNote": "These servers require an API key or credentials. Off by default — add your credentials and enable after consent."
+      "secretNote": "Off until you give it one. The Database server takes a Postgres connection string — point it at a local database, ideally with a read-only user, and every agent spawned afterwards can query it."
     }
   },
   "devicePicker": {

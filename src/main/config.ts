@@ -214,7 +214,7 @@ export interface HarnessConfig {
   /** Per-server consent state for the default MCP bundle, keyed by catalog id.
    *  Seeded from MCP_CATALOG (safe-readonly ON, write/secret OFF); the user flips
    *  these in Settings. A server is wired into an agent only when enabled here. */
-  mcpDefaults?: { [id: string]: { enabled: boolean } };
+  mcpDefaults?: { [id: string]: { enabled: boolean } };   // credentials live in the encrypted store, never here
   /** Enable semantic memory (MemPalace CLI). No-op if mempalace isn't installed. */
   semanticMemory: boolean;
   /** Embedding model for the palace: lightweight 'minilm' or multilingual 'embeddinggemma'. */

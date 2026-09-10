@@ -1295,6 +1295,16 @@ const api = {
   // Per-CLI-provider BYOK keys — WRITE-ONLY. `providerKeySet` stores a backend key one
   // way (never echoed); `providerKeyHas` returns only a boolean; no method ever returns
   // the plaintext. Keys are materialized MAIN-ONLY at spawn.
+  // Credentials for a keyed MCP server (e.g. the Database server's connection
+  // string). Same write-only contract as the provider keys: set it, ask whether
+  // one exists, clear it — nothing ever reads one back.
+  mcpSecretSet: (req: { id: string; envName: string; value: string }): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke('mcpSecret:set', req),
+  mcpSecretHas: (id: string, envName: string): Promise<boolean> =>
+    ipcRenderer.invoke('mcpSecret:has', id, envName),
+  mcpSecretClear: (id: string, envName: string): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke('mcpSecret:clear', id, envName),
+
   providerKeySet: (req: { backend: string; key: string }): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke('providerKey:set', req),
   providerKeyHas: (backend: string): Promise<boolean> =>

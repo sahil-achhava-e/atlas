@@ -146,6 +146,21 @@
   // status object off it and threw. A preview folder is not a repo.
   gitIsRepo: async () => false,
 
+  // Credentials for a keyed MCP server. The preview keeps them in localStorage
+  // so the field's set/clear states can be exercised; the real bridge stores
+  // them encrypted in the main process.
+  mcpSecretSet: async function (req) {
+    try { localStorage.setItem('atlas.preview.mcp.' + req.id + '.' + req.envName, '1'); } catch (e) { /* noop */ }
+    return { ok: true };
+  },
+  mcpSecretHas: async function (id, envName) {
+    try { return localStorage.getItem('atlas.preview.mcp.' + id + '.' + envName) === '1'; } catch (e) { return false; }
+  },
+  mcpSecretClear: async function (id, envName) {
+    try { localStorage.removeItem('atlas.preview.mcp.' + id + '.' + envName); } catch (e) { /* noop */ }
+    return { ok: true };
+  },
+
   // The generic [] answered these too, and a list where an OBJECT belongs put
   // `undefined.trim()` in the Triggers tab and took the window down with it.
   getOrgTrigger: async () => ({ apiKey: '', enabled: false, mode: 'inbox' }),

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { HarnessConfig } from '@/store/config';
-import { MCP_CATALOG, type McpTier } from '@shared/mcpCatalog';
+import { MCP_CATALOG, mcpSecretEnvKeys, type McpTier } from '@shared/mcpCatalog';
+import { PixelButton } from './PixelButton';
 
 export interface McpDefaultsSettingsProps {
   config: HarnessConfig;
@@ -30,6 +31,48 @@ const labelStyle: React.CSSProperties = {
 export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
   const { t } = useTranslation();
   const [note, setNote] = useState('');
+  // Credentials are write-only: we keep what the user is typing, and a boolean
+  // per field saying whether one is already stored. Nothing reads a value back.
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [hasSecret, setHasSecret] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const next: Record<string, boolean> = {};
+      for (const entry of MCP_CATALOG) {
+        for (const envName of mcpSecretEnvKeys(entry.id)) {
+          try { next[entry.id + envName] = await window.cth.mcpSecretHas(entry.id, envName); }
+          catch { next[entry.id + envName] = false; }
+        }
+      }
+      if (alive) setHasSecret(next);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const saveSecret = async (id: string, envName: string) => {
+    const value = (draft[id + envName] ?? '').trim();
+    if (!value) return;
+    const res = await window.cth.mcpSecretSet({ id, envName, value });
+    if (res?.ok) {
+      setHasSecret((h) => ({ ...h, [id + envName]: true }));
+      setDraft((d) => ({ ...d, [id + envName]: '' }));
+      setNote('saved — agents spawned from now on can use it');
+    } else {
+      setNote(res?.error ?? 'could not save');
+    }
+  };
+  const clearSecret = async (id: string, envName: string) => {
+    await window.cth.mcpSecretClear(id, envName);
+    setHasSecret((h) => ({ ...h, [id + envName]: false }));
+    setNote('removed — the server stops being offered to new agents');
+  };
+
+  /** What to show in an empty field, per credential. */
+  const PLACEHOLDER: Record<string, string> = {
+    DATABASE_URL: 'postgresql://user:password@localhost:5432/epicxp_visits'
+  };
 
   const enabledFor = (id: string): boolean =>
     config.mcpDefaults?.[id]?.enabled ?? MCP_CATALOG.find((e) => e.id === id)?.defaultEnabled ?? false;
@@ -81,16 +124,20 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {entries.map((entry) => {
                 const on = enabledFor(entry.id);
+                const envKeys = mcpSecretEnvKeys(entry.id);
                 return (
                   <div
                     key={entry.id}
                     style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      gap: 12, padding: '7px 10px',
+                      display: 'flex', flexDirection: 'column', gap: 8,
+                      padding: '7px 10px',
                       background: 'var(--cth-paper-100)',
                       boxShadow: `inset 0 0 0 1px ${isConsent && on ? '#6E1423' : 'var(--cth-ink-300)'}`
                     }}
                   >
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12
+                  }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, minWidth: 0 }}>
                       <span style={{ fontSize: 12, lineHeight: '18px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>
                         {entry.label}
@@ -127,6 +174,40 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                     >
                       {on ? t('common.on') : t('common.off')}
                     </button>
+                  </div>
+
+                  {/* A keyed server needs its credential before it can start, so
+                      the field lives with the switch rather than in another tab.
+                      Write-only: it goes to the encrypted store and is never read
+                      back, so the box shows "set" rather than the value. */}
+                  {envKeys.map((envName) => (
+                    <div key={envName} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <input
+                        type="password"
+                        autoComplete="off"
+                        value={draft[entry.id + envName] ?? ''}
+                        onChange={(e) => setDraft((d) => ({ ...d, [entry.id + envName]: e.target.value }))}
+                        placeholder={hasSecret[entry.id + envName]
+                          ? `${envName} · set — paste a new one to replace it`
+                          : PLACEHOLDER[envName] ?? envName}
+                        style={{
+                          flex: 1, minWidth: 0, padding: '6px 8px 5px',
+                          background: 'var(--cth-cream-100)', border: 'none',
+                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+                          fontFamily: 'var(--cth-font-mono)', fontSize: 12,
+                          color: 'var(--cth-ink-900)', outline: 'none'
+                        }}
+                      />
+                      <PixelButton variant="secondary" size="sm" onClick={() => { void saveSecret(entry.id, envName); }}>
+                        {t('common.save')}
+                      </PixelButton>
+                      {hasSecret[entry.id + envName] && (
+                        <PixelButton variant="secondary" size="sm" onClick={() => { void clearSecret(entry.id, envName); }}>
+                          {t('common.delete')}
+                        </PixelButton>
+                      )}
+                    </div>
+                  ))}
                   </div>
                 );
               })}

@@ -115,7 +115,7 @@ export const MCP_CATALOG: McpCatalogEntry[] = [
   {
     id: 'db',
     label: 'Database',
-    description: 'Query a SQL database. Requires a connection string.',
+    description: 'Lets an agent run SQL against the database you point it at. Give it a read-only user unless you mean otherwise.',
     // TODO-verify exact server package for the user's DB engine (Postgres assumed).
     spec: {
       command: 'npx',
@@ -126,6 +126,18 @@ export const MCP_CATALOG: McpCatalogEntry[] = [
     defaultEnabled: false
   },
 ];
+
+/** Where a keyed server's credential lives in the encrypted store. One ref per
+ *  env var, so a server that needs two secrets is not a special case. */
+export function mcpSecretRef(id: string, envName: string): string {
+  return `mcp:${id}:${envName}`;
+}
+
+/** The env vars a catalog entry needs filled before it can start. */
+export function mcpSecretEnvKeys(id: string): string[] {
+  const e = MCP_CATALOG.find((x) => x.id === id);
+  return e?.spec.env ? Object.keys(e.spec.env) : [];
+}
 
 /** Look up a catalog entry by id. */
 export function mcpCatalogEntry(id: string): McpCatalogEntry | undefined {

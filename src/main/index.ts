@@ -1,3 +1,4 @@
+import { mcpSecretRef, mcpSecretEnvKeys } from '../shared/mcpCatalog';
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';
 import { spawn } from 'node:child_process';
 import {
@@ -2763,7 +2764,7 @@ async function spawnAgentCore(opts: AgentSpawnOptions, owner: Electron.WebConten
           kgCliPath: knowledge.env().KG_CLI,
           theme: readConfig().terminalTheme ?? 'light',
           // W3 — default-MCP consent state + the bundled skills source dir.
-          mcpDefaults: readConfig().mcpDefaults,
+          mcpDefaults: mcpDefaultsWithSecrets(),
           skillsDir: skillsResourceDir(),
           // The shared palace is mutated by the agent's own `mempalace` calls, so
           // the OS sandbox must let it through (empty when memory is off).
@@ -3138,6 +3139,42 @@ ipcMain.handle('integrations:remove', (_evt, payload: unknown) => {
 // can SET a key and ASK whether one is set (boolean) — it can never read the
 // plaintext back. Keys are materialized MAIN-ONLY at spawn (spawnAgentCore). Base
 // URLs are non-secret and ride HarnessConfig.providerBaseUrls (normal config save).
+/** The consent map, with each keyed server's credentials filled in from the
+ *  encrypted store. The config file never holds a connection string; it holds
+ *  only whether a server is on. */
+function mcpDefaultsWithSecrets(): { [id: string]: { enabled: boolean; env?: Record<string, string> } } {
+  const cfg = readConfig().mcpDefaults ?? {};
+  const out: { [id: string]: { enabled: boolean; env?: Record<string, string> } } = {};
+  for (const [id, v] of Object.entries(cfg)) {
+    const env: Record<string, string> = {};
+    for (const key of mcpSecretEnvKeys(id)) {
+      const val = integrations.getSecret(mcpSecretRef(id, key));
+      if (val) env[key] = val;
+    }
+    out[id] = { enabled: !!v?.enabled, ...(Object.keys(env).length ? { env } : {}) };
+  }
+  return out;
+}
+
+// ─── IPC: credentials for a keyed MCP server (write-only, same store as the
+// provider keys — the renderer can set, ask whether one exists, and clear).
+ipcMain.handle('mcpSecret:set', (_evt, payload: unknown) => {
+  const p = (payload ?? {}) as { id?: unknown; envName?: unknown; value?: unknown };
+  if (typeof p.id !== 'string' || typeof p.envName !== 'string') return { ok: false, error: 'id and envName required' };
+  if (!mcpSecretEnvKeys(p.id).includes(p.envName)) return { ok: false, error: 'unknown server or field' };
+  if (typeof p.value !== 'string' || !p.value.trim()) return { ok: false, error: 'value required' };
+  return integrations.setSecret(mcpSecretRef(p.id, p.envName), p.value.trim());
+});
+ipcMain.handle('mcpSecret:has', (_evt, id: unknown, envName: unknown) =>
+  typeof id === 'string' && typeof envName === 'string'
+    ? integrations.hasSecret(mcpSecretRef(id, envName))
+    : false);
+ipcMain.handle('mcpSecret:clear', (_evt, id: unknown, envName: unknown) => {
+  if (typeof id !== 'string' || typeof envName !== 'string') return { ok: false, error: 'id and envName required' };
+  try { integrations.deleteSecret(mcpSecretRef(id, envName)); return { ok: true }; }
+  catch (e) { return { ok: false, error: e instanceof Error ? e.message : String(e) }; }
+});
+
 ipcMain.handle('providerKey:set', (_evt, payload: unknown) => {
   const p = (payload ?? {}) as { backend?: unknown; key?: unknown };
   if (typeof p.backend !== 'string' || !(p.backend in BACKEND_KEY_ENV)) return { ok: false, error: 'unknown backend' };
