@@ -1,10 +1,10 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
+import { AVATAR_LIBRARY } from '@/scene/office/avatarLibrary';
 import { SpritePortrait } from './SpritePortrait';
 import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
-import { OFFICE_CAST, type OfficeCharacterName } from '@/scene/office/cast';
 import { type AccentColorName } from '@/design/tokens';
 import {
   type AgentProvider,
@@ -29,6 +29,12 @@ export interface EditAgentModalProps {
  * Agent fields that matter after spawn; save only patches the durable roster
  * via updateAgent (engine changes apply on the next restart).
  */
+/** Atlas first, then the library — the same order Add agent shows. */
+const FACES: { id: string; name: string }[] = [
+  { id: 'michael', name: 'Atlas' },
+  ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name }))
+];
+
 export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
   const updateAgent = useStore((s) => s.updateAgent);
   const [config, setConfig] = useState<HarnessConfig | null>(null);
@@ -132,14 +138,19 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
 
               <Row label="Character">
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {OFFICE_CAST.map((c) => {
-                    const active = character === c.name;
+                  {/* The SAME thirty faces Add agent offers, plus Atlas — the two
+                      panels used to draw from different libraries, so an agent
+                      hired with one face could only be re-faced from the other.
+                      Picking here changes the face and nothing else: the name
+                      stays whatever you called it. */}
+                  {FACES.map((c) => {
+                    const active = character === c.id;
                     return (
                       <button
-                        key={c.name}
+                        key={c.id}
                         type="button"
-                        onClick={() => { setCharacter(c.name); setName(c.displayName); }}
-                        title={c.blurb}
+                        onClick={() => setCharacter(c.id)}
+                        title={c.name}
                         style={{
                           padding: 4,
                           background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
@@ -155,9 +166,12 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                           display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
                           overflow: 'hidden'
                         }}>
-                          <SpritePortrait character={c.name} scale={1.5} />
+                          <SpritePortrait character={c.id} scale={1.5} />
                         </div>
-                        <span style={{ fontSize: 10, color: 'var(--cth-ink-700)' }}>{c.displayName}</span>
+                        <span style={{
+                          fontSize: 10, color: 'var(--cth-ink-700)',
+                          maxWidth: 46, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                        }}>{c.name}</span>
                       </button>
                     );
                   })}
