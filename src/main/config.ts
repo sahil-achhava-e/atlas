@@ -9,7 +9,7 @@ import {
   providerPreset,
   type AgentProvider
 } from '../shared/agentProvider';
-import { defaultMcpDefaults } from '../shared/mcpCatalog';
+import { defaultMcpDefaults, type DbConnection } from '../shared/mcpCatalog';
 import { MAX_AGENT_TOKEN_CAP } from '../shared/tokenCaps';
 import { expandTilde, normalizeHiveHome } from './fs';
 import type { IntegrationRecord } from '../shared/integrations';
@@ -215,6 +215,8 @@ export interface HarnessConfig {
    *  Seeded from MCP_CATALOG (safe-readonly ON, write/secret OFF); the user flips
    *  these in Settings. A server is wired into an agent only when enabled here. */
   mcpDefaults?: { [id: string]: { enabled: boolean } };   // credentials live in the encrypted store, never here
+  /** Databases agents may query. URLs live in the encrypted store, not here. */
+  dbConnections?: DbConnection[];
   /** Enable semantic memory (MemPalace CLI). No-op if mempalace isn't installed. */
   semanticMemory: boolean;
   /** Embedding model for the palace: lightweight 'minilm' or multilingual 'embeddinggemma'. */

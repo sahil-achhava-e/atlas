@@ -1,4 +1,4 @@
-import { mcpSecretRef, mcpSecretEnvKeys } from '../shared/mcpCatalog';
+import { mcpSecretRef, mcpSecretEnvKeys, dbSecretRef } from '../shared/mcpCatalog';
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';
 import { spawn } from 'node:child_process';
 import {
@@ -2765,6 +2765,7 @@ async function spawnAgentCore(opts: AgentSpawnOptions, owner: Electron.WebConten
           theme: readConfig().terminalTheme ?? 'light',
           // W3 — default-MCP consent state + the bundled skills source dir.
           mcpDefaults: mcpDefaultsWithSecrets(),
+          dbConnections: dbConnectionsWithUrls(),
           skillsDir: skillsResourceDir(),
           // The shared palace is mutated by the agent's own `mempalace` calls, so
           // the OS sandbox must let it through (empty when memory is off).
@@ -3139,6 +3140,15 @@ ipcMain.handle('integrations:remove', (_evt, payload: unknown) => {
 // can SET a key and ASK whether one is set (boolean) — it can never read the
 // plaintext back. Keys are materialized MAIN-ONLY at spawn (spawnAgentCore). Base
 // URLs are non-secret and ride HarnessConfig.providerBaseUrls (normal config save).
+/** The database connections, each with its URL read from the encrypted store.
+ *  A connection whose URL is missing is dropped rather than passed empty. */
+function dbConnectionsWithUrls(): Array<{ id: string; label: string; cwd?: string; url: string }> {
+  const list = readConfig().dbConnections ?? [];
+  return list
+    .map((c) => ({ ...c, url: integrations.getSecret(dbSecretRef(c.id)) ?? '' }))
+    .filter((c) => !!c.url);
+}
+
 /** The consent map, with each keyed server's credentials filled in from the
  *  encrypted store. The config file never holds a connection string; it holds
  *  only whether a server is on. */
@@ -3158,6 +3168,20 @@ function mcpDefaultsWithSecrets(): { [id: string]: { enabled: boolean; env?: Rec
 
 // ─── IPC: credentials for a keyed MCP server (write-only, same store as the
 // provider keys — the renderer can set, ask whether one exists, and clear).
+ipcMain.handle('dbConn:setUrl', (_evt, payload: unknown) => {
+  const p = (payload ?? {}) as { id?: unknown; url?: unknown };
+  if (typeof p.id !== 'string' || !p.id) return { ok: false, error: 'id required' };
+  if (typeof p.url !== 'string' || !p.url.trim()) return { ok: false, error: 'connection string required' };
+  return integrations.setSecret(dbSecretRef(p.id), p.url.trim());
+});
+ipcMain.handle('dbConn:hasUrl', (_evt, id: unknown) =>
+  typeof id === 'string' ? integrations.hasSecret(dbSecretRef(id)) : false);
+ipcMain.handle('dbConn:clearUrl', (_evt, id: unknown) => {
+  if (typeof id !== 'string') return { ok: false, error: 'id required' };
+  try { integrations.deleteSecret(dbSecretRef(id)); return { ok: true }; }
+  catch (e) { return { ok: false, error: e instanceof Error ? e.message : String(e) }; }
+});
+
 ipcMain.handle('mcpSecret:set', (_evt, payload: unknown) => {
   const p = (payload ?? {}) as { id?: unknown; envName?: unknown; value?: unknown };
   if (typeof p.id !== 'string' || typeof p.envName !== 'string') return { ok: false, error: 'id and envName required' };

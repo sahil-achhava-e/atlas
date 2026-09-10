@@ -127,6 +127,23 @@ export const MCP_CATALOG: McpCatalogEntry[] = [
   },
 ];
 
+/** A database an agent may query. The URL is NOT here — it lives in the
+ *  encrypted store under `mcp:db:<id>`; this is only the label and, optionally,
+ *  the project it belongs to. A connection with a `cwd` is offered only to
+ *  agents working inside that folder, so the Visits agent never sees the Events
+ *  database. */
+export interface DbConnection {
+  id: string;
+  label: string;
+  /** Absolute path of the project this database belongs to. Unset = every agent. */
+  cwd?: string;
+}
+
+/** Where a database connection's URL lives in the encrypted store. */
+export function dbSecretRef(id: string): string {
+  return `mcp:db:${id}`;
+}
+
 /** Where a keyed server's credential lives in the encrypted store. One ref per
  *  env var, so a server that needs two secrets is not a special case. */
 export function mcpSecretRef(id: string, envName: string): string {

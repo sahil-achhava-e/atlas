@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { HarnessConfig } from '@/store/config';
-import { MCP_CATALOG, mcpSecretEnvKeys, type McpTier } from '@shared/mcpCatalog';
+import { MCP_CATALOG, mcpSecretEnvKeys, type DbConnection, type McpTier } from '@shared/mcpCatalog';
 import { PixelButton } from './PixelButton';
 
 export interface McpDefaultsSettingsProps {
@@ -41,10 +41,15 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
     void (async () => {
       const next: Record<string, boolean> = {};
       for (const entry of MCP_CATALOG) {
+        if (entry.id === 'db') continue;              // handled per connection below
         for (const envName of mcpSecretEnvKeys(entry.id)) {
           try { next[entry.id + envName] = await window.cth.mcpSecretHas(entry.id, envName); }
           catch { next[entry.id + envName] = false; }
         }
+      }
+      for (const c of config.dbConnections ?? []) {
+        try { next[c.id] = await window.cth.dbConnHasUrl(c.id); }
+        catch { next[c.id] = false; }
       }
       if (alive) setHasSecret(next);
     })();
@@ -68,6 +73,47 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
     setHasSecret((h) => ({ ...h, [id + envName]: false }));
     setNote('removed — the server stops being offered to new agents');
   };
+
+  // ── database connections: labels in config, URLs in the encrypted store ──
+  const [conns, setConns] = useState<DbConnection[]>(config.dbConnections ?? []);
+  const persist = async (next: DbConnection[]) => {
+    setConns(next);
+    try { await window.cth.updateConfig({ dbConnections: next } as Partial<HarnessConfig>); }
+    catch { setNote('could not save the list'); }
+  };
+  const addConn = () => persist([
+    ...conns,
+    { id: `db${Date.now().toString(36)}`, label: `database ${conns.length + 1}` }
+  ]);
+  const renameConn = (id: string, label: string) =>
+    persist(conns.map((c) => (c.id === id ? { ...c, label } : c)));
+  const scopeConn = (id: string, cwd?: string) =>
+    persist(conns.map((c) => (c.id === id ? { ...c, cwd } : c)));
+  const removeConn = async (id: string) => {
+    await window.cth.dbConnClearUrl(id);
+    setHasSecret((h) => ({ ...h, [id]: false }));
+    await persist(conns.filter((c) => c.id !== id));
+  };
+  const saveUrl = async (id: string) => {
+    const url = (draft[id] ?? '').trim();
+    if (!url) return;
+    const res = await window.cth.dbConnSetUrl({ id, url });
+    if (res?.ok) {
+      setHasSecret((h) => ({ ...h, [id]: true }));
+      setDraft((d) => ({ ...d, [id]: '' }));
+      setNote('saved — agents spawned from now on can query it');
+    } else {
+      setNote(res?.error ?? 'could not save');
+    }
+  };
+
+  const fieldStyle = {
+    padding: '6px 8px 5px',
+    background: 'var(--cth-cream-100)', border: 'none',
+    boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+    fontFamily: 'var(--cth-font-mono)', fontSize: 12,
+    color: 'var(--cth-ink-900)', outline: 'none'
+  } as const;
 
   /** What to show in an empty field, per credential. */
   const PLACEHOLDER: Record<string, string> = {
@@ -176,11 +222,58 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                     </button>
                   </div>
 
-                  {/* A keyed server needs its credential before it can start, so
-                      the field lives with the switch rather than in another tab.
-                      Write-only: it goes to the encrypted store and is never read
-                      back, so the box shows "set" rather than the value. */}
-                  {envKeys.map((envName) => (
+                  {/* The Database entry is a LIST: one row per database, each
+                      optionally tied to a project so an agent only ever sees its
+                      own. URLs are write-only — they go to the encrypted store
+                      and are never read back, so a row says "set", not the value. */}
+                  {entry.id === 'db' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {conns.map((c) => (
+                        <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <input
+                            value={c.label}
+                            onChange={(e) => renameConn(c.id, e.target.value)}
+                            placeholder="label, e.g. visits"
+                            style={{ ...fieldStyle, width: 120, fontFamily: 'var(--cth-font-ui)' }}
+                          />
+                          <select
+                            value={c.cwd ?? ''}
+                            onChange={(e) => scopeConn(c.id, e.target.value || undefined)}
+                            style={{ ...fieldStyle, width: 190 }}
+                            aria-label="project this database belongs to"
+                          >
+                            <option value="">every project</option>
+                            {(config.registeredRepos ?? []).map((r) => (
+                              <option key={r} value={r}>{r.split('/').filter(Boolean).pop()}</option>
+                            ))}
+                          </select>
+                          <input
+                            type="password"
+                            autoComplete="off"
+                            value={draft[c.id] ?? ''}
+                            onChange={(e) => setDraft((d) => ({ ...d, [c.id]: e.target.value }))}
+                            placeholder={hasSecret[c.id]
+                              ? 'set — paste a new one to replace it'
+                              : 'postgresql://user:pass@localhost:5432/epicxp_visits'}
+                            style={{ ...fieldStyle, flex: 1, minWidth: 200 }}
+                          />
+                          <PixelButton variant="secondary" size="sm" onClick={() => { void saveUrl(c.id); }}>
+                            {t('common.save')}
+                          </PixelButton>
+                          <PixelButton variant="secondary" size="sm" onClick={() => { void removeConn(c.id); }}>
+                            {t('common.delete')}
+                          </PixelButton>
+                        </div>
+                      ))}
+                      <div>
+                        <PixelButton variant="secondary" size="sm" onClick={() => { void addConn(); }}>
+                          + add a database
+                        </PixelButton>
+                      </div>
+                    </div>
+                  )}
+
+                  {entry.id !== 'db' && envKeys.map((envName) => (
                     <div key={envName} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <input
                         type="password"

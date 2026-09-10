@@ -1,3 +1,4 @@
+import type { DbConnection } from '@shared/mcpCatalog';
 // Mirrors src/main/config.ts. Kept as a renderer-side type-only module
 // so we don't have to reach into the preload package to type-check.
 import {
@@ -79,6 +80,8 @@ export interface HarnessConfig {
   /** Per-server consent for the default MCP bundle, keyed by catalog id (mirrors
    *  src/main/config.ts; seeded from MCP_CATALOG). */
   mcpDefaults?: { [id: string]: { enabled: boolean } };
+  /** Databases agents may query. URLs live in the encrypted store, not here. */
+  dbConnections?: DbConnection[];
   semanticMemory: boolean;
   embeddingModel: 'minilm' | 'embeddinggemma';
   missions?: ScheduledMission[];

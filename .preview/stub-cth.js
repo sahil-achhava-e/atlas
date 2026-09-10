@@ -149,6 +149,18 @@
   // Credentials for a keyed MCP server. The preview keeps them in localStorage
   // so the field's set/clear states can be exercised; the real bridge stores
   // them encrypted in the main process.
+  dbConnSetUrl: async function (req) {
+    try { localStorage.setItem('atlas.preview.dburl.' + req.id, '1'); } catch (e) { /* noop */ }
+    return { ok: true };
+  },
+  dbConnHasUrl: async function (id) {
+    try { return localStorage.getItem('atlas.preview.dburl.' + id) === '1'; } catch (e) { return false; }
+  },
+  dbConnClearUrl: async function (id) {
+    try { localStorage.removeItem('atlas.preview.dburl.' + id); } catch (e) { /* noop */ }
+    return { ok: true };
+  },
+
   mcpSecretSet: async function (req) {
     try { localStorage.setItem('atlas.preview.mcp.' + req.id + '.' + req.envName, '1'); } catch (e) { /* noop */ }
     return { ok: true };

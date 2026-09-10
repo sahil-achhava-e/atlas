@@ -48,6 +48,8 @@ import { resolveGodName } from '../shared/godIdentity';
  *  Kept as a local shape so hive.ts never imports the foundation-owned config
  *  module just for a type. */
 type McpDefaultsMap = { [id: string]: { enabled: boolean; env?: Record<string, string> } } | undefined;
+/** Databases this spawn may offer, already resolved to URLs by the caller. */
+type DbConnEnv = Array<{ id: string; label: string; cwd?: string; url: string }>;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -687,6 +689,8 @@ export class HiveManager {
       /** Consent state for the default-MCP bundle (W3). Threaded from the live
        *  HarnessConfig by the caller; undefined → catalog defaults apply. */
       mcpDefaults?: { [id: string]: { enabled: boolean; env?: Record<string, string> } };
+      /** Databases this agent may query, URLs already resolved from the store. */
+      dbConnections?: DbConnEnv;
       /** App-resources `skills/` source dir (W3). The bundled read-only skills are
        *  copied into the agent's `.claude/skills/` per spawn; undefined or missing
        *  is a no-op (tolerated until Kevin populates the resource dir). */
@@ -962,7 +966,7 @@ export class HiveManager {
     if (sock && shim) {
       env.HIVE_SOCK = sock;
       const settingsPath = join(dir, 'settings.json');
-      this.writeJson(settingsPath, this.hookSettings(shim, meta.cwd, opts.mcpDefaults, opts.theme, this.sandboxWritableDirs(meta, dir, root, opts.extraWritableDirs)));
+      this.writeJson(settingsPath, this.hookSettings(shim, meta.cwd, opts.mcpDefaults, opts.theme, this.sandboxWritableDirs(meta, dir, root, opts.extraWritableDirs), opts.dbConnections ?? []));
       args.push('--settings', settingsPath);
     }
     return { args, env };
@@ -1143,7 +1147,7 @@ export class HiveManager {
     return Array.from(new Set(out));
   }
 
-  private hookSettings(shim: string, cwd: string, cfg: McpDefaultsMap, theme?: 'light' | 'dark', writableDirs: string[] = []): unknown {
+  private hookSettings(shim: string, cwd: string, cfg: McpDefaultsMap, theme?: 'light' | 'dark', writableDirs: string[] = [], dbConns: DbConnEnv = []): unknown {
     // Bundled node, NOT bare `node` — see nodeLauncherPath(). Claude runs each of
     // these through `sh -c` with a stripped PATH, where `node` is often absent.
     const cmd = this.nodeRun(shim);
@@ -1151,7 +1155,7 @@ export class HiveManager {
       ...(matcher ? { matcher } : {}),
       hooks: [{ type: 'command', command: cmd }]
     });
-    const mcpServers = this.buildDefaultMcpServers(cwd, cfg);
+    const mcpServers = this.buildDefaultMcpServers(cwd, cfg, dbConns);
     return {
       // Match the TUI's truecolor palette to the harness terminal theme —
       // PER SESSION, so the user's global Claude theme (their own terminals
@@ -1218,7 +1222,8 @@ export class HiveManager {
    */
   private buildDefaultMcpServers(
     cwd: string,
-    cfg: McpDefaultsMap
+    cfg: McpDefaultsMap,
+    dbConns: DbConnEnv = []
   ): Record<string, { command: string; args: string[]; env?: Record<string, string> }> {
     const out: Record<string, { command: string; args: string[]; env?: Record<string, string> }> = {};
     for (const e of MCP_CATALOG) {
@@ -1232,6 +1237,21 @@ export class HiveManager {
       // Replace the `<cwd>` placeholder (filesystem/git) with the agent cwd at merge
       // time so these stay strictly workspace-scoped.
       const args = e.spec.args.map((a) => (a === '<cwd>' ? cwd : a));
+      // The Database entry is not one server: it is one per connection the user
+      // has added, and a connection tied to a project is offered only to agents
+      // working inside it — the Visits agent never sees the Events database.
+      if (e.id === 'db') {
+        for (const c of dbConns) {
+          if (!c.url) continue;
+          if (c.cwd && !(cwd === c.cwd || cwd.startsWith(c.cwd.endsWith('/') ? c.cwd : c.cwd + '/'))) continue;
+          out[`munder-db-${c.id}`] = {
+            command: e.spec.command,
+            args: e.spec.args.map((a) => (a === '<cwd>' ? cwd : a)),
+            env: { DATABASE_URL: c.url }
+          };
+        }
+        continue;
+      }
       // A keyed server without its credential is worse than a missing one: the
       // agent sees the tools, calls them, and gets a connection error it cannot
       // fix. Leave it out until the credential exists.
