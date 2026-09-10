@@ -17,7 +17,13 @@ import {
   isClaudeProvider
 } from '@/store/config';
 
-const ACCENTS: AccentColorName[] = ['coral', 'mint', 'sky', 'lemon', 'lilac', 'peach'];
+// The same twelve Add agent offers, in hue order, plus a custom swatch. Six
+// was not enough to tell a dozen agents apart, and two panels offering
+// different palettes meant an agent's colour could not be reproduced.
+const ACCENTS: AccentColorName[] = [
+  'coral', 'rose', 'peach', 'lemon', 'olive', 'mint',
+  'jade', 'sky', 'indigo', 'lilac', 'plum', 'slate',
+];
 
 export interface EditAgentModalProps {
   agent: Agent;
@@ -137,7 +143,10 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               </Row>
 
               <Row label="Character">
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <div style={{
+                  display: 'flex', gap: 6, flexWrap: 'wrap',
+                  maxHeight: 188, overflowY: 'auto', paddingRight: 4
+                }}>
                   {/* The SAME thirty faces Add agent offers, plus Atlas — the two
                       panels used to draw from different libraries, so an agent
                       hired with one face could only be re-faced from the other.
@@ -179,30 +188,61 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               </Row>
 
               <Row label="Color">
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                   {ACCENTS.map((a) => (
                     <button
                       key={a}
                       type="button"
                       onClick={() => setAccent(a)}
                       title={a}
+                      aria-label={a}
+                      aria-pressed={accent === a}
                       style={{
-                        width: 28, height: 28,
+                        width: 30, height: 30, padding: 0,
+                        display: 'grid', placeItems: 'center',
                         background: `var(--cth-${a})`,
+                        // A halo in the swatch's OWN colour, not an ink ring:
+                        // ink-900 flips to near-white in dark and vanished.
                         boxShadow: accent === a
-                          ? 'inset 0 0 0 1.5px var(--cth-ink-500), 0 0 0 2px var(--cth-ink-900)'
+                          ? `0 0 0 2px var(--cth-cream-50), 0 0 0 4px var(--cth-${a})`
                           : 'inset 0 0 0 1px var(--cth-ink-300)',
+                        color: 'var(--cth-on-accent)',
+                        fontSize: 14, lineHeight: 1,
                         cursor: 'pointer', border: 'none'
                       }}
-                    />
+                    >{accent === a ? '\u2713' : ''}</button>
                   ))}
+                  <label
+                    title="custom colour"
+                    style={{
+                      width: 30, height: 30, display: 'grid', placeItems: 'center',
+                      cursor: 'pointer', position: 'relative',
+                      background: accent.startsWith('#') ? accent : 'var(--cth-cream-200)',
+                      boxShadow: accent.startsWith('#')
+                        ? `0 0 0 2px var(--cth-cream-50), 0 0 0 4px ${accent}`
+                        : 'inset 0 0 0 1px var(--cth-ink-300)',
+                      color: accent.startsWith('#') ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)',
+                      fontFamily: 'var(--cth-font-display)', fontSize: 12
+                    }}
+                  >
+                    {accent.startsWith('#') ? '\u2713' : '+'}
+                    <input
+                      type="color"
+                      value={accent.startsWith('#') ? accent : '#F2685C'}
+                      onChange={(e) => setAccent(e.target.value as AccentColorName)}
+                      style={{
+                        position: 'absolute', inset: 0, opacity: 0,
+                        width: '100%', height: '100%', cursor: 'pointer', border: 'none', padding: 0
+                      }}
+                    />
+                  </label>
                 </div>
               </Row>
             </Section>
 
             <Section label="Engine" hint="provider · model · next restart">
               <Row label="Provider">
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 8, rowGap: 8, flexWrap: 'wrap' }}>
                   {AGENT_PROVIDER_PRESETS.map((p) => {
                     const active = provider === p.id;
                     return (
@@ -212,12 +252,12 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                         onClick={() => pickProvider(p.id)}
                         title={p.label}
                         style={{
-                          padding: '3px 8px 1px',
+                          padding: '6px 10px 5px',
                           background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
                           boxShadow: active
                             ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
                             : 'inset 0 0 0 1px var(--cth-ink-100)',
-                          fontFamily: 'var(--cth-font-ui)', fontSize: 12,
+                          fontFamily: 'var(--cth-font-ui)', fontSize: 13,
                           color: 'var(--cth-ink-900)', cursor: 'pointer', border: 'none',
                           display: 'inline-flex', alignItems: 'center', gap: 6
                         }}
@@ -232,7 +272,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
 
               {preset.supportsModel && (
                 <Row label="Model">
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: 8, rowGap: 8, flexWrap: 'wrap' }}>
                     {(() => {
                       const known = modelsForProvider(provider);
                       return model && !known.some((m) => m.id === model)
@@ -247,12 +287,12 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                           onClick={() => setModel(m.id)}
                           title={m.id ?? 'CLI default model'}
                           style={{
-                            padding: '3px 8px 1px',
+                            padding: '6px 10px 5px',
                             background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
                             boxShadow: active
                               ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
                               : 'inset 0 0 0 1px var(--cth-ink-100)',
-                            fontFamily: 'var(--cth-font-ui)', fontSize: 12,
+                            fontFamily: 'var(--cth-font-ui)', fontSize: 13,
                             color: 'var(--cth-ink-900)', cursor: 'pointer', border: 'none'
                           }}
                         >
@@ -294,9 +334,16 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+            {/* The footer is a floor, not another row: a rule above it and its
+                own padding, so Save never floats against the last field. */}
+            <div style={{
+              display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'flex-end',
+              marginTop: 6, paddingTop: 14, borderTop: '1px solid var(--cth-ink-100)'
+            }}>
+              <span style={{ flex: 1, fontSize: 12, color: 'var(--cth-ink-500)' }}>
+                Name, face and colour apply at once. Engine changes wait for the next restart.
+              </span>
               <PixelButton variant="ghost" size="md" onClick={onClose}>cancel</PixelButton>
-              <div style={{ flex: 1 }} />
               <PixelButton variant="primary" size="md" onClick={save}>save changes</PixelButton>
             </div>
           </div>
@@ -308,12 +355,13 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
 
 const inputStyle: CSSProperties = {
   width: '100%',
-  padding: '6px 8px 4px',
+  padding: '9px 11px 8px',
   background: 'var(--cth-paper-100)',
   border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
   fontFamily: 'var(--cth-font-ui)',
-  fontSize: 16,
+  fontSize: 14,
+  lineHeight: '20px',
   color: 'var(--cth-ink-900)',
   outline: 'none',
   boxSizing: 'border-box'
@@ -329,7 +377,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span style={{
           fontFamily: 'var(--cth-font-display)',
@@ -346,10 +394,10 @@ function Section({
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <span style={{
         fontFamily: 'var(--cth-font-display)',
-        fontSize: 8, lineHeight: '12px',
+        fontSize: 9, lineHeight: '13px', letterSpacing: '.04em',
         color: 'var(--cth-ink-700)',
         textTransform: 'uppercase'
       }}>{label}</span>
