@@ -107,18 +107,11 @@ export const MCP_CATALOG: McpCatalogEntry[] = [
   },
 
   // ─── Write / secret — shipped OFF, consent-gated ──────────────────────────
-  {
-    id: 'github-token',
-    label: 'GitHub',
-    description: 'Read/write GitHub issues, PRs, and repos. Requires a personal access token.',
-    spec: {
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-github'],
-      env: { GITHUB_PERSONAL_ACCESS_TOKEN: '' }
-    },
-    tier: 'secret',
-    defaultEnabled: false
-  },
+  //
+  // One entry, deliberately. GitHub went because this organisation is on Azure
+  // DevOps and its ADO access comes from a skill, not a server. Keyed web search
+  // went because Claude Code already has WebSearch and WebFetch built in, with
+  // no key. Email and calendar went because nothing here touches them.
   {
     id: 'db',
     label: 'Database',
@@ -132,24 +125,6 @@ export const MCP_CATALOG: McpCatalogEntry[] = [
     tier: 'secret',
     defaultEnabled: false
   },
-  {
-    id: 'email-calendar',
-    label: 'Email & Calendar',
-    description: 'Read/send mail and read/write calendar events. Requires account credentials.',
-    // TODO-verify provider package (Gmail/Google Calendar assumed).
-    spec: { command: 'npx', args: ['-y', '@modelcontextprotocol/server-gsuite'], env: { GOOGLE_OAUTH_TOKEN: '' } },
-    tier: 'secret',
-    defaultEnabled: false
-  },
-  {
-    id: 'search-with-key',
-    label: 'Web Search',
-    description: 'Keyed web search. Requires a search-provider API key.',
-    // TODO-verify provider package (Brave Search assumed).
-    spec: { command: 'npx', args: ['-y', '@modelcontextprotocol/server-brave-search'], env: { BRAVE_API_KEY: '' } },
-    tier: 'secret',
-    defaultEnabled: false
-  }
 ];
 
 /** Look up a catalog entry by id. */
