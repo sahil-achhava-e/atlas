@@ -62,7 +62,10 @@ export function SettingsHeroCard() {
       .then((i) => { if (alive) setVersion(i.version); })
       .catch(() => { /* the card is still useful without it */ });
     window.cth.heroPayload()
-      .then((r) => { if (alive) setHero(r.hero); })
+      // Shape-checked, not just rejection-checked: a payload that resolves
+      // WITHOUT a hero stored undefined here and `hero.plan` below took the
+      // whole Settings modal — and with it the window — down with it.
+      .then((r) => { if (alive && r && r.hero) setHero(r.hero); })
       .catch(() => { /* defaults already rendered */ });
     return () => { alive = false; };
   }, []);
