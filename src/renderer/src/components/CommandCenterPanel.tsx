@@ -17,6 +17,7 @@ import { terminalInstanceKey } from './terminalRecovery';
 import { Icon } from './Icon';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useOpenAsks } from '@/hooks/useOpenAsks';
+import { EditAgentModal } from './EditAgentModal';
 import { MemoryPanel } from './MemoryPanel';
 import { MemoryGraphPanel } from './MemoryGraphPanel';
 import { useFleetTelemetry } from '@/hooks/useTelemetry';
@@ -104,6 +105,10 @@ const TABS: { key: CCTab; labelKey: string; hintKey: string; icon: Parameters<ty
 export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent; fullscreen?: boolean }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<CCTab>('terminal');
+  // Atlas had no way to be edited: AgentDetailPanel hands god straight to this
+  // panel and never reaches the Edit button every other agent gets, so his
+  // name, one-liner and standing goal were unreachable from the app.
+  const [editOpen, setEditOpen] = useState(false);
   // The trigger-history ledger has nothing to say until an outside party can
   // reach us, so its tab appears only once an org key or a webhook exists. This
   // is the first config-gated tab in the panel: TABS stays the canonical order
@@ -225,6 +230,16 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
           }}>{headerLine}</div>
         </div>
+
+        <PixelButton variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
+          <span
+            className="cth-tip cth-tip-wrap"
+            data-tip={t('agentCard.editAgent', { defaultValue: 'Name, one-liner and standing goal' })}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+          >
+            <Icon name="edit" /> {t('common.edit', { defaultValue: 'edit' })}
+          </span>
+        </PixelButton>
 
         {/* Floor-level surface with no agent of its own: the honest target is
             whoever is selected, stated explicitly rather than left to the IDE's
@@ -372,6 +387,8 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         {tab === 'workers' && <WorkersTab />}
       </div>
       </ErrorBoundary>
+
+      {editOpen && <EditAgentModal agent={agent} onClose={() => setEditOpen(false)} />}
     </PixelPanel>
   );
 }
