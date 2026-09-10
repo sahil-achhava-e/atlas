@@ -9,12 +9,10 @@ import { type AccentColorName } from '@/design/tokens';
 import {
   type AgentProvider,
   type HarnessConfig,
-  AGENT_PROVIDER_PRESETS,
   buildSpawnCommand,
   modelsForProvider,
   inferAgentProvider,
-  providerPreset,
-  isClaudeProvider
+  providerPreset
 } from '@/store/config';
 
 // The same twelve Add agent offers, in hue order, plus a custom swatch. Six
@@ -69,16 +67,6 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
     setDescription(agent.description);
     setGoal(agent.goal ?? '');
   }, [agent.id]);
-
-  const pickProvider = (id: AgentProvider) => {
-    setProvider(id);
-    if (!config) {
-      setModel(undefined);
-      return;
-    }
-    const nextModel = isClaudeProvider(id) ? config.defaultModel : config.providerDefaultModels?.[id];
-    setModel(nextModel);
-  };
 
   const preset = providerPreset(provider);
 
@@ -241,32 +229,25 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
             </Section>
 
             <Section label="Engine" hint="provider · model · next restart">
+              {/* One engine per workspace: the row states which, it does not
+                  offer a choice. Re-pointing a single agent at a CLI this
+                  workspace was never set up for is how you get an agent that
+                  cannot start. Change it in Settings, once, and every agent
+                  follows. */}
               <Row label="Provider">
-                <div style={{ display: 'flex', gap: 8, rowGap: 8, flexWrap: 'wrap' }}>
-                  {AGENT_PROVIDER_PRESETS.map((p) => {
-                    const active = provider === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => pickProvider(p.id)}
-                        title={p.label}
-                        style={{
-                          padding: '6px 10px 5px',
-                          background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
-                          boxShadow: active
-                            ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
-                            : 'inset 0 0 0 1px var(--cth-ink-100)',
-                          fontFamily: 'var(--cth-font-ui)', fontSize: 13,
-                          color: 'var(--cth-ink-900)', cursor: 'pointer', border: 'none',
-                          display: 'inline-flex', alignItems: 'center', gap: 6
-                        }}
-                      >
-                        <ProviderLogo provider={p.id} size={14} />
-                        {p.label}
-                      </button>
-                    );
-                  })}
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
+                  padding: '8px 12px',
+                  background: 'var(--cth-cream-100)',
+                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+                }}>
+                  <ProviderLogo provider={provider} size={16} />
+                  <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)' }}>
+                    {providerPreset(provider).label}
+                  </span>
+                  <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
+                    this workspace's engine
+                  </span>
                 </div>
               </Row>
 
