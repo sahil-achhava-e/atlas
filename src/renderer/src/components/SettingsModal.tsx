@@ -13,10 +13,8 @@ import {
 } from '@shared/triggers';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
-import { UpdatesSection } from './UpdatesSection';
 import { SetupPanel } from './SetupPanel';
 import { Icon } from './Icon';
-import { OfficeThemePicker } from './OfficeThemePicker';
 import { McpDefaultsSettings } from './McpDefaultsSettings';
 import { IntegrationsRegistry } from './IntegrationsRegistry';
 import { AiEnginesSettings } from './AiEnginesSettings';
@@ -941,14 +939,8 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           project's paid plan, its Discord and its founders'
                           wall, none of which belong in this fork. General now
                           opens on the question people actually came to answer. */}
-                      {/* Updates — first among the settings proper, because "am I
-                          on the latest?" is the question people open Settings to
-                          answer, and the toolbar chip says nothing at all when
-                          the answer is yes. */}
-                      <UpdatesSection />
-
-                      <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
-
+                      {/* No Updates block: the updater reads the upstream
+                          project's releases, which are not this fork's. */}
                       {/* Home folder */}
                       <div>
                         <div style={sectionHead}>
@@ -1079,8 +1071,8 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             so the switch governed nothing. */}
                       </div>
 
-                      {/* Office Theme — TV-show office maps (experimental; flag tvShowOffices, default off) */}
-                      <OfficeThemePicker config={config} />
+                      {/* No office-theme picker: four of its six themes were
+                          never built, and the floor is being redesigned. */}
                     </>
                   )}
 
