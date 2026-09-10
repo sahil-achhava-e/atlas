@@ -23,12 +23,6 @@ import { AiEnginesSettings } from './AiEnginesSettings';
 import { REALTIME_MODEL } from '@shared/realtimePricing';
 import { RealtimeDevicePicker } from '@/realtime/DevicePicker';
 import { CostHud } from '@/realtime/CostHud';
-import {
-  isArabicTerminalEnabled,
-  isArabicTerminalFollowingLanguage,
-  setArabicTerminalEnabled
-} from '@/terminal/arabicSetting';
-import { notifyArabicTerminalChangeAll } from '@/components/terminalPool';
 import { isComposingKey } from '@shared/imeGuard';
 import { LANGUAGES, setLanguage } from '@/i18n';
 
@@ -262,18 +256,6 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
     stage({ strongKeepalive: next } as Partial<HarnessConfig>);
   };
   const [simpleMode, setSimpleMode] = useState<boolean>(cfgX.audience === 'non-technical');
-  // Renderer-local, not part of HarnessConfig — it only changes how this window
-  // paints pty output. Read once; the setter keeps localStorage in step.
-  const [arabicTerminal, setArabicTerminal] = useState(isArabicTerminalEnabled);
-  // Whether that value is the language's default or a choice the user made.
-  // Shown as a note rather than a second control: the toggle already IS the
-  // override, so the only thing missing is telling them which one they are
-  // looking at. Re-read on every language change, because the default moves.
-  const [arabicFollowsLanguage, setArabicFollowsLanguage] = useState(isArabicTerminalFollowingLanguage);
-  useEffect(() => {
-    setArabicTerminal(isArabicTerminalEnabled());
-    setArabicFollowsLanguage(isArabicTerminalFollowingLanguage());
-  }, [i18n.language]);
   const toggleSimpleMode = async () => {
     const next = !simpleMode;
     setSimpleMode(next);
@@ -475,24 +457,6 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
     const next = !autoCompactOn;
     setAutoCompactOn(next);
     setAutoCompactPending(next);
-  };
-
-  // ─── Auto-update (default ON; gates main's updater checks entirely) ────────
-  const [autoUpdateOn, setAutoUpdateOn] = useState<boolean>(config.autoUpdate !== false);
-  const toggleAutoUpdate = async () => {
-    const next = !autoUpdateOn;
-    setAutoUpdateOn(next);
-    try { stage({ autoUpdate: next }); }
-    catch { setAutoUpdateOn(!next); }
-  };
-
-  // ─── Anonymous usage stats (default ON = opt-out; contract in TELEMETRY.md) ─
-  const [telemetryOn, setTelemetryOn] = useState<boolean>(config.telemetryEnabled !== false);
-  const toggleTelemetry = async () => {
-    const next = !telemetryOn;
-    setTelemetryOn(next);
-    try { stage({ telemetryEnabled: next }); }
-    catch { setTelemetryOn(!next); }
   };
 
   // --- Free Flow (voice dictation → message queue) ---
@@ -1029,36 +993,6 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                               {simpleMode ? t('common.on') : t('common.off')}
                             </PixelButton>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
-                                {t('settings.general.arabicTerminal')}
-                              </span>
-                              <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
-                                {t('settings.general.arabicTerminalDesc')}
-                              </span>
-                              {arabicFollowsLanguage && (
-                                <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
-                                  {t('settings.general.arabicTerminalFollowsLanguage')}
-                                </span>
-                              )}
-                            </div>
-                            <PixelButton
-                              variant={arabicTerminal ? 'primary' : 'secondary'}
-                              size="sm"
-                              onClick={() => {
-                                const next = !arabicTerminal;
-                                setArabicTerminalEnabled(next);
-                                setArabicTerminal(next);
-                                setArabicFollowsLanguage(false);
-                                // Reach the terminals that are already open, the
-                                // same way a language switch does.
-                                notifyArabicTerminalChangeAll();
-                              }}
-                            >
-                              {arabicTerminal ? t('common.on') : t('common.off')}
-                            </PixelButton>
-                          </div>
                         </div>
                       </div>
 
@@ -1139,42 +1073,10 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             {autoCompactOn ? t('common.on') : t('common.off')}
                           </PixelButton>
                         </div>
-                        <div style={{ height: 10 }} />
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
-                              {t('settings.general.autoUpdate')}
-                            </span>
-                            <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
-                              {t('settings.general.autoUpdateDesc')}
-                            </span>
-                          </div>
-                          <PixelButton
-                            variant={autoUpdateOn ? 'primary' : 'secondary'}
-                            size="sm"
-                            onClick={toggleAutoUpdate}
-                          >
-                            {autoUpdateOn ? t('common.on') : t('common.off')}
-                          </PixelButton>
-                        </div>
-                        <div style={{ height: 10 }} />
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
-                              {t('settings.general.telemetry')}
-                            </span>
-                            <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
-                              {t('settings.general.telemetryDesc')}
-                            </span>
-                          </div>
-                          <PixelButton
-                            variant={telemetryOn ? 'primary' : 'secondary'}
-                            size="sm"
-                            onClick={toggleTelemetry}
-                          >
-                            {telemetryOn ? t('common.on') : t('common.off')}
-                          </PixelButton>
-                        </div>
+                        {/* No auto-update row: releases come from the
+                            upstream project, not this fork. No telemetry row
+                            either — this build ships without an analytics key,
+                            so the switch governed nothing. */}
                       </div>
 
                       {/* Office Theme — TV-show office maps (experimental; flag tvShowOffices, default off) */}
