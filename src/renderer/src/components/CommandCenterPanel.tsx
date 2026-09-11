@@ -62,14 +62,6 @@ type CCTab = 'terminal' | 'floor' | 'tasks' | 'human' | 'triggers'
 const DEFAULT_TOKEN_CAP = 1_000_000;
 
 /** A GitHub issue as returned by `window.cth.githubIssues` (labels/assignees flattened). */
-interface GHIssue {
-  number: number;
-  title: string;
-  body: string;
-  url: string;
-  labels: string[];
-  assignees: string[];
-}
 
 const fmtK = (n: number): string => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : `${Math.round(n / 1000)}k`);
 
@@ -426,7 +418,6 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
   // standalone Fleet tab folded in here so the roster shows identity + controls
   // AND live cost/usage in one place).
   const { samples, spark, rate, lastTool, breakers } = useFleetTelemetry();
-  const [repos, setRepos] = useState<string[]>([]);
   // Floor-wide token budget (drives the breaker); also the token-meter denominator.
   const [tokenCap, setTokenCap] = useState<number | undefined>(undefined);
   // Per-agent token limit (overrides the floor budget for that agent), keyed by id.
@@ -442,15 +433,8 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
   const [dispatchTo, setDispatchTo] = useState<string>(''); // '' = Michael decides
   const [dispatchText, setDispatchText] = useState('');
   const [dispatchMsg, setDispatchMsg] = useState<string | null>(null);
-  // ── ISSUES section state ──
-  const [issueRepo, setIssueRepo] = useState<string>('');
-  const [issues, setIssues] = useState<GHIssue[]>([]);
-  const [issuesLoading, setIssuesLoading] = useState(false);
-  const [issuesError, setIssuesError] = useState<string | null>(null);
-
   useEffect(() => {
     window.cth.getConfig().then((c) => {
-      setRepos(c.registeredRepos ?? []);
       setTokenCap(c.costCapTokens);
       setAgentTokenCaps(c.agentTokenCaps ?? {});
       setEngineProvider(c.godProvider ?? 'claude');
@@ -643,32 +627,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
     setTimeout(() => setDispatchMsg(null), 4000);
   };
 
-  const fetchIssues = async () => {
-    const repo = issueRepo || repos[0];
-    if (!repo) { setIssuesError('No repo selected.'); return; }
-    setIssuesLoading(true);
-    setIssuesError(null);
-    try {
-      const res = await window.cth.githubIssues(repo);
-      if (res.ok) {
-        setIssues((res.issues ?? []).slice(0, 10));
-      } else {
-        setIssues([]);
-        setIssuesError(res.error ?? 'Failed to fetch issues.');
-      }
-    } catch (e) {
-      setIssues([]);
-      setIssuesError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setIssuesLoading(false);
-    }
-  };
 
-  const assignIssue = (issue: GHIssue) => {
-    const body = (issue.body ?? '').slice(0, 200);
-    setDispatchText(`GitHub Issue #${issue.number}: ${issue.title}\n\n${body}\n\nURL: ${issue.url}`);
-    setDispatchTo(''); // Michael decomposes and assigns — no more broadcast blasts
-  };
 
   // Set/clear one agent's token limit atomically in main. Renderer config objects
   // are snapshots, so persisting this whole map could clobber a cap added by the
@@ -695,17 +654,6 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
   // headroom visible, never pinned to a useless 100%.
   const floorCap = tokenCap && tokenCap > 0 ? tokenCap : DEFAULT_TOKEN_CAP;
   // Fleet totals across the roster (for the AGENTS summary band).
-  let sumTokens = 0, sumInput = 0, sumCacheRead = 0, sumRate = 0;
-  for (const a of agents) {
-    const s = samples[a.id];
-    if (s) {
-      sumTokens += s.input + s.output + s.cacheRead + s.cacheCreation;
-      sumInput += s.input + s.cacheRead + s.cacheCreation;
-      sumCacheRead += s.cacheRead;
-    }
-    sumRate += rate[a.id] ?? 0;
-  }
-  const fleetCachePct = sumInput > 0 ? Math.round((sumCacheRead / sumInput) * 100) : 0;
 
   return (
     <Scroll>
@@ -989,92 +937,11 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
           </div>
           );
         })}
-        {/* Fleet summary band */}
-        <div style={{
-          display: 'flex', gap: 16, marginTop: 2, padding: '10px 12px',
-          background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-          fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-900)', flexWrap: 'wrap'
-        }}>
-          <span>Σ <strong>{fmtTokens(sumTokens)}</strong> {t('costHud.tok')}</span>
-          <span style={{ color: 'var(--cth-ink-700)' }}>{t('commandCenter.fleetInputs', { value: fmtTokens(sumInput), pct: fleetCachePct })}</span>
-          <span style={{ color: 'var(--cth-ink-700)' }}>{t('commandCenter.fleetRate', { value: Math.round(sumRate).toLocaleString() })}</span>
-        </div>
-        <div style={{ marginTop: 6 }}>
-          <Muted>
-            {t('commandCenter.telemetryNote', { cap: fmtTokens(floorCap) })}
-            {tokenCap && tokenCap > 0 ? '' : t('commandCenter.defaultBudgetNote')}
-          </Muted>
-        </div>
       </Section>
 
       <ArchivedSection />
 
 
-      <Section title={t('commandCenter.directories')}>
-        {repos.length === 0 && <Muted>{t('commandCenter.noRepos')}</Muted>}
-        {repos.map((r) => (
-          <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-            <span style={{ flex: 1, fontSize: 13, color: 'var(--cth-ink-700)', wordBreak: 'break-all' }}>{r}</span>
-            <button
-              onClick={() => window.cth.openTerminalAt(r)}
-              style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--cth-ink-500)' }}
-            ><Icon name="terminal" /></button>
-          </div>
-        ))}
-      </Section>
-
-      <Section title={t('commandCenter.issues')}>
-        {repos.length === 0 && <Muted>{t('commandCenter.noRepos')}</Muted>}
-        {repos.length > 0 && (
-          <>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-              <Select value={issueRepo || repos[0]} onChange={setIssueRepo}>
-                {repos.map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </Select>
-              <PixelButton variant="primary" size="sm" onClick={fetchIssues} disabled={issuesLoading}>
-                {issuesLoading ? t('commandCenter.fetching') : t('commandCenter.fetchIssues')}
-              </PixelButton>
-            </div>
-            {issuesError && (
-              <div style={{
-                fontSize: 13, color: 'var(--cth-ink-700)', marginBottom: 6,
-                padding: 10, background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-                wordBreak: 'break-word'
-              }}>{issuesError}</div>
-            )}
-            {!issuesError && !issuesLoading && issues.length === 0 && <Muted>{t('commandCenter.noIssues')}</Muted>}
-            {issues.map((issue) => (
-              <div key={issue.number} style={{
-                display: 'flex', flexDirection: 'column', gap: 4,
-                padding: 10, marginBottom: 6,
-                background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <span style={{ fontSize: 13, color: 'var(--cth-ink-900)', flex: 1, wordBreak: 'break-word' }}>
-                    <strong>#{issue.number}</strong> {issue.title}
-                  </span>
-                  <PixelButton variant="secondary" size="sm" onClick={() => assignIssue(issue)}>
-                    {t('commandCenter.assign')}
-                  </PixelButton>
-                </div>
-                {issue.labels.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                    {issue.labels.map((label) => (
-                      <span key={label} style={{
-                        fontSize: 11, lineHeight: '14px', padding: '0 5px',
-                        background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-                        color: 'var(--cth-ink-700)'
-                      }}>{label}</span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </>
-        )}
-      </Section>
     </Scroll>
   );
 }
