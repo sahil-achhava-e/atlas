@@ -617,7 +617,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                           if (!badge) return null;
                           const bad = a.state === 'not-installable';
                           return (
-                            <span title={a.path ?? undefined} style={{
+                            <span style={{
                               fontSize: 11, padding: '2px 10px', lineHeight: '16px',
                               background: a.state === 'installed' ? 'var(--cth-mint-light)' : bad ? 'var(--cth-paper-100)' : 'var(--cth-cream-200)',
                               color: bad ? 'var(--cth-ink-500)' : 'var(--cth-ink-900)',
@@ -641,7 +641,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       disabled instead of hidden, so "Copilot is missing" reads as the
                       real constraint — no inbox drain path — not as "unsupported". */}
                   {onboardingEngineChoices().workersOnly.map((p) => (
-                    <label key={p.id} aria-disabled title={t('onboarding.orchestrator.workersOnlyHint', { godName })} style={{
+                    <label key={p.id} aria-disabled style={{
                       display: 'flex', alignItems: 'center', gap: 12,
                       padding: '12px 16px',
                       background: 'var(--cth-paper-100)',

@@ -118,7 +118,6 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
       {!open ? (
         <button
           onClick={() => { setOpen(true); refreshStatus(); }}
-          title={t('memoryPanel.openTitle')}
           style={{
             padding: '5px 16px 3px',
             background: active ? 'var(--cth-lemon-light)' : 'var(--cth-cream-200)',

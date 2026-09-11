@@ -215,9 +215,6 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
         )}
         {statusHint && (
           <span
-            title={deliveryPaused && !queue[0]?.manual
-              ? t('queueComposer.pausedTitle')
-              : statusHint}
             style={{
               fontSize: 13,
               color: idle ? 'var(--cth-ink-700)' : 'var(--cth-ink-500)',
@@ -239,9 +236,6 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
               const discarded = clearTerminalDraft(agent.ptyId!);
               if (discarded.trim()) setText(text ? `${text}\n${discarded}` : discarded);
             }}
-            title={block === 'picker'
-              ? "Close the picker this agent has open so queued messages can be delivered"
-              : "Move the leftover text on this agent's prompt into this box so queued messages can be delivered"}
             style={{
               border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
               fontFamily: 'var(--cth-font-ui)', fontSize: 13,
@@ -252,7 +246,6 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
         {queue.length > 1 && (
           <button
             onClick={() => clearQueue(agent.id)}
-            title={t('queueComposer.clearAllTitle')}
             style={{
               marginLeft: 'auto', flexShrink: 0, whiteSpace: 'nowrap',
               border: 'none', background: 'transparent', cursor: 'pointer',
@@ -288,7 +281,6 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
           {attachments.map((a) => (
             <span
               key={a.path}
-              title={a.path}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 4,
                 maxWidth: '100%',
@@ -305,7 +297,6 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
               }}>{a.name}</span>
               <button
                 onClick={() => removeAttachment(a.path)}
-                title={t('queueComposer.removeAttachment')}
                 style={{
                   flexShrink: 0, border: 'none', background: 'transparent', cursor: 'pointer',
                   color: 'var(--cth-ink-500)', padding: 0,
@@ -372,7 +363,6 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
           {agent.isGod && <RealtimeMichaelToggle />}
           <button
             onClick={pickFiles}
-            title={t('queueComposer.files')}
             aria-label={t('queueComposer.files')}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -489,7 +479,6 @@ function QueuedMessageRow(
         <div
           ref={bodyRef}
           dir={rtl ? 'auto' : undefined}
-          title={expanded ? undefined : message.text}
           style={{
             fontSize: 13, lineHeight: '18px',
             color: 'var(--cth-ink-900)',
@@ -509,7 +498,6 @@ function QueuedMessageRow(
             {(clipped || expanded) && (
               <button
                 onClick={() => setExpanded((e) => !e)}
-                title={expanded ? t('queueComposer.collapse') : t('queueComposer.showFull')}
                 style={{
                   border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
                   fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '16px',
@@ -520,7 +508,6 @@ function QueuedMessageRow(
             {paused && !message.manual && (
               <button
                 onClick={onSendNow}
-                title={t('queueComposer.sendNowTitle')}
                 style={{
                   border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
                   fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '16px',
@@ -538,7 +525,6 @@ function QueuedMessageRow(
       </div>
       <button
         onClick={onRemove}
-        title={t('queueComposer.removeFromQueue')}
         style={{
           flexShrink: 0, border: 'none', background: 'transparent',
           cursor: 'pointer',

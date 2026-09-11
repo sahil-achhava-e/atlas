@@ -156,7 +156,6 @@ export function AgentCard({
       aria-current={selected ? 'true' : undefined}
       // Everything the card used to spell out in rows, in one tooltip: who,
       // what it is doing, and your note about it.
-      title={[name, description, infoLine, noteFirstLine].filter(Boolean).join(' — ')}
       className="cth-titlebar-nodrag"
       style={{
         width, minWidth: width, height,
@@ -171,9 +170,6 @@ export function AgentCard({
           actively DOING a ledger task. Click → the task's detail overlay. */}
       {doingCount > 0 && (
         <span
-          title={doingCount === 1
-            ? t('agentCard.doingTasks', { count: doingCount })
-            : t('agentCard.doingTasksPlural', { count: doingCount })}
           onClick={(e) => { e.stopPropagation(); onTaskNoteClick?.(); }}
           style={{
             position: 'absolute', right: -4, bottom: -5, zIndex: 2,
@@ -244,7 +240,7 @@ export function AgentCard({
             {/* Context gauge — drawn only once there is a reading. An empty
                 bordered bar reads as progress stuck at zero, which is a
                 different and more worrying claim than "nothing measured yet". */}
-            <div style={{ marginTop: 'auto', width: '100%' }} title={gaugeTitle}>
+            <div style={{ marginTop: 'auto', width: '100%' }}>
               <div style={{
                 height: 3, width: '100%',
                 background: contextTokens ? 'var(--cth-cream-200)' : 'transparent',
@@ -266,7 +262,6 @@ export function AgentCard({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); onEditNote(); }
               }}
-              title={note ? t('agentCard.editNote') : t('agentCard.addNote')}
               aria-label={t('agentCard.editNoteAria', { name })}
               style={{
                 position: 'absolute', right: 0, bottom: 0,

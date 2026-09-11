@@ -273,7 +273,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
               know whether to care; a bar answers it first and keeps the exact
               number beside it, grouped and tabular so the digits line up. */}
           {contextPct !== null && (
-            <div style={{ marginTop: 8 }} title={t('agentCard.contextGaugeTitle')}>
+            <div style={{ marginTop: 8 }}>
               <div style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
                 fontSize: 11, color: 'var(--cth-ink-500)', marginBottom: 4
@@ -304,8 +304,6 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
 
         <PixelButton variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
           <span
-            className="cth-tip cth-tip-wrap"
-            data-tip={t('agentCard.editAgent', { defaultValue: 'Name, one-liner and standing goal' })}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
           >
             <Icon name="edit" /> {t('common.edit', { defaultValue: 'edit' })}
@@ -320,8 +318,6 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
           s.setIdeOpen(true, s.selectedId);
         }}>
           <span
-            className="cth-tip cth-tip-wrap"
-            data-tip={t('commandCenter.ideTitle')}
             aria-label={t('commandCenter.openIdeAria')}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
           >
@@ -345,8 +341,6 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
             <button
               key={d.key}
               onClick={() => setTab(d.key)}
-              className="cth-tip cth-tip-wrap"
-              data-tip={t(d.hintKey)}
               style={{
                 position: 'relative', whiteSpace: 'nowrap', flex: '1 0 auto',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -399,8 +393,6 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
             <button
               key={d.key}
               onClick={() => setTab(d.key)}
-              className="cth-tip cth-tip-wrap"
-              data-tip={t(d.hintKey)}
               style={{
                 whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
                 display: 'inline-flex', alignItems: 'center', gap: 4,
@@ -849,7 +841,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                 }}
               >{a.name}{a.isGod ? t('commandCenter.godTag') : ''}</button>
               <PixelBadge status={armed ? 'looping' : a.status} />
-              {armed && <span title={breaker?.reason} style={{ color: 'var(--cth-coral)', fontSize: 13 }}>⚠</span>}
+              {armed && <span style={{ color: 'var(--cth-coral)', fontSize: 13 }}>⚠</span>}
               <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--cth-ink-500)' }}>
                 {t('commandCenter.toolCalls', { count: toolCounts[a.id] ?? 0 })}
               </span>
@@ -875,11 +867,6 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
               <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-300)', flexShrink: 0 }}>{t('commandCenter.budget')}</span>
               <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-900)', width: 56, textAlign: 'right' }}>{fmtTokens(tokens)}</span>
               <div
-                title={t('commandCenter.meterTitle', {
-                  used: used.toLocaleString(),
-                  limit: denom.toLocaleString(),
-                  note: hasAgentCap ? t('commandCenter.agentLimit') : t('commandCenter.floorBudget')
-                })}
                 style={{ width: 96, height: 8, background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', flexShrink: 0 }}
               >
                 <div style={{ width: `${pct}%`, height: '100%', background: meterColor }} />
@@ -903,11 +890,6 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                       {fmtTokens(a.contextTokens!)}
                     </span>
                     <div
-                      title={t('commandCenter.contextTitle', {
-                        used: a.contextTokens!.toLocaleString(),
-                        limit: a.contextLimit!.toLocaleString(),
-                        pct: cpct
-                      })}
                       style={{ width: 96, height: 8, background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', flexShrink: 0 }}
                     >
                       <div style={{ width: `${cpct}%`, height: '100%', background: ccolor }} />
@@ -988,7 +970,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   disabled={restarting === a.id}
                   onClick={() => restartWithModel(a, a.model, { resume: true })}
                 >
-                  <span title={t('commandCenter.restartContinueTitle')}>
+                  <span>
                     {t('commandCenter.restartContinue')}
                   </span>
                 </PixelButton>
@@ -1051,7 +1033,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   disabled={restarting === a.id}
                   onClick={() => restartWithModel(a, a.model, { resume: true })}
                 >
-                  <span title={t('commandCenter.restartContinueTitle', { name: a.name })}>
+                  <span>
                     {t('commandCenter.restartContinue')}
                   </span>
                 </PixelButton>
@@ -1088,7 +1070,6 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
             <span style={{ flex: 1, fontSize: 13, color: 'var(--cth-ink-700)', wordBreak: 'break-all' }}>{r}</span>
             <button
               onClick={() => window.cth.openTerminalAt(r)}
-              title={t('commandCenter.openInTerminal')}
               style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--cth-ink-500)' }}
             ><Icon name="terminal" /></button>
           </div>
@@ -1342,7 +1323,6 @@ function TokenLimitEditor({ value, onSet }: { value?: number; onSet: (tokens: nu
     return (
       <button
         onClick={() => { setText(value != null ? String(value) : ''); setEditing(true); }}
-        title={t('commandCenter.tokenLimitTitle')}
         style={{
           flexShrink: 0, padding: '1px 10px', border: 'none', cursor: 'pointer',
           background: value && value > 0 ? 'var(--cth-lemon)' : 'var(--cth-cream-200)',
@@ -1374,7 +1354,7 @@ function TokenLimitEditor({ value, onSet }: { value?: number; onSet: (tokens: nu
         }}
       />
       <button
-        onMouseDown={(e) => e.preventDefault()} onClick={commit} title={t('commandCenter.saveLimit')}
+        onMouseDown={(e) => e.preventDefault()} onClick={commit}
         style={{ flexShrink: 0, padding: '1px 5px', border: 'none', cursor: 'pointer', background: 'var(--cth-mint)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', fontSize: 11, color: 'var(--cth-ink-900)' }}
       >✓</button>
     </span>

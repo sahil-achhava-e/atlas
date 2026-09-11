@@ -191,18 +191,16 @@ export function CodeEditor({
         <Icon name="code" />
         <span style={{
           flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-        }} title={absPath}>{filePath}{dirty && ' •'}</span>
+        }}>{filePath}{dirty && ' •'}</span>
         {onCopyPath && (
           <button
             onClick={onCopyPath}
-            title="Copy absolute path"
             style={editorBtn}
           >copy path</button>
         )}
         <button
           onClick={save}
           disabled={!dirty || saveState === 'saving'}
-          title="Save (Cmd-S)"
           style={{ ...editorBtn, opacity: dirty ? 1 : 0.5 }}
         >
           {saveState === 'saving' ? '...' : saveState === 'saved' ? 'saved' : saveState === 'error' ? 'err' : 'save'}
@@ -210,7 +208,6 @@ export function CodeEditor({
         {onOpenInIde && (
           <button
             onClick={onOpenInIde}
-            title="Open in the IDE"
             aria-label="Open in the IDE"
             style={editorBtn}
           >

@@ -190,7 +190,6 @@ export function AskMeTab() {
             }}>
               <button
                 onClick={() => openTaskDetail(t.id)}
-                title={translate('askMe.openDetail')}
                 style={{
                   border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, textAlign: 'left',
                   fontFamily: 'var(--cth-font-mono)', fontSize: 15, color: 'var(--cth-ink-900)',
@@ -206,7 +205,6 @@ export function AskMeTab() {
               <button
                 onClick={() => void dismiss(t)}
                 disabled={sending === t.id}
-                title={translate('askMe.dismissTitle')}
                 aria-label={translate('askMe.dismissAria')}
                 style={{
                   flexShrink: 0, width: 18, height: 18, padding: 0, marginLeft: 2,
@@ -257,7 +255,6 @@ export function AskMeTab() {
                 {(t.humanQA?.filter((e) => e.a).length ?? 0) > 0 && (
                   <button
                     onClick={() => openTaskDetail(t.id)}
-                    title={translate('askMe.viewAnswersHistory')}
                     style={{
                       border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
                       fontSize: 11, color: 'var(--cth-ink-700)', fontFamily: 'var(--cth-font-ui)', fontWeight: 600,

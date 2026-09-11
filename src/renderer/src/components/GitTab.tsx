@@ -243,13 +243,12 @@ function StatusGroup({ label, entries }: {
           <span style={{
             flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
             fontFamily: 'var(--cth-font-mono)', fontSize: 13
-          }} title={e.path}>{e.path}</span>
+          }}>{e.path}</span>
           <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>
             {statusLabelKey(e.code) ? t(statusLabelKey(e.code)) : ''}
           </span>
           <button
             onClick={() => navigator.clipboard.writeText(e.path).catch(() => {})}
-            title={t('gitTab.copyPath')}
             style={{
               padding: 0, background: 'transparent', border: 'none',
               cursor: 'pointer', color: 'var(--cth-ink-500)'

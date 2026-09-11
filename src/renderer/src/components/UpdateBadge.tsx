@@ -104,7 +104,6 @@ export function UpdateBadge() {
       className="cth-titlebar-nodrag"
       onClick={() => { void onClick(); }}
       disabled={!interactive}
-      title={view.title}
       aria-label={view.label ? `${view.title}` : `Version ${__APP_VERSION__} — check for updates`}
       aria-busy={view.busy || busy}
       style={{

@@ -73,10 +73,6 @@ export function AgentHoldButton({ agentId }: { agentId: string }) {
       }}
     >
       <span
-        className="cth-tip cth-tip-wrap"
-        data-tip={err ? err : on
-          ? `End the 1:1. ${godName} can hand ${agent.name} work again.`
-          : `Take ${agent.name} aside. ${godName} stops sending them work until you end it. Unlike the two buttons here, this does not restrain the agent: they keep running and keep answering you.`}
         aria-label={on ? `End the 1:1 and release this agent to ${godName}` : 'Take this agent aside for a 1:1'}
         style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
       >

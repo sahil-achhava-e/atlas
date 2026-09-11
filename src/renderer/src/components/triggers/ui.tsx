@@ -442,7 +442,6 @@ export function WeeklyPicker({ value, onChange }: {
               key={d}
               type="button"
               onClick={() => toggle(d)}
-              title={WEEKDAY_LABELS[d]}
               aria-pressed={on}
               style={{
                 width: 26, height: 24, border: 'none', cursor: 'pointer',

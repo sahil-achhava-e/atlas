@@ -55,7 +55,6 @@ export function SidebarSplitter({
         e.preventDefault();
       }}
       onDoubleClick={() => onChange(420)}
-      title="Drag to resize · double-click to reset"
       style={{
         width: 10,
         cursor: 'ew-resize',

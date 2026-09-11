@@ -88,7 +88,6 @@ export const MarkdownPreview = memo(function MarkdownPreview({
               <a
                 href={h || undefined}
                 onClick={onClick}
-                title={h}
                 style={clickable ? undefined : { cursor: 'default', textDecoration: 'underline dotted' }}
               >
                 {children}
@@ -118,7 +117,7 @@ export const MarkdownPreview = memo(function MarkdownPreview({
  *  and local files that turned out to be missing or undecodable. */
 function ImageChip({ alt, src, note }: { alt?: string; src?: string; note?: string }) {
   return (
-    <span className="cth-md-img" title={src}>
+    <span className="cth-md-img">
       🖼 {alt || 'image'}{note ? ` — ${note}` : ''}
     </span>
   );
@@ -138,7 +137,6 @@ function MdImage({ root, rel, alt, src }: { root: string; rel: string; alt?: str
       className="cth-md-image"
       src={img.url}
       alt={alt || rel}
-      title={src}
       onError={() => setDecodeFailed(true)}
     />
   );

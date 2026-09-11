@@ -193,7 +193,7 @@ export function MemoryGraphPanel({
         borderBottom: '1px solid var(--cth-ink-300)', background: 'var(--cth-cream-100)', flexWrap: 'wrap'
       }}>
         <Toggle on={showTopics} onClick={() => setShowTopics((v) => !v)} label={t('memoryGraph.topics')} />
-        <button onClick={refresh} title={t('memoryGraph.refresh')} style={iconBtn}>
+        <button onClick={refresh} style={iconBtn}>
           <Icon name="gear" /> {t('memoryGraph.refresh')}
         </button>
         <div style={{ flex: 1 }} />

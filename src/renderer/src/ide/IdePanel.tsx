@@ -385,9 +385,6 @@ export function IdePanel() {
         {target.agent ? (
           <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
             <span
-              title={target.inferred
-                ? t('idePanel.workspaceInferred', { name: target.agent.name })
-                : t('idePanel.workspace', { name: target.agent.name })}
               style={{
                 fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
                 color: 'var(--cth-ink-900)',
@@ -413,7 +410,7 @@ export function IdePanel() {
             {t('idePanel.noAgent')}
           </span>
         )}
-        <span title={root ?? ''} style={{
+        <span style={{
           fontFamily: 'var(--cth-font-mono)', fontSize: 13, color: 'var(--cth-ink-500)',
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '30vw'
         }}>
@@ -422,7 +419,6 @@ export function IdePanel() {
         <button
           className="cth-titlebar-nodrag"
           onClick={() => setIdeOpen(false)}
-          title={t('idePanel.closeIde')}
           aria-label={t('idePanel.closeIde')}
           style={{
             marginLeft: 'auto',
@@ -461,7 +457,6 @@ export function IdePanel() {
             }}>
               <button
                 onClick={toggleGitRail}
-                title={gitCollapsed ? t('idePanel.expandGit') : t('idePanel.collapseGit')}
                 aria-label={gitCollapsed ? t('idePanel.expandGit') : t('idePanel.collapseGit')}
                 aria-expanded={!gitCollapsed}
                 style={{
@@ -497,7 +492,7 @@ export function IdePanel() {
               ))}
               <span style={{ flex: 1 }} />
               {railTab === 'changes' && !gitCollapsed && (
-                <button onClick={() => refreshStatus()} title={t('idePanel.refresh')} style={iconBtn}>
+                <button onClick={() => refreshStatus()} style={iconBtn}>
                   <Icon name="web" />
                 </button>
               )}
@@ -522,7 +517,6 @@ export function IdePanel() {
                     <div
                       key={f.path}
                       onClick={() => openDiff(f.path)}
-                      title={f.path}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 8, padding: '2px 12px',
                         cursor: 'pointer', fontSize: 13, color: 'var(--cth-ink-900)',
@@ -576,7 +570,6 @@ export function IdePanel() {
                   <div
                     key={tab.key}
                     onClick={() => setActiveKey(tab.key)}
-                    title={tab.rel}
                     style={{
                       display: 'inline-flex', alignItems: 'center', gap: 8, padding: '0 8px', height: 30,
                       cursor: 'pointer', flexShrink: 0, maxWidth: 240,
@@ -600,7 +593,6 @@ export function IdePanel() {
                     </span>
                     <button
                       onClick={(e) => { e.stopPropagation(); closeTab(tab.key); }}
-                      title={t('idePanel.closeTab')}
                       style={{ ...iconBtn, width: 16, height: 16 }}
                     >
                       <Icon name="x" />
@@ -705,7 +697,7 @@ export function IdePanel() {
                       <span style={{
                         flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         fontFamily: 'var(--cth-font-mono)', textAlign: 'right'
-                      }} title={activeTab.rel}>{activeTab.rel}</span>
+                      }}>{activeTab.rel}</span>
                     </div>
                     <div style={{ flex: 1, minHeight: 0 }}>
                       <MonacoDiff path={activeTab.rel} original={d.head} modified={d.working} />
@@ -732,8 +724,8 @@ export function IdePanel() {
                       <span style={{
                         flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         fontFamily: 'var(--cth-font-mono)', textAlign: 'right'
-                      }} title={activeTab.rel}>{activeTab.rel}</span>
-                      <button onClick={() => ensureDiff(activeTab.rel, true)} title={t('idePanel.refreshDiff')} style={iconBtn}>
+                      }}>{activeTab.rel}</span>
+                      <button onClick={() => ensureDiff(activeTab.rel, true)} style={iconBtn}>
                         <Icon name="web" />
                       </button>
                     </div>
@@ -775,7 +767,7 @@ function EditorBar({ rel, dirty, saveState, onSave, onCopy, mdView, onMdView, on
   return (
     <div style={ideBarStyle}>
       <Icon name="code" />
-      <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--cth-font-mono)' }} title={rel}>
+      <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--cth-font-mono)' }}>
         {rel}{dirty ? ' •' : ''}
       </span>
       {mdView && onMdView && (
@@ -784,7 +776,6 @@ function EditorBar({ rel, dirty, saveState, onSave, onCopy, mdView, onMdView, on
             <button
               key={v}
               onClick={() => onMdView(v)}
-              title={v === 'code' ? t('idePanel.mdSourceOnly') : v === 'split' ? t('idePanel.mdSplit') : t('idePanel.mdPreview')}
               style={{
                 ...textBtn,
                 background: mdView === v ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
@@ -795,10 +786,10 @@ function EditorBar({ rel, dirty, saveState, onSave, onCopy, mdView, onMdView, on
         </span>
       )}
       {onViewImage && (
-        <button onClick={onViewImage} title={t('idePanel.viewImage')} style={textBtn}>{t('idePanel.viewImage')}</button>
+        <button onClick={onViewImage} style={textBtn}>{t('idePanel.viewImage')}</button>
       )}
-      <button onClick={onCopy} title={t('idePanel.copyPath')} style={textBtn}>{t('idePanel.copyPath')}</button>
-      <button onClick={onSave} disabled={!dirty || saveState === 'saving'} title={t('idePanel.saveTitle')}
+      <button onClick={onCopy} style={textBtn}>{t('idePanel.copyPath')}</button>
+      <button onClick={onSave} disabled={!dirty || saveState === 'saving'}
         style={{ ...textBtn, opacity: dirty ? 1 : 0.5 }}>
         {saveState === 'saving' ? '...' : saveState === 'saved' ? t('idePanel.saved') : saveState === 'error' ? t('agentDetail.err') : t('idePanel.save')}
       </button>

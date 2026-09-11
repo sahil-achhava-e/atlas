@@ -88,7 +88,6 @@ export function CostHud({ compact = false }: CostHudProps): React.ReactElement |
     const tokLabel = totalTok >= 1000 ? `${(totalTok / 1000).toFixed(1)}k` : String(totalTok);
     return (
       <span
-        title={t('costHud.compactTitle', { count: totalTok })}
         style={{
           fontFamily: 'var(--cth-font-mono)',
           fontSize: 13,

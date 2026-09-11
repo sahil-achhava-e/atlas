@@ -214,7 +214,6 @@ export function AgentStrip({ config }: AgentStripProps) {
                     }}>{t('agentStrip.privateNote', { name: a.name.toUpperCase() })}</span>
                     <button
                       onClick={() => setNoteEditId(null)}
-                      title={t('agentStrip.done')}
                       aria-label={t('agentStrip.closeNoteEditor')}
                       style={{
                         flexShrink: 0, width: 18, height: 18, padding: 0, lineHeight: 1,
@@ -263,10 +262,6 @@ export function AgentStrip({ config }: AgentStripProps) {
           floor-wide switch belongs here. */}
       <span
         style={{ alignSelf: 'center', flexShrink: 0, marginInlineStart: 'auto' }}
-        className="cth-tip cth-tip-wrap"
-        data-tip={deliveryPaused
-          ? t('commandCenter.deliveryPausedTitle')
-          : t('commandCenter.deliveryOnTitle')}
       >
         <PixelButton
           variant={deliveryPaused ? 'primary' : 'secondary'}
@@ -293,9 +288,6 @@ export function AgentStrip({ config }: AgentStripProps) {
         <span
           ref={restoreBtnRef}
           style={{ alignSelf: 'center', flexShrink: 0, marginLeft: 'auto' }}
-          title={restoreBusy
-            ? t('agentStrip.restoringTitle')
-            : t('agentStrip.restoreTitle', { names: restorableAgents.map((a: Agent) => a.name).join(', ') })}
         >
           <PixelButton
             variant="primary"
@@ -337,7 +329,6 @@ export function AgentStrip({ config }: AgentStripProps) {
             {restorableAgents.map((a: Agent) => (
               <span
                 key={a.id}
-                title={t('agentStrip.restorable', { name: a.name })}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   height: 26, padding: '0 4px 0 8px',
@@ -354,7 +345,6 @@ export function AgentStrip({ config }: AgentStripProps) {
                 </span>
                 <button
                   onClick={() => useStore.getState().removeRestorableAgent(a.id)}
-                  title={t('agentStrip.dismiss', { name: a.name })}
                   aria-label={t('agentStrip.dismissAria', { name: a.name })}
                   style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -396,7 +386,6 @@ function AddAgentTile({ label, onClick }: { label: string; onClick: () => void }
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       className="cth-titlebar-nodrag"
-      title={label}
       style={{
         width: CARD_WIDTH, height: CARD_HEIGHT, flexShrink: 0, alignSelf: 'center',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,

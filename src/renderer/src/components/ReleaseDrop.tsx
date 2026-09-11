@@ -161,7 +161,6 @@ export function ReleaseDrop({ version, html, onDismiss }: ReleaseDropProps) {
           <button
             onClick={onDismiss}
             aria-label="Close release notes"
-            title="Close (Esc)"
             style={{
               flexShrink: 0, width: 26, height: 26, padding: 0,
               background: PAPER, color: INK, border: `2px solid ${PAPER}`,
@@ -182,7 +181,6 @@ export function ReleaseDrop({ version, html, onDismiss }: ReleaseDropProps) {
               authored <a target="_blank"> reach the OS browser, and it carries no
               script, same-origin, form or navigation rights with it. */}
           <iframe
-            title={`What's new in ${version}`}
             srcDoc={srcDoc}
             sandbox="allow-popups"
             referrerPolicy="no-referrer"

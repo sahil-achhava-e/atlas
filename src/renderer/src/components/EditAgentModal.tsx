@@ -147,7 +147,6 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                         key={c.id}
                         type="button"
                         onClick={() => setCharacter(c.id)}
-                        title={c.name}
                         style={{
                           padding: 4,
                           background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
@@ -182,7 +181,6 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                       key={a}
                       type="button"
                       onClick={() => setAccent(a)}
-                      title={a}
                       aria-label={a}
                       aria-pressed={accent === a}
                       style={{
@@ -201,7 +199,6 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                     >{accent === a ? '\u2713' : ''}</button>
                   ))}
                   <label
-                    title="custom colour"
                     style={{
                       width: 30, height: 30, display: 'grid', placeItems: 'center',
                       cursor: 'pointer', position: 'relative',
@@ -266,7 +263,6 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                           key={m.label}
                           type="button"
                           onClick={() => setModel(m.id)}
-                          title={m.id ?? 'CLI default model'}
                           style={{
                             padding: '10px 16px 5px',
                             background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',

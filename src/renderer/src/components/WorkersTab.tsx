@@ -118,7 +118,7 @@ export function WorkersTab() {
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                     }}>{w.name}</span>
                     {w.hasSlack && (
-                      <span title={t('workersTab.repliesToSlack')} style={{
+                      <span style={{
                         fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-700)',
                         boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)', padding: '0 5px'
                       }}>slack</span>
@@ -132,13 +132,13 @@ export function WorkersTab() {
                   </PixelButton>
                 </div>
                 <div style={metaRow}>
-                  <span title={t('workersTab.workerIdTitle')}>{w.workerId}</span>
-                  <span title={t('workersTab.baseBranchTitle')}>{t('workersTab.base', { branch: w.baseBranch })}</span>
-                  <span title={t('workersTab.upSinceTitle')}>{t('workersTab.up', { age: relAge(w.ageMs) })}</span>
-                  <span title={t('workersTab.idleTitle')}>
+                  <span>{w.workerId}</span>
+                  <span>{t('workersTab.base', { branch: w.baseBranch })}</span>
+                  <span>{t('workersTab.up', { age: relAge(w.ageMs) })}</span>
+                  <span>
                     {w.idleMs === null ? t('workersTab.ptyGone') : t('workersTab.idle', { age: relAge(w.idleMs) })}
                   </span>
-                  <span title={t('workersTab.tokensTitle')}>
+                  <span>
                     {t('workersTab.tokens', { value: fmtTokens(w.tokensUsed) })}{w.tokenCap !== null ? ` / ${fmtTokens(w.tokenCap)}` : ` · ${t('workersTab.uncapped')}`}
                   </span>
                 </div>

@@ -146,7 +146,6 @@ export function FileTree({ root, activeRel, onOpenFile, onCopyPath }: FileTreePr
           }}>{node.name}</span>
           <button
             onClick={(e) => { e.stopPropagation(); onCopyPath(node.rel); }}
-            title={t('fileTree.copyPathTitle')}
             style={{
               padding: '0 4px',
               fontSize: 11,

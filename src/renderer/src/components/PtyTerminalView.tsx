@@ -407,24 +407,20 @@ export function PtyTerminalView({ ptyId, label, onStreamData, onUserPrompt, onTo
           <button
             onClick={() => zoom(-1)}
             disabled={fontSize <= MIN_FONT_SIZE}
-            title="Zoom out (Cmd -)"
             style={zoomBtnStyle}
           >−</button>
           <button
             onClick={resetZoom}
-            title="Reset zoom (Cmd 0)"
             style={{ ...zoomBtnStyle, width: 'auto', padding: '0 4px', minWidth: 28 }}
           >{fontSize}px</button>
           <button
             onClick={() => zoom(1)}
             disabled={fontSize >= MAX_FONT_SIZE}
-            title="Zoom in (Cmd +)"
             style={zoomBtnStyle}
           >+</button>
           {fullscreen && onToggleFullscreen && (
             <button
               onClick={onToggleFullscreen}
-              title="Exit focus mode (Esc)"
               style={{ ...zoomBtnStyle, width: 22, height: 22, marginLeft: 4 }}
             >
               <Icon name="minimize" />

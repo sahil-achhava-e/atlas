@@ -85,7 +85,6 @@ export function PixelButton({
 
   return (
     <button
-      title={title}
       onClick={disabled ? undefined : onClick}
       onMouseDown={() => setPressed(true)}
       onMouseUp={() => setPressed(false)}

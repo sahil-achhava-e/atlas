@@ -133,7 +133,6 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                       key={h}
                       onClick={() => openHive(h)}
                       disabled={!!busy}
-                      title={`Switch to ${h} (reloads the app)`}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 12, padding: '12px 12px',
                         background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',

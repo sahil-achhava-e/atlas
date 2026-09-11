@@ -314,7 +314,6 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
         <div className="cth-titlebar-nodrag" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
             onClick={toggleRoster}
-            title={rosterCollapsed ? t('fullscreenTerminal.showAgentList') : t('fullscreenTerminal.hideAgentList')}
             aria-label={rosterCollapsed ? t('fullscreenTerminal.showAgentList') : t('fullscreenTerminal.hideAgentList')}
             aria-pressed={rosterCollapsed}
             style={{
@@ -339,7 +338,6 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
               // running TUI. Both entry points must tell them.
               notifyThemeChangeAll(next === 'dark' ? 'dark' : 'light');
             }}
-            title={appThemeNow === 'dark' ? t('fullscreenTerminal.lightTheme') : t('fullscreenTerminal.darkTheme')}
             aria-label={t('fullscreenTerminal.toggleTheme')}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -359,7 +357,6 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
           <button
             className="cth-settings-btn"
             onClick={() => window.dispatchEvent(new CustomEvent('cth:open-settings'))}
-            title="Settings"
             aria-label="Settings"
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -381,7 +378,6 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
           </button>
           <button
             onClick={() => setFullscreen(null)}
-            title={t('fullscreenTerminal.exitFullscreen')}
             aria-label={t('fullscreenTerminal.exitFullscreen')}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -418,7 +414,6 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
           <div style={{ padding: 12, borderBottom: '1px solid var(--cth-ink-300)' }}>
             <button
               onClick={() => setAddAgentOpen(true)}
-              title={t('fullscreenTerminal.addAgent')}
               style={{
                 width: '100%', height: 32,
                 background: 'var(--cth-cream-100)',
@@ -454,7 +449,6 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
               // separation — a hairline plus air above, not just a label.
               <div key={repoKey} style={{ marginTop: 16, paddingTop: 10, borderTop: '1px solid var(--cth-ink-300)' }}>
                 <div
-                  title={repoKey}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8,
                     padding: '0 10px 6px',
@@ -529,7 +523,6 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
                   {restorableAgents.map((a: Agent) => (
                     <span
                       key={a.id}
-                      title={`${a.name} — restorable from last session`}
                       style={{
                         display: 'inline-flex', alignItems: 'center', gap: 2,
                         height: 20, padding: '0 2px 0 6px',
@@ -541,7 +534,6 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
                       {a.name}
                       <button
                         onClick={() => useStore.getState().removeRestorableAgent(a.id)}
-                        title={`Dismiss ${a.name} — remove permanently from the restore list`}
                         aria-label={`Dismiss ${a.name}`}
                         style={{
                           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -636,7 +628,6 @@ function ContextBar({ tokens, limit, accent }: { tokens?: number; limit?: number
   const k = (n: number) => (n >= 1000 ? `${Math.round(n / 1000)}k` : String(n));
   return (
     <div
-      title={t('fullscreenTerminal.contextTitle', { used: k(tokens), limit: k(limit), pct })}
       style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}
     >
       <span style={{
@@ -777,7 +768,6 @@ function SidebarRow({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); toggleEditor(); }
               }}
-              title={agent.note ? t('agentCard.editNote') : t('agentCard.addNote')}
               aria-label={t('agentCard.editNoteAria', { name: agent.name })}
               style={{
                 flexShrink: 0, width: 20, height: 20,
@@ -802,14 +792,14 @@ function SidebarRow({
             <span style={{
               flexShrink: 0, maxWidth: '52%',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-            }} title={agent.model ? t('fullscreenTerminal.modelTitle', { model: agent.model }) : t('fullscreenTerminal.cliDefault')}>
+            }}>
               {shortModel(agent.model) ?? t('fullscreenTerminal.cliDefault')}
             </span>
             <span style={{ flexShrink: 0, opacity: 0.5 }}>·</span>
             <span style={{
               flex: 1, minWidth: 0,
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-            }} title={agent.worktreePath || agent.cwd}>
+            }}>
               {basename(agent.worktreePath || agent.cwd) || agent.project}
             </span>
           </div>
@@ -820,7 +810,6 @@ function SidebarRow({
             {bullets.map((line, i) => (
               <span
                 key={i}
-                title={line}
                 style={{
                   display: 'flex', gap: 6, alignItems: 'baseline',
                   fontSize: scale.note, lineHeight: 1.35,
@@ -970,8 +959,6 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
       {!agent.isGod && (
         <PixelButton variant="secondary" size="sm" onClick={onEdit}>
           <span
-            className="cth-tip cth-tip-left cth-tip-wrap"
-            data-tip={`Edit ${agent.name}: their name and face, which engine they run on, and the briefing that tells them what they are for.`}
             aria-label={`Edit ${agent.name}`}
             style={{ display: 'inline-flex', alignItems: 'center', lineHeight: 0 }}
           >
@@ -996,8 +983,6 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
             sidebar rather than the one filling the screen. */}
         <PixelButton variant="secondary" size="sm" onClick={() => useStore.getState().setIdeOpen(true, agent.id)}>
           <span
-            className="cth-tip cth-tip-wrap"
-            data-tip={t('fullscreenTerminal.ideTip', { name: agent.name })}
             aria-label={t('fullscreenTerminal.openIdeAria')}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
           >
@@ -1012,8 +997,6 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
         {agent.isGod && <CostHud compact />}
         <PixelButton variant="secondary" size="sm" onClick={openTerminal} disabled={openState === 'opening'}>
           <span
-            className="cth-tip cth-tip-wrap"
-            data-tip={t('fullscreenTerminal.openTerminalTip', { cwd: agent.worktreePath || agent.cwd })}
             aria-label={t('fullscreenTerminal.openTerminalAria')}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
           >
@@ -1039,7 +1022,6 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
                 24px box — the button measured the same as its neighbours while
                 reading taller than them. */}
             <span
-              title={t('fullscreenTerminal.closeAgent', { name: agent.name })}
               style={{ display: 'inline-flex', alignItems: 'center', lineHeight: 0 }}
             >
               <Icon name="x" />

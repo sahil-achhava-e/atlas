@@ -55,16 +55,11 @@ export function ToolWaterfall({ agentId }: { agentId: string }) {
           const ok = s.success && s.tool !== 'api_error';
           return (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-              <span style={{ width: 88, fontSize: 11, color: 'var(--cth-ink-700)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={s.error ?? s.tool}>
+              <span style={{ width: 88, fontSize: 11, color: 'var(--cth-ink-700)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {s.tool}
               </span>
               <div style={{ flex: 1, height: 12, background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)' }}>
                 <div
-                  title={s.error
-                    ? `${s.tool}: ${s.error}`
-                    : ok
-                      ? t('toolWaterfall.barOk', { tool: s.tool, ms: s.durationMs })
-                      : t('toolWaterfall.barFailed', { tool: s.tool, ms: s.durationMs })}
                   style={{ width: `${pct}%`, height: '100%', background: ok ? 'var(--cth-mint)' : 'var(--cth-coral)' }}
                 />
               </div>

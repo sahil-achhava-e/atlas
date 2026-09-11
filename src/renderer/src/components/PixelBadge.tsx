@@ -61,7 +61,6 @@ export function PixelBadge({ status, label, style, dotOnly }: PixelBadgeProps) {
   if (dotOnly) {
     return (
       <span
-        title={text}
         aria-label={text}
         role="img"
         style={{

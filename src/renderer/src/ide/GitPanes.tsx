@@ -41,7 +41,7 @@ const smallBtn: React.CSSProperties = {
 
 function FileRow({ f, onClick }: { f: GitFileChange; onClick: () => void }) {
   return (
-    <div onClick={onClick} title={f.oldPath ? `${f.oldPath} → ${f.path}` : f.path} style={rowStyle}>
+    <div onClick={onClick} style={rowStyle}>
       <span style={{
         width: 12, textAlign: 'center', fontFamily: 'var(--cth-font-mono)',
         fontWeight: 'bold' as const, color: statusColor(f.status)
@@ -125,11 +125,11 @@ export function HistoryPane({ gitRoot, onOpenRevDiff }: {
             <span style={{ fontFamily: 'var(--cth-font-mono)', color: 'var(--cth-ink-900)' }}>{selected.shortSha}</span>
             <span style={{
               flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-            }} title={selected.subject}>{selected.subject}</span>
-            <button style={smallBtn} onClick={() => void jump(selected)} title={t('gitPanes.checkoutTitle')}>
+            }}>{selected.subject}</span>
+            <button style={smallBtn} onClick={() => void jump(selected)}>
               <Icon name="arrow-right" /> {t('gitPanes.jumpHere')}
             </button>
-            <button style={{ ...smallBtn, width: 20, justifyContent: 'center' }} onClick={() => setSelected(null)} title={t('common.close')}>✕</button>
+            <button style={{ ...smallBtn, width: 20, justifyContent: 'center' }} onClick={() => setSelected(null)}>✕</button>
           </div>
           {/* `flex: 1` is load-bearing: without it this scroller sizes to its
               CONTENT, overflows the parent's maxHeight and never reaches its own
@@ -208,30 +208,27 @@ export function ComparePane({ gitRoot, onOpenRevDiff }: {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 12px', flexShrink: 0 }}>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          <select value={base} onChange={(e) => setBase(e.target.value)} style={sel} title={t('gitPanes.baseTitle')}>
+          <select value={base} onChange={(e) => setBase(e.target.value)} style={sel}>
             {branches.map((b) => <option key={b} value={b}>{b}</option>)}
           </select>
-          <button style={{ ...smallBtn, width: 22, justifyContent: 'center' }} title={t('gitPanes.swapTitle')}
+          <button style={{ ...smallBtn, width: 22, justifyContent: 'center' }}
             onClick={() => { setBase(head); setHead(base); }}>⇄</button>
-          <select value={head} onChange={(e) => setHead(e.target.value)} style={sel} title={t('gitPanes.compareTitle')}>
+          <select value={head} onChange={(e) => setHead(e.target.value)} style={sel}>
             {branches.map((b) => <option key={b} value={b}>{b}</option>)}
           </select>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 11, color: 'var(--cth-ink-500)' }}>
           {result && (
-            <span title={t('gitPanes.aheadBehind', { head, ahead: result.ahead, behind: result.behind, base })}>
+            <span>
               ↑{result.ahead} ↓{result.behind}
             </span>
           )}
           <button
             style={{ ...smallBtn, background: mode === 'three' ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)' }}
             onClick={() => setMode((m) => (m === 'three' ? 'two' : 'three'))}
-            title={mode === 'three'
-              ? t('gitPanes.modeThreeTitle')
-              : t('gitPanes.modeTwoTitle')}
           >{mode === 'three' ? t('gitPanes.sinceCommonAncestor') : t('gitPanes.literalDifference')}</button>
           <span style={{ flex: 1 }} />
-          <button style={smallBtn} onClick={() => void switchTo()} title={t('gitPanes.switchToTitle', { head })}>
+          <button style={smallBtn} onClick={() => void switchTo()}>
             <Icon name="arrow-right" /> {t('gitPanes.switchTo', { branch: head.split('/').pop() })}
           </button>
         </div>

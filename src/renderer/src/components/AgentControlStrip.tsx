@@ -83,10 +83,6 @@ export function AgentControlStrip({ agentId }: { agentId: string }) {
             its session. Say the consequence on the button, the detail on hover. */}
         <PixelButton variant={snap?.paused ? 'primary' : 'secondary'} size="sm" onClick={togglePause}>
           <span
-            className="cth-tip cth-tip-left cth-tip-wrap"
-            data-tip={snap?.paused
-              ? t('agentControl.allowToolsTip')
-              : t('agentControl.blockToolsTip')}
             aria-label={snap?.paused ? t('agentControl.allowToolsAria') : t('agentControl.blockToolsAria')}
           >
             {snap?.paused ? t('agentControl.allowTools') : t('agentControl.blockTools')}
@@ -94,8 +90,6 @@ export function AgentControlStrip({ agentId }: { agentId: string }) {
         </PixelButton>
         <PixelButton variant="destructive" size="sm" onClick={halt}>
           <span
-            className="cth-tip cth-tip-left cth-tip-wrap"
-            data-tip={t('agentControl.stopAfterStepTip')}
             aria-label={t('agentControl.stopAfterStepAria')}
           >
             {t('agentControl.stopAfterStep')}
@@ -129,8 +123,6 @@ export function AgentControlStrip({ agentId }: { agentId: string }) {
         />
         <PixelButton variant="secondary" size="sm" onClick={sendSteer} disabled={!steer.trim()}>
           <span
-            className="cth-tip cth-tip-wrap"
-            data-tip={t('agentControl.steerTip')}
             aria-label={t('agentControl.steerAria')}
           >{t('agentControl.steer')}</span>
         </PixelButton>

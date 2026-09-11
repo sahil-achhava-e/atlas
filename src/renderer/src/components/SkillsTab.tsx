@@ -27,7 +27,6 @@ function SkillSwitch({ on, label, onText, offText, onChange }: {
       role="switch"
       aria-checked={on}
       aria-label={label}
-      title={on ? onText : offText}
       onClick={() => onChange(!on)}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 8,

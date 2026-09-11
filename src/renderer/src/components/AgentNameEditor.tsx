@@ -68,7 +68,6 @@ export function AgentNameEditor({
         draggable={false}
         value={draft}
         aria-label={`Rename ${name}`}
-        title={error}
         onFocus={(event) => event.currentTarget.select()}
         onChange={(event) => setDraft(event.target.value)}
         onClick={(event) => event.stopPropagation()}
@@ -105,7 +104,6 @@ export function AgentNameEditor({
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, minWidth: 0, flex: 1 }}>
       <span
         onDoubleClick={(event) => { event.stopPropagation(); beginEditing(); }}
-        title={`${name} — double-click to rename`}
         style={{
           fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize,
           color: 'var(--cth-ink-900)',
@@ -116,7 +114,6 @@ export function AgentNameEditor({
         type="button"
         draggable={false}
         aria-label={`Rename ${name}`}
-        title={`Rename ${name}`}
         onClick={(event) => { event.stopPropagation(); beginEditing(); }}
         onMouseDown={(event) => event.stopPropagation()}
         style={{

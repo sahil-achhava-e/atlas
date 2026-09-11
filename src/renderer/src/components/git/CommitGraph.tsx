@@ -157,7 +157,6 @@ export function CommitGraph({ commits, currentBranch, onCommitClick }: CommitGra
           <div
             key={c.sha}
             onClick={onCommitClick ? () => onCommitClick(c.sha) : undefined}
-            title={`${c.shortSha} · ${c.subject}\n${c.author} · ${relTime(c.time * 1000)} ago`}
             style={{
               height: ROW_H,
               display: 'flex',

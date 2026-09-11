@@ -238,7 +238,6 @@ function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
     <div style={{ position: 'relative', display: 'flex' }}>
       <button
         onClick={onOpen}
-        title={t('kanban.openTaskDetails')}
         style={{
           flex: 1, minWidth: 0,
           display: 'flex', alignItems: 'stretch', gap: 0, padding: 0,
@@ -271,7 +270,7 @@ function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
           )}
         </span>
         {waitsOnHuman(task) && (
-          <span title={t('kanban.needsYouTitle')} style={{
+          <span style={{
             alignSelf: 'center', marginRight: 18, flexShrink: 0,
             fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, padding: '2px 5px 1px',
             background: 'var(--cth-lilac)', color: 'var(--cth-ink-900)',
@@ -282,7 +281,6 @@ function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
       {/* Dismiss — sibling button (not nested) so it never triggers onOpen. */}
       <button
         onClick={(e) => { e.stopPropagation(); onDismiss(); }}
-        title={t('kanban.dismissTitle')}
         aria-label={t('kanban.dismissAria')}
         style={{
           position: 'absolute', top: 0, right: 0, width: 16, height: 16, padding: 0,
@@ -470,7 +468,7 @@ function PriorityDots({ level }: { level: number }) {
   // 1 = lowest, 5 = highest. Warmer fill as priority climbs.
   const color = level >= 4 ? 'var(--cth-coral)' : level === 3 ? 'var(--cth-lemon)' : 'var(--cth-mint)';
   return (
-    <span title={t('kanban.priority', { level })} style={{ display: 'inline-flex', gap: 2, flexShrink: 0, marginTop: 2 }}>
+    <span style={{ display: 'inline-flex', gap: 2, flexShrink: 0, marginTop: 2 }}>
       {[1, 2, 3, 4, 5].map((i) => (
         <span key={i} style={{
           width: 4, height: 8,

@@ -174,8 +174,6 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
         </div>
         <PixelButton variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
           <span
-            className="cth-tip cth-tip-wrap"
-            data-tip={`Edit ${agent.name}: their name and face, which engine they run on, and the briefing that tells them what they are for.`}
             aria-label="Edit this agent"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
           >
@@ -186,8 +184,6 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
             opens the full-window Monaco editor rooted at this agent's workspace. */}
         <PixelButton variant="secondary" size="sm" onClick={() => useStore.getState().setIdeOpen(true, agent.id)}>
           <span
-            className="cth-tip cth-tip-wrap"
-            data-tip={t('agentDetail.ideTip', { project: agent.project })}
             aria-label={t('agentDetail.openIde')}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
           >
@@ -199,8 +195,6 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
               and Talk both also open something. The label names the thing you
               get; the tip names the folder you get it in. */}
           <span
-            className="cth-tip cth-tip-wrap"
-            data-tip={t('agentDetail.terminalTip', { cwd: agent.cwd })}
             aria-label={t('agentDetail.openTerminalAria')}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
           >

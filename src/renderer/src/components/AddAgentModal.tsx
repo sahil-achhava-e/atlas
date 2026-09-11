@@ -665,7 +665,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               // Picking names it too, overwriting what was
                               // there, so the field always matches the face.
                               onClick={() => { setCharacter(f.id); setName(f.name); }}
-                              title={used ? tr('addAgent.faceInUse') : f.name}
                               aria-pressed={active}
                               style={{
                                 width: 66, padding: '5px 4px 4px', border: 'none',
@@ -711,7 +710,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           <button
                             key={a}
                             onClick={() => setAccent(a)}
-                            title={a}
                             aria-label={a}
                             aria-pressed={accent === a}
                             style={{
@@ -733,7 +731,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                             worse and bigger. A custom accent is stored as the
                             hex itself, which every accent consumer now accepts. */}
                         <label
-                          title={tr('addAgent.customColor')}
                           style={{
                             width: 34, height: 34, display: 'grid', placeItems: 'center',
                             cursor: 'pointer', position: 'relative',
@@ -784,7 +781,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               <button
                                 key={r}
                                 onClick={() => setCwd(r)}
-                                title={r}
                                 aria-pressed={active}
                                 className="cth-choice"
                                 style={{
@@ -897,7 +893,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                             <button
                               key={m.label}
                               onClick={() => pickModel(m.id)}
-                              title={m.id ?? tr('addAgent.cliDefaultModel')}
                               style={{
                                 padding: '3px 12px 1px',
                                 background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
@@ -933,7 +928,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                                   <button
                                     key={p.tag}
                                     onClick={() => pickModel(slug)}
-                                    title={tr('addAgent.ossLocalTitle', { slug, ram: p.minRam, tag: p.tag })}
                                     style={ossChip(active, accent)}
                                   >
                                     {p.label}
@@ -951,7 +945,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                                   <button
                                     key={p.slug}
                                     onClick={() => pickModel(p.slug)}
-                                    title={tr('addAgent.ossByokTitle', { slug: p.slug, keyEnv: p.keyEnv })}
                                     style={ossChip(active, accent)}
                                   >
                                     {p.label}

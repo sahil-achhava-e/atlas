@@ -185,7 +185,6 @@ export function RealtimeMichaelToggle({ compact = false }: RealtimeMichaelToggle
   // when the inner button is disabled — Chromium suppresses tooltips on a disabled button.
   return (
     <span
-      title={title}
       className="cth-titlebar-nodrag"
       // minWidth:0 is what actually stops the overflow: without it this inline-flex
       // keeps its max-content width and pushes past the card's edge no matter what

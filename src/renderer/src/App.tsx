@@ -417,8 +417,6 @@ export function App() {
               agent panel, which is the one place you already know the answer. */}
           {config.harnessHome && (
             <span
-              className="cth-tip"
-              data-tip={config.harnessHome}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 marginInlineStart: 4, padding: '4px 10px',
@@ -508,7 +506,7 @@ export function App() {
         }} />
 
         <button
-          className="cth-titlebar-nodrag cth-tip"
+          className="cth-titlebar-nodrag"
           onClick={() => {
             const next = toggleAppTheme();
             // Tell every RUNNING program the theme flipped. xterm repaints its own
@@ -524,7 +522,6 @@ export function App() {
             // harness agents — the user's global Claude theme is never touched.
             void window.cth.updateConfig({ terminalTheme: next });
           }}
-          data-tip={appThemeNow === 'dark' ? 'Light theme' : 'Dark theme'}
           aria-label="Toggle dark mode"
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -541,9 +538,8 @@ export function App() {
         {/* v0.3.4: the IDE button moved to agent level — every agent's header
             (sidebar detail, god Command Center, fullscreen) carries it. */}
         <button
-          className="cth-titlebar-nodrag cth-settings-btn cth-tip"
+          className="cth-titlebar-nodrag cth-settings-btn"
           onClick={() => { setSettingsSection(undefined); setSettingsOpen(true); }}
-          data-tip="Settings"
           aria-label="Settings"
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -562,7 +558,7 @@ export function App() {
             is drawn in — at 16-18px a pixel-grid glyph reads as a rendering
             artifact next to the OS window controls, not as a style choice. */}
         <button
-          className="cth-titlebar-nodrag cth-tip"
+          className="cth-titlebar-nodrag"
           onClick={() => {
             if (fullscreenAgentId) { useStore.getState().setFullscreen(null); return; }
             const all = useStore.getState().agents;
@@ -571,7 +567,6 @@ export function App() {
               ?? all.find((x) => x.ptyId);
             if (target) useStore.getState().setFullscreen(target.id);
           }}
-          data-tip={fullscreenAgentId ? 'Exit focus mode (Esc)' : 'Focus mode'}
           aria-label="Toggle focus mode"
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',

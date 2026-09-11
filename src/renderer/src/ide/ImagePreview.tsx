@@ -49,7 +49,6 @@ export function ImagePreview({ root, rel, onCopyPath, onViewSource }: ImagePrevi
         <Icon name="image" />
         <span
           style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--cth-font-mono)' }}
-          title={rel}
         >{rel}</span>
 
         {/* Facts about the file, in the same muted register as the diff bar's
@@ -65,7 +64,6 @@ export function ImagePreview({ root, rel, onCopyPath, onViewSource }: ImagePrevi
             <button
               key={String(v)}
               onClick={() => setFit(v)}
-              title={v ? t('imagePreview.fitTitle') : t('imagePreview.oneToOneTitle')}
               style={{
                 ...ideTextBtn,
                 background: fit === v ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
@@ -76,11 +74,11 @@ export function ImagePreview({ root, rel, onCopyPath, onViewSource }: ImagePrevi
         </span>
 
         {onViewSource && (
-          <button onClick={onViewSource} title={t('imagePreview.viewSourceTitle')} style={ideTextBtn}>
+          <button onClick={onViewSource} style={ideTextBtn}>
             {t('imagePreview.viewSource')}
           </button>
         )}
-        <button onClick={onCopyPath} title="Copy absolute path" style={ideTextBtn}>copy path</button>
+        <button onClick={onCopyPath} style={ideTextBtn}>copy path</button>
       </div>
 
       <div style={{
