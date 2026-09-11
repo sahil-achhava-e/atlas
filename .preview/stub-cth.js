@@ -227,6 +227,22 @@
       humanQA: [{ askedAt: new Date().toISOString(),
         q: 'The pipeline cannot find DejaVuSans.ttf when it renders the voucher. Should I vendor the font into the repo, or install it in the build image?',
         choices: ['Vendor the font into the repo', 'Install it in the build image'] }]
+    },
+    {
+      id: 'vms-1275', title: 'Receipt PDF: inline the images instead of fetching them', status: 'doing',
+      assignee: 'atlas', priority: 4, createdAt: new Date(Date.now() - 26 * 3600e3).toISOString()
+    },
+    {
+      id: 'vms-1288', title: 'Add a smoke test for the voucher redemption flow', status: 'todo',
+      assignee: 'atlas', priority: 2, createdAt: new Date(Date.now() - 5 * 3600e3).toISOString()
+    },
+    {
+      id: 'vms-1291', title: 'Rename bookingLine.qty to quantity across the API', status: 'todo',
+      priority: 1, createdAt: new Date(Date.now() - 2 * 3600e3).toISOString()
+    },
+    {
+      id: 'vms-1264', title: 'Pipeline: cache node_modules between stages', status: 'done',
+      assignee: 'atlas', priority: 3, createdAt: new Date(Date.now() - 50 * 3600e3).toISOString()
     }
   ] }),
   skillsDisabled: async () => (window.__skillsOff = window.__skillsOff || []),

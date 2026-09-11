@@ -1318,7 +1318,12 @@
     "asked": "سُئل",
     "youAnswered": "أجبتَ",
     "dismissedWithoutAnswer": "أُزيل دون إجابة.",
-    "moveTo": "نقل إلى"
+    "moveTo": "نقل إلى",
+    "emptyTitle": "لا عمل على اللوحة",
+    "emptySub": "تظهر المهام هنا بعد أن يقسّم أطلس الطلب إلى خطوات ويوزّعها.",
+    "needsYouShort": "يحتاجك",
+    "unassignedShort": "غير مُسندة",
+    "dismiss": "إزالة من اللوحة"
   },
   "queueComposer": {
     "recording": "● يسجّل. انقر إيقاف للتفريغ النصي",

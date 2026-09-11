@@ -1392,7 +1392,14 @@
     "asked": "Asked",
     "youAnswered": "You answered",
     "dismissedWithoutAnswer": "Cleared without an answer.",
-    "moveTo": "Move to"
+    "moveTo": "Move to",
+    "emptyTitle": "No work on the board",
+    "emptySub": "Tasks appear here once Atlas breaks a request into steps and assigns them.",
+    "count_one": "{{count}} task",
+    "count_other": "{{count}} tasks",
+    "needsYouShort": "Needs you",
+    "unassignedShort": "Unassigned",
+    "dismiss": "Remove from board"
   },
   "terminal": {
     "live": "live"

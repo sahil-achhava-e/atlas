@@ -7,6 +7,7 @@ import { Icon } from './Icon';
 import { useStore } from '@/store/store';
 import { StatusGlyph } from './StatusGlyph';
 import { Dropdown } from './Dropdown';
+import { TasksIcon } from './TabIcons';
 import { SpritePortrait } from './SpritePortrait';
 import { MarkdownPreview } from '@/markdown/MarkdownPreview';
 import { useRtl } from '@/i18n/useDirection';
@@ -168,6 +169,8 @@ export function TasksKanban() {
   /** Resolve an assignee id to a display name — falls back to the restorable
    *  roster so a done card keeps its author's name even after that worker's
    *  terminal is gone, then to the raw id. */
+  const characterFor = (id?: string): string | undefined =>
+    id ? agents.find((a) => a.id === id)?.character : undefined;
   const nameFor = (id?: string): string | undefined =>
     id
       ? (agents.find((a) => a.id === id)?.name
@@ -192,43 +195,78 @@ export function TasksKanban() {
         </span>
       </div>
 
-      {/* Columns */}
+      {/* Grouped list, not columns. Four columns inside a 420px panel gave
+          every card about 90px of width: the titles were cut mid-word, three of
+          the four columns were usually empty, and the whole thing scrolled
+          sideways. Work is grouped by status down the page instead, so a card
+          gets the full width and an empty status costs one line rather than a
+          whole column. */}
       <div style={{
-        flex: 1, minHeight: 0, display: 'flex', gap: 8, padding: 16, overflowX: 'auto'
+        flex: 1, minHeight: 0, overflowY: 'auto', padding: 14,
+        display: 'flex', flexDirection: 'column', gap: 16
       }}>
         {COLUMNS.map((col) => {
-          const cards = tasks.filter((t) => t.status === col.key);
+          const cards = tasks.filter((x) => x.status === col.key);
+          if (cards.length === 0) return null;
           return (
-            <div key={col.key} style={{
-              flex: '1 1 0', minWidth: 170, display: 'flex', flexDirection: 'column',
-              background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
-            }}>
+            <div key={col.key} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px 4px',
-                background: col.accent, boxShadow: 'inset 0 -1px 0 var(--cth-ink-900)',
-                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-ink-900)'
+                display: 'flex', alignItems: 'center', gap: 8,
+                position: 'sticky', top: -14, zIndex: 2,
+                padding: '6px 0', background: 'var(--cth-paper-100)'
               }}>
-                {t(col.labelKey)}
-                <span style={{ marginLeft: 'auto', fontSize: 11, fontFamily: 'var(--cth-font-ui)' }}>{cards.length}</span>
+                <span style={{
+                  width: 8, height: 8, borderRadius: 'var(--cth-radius-pill)',
+                  background: col.accent, flexShrink: 0
+                }} />
+                <span style={{
+                  fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13,
+                  color: 'var(--cth-ink-900)'
+                }}>{t(col.labelKey)}</span>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  minWidth: 20, height: 20, padding: '0 6px',
+                  borderRadius: 'var(--cth-radius-pill)',
+                  background: 'var(--cth-cream-100)',
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 600,
+                  color: 'var(--cth-ink-500)'
+                }}>{cards.length}</span>
               </div>
-              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {cards.length === 0 && (
-                  <div style={{ fontSize: 13, color: 'var(--cth-ink-300)', textAlign: 'center', padding: '8px 0' }}>—</div>
-                )}
-                {cards.map((t) => (
-                  <TaskCard
-                    key={t.id}
-                    task={t}
-                    accent={col.accent}
-                    assigneeName={nameFor(t.assignee)}
-                    onOpen={() => openTaskDetail(t.id)}
-                    onDismiss={() => dismissTask(t.id)}
-                  />
-                ))}
-              </div>
+              {cards.map((x) => (
+                <TaskCard
+                  key={x.id}
+                  task={x}
+                  accent={col.accent}
+                  assigneeName={nameFor(x.assignee)}
+                  assigneeCharacter={characterFor(x.assignee)}
+                  onOpen={() => openTaskDetail(x.id)}
+                  onDismiss={() => dismissTask(x.id)}
+                />
+              ))}
             </div>
           );
         })}
+
+        {tasks.length === 0 && (
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+            textAlign: 'center', padding: '40px 16px'
+          }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 46, height: 46, borderRadius: 'var(--cth-radius-pill)',
+              background: 'var(--cth-cream-100)', color: 'var(--cth-ink-300)'
+            }}>
+              <TasksIcon size={22} />
+            </span>
+            <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 15, fontWeight: 600, color: 'var(--cth-ink-900)' }}>
+              {t('kanban.emptyTitle')}
+            </div>
+            <div style={{ fontSize: 13, lineHeight: '19px', color: 'var(--cth-ink-500)', maxWidth: 280 }}>
+              {t('kanban.emptySub')}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -240,74 +278,111 @@ export function TasksKanban() {
 // lives in the detail view a click away: a kanban card can carry little more
 // than a title.
 
-function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
+function TaskCard({ task, accent, assigneeName, assigneeCharacter, onOpen, onDismiss }: {
   task: HiveTask;
   accent: string;
   assigneeName?: string;
+  /** The agent's sprite, so a card shows the same face as the floor. */
+  assigneeCharacter?: string;
   onOpen: () => void;
   onDismiss: () => void;
 }) {
   const { t } = useTranslation();
+  const needsYou = waitsOnHuman(task);
   return (
     <div style={{ position: 'relative', display: 'flex' }}>
       <button
         onClick={onOpen}
+        className="cth-task-card"
         style={{
           flex: 1, minWidth: 0,
-          display: 'flex', alignItems: 'stretch', gap: 0, padding: 0,
+          display: 'flex', flexDirection: 'column', gap: 10,
+          padding: '14px 16px',
           border: 'none', cursor: 'pointer', textAlign: 'left',
           background: 'var(--cth-paper-100)',
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
+          borderInlineStart: `3px solid ${accent}`,
+          borderRadius: 'var(--cth-radius-input)',
+          boxShadow: '0 0 0 1px var(--cth-ink-100)',
+          transition: 'box-shadow 120ms ease, transform 120ms ease'
         }}
       >
-        <span style={{ width: 4, flexShrink: 0, background: accent, boxShadow: 'inset -1px 0 0 var(--cth-ink-700)' }} />
-        <span style={{ flex: 1, minWidth: 0, padding: '10px 18px 10px 7px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {/* The id the god writes into tasks.json (bmt-12, or a synthetic
-              t-xxxx). Cards get referred to by id in dispatches and in Slack,
-              so it has to be readable without opening the detail view. Mono
-              because it's an identifier you retype. Sits inside the text
-              column, so the 18px right padding keeps it clear of the ✕ and
-              the '?' badge. */}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <span style={{
-            fontFamily: 'var(--cth-font-mono)', fontSize: 11,
-            color: 'var(--cth-ink-500)'
+            fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)'
           }}>{task.id}</span>
-          <span style={{
-            fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '16px',
-            color: 'var(--cth-ink-900)',
-            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
-          }}>{task.title}</span>
-          {assigneeName && (
-            <span style={{ fontSize: 11, color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-ui)', fontWeight: 600 }}>
-              {assigneeName.toUpperCase()}
+          {needsYou && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '2px 8px', borderRadius: 'var(--cth-radius-pill)',
+              background: 'color-mix(in srgb, var(--cth-status-blocked) 14%, transparent)',
+              color: 'var(--cth-status-blocked)',
+              fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 600
+            }}>
+              <StatusGlyph status="blocked" size={11} />
+              {t('kanban.needsYouShort')}
             </span>
           )}
+          <span style={{ flex: 1 }} />
+          <PriorityDots level={Math.max(1, Math.min(5, task.priority))} />
         </span>
-        {waitsOnHuman(task) && (
-          <span style={{
-            alignSelf: 'center', marginRight: 18, flexShrink: 0,
-            fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, padding: '2px 5px 1px',
-            background: 'var(--cth-lilac)', color: 'var(--cth-ink-900)',
-            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
-          }}>?</span>
-        )}
+
+        <span style={{
+          fontFamily: 'var(--cth-font-ui)', fontSize: 14, fontWeight: 600, lineHeight: '20px',
+          color: 'var(--cth-ink-900)',
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
+        }}>{task.title}</span>
+
+        {/* Who has it, with their own face. A shouted uppercase surname told you
+            less and looked like a label rather than a person. */}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+          {assigneeName ? (
+            <>
+              <span style={{
+                width: 20, height: 20, flexShrink: 0, borderRadius: 'var(--cth-radius-pill)',
+                overflow: 'hidden', background: 'var(--cth-cream-200)',
+                display: 'inline-flex', alignItems: 'flex-end', justifyContent: 'center'
+              }}>
+                {assigneeCharacter
+                  ? <SpritePortrait character={assigneeCharacter} scale={0.56} />
+                  : <span style={{
+                      alignSelf: 'center', fontFamily: 'var(--cth-font-ui)',
+                      fontSize: 10, fontWeight: 700, color: 'var(--cth-ink-700)'
+                    }}>{assigneeName.slice(0, 1).toUpperCase()}</span>}
+              </span>
+              <span style={{
+                fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-700)',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+              }}>{assigneeName}</span>
+            </>
+          ) : (
+            <span style={{
+              fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-300)'
+            }}>{t('kanban.unassignedShort')}</span>
+          )}
+        </span>
       </button>
-      {/* Dismiss — sibling button (not nested) so it never triggers onOpen. */}
+
       <button
-        onClick={(e) => { e.stopPropagation(); onDismiss(); }}
-        aria-label={t('kanban.dismissAria')}
+        onClick={onDismiss}
+        className="cth-iconbar cth-quiet-danger"
+        data-label={t('kanban.dismiss')}
+        aria-label={t('kanban.dismiss')}
         style={{
-          position: 'absolute', top: 0, right: 0, width: 16, height: 16, padding: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
-          border: 'none', cursor: 'pointer', background: 'transparent',
-          color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-ui)', fontSize: 13
+          position: 'absolute', top: 8, insetInlineEnd: 8,
+          width: 24, height: 24, border: 'none', background: 'transparent',
+          borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          color: 'var(--cth-ink-300)', opacity: 0
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--cth-coral)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--cth-ink-500)'; }}
-      >✕</button>
+      >
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        </svg>
+      </button>
     </div>
   );
 }
+
 
 // ─── Detail view ─────────────────────────────────────────────────────────────
 // The full breakdown of one task: status, assignee, priority, the complete
@@ -598,9 +673,10 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
                 style={{
                   height: 34, padding: '0 14px', flexShrink: 0,
                   border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
-                  background: 'transparent', color: 'var(--cth-ink-700)',
+                  background: 'var(--cth-paper-100)', color: 'var(--cth-ink-900)',
+                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
                   fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
-                  transition: 'background 120ms ease, color 120ms ease'
+                  transition: 'background 120ms ease, box-shadow 120ms ease'
                 }}
                 className="cth-ghost-btn"
               >{t('common.close')}</button>
