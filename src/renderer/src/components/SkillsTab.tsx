@@ -72,8 +72,14 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
   useEffect(() => { void loadLocal(); }, [loadLocal]);
   const q = query.trim().toLowerCase();
 
+  /** Skills that came with Atlas are not yours to manage — you cannot uninstall
+   *  them from here and nothing about them changes. Listing them buried the two
+   *  or three you actually added. The count below still names them, because a
+   *  tab that silently omits live skills is lying about what agents can do. */
+  const bundledCount = (local ?? []).filter((s) => s.scope === 'bundled').length;
+
   const shownLocal = useMemo(() => {
-    const list = local ?? [];
+    const list = (local ?? []).filter((s) => s.scope !== 'bundled');
     if (!q) return list;
     return list.filter((s) =>
       s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q));
@@ -115,8 +121,16 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
           fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '13px',
           color: 'var(--cth-ink-700)', textTransform: 'uppercase'
         }}>
-          {t('skillsTab.installed')}{local ? ` (${local.length})` : ''}
+          {t('skillsTab.installed')}{local ? ` (${local.length - bundledCount})` : ''}
         </span>
+        {bundledCount > 0 && (
+          <span style={{
+            fontFamily: 'var(--cth-font-ui)', fontSize: 11,
+            color: 'var(--cth-ink-600)', flexShrink: 0
+          }}>
+            {t('skillsTab.plusBundled', { count: bundledCount })}
+          </span>
+        )}
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -149,7 +163,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
         {local === null ? <Muted>{t('skillsTab.scanning')}</Muted>
           : shownLocal.length === 0 ? (
             <Muted>
-              {local.length === 0
+              {local.length - bundledCount === 0
                 ? t('skillsTab.noSkillsInstalled')
                 : t('skillsTab.nothingMatches')}
             </Muted>

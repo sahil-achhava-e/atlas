@@ -1169,7 +1169,8 @@
     "installFailed": "فشل التثبيت",
     "removeFailed": "تعذّرت إزالته",
     "uninstallFailed": "فشل إلغاء التثبيت",
-    "catalogUnreachable": "تعذّر الوصول إلى الفهرس"
+    "catalogUnreachable": "تعذّر الوصول إلى الفهرس",
+    "plusBundled": "+ {{count}} مضمّنة مع أطلس"
   },
   "workersTab": {
     "stopping": "يتوقّف",
