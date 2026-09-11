@@ -135,11 +135,18 @@ export function SetupPanel(
 
   // Only ESSENTIALS are handed to Michael. Installing all eight engine CLIs
   // because they happen to be listed would be a wild overreach of one click.
-  const missingEssential = useMemo(
-    () => (tools ?? []).filter((t) => !t.found && t.essential),
-    [tools]
+  // `only` narrows the panel to some sections, so the header must count the
+  // same subset. It counted every tool in the catalogue, which is how a memory
+  // section showing one row announced "2 of 3 ready".
+  const visible = useMemo(
+    () => (tools ?? []).filter((t) => !only || only.includes(t.kind)),
+    [tools, only]
   );
-  const readyCount = (tools ?? []).filter((t) => t.found).length;
+  const missingEssential = useMemo(
+    () => visible.filter((t) => !t.found && t.essential),
+    [visible]
+  );
+  const readyCount = visible.filter((t) => t.found).length;
 
   const askMichael = () => {
     if (missingEssential.length === 0) return;
@@ -154,11 +161,19 @@ export function SetupPanel(
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 200 }}>
-          <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 12 }}>{t('setupPanel.title')}</div>
+          <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 12 }}>
+            {only && !only.includes('prerequisite')
+              ? t('setupPanel.titleEngines')
+              : t('setupPanel.title')}
+          </div>
           <div style={{ fontSize: 12, color: 'var(--cth-ink-500)', marginTop: 2 }}>
             {tools === null
               ? t('setupPanel.checking')
-              : t('setupPanel.summary', { ready: readyCount, total: tools.length, missing: missingEssential.length })}
+              : missingEssential.length
+                ? t('setupPanel.summaryMissing', {
+                    ready: readyCount, total: visible.length, missing: missingEssential.length
+                  })
+                : t('setupPanel.summary', { ready: readyCount, total: visible.length })}
           </div>
         </div>
         <PixelButton variant="ghost" size="md" onClick={() => void refresh()} disabled={busy}>
@@ -166,17 +181,19 @@ export function SetupPanel(
         </PixelButton>
       </div>
 
-      {/* The headline action. Present but disabled when nothing is missing, so the
-          page reads the same either way rather than the button vanishing. */}
+      {/* Only when something is missing. It used to render disabled with an
+          "everything is installed" paragraph beside it, which read as a control
+          nobody could explain: a primary button that does nothing, under a
+          heading about prerequisites, in a panel about models. The summary line
+          above already says everything is ready. */}
+      {missingEssential.length > 0 && (
       <div style={{
         padding: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap',
         background: missingEssential.length ? 'var(--cth-lemon-light)' : 'var(--cth-cream-100)',
         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
       }}>
         <div style={{ flex: 1, minWidth: 220, fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: 1.5 }}>
-          {missingEssential.length
-            ? t('setupPanel.askDesc', { count: missingEssential.length })
-            : t('setupPanel.allReady')}
+          {t('setupPanel.askDesc', { count: missingEssential.length })}
         </div>
         <PixelButton
           variant="primary"
@@ -189,9 +206,10 @@ export function SetupPanel(
           </span>
         </PixelButton>
       </div>
+      )}
 
       {SECTIONS.filter((sec) => !only || only.includes(sec.kind)).map((section) => {
-        const rows = (tools ?? []).filter((t) => t.kind === section.kind);
+        const rows = visible.filter((t) => t.kind === section.kind);
         if (rows.length === 0) return null;
         return (
           <div key={section.kind} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

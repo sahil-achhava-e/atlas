@@ -297,12 +297,20 @@
     // badge at all. These three rows are the three real shapes.
     toolsStatus: function () {
       return Promise.resolve([
-        { id: 'engine:claude', found: true, path: '/opt/homebrew/bin/claude',
+        // kind + essential were missing, so every row fell outside both sections
+        // and the panel reported "0 of 0 ready" — a state the real app cannot
+        // reach, which meant the block was never actually being verified here.
+        { id: 'engine:claude', kind: 'engine', label: 'Claude Code', essential: true,
+          found: true, path: '/opt/homebrew/bin/claude',
           installCommand: 'npm install -g @anthropic-ai/claude-code',
           docsUrl: 'https://docs.claude.com/en/docs/claude-code' },
-        { id: 'engine:codex', found: true, path: '/opt/homebrew/bin/codex', installCommand: '' },
-        { id: 'engine:gemini', found: false, path: null, installCommand: '',
+        { id: 'engine:codex', kind: 'engine', label: 'Codex', essential: false,
+          found: true, path: '/opt/homebrew/bin/codex', installCommand: '' },
+        { id: 'engine:gemini', kind: 'engine', label: 'Gemini CLI', essential: false,
+          found: false, path: null, installCommand: '',
           docsUrl: 'https://github.com/google-gemini/gemini-cli' },
+        { id: 'git', kind: 'prerequisite', label: 'git', essential: true,
+          found: true, path: '/usr/bin/git', installCommand: '' },
       ]);
     },
   };

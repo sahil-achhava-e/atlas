@@ -859,8 +859,8 @@
   "setupPanel": {
     "title": "PREREQUISITES",
     "checking": "Checking what is installed…",
-    "summary": "{{ready}} of {{total}} ready{{missing}}",
-    "summaryMissing": " · {{count}} recommended missing",
+    "summary": "{{ready}} of {{total}} ready",
+    "summaryMissing": "{{ready}} of {{total}} ready, {{missing}} still to set up",
     "recheck": "re-check",
     "checkingBtn": "checking…",
     "statusReady": "READY",
@@ -871,7 +871,7 @@
     "askDesc": "{{godName}} can install the {{count}} missing recommended tool for you. This fills in his dispatch box. Nothing runs until you press dispatch.",
     "askDescPlural": "{{godName}} can install the {{count}} missing recommended tools for you. This fills in his dispatch box. Nothing runs until you press dispatch.",
     "allReady": "Everything recommended is installed. The engines above are optional, so set up only the ones you use.",
-    "askMichael": "ask {{godName}} to set up everything",
+    "askMichael": "ask {{godName}} to install these",
     "sections": {
       "prerequisites": {
         "title": "Prerequisites",
@@ -885,7 +885,8 @@
         "title": "Agent engines",
         "blurb": "The CLIs your agents run on. You only need the ones you actually use, not all of them."
       }
-    }
+    },
+    "titleEngines": "ENGINES AND TOOLS"
   },
   "aiEngines": {
     "providers": "AI ENGINE PROVIDERS (BYOK)",

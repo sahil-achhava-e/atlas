@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
-import { SetupPanel } from './SetupPanel';
 import { isComposingKey } from '@shared/imeGuard';
 import { useRtl } from '@/i18n/useDirection';
 
@@ -178,12 +177,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
                     Setup owns the platform-correct commands now, plus the uv
                     dependency, the live detected state, and the delegate-to-Michael
                     path. One source of truth beats two that disagree by OS. */}
-                {/* The memory checks used to live behind a button to the
-                    Prerequisites tab. That tab is gone — setup for a thing
-                    belongs with the switch for that thing — so they render here. */}
-                <div style={{ marginTop: 8 }}>
-                  <SetupPanel only={['memory']} />
-                </div>
+
                 <div style={{ marginTop: 8, color: 'var(--cth-ink-500)' }}>
                   {t('memoryPanel.plainNotesStill')}
                 </div>
