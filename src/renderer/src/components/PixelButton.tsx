@@ -60,24 +60,28 @@ export function PixelButton({
           shadow:  'var(--cth-lilac-hover)'
         };
       case 'secondary':
+        // White with a hairline, not a grey fill: beside a filled primary, two
+        // filled buttons make you decide which one is the answer.
         return {
-          fill:    disabled ? 'var(--cth-cream-300)' : (hover ? 'var(--cth-cream-200)' : 'var(--cth-cream-100)'),
+          fill:    disabled ? 'transparent' : (hover ? 'var(--cth-cream-50)' : 'var(--cth-paper-100)'),
           text:    disabled ? disabledText : 'var(--cth-ink-900)',
-          border:  'var(--cth-ink-300)',
+          border:  disabled ? 'var(--cth-ink-100)' : 'var(--cth-ink-300)',
           shadow:  'var(--cth-ink-100)'
         };
       case 'ghost':
         return {
-          fill:    hover ? 'var(--cth-cream-200)' : 'transparent',
+          fill:    hover ? 'var(--cth-cream-100)' : 'transparent',
           text:    disabled ? disabledText : 'var(--cth-ink-700)',
-          border:  'var(--cth-ink-300)',
-          shadow:  'var(--cth-ink-100)'
+          border:  'transparent',
+          shadow:  'transparent'
         };
       case 'destructive':
+        // White text on red. Ink-900 on coral was near-black on red, which is
+        // the least legible pair in the palette and the one that matters most.
         return {
-          fill:    disabled ? 'var(--cth-cream-300)' : (hover ? 'color-mix(in srgb, var(--cth-coral) 86%, #000)' : 'var(--cth-coral)'),
-          text:    disabled ? disabledText : 'var(--cth-ink-900)',
-          border:  'var(--cth-ink-500)',
+          fill:    disabled ? 'transparent' : (hover ? 'color-mix(in srgb, var(--cth-coral) 86%, #000)' : 'var(--cth-coral)'),
+          text:    disabled ? disabledText : '#FFFFFF',
+          border:  disabled ? 'var(--cth-ink-100)' : 'var(--cth-coral)',
           shadow:  'var(--cth-ink-300)'
         };
     }

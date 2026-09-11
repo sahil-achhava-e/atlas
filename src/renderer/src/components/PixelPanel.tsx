@@ -26,7 +26,7 @@ const fillByVariant: Record<Variant, string> = {
   inset:    'var(--cth-cream-200)',
   active:   'var(--cth-cream-100)',
   terminal: 'var(--cth-paper-100)',
-  dialog:   'var(--cth-cream-50)'
+  dialog:   'var(--cth-paper-100)'
 };
 
 export function PixelPanel({
@@ -65,13 +65,12 @@ export function PixelPanel({
         <div
           style={{
             margin: noPadding ? 0 : '-12px -12px 12px',
-            padding: '10px 12px 4px',
-            background: accent ? `var(--cth-${accent})` : 'var(--cth-cream-200)',
+            padding: '14px 16px 12px',
+            background: accent ? `var(--cth-${accent})` : 'transparent',
             color: 'var(--cth-ink-900)',
             fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-            fontSize: 'var(--cth-text-display-md)',
-            lineHeight: 'var(--cth-lh-display-md)',
-            boxShadow: 'inset 0 -1px 0 var(--cth-ink-900)'
+            fontSize: 15, letterSpacing: '-0.2px', lineHeight: '20px',
+            boxShadow: 'inset 0 -1px 0 var(--cth-ink-100)'
           }}
         >
           {title}

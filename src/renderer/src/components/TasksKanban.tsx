@@ -5,6 +5,9 @@ import { PixelButton } from './PixelButton';
 import { PixelBadge } from './PixelBadge';
 import { Icon } from './Icon';
 import { useStore } from '@/store/store';
+import { StatusGlyph } from './StatusGlyph';
+import { Dropdown } from './Dropdown';
+import { SpritePortrait } from './SpritePortrait';
 import { MarkdownPreview } from '@/markdown/MarkdownPreview';
 import { useRtl } from '@/i18n/useDirection';
 
@@ -315,10 +318,12 @@ function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
 // the big stage instead of the narrow side panel. Exported for App's
 // TaskDetailOverlay; opened via the store's openTaskDetail from anywhere.
 
-export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose }: {
+export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove, onAssign, onClose }: {
   task: HiveTask;
   all: HiveTask[];
   assigneeName?: string;
+  /** The agent's sprite, so the chip shows the same face as the floor. */
+  assigneeCharacter?: string;
   onMove: (s: Status) => void;
   onAssign: () => void;
   onClose: () => void;
@@ -337,12 +342,62 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 280,
-        background: 'rgba(26, 19, 32, 0.6)',
+        background: 'color-mix(in srgb, var(--cth-ink-900) 46%, transparent)',
+        backdropFilter: 'blur(3px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24
       }}
     >
       <div onClick={(e) => e.stopPropagation()} style={{ width: 720, maxWidth: '94vw', maxHeight: '90vh', display: 'flex' }}>
-        <PixelPanel variant="dialog" title={t('kanban.taskTitle')} noPadding style={{ display: 'flex', flexDirection: 'column', width: '100%', minHeight: 0 }}>
+        <PixelPanel variant="dialog" noPadding style={{ display: 'flex', flexDirection: 'column', width: '100%', minHeight: 0 }}>
+          {/* Header: which task, and when it was raised. The id is the handle
+              every dispatch uses and the timestamp is how you tell two attempts
+              apart, so both belong at the top rather than buried in a fact row
+              under the title. */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '14px 16px', borderBottom: '1px solid var(--cth-ink-100)'
+          }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'baseline', gap: 7,
+              fontFamily: 'var(--cth-font-ui)', fontSize: 15, fontWeight: 600,
+              letterSpacing: '-0.2px', color: 'var(--cth-ink-900)'
+            }}>
+              {t('kanban.taskTitle')}
+              <span style={{ color: 'var(--cth-ink-300)', fontWeight: 400 }}>·</span>
+              <span style={{
+                fontFamily: 'var(--cth-font-mono)', fontSize: 12.5, fontWeight: 500,
+                color: 'var(--cth-ink-700)'
+              }}>{task.id}</span>
+            </span>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center',
+              padding: '4px 11px', borderRadius: 'var(--cth-radius-pill)',
+              background: `color-mix(in srgb, ${col.accent} 14%, transparent)`,
+              color: col.accent,
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12
+            }}>{t(col.labelKey)}</span>
+            <span style={{ flex: 1 }} />
+            <span style={{
+              fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-500)',
+              whiteSpace: 'nowrap'
+            }}>{isNaN(created.getTime()) ? '' : created.toLocaleString()}</span>
+            <button
+              onClick={onClose}
+              aria-label={t('common.close')}
+              className="cth-iconbar"
+              data-label={t('common.close')}
+              style={{
+                width: 28, height: 28, flexShrink: 0, border: 'none', background: 'transparent',
+                borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--cth-ink-300)'
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
           <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0, overflowY: 'auto' }}>
             {/* Title under a status-colored bar */}
             <div style={{ borderLeft: `4px solid ${col.accent}`, paddingLeft: 8 }}>
@@ -356,79 +411,151 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
               {/* The id leads the row for the same reason it leads on the card:
                   it is the handle every dispatch and every message uses to name
                   this task, so it should be the first thing here too. */}
-              <span style={{
-                fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)'
-              }}>{task.id}</span>
-              <span style={{
-                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, padding: '2px 10px 1px',
-                background: col.accent, color: 'var(--cth-ink-900)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
-              }}>{t(col.labelKey)}</span>
-              {assigneeName
-                ? <PixelBadge status="working" label={assigneeName} />
-                : <span style={{ fontSize: 11, color: 'var(--cth-ink-300)' }}>{t('kanban.unassigned')}</span>}
+
+              {assigneeName ? (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7,
+                  padding: '3px 11px 3px 3px', borderRadius: 'var(--cth-radius-pill)',
+                  background: 'var(--cth-cream-100)',
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600,
+                  color: 'var(--cth-ink-900)'
+                }}>
+                  <span style={{
+                    width: 20, height: 20, borderRadius: 'var(--cth-radius-pill)',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'var(--cth-lilac)', color: '#FFFFFF', fontSize: 10, fontWeight: 700
+                  }}>{assigneeName.slice(0, 1).toUpperCase()}</span>
+                  {assigneeName}
+                </span>
+              ) : (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '4px 11px', borderRadius: 'var(--cth-radius-pill)',
+                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 12,
+                  color: 'var(--cth-ink-500)'
+                }}>
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <circle cx="10" cy="7.2" r="2.8" stroke="currentColor" strokeWidth="1.6" />
+                    <path d="M4.6 16.4c0-2.6 2.4-4.3 5.4-4.3s5.4 1.7 5.4 4.3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                  </svg>
+                  {t('kanban.unassigned')}
+                </span>
+              )}
               <PriorityDots level={Math.max(1, Math.min(5, task.priority))} />
-              <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-ui)', fontWeight: 600 }}>
-                {isNaN(created.getTime()) ? '' : created.toLocaleString()}
-              </span>
+
             </div>
 
             {/* The contract — preserved line by line */}
             <div style={{
-              padding: 16, background: 'var(--cth-paper-100)',
-              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-              fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '18px',
-              color: 'var(--cth-ink-900)', whiteSpace: 'pre-wrap', wordBreak: 'break-word'
+              padding: 14, background: 'var(--cth-cream-50)',
+              borderRadius: 'var(--cth-radius-input)',
+              fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '20px',
+              color: 'var(--cth-ink-700)', whiteSpace: 'pre-wrap', wordBreak: 'break-word'
             }} dir={rtl ? 'auto' : undefined}>
-              {task.description?.trim() || <span style={{ color: 'var(--cth-ink-300)' }}>{t('kanban.noDescription')}</span>}
+              {task.description?.trim() || <span style={{ color: 'var(--cth-ink-300)', fontStyle: 'italic' }}>{t('kanban.noDescription')}</span>}
             </div>
 
             {/* The human Q&A trail — every decision documented on the card.
                 Rendered as markdown (card variant), matching the ASK ME tab the
                 "view earlier answers" link arrives from. */}
             {(task.humanQA?.length ?? 0) > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-ink-500)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12, color: 'var(--cth-ink-500)' }}>
                   {t('kanban.humanQA')}
                 </div>
-                {task.humanQA!.map((e, i) => (
-                  <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <div style={{
-                      display: 'flex', gap: 8, padding: '5px 7px',
-                      background: 'var(--cth-lilac-light, #ece2f5)',
-                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-                      fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-900)'
-                    }}>
-                      <span style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, flexShrink: 0, marginTop: 2 }}>Q</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <MarkdownPreview source={e.q} variant="card" />
-                      </div>
-                    </div>
-                    {e.a ? (
-                      <div style={{
-                        display: 'flex', gap: 8, padding: '5px 7px',
-                        background: 'var(--cth-mint-light, #d9eed9)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-                        fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-900)'
-                      }}>
-                        <span style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, flexShrink: 0, marginTop: 2 }}>A</span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <MarkdownPreview source={e.a} variant="card" />
+                {task.humanQA!.map((e, i) => {
+                  const open = !e.a && !e.dismissedAt;
+                  const asked = e.askedAt ? new Date(e.askedAt) : null;
+                  const answered = e.answeredAt ? new Date(e.answeredAt) : null;
+                  const when = (d: Date | null) =>
+                    d && !isNaN(d.getTime()) ? d.toLocaleString() : '';
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        display: 'flex', flexDirection: 'column', gap: 0,
+                        borderRadius: 'var(--cth-radius-input)',
+                        overflow: 'hidden',
+                        boxShadow: open
+                          ? `inset 0 0 0 1px color-mix(in srgb, var(--cth-status-blocked) 40%, transparent)`
+                          : 'inset 0 0 0 1px var(--cth-ink-100)'
+                      }}
+                    >
+                      {/* Each exchange is one object with two halves, so a trail
+                          of five reads as five conversations rather than ten
+                          floating bubbles. */}
+                      <div style={{ padding: '10px 12px', background: 'var(--cth-paper-100)' }}>
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5,
+                          fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-500)'
+                        }}>
+                          <span style={{ fontWeight: 600, color: 'var(--cth-lilac)' }}>
+                            {t('kanban.asked')}
+                          </span>
+                          {when(asked) && <span>{when(asked)}</span>}
+                          {open && (
+                            <span style={{
+                              marginInlineStart: 'auto',
+                              display: 'inline-flex', alignItems: 'center', gap: 6,
+                              padding: '3px 9px', borderRadius: 'var(--cth-radius-pill)',
+                              background: 'color-mix(in srgb, var(--cth-status-blocked) 13%, transparent)',
+                              color: 'var(--cth-status-blocked)', fontWeight: 600
+                            }}>
+                              <StatusGlyph status="blocked" size={12} />
+                              {t('kanban.awaitingAnswer')}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{
+                          fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '20px',
+                          color: 'var(--cth-ink-900)'
+                        }}>
+                          <MarkdownPreview source={e.q} variant="card" />
                         </div>
                       </div>
-                    ) : (
-                      <div style={{ fontSize: 11, color: 'var(--cth-coral)', fontFamily: 'var(--cth-font-ui)', fontWeight: 600 }}>
-                        {t('kanban.awaitingAnswer')}
-                      </div>
-                    )}
-                  </div>
-                ))}
+
+                      {e.a && (
+                        <div style={{
+                          padding: '10px 12px',
+                          background: 'color-mix(in srgb, var(--cth-status-success) 7%, transparent)',
+                          borderTop: '1px solid var(--cth-ink-100)'
+                        }}>
+                          <div style={{
+                            display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5,
+                            fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-500)'
+                          }}>
+                            <span style={{ fontWeight: 600, color: 'var(--cth-status-success)' }}>
+                              {t('kanban.youAnswered')}
+                            </span>
+                            {when(answered) && <span>{when(answered)}</span>}
+                          </div>
+                          <div style={{
+                            fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '20px',
+                            color: 'var(--cth-ink-900)'
+                          }}>
+                            <MarkdownPreview source={e.a} variant="card" />
+                          </div>
+                        </div>
+                      )}
+
+                      {e.dismissedAt && !e.a && (
+                        <div style={{
+                          padding: '8px 12px', background: 'var(--cth-cream-50)',
+                          borderTop: '1px solid var(--cth-ink-100)',
+                          fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-500)'
+                        }}>{t('kanban.dismissedWithoutAnswer')}</div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
             {/* Dependencies, resolved to titles */}
             {deps.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-ink-500)' }}>
+                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12, color: 'var(--cth-ink-500)' }}>
                   {t('kanban.dependsOn')}
                 </div>
                 {deps.map((d) => {
@@ -447,25 +574,27 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
               </div>
             )}
 
-            {/* Controls */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <select
+            {/* Footer: where you act, so it is separated from what you are
+                reading rather than being the last paragraph of it. */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              margin: '4px -16px -16px', padding: '12px 16px',
+              background: 'var(--cth-cream-50)',
+              borderTop: '1px solid var(--cth-ink-100)'
+            }}>
+              <Dropdown
                 value={task.status}
-                onChange={(e) => onMove(e.target.value as Status)}
-                style={{
-                  flex: 1, padding: '4px 10px', background: 'var(--cth-paper-100)', border: 'none',
-                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', fontFamily: 'var(--cth-font-ui)',
-                  fontSize: 13, color: 'var(--cth-ink-900)', cursor: 'pointer'
-                }}
-              >
-                {COLUMNS.map((c) => (<option key={c.key} value={c.key}>{t(c.labelKey).toLowerCase()}</option>))}
-              </select>
+                ariaLabel={t('kanban.moveTo')}
+                onChange={(v) => onMove(v as Status)}
+                options={COLUMNS.map((c) => ({ value: c.key, label: t(c.labelKey), tone: c.accent }))}
+              />
+              <span style={{ flex: 1 }} />
               <PixelButton variant="secondary" size="sm" onClick={onAssign}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <Icon name="arrow-right" /> {t('kanban.assign')}
                 </span>
               </PixelButton>
-              <PixelButton variant="ghost" size="sm" onClick={onClose}>{t('common.close')}</PixelButton>
+              <PixelButton variant="primary" size="sm" onClick={onClose}>{t('common.close')}</PixelButton>
             </div>
           </div>
         </PixelPanel>

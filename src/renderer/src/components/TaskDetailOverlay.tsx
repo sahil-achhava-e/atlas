@@ -14,6 +14,9 @@ const POLL_MS = 5000;
 export function TaskDetailOverlay() {
   const taskDetailId = useStore((s) => s.taskDetailId);
   const closeTaskDetail = useStore((s) => s.closeTaskDetail);
+  const agentsForFaces = useStore((s) => s.agents);
+  const characterFor = (id?: string): string | undefined =>
+    id ? agentsForFaces.find((a) => a.id === id)?.character : undefined;
   const agents = useStore((s) => s.agents);
   const restorable = useStore((s) => s.restorableAgents);
   const [tasks, setTasks] = useState<HiveTask[]>([]);
@@ -72,6 +75,7 @@ export function TaskDetailOverlay() {
       task={task}
       all={tasks}
       assigneeName={nameFor(task.assignee)}
+      assigneeCharacter={characterFor(task.assignee)}
       onMove={(s) => void move(s)}
       onAssign={assign}
       onClose={closeTaskDetail}

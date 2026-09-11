@@ -139,7 +139,7 @@
 
   --cth-panel-border-inset:    inset 0 0 0 1px var(--cth-ink-100);
   --cth-panel-border-terminal: inset 0 0 0 1px var(--cth-ink-300);
-  --cth-panel-border-dialog:   inset 0 0 0 1px var(--cth-ink-500);
+  --cth-panel-border-dialog:   inset 0 0 0 1px var(--cth-ink-100);
 }
 
 /* ── Dark theme ──────────────────────────────────────────────────────────────
