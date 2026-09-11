@@ -25,13 +25,17 @@ export function Dropdown({
   options,
   onChange,
   ariaLabel,
-  width = 180
+  width = 180,
+  align = 'bottom'
 }: {
   value: string;
   options: DropdownOption[];
   onChange: (value: string) => void;
   ariaLabel?: string;
   width?: number | string;
+  /** Which way the menu opens. Bottom by default because the first use sits in
+   *  a dialog footer; a dropdown near the top of a panel wants 'top'. */
+  align?: 'top' | 'bottom';
 }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(() => Math.max(0, options.findIndex((o) => o.value === value)));
@@ -103,7 +107,8 @@ export function Dropdown({
           role="listbox"
           aria-label={ariaLabel}
           style={{
-            position: 'absolute', insetInlineStart: 0, bottom: 'calc(100% + 6px)',
+            position: 'absolute', insetInlineStart: 0,
+            ...(align === 'bottom' ? { bottom: 'calc(100% + 6px)' } : { top: 'calc(100% + 6px)' }),
             minWidth: '100%', zIndex: 50,
             padding: 4, borderRadius: 'var(--cth-radius-input)',
             background: 'var(--cth-paper-100)',

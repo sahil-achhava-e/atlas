@@ -1,3 +1,4 @@
+import React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PixelPanel } from './PixelPanel';
@@ -14,6 +15,7 @@ import { SkillsTab } from './SkillsTab';
 import { acquireTerminal, disposeTerminal, resetTerminal } from './terminalPool';
 import { terminalInstanceKey } from './terminalRecovery';
 import { Icon } from './Icon';
+import { Dropdown } from './Dropdown';
 import {
   TerminalIcon, BellIcon, TasksIcon, TeamIcon, MemoryIcon,
   MapIcon, EventsIcon, JobsIcon, TriggersIcon, SkillsIcon, EditIcon, CodeIcon
@@ -657,31 +659,67 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
 
   return (
     <Scroll>
-      <Section title={t('commandCenter.dispatchViaMichael', { godName: godName.toUpperCase() })}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-          <span style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>
-            {t('commandCenter.suggestedOwner')}
-          </span>
-          <Select value={dispatchTo} onChange={setDispatchTo}>
-            <option value="">{t('commandCenter.michaelDecides', { godName })}</option>
-            {agents.filter((a) => !a.isGod).map((a) => (
-              <option key={a.id} value={a.id}>{a.name}</option>
-            ))}
-          </Select>
-        </div>
-        <textarea
-          dir={rtl ? 'auto' : undefined}
-          value={dispatchText}
-          onChange={(e) => setDispatchText(e.target.value)}
-          rows={2}
-          placeholder={t('commandCenter.dispatchPlaceholder', { godName })}
-          style={textareaStyle}
-        />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-          <PixelButton variant="primary" size="sm" onClick={dispatch} disabled={!dispatchText.trim()}>
-            {t('commandCenter.dispatch')}
-          </PixelButton>
-          {dispatchMsg && <span style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>{dispatchMsg}</span>}
+      <Section title={t('commandCenter.dispatchViaMichael', { godName })}>
+        <div style={{
+          padding: 14, borderRadius: 'var(--cth-radius-card)',
+          background: 'var(--cth-paper-100)',
+          boxShadow: '0 0 0 1px var(--cth-ink-100), var(--cth-shadow-sm)',
+          display: 'flex', flexDirection: 'column', gap: 10
+        }}>
+          <textarea
+            className="cth-input"
+            dir={rtl ? 'auto' : undefined}
+            value={dispatchText}
+            onChange={(e) => setDispatchText(e.target.value)}
+            rows={3}
+            placeholder={t('commandCenter.dispatchPlaceholder', { godName })}
+            style={{
+              width: '100%', boxSizing: 'border-box', resize: 'vertical',
+              padding: '11px 13px', border: 'none',
+              borderRadius: 'var(--cth-radius-input)',
+              background: 'var(--cth-paper-100)',
+              fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '20px',
+              color: 'var(--cth-ink-900)', outline: 'none'
+            }}
+          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{
+              fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-500)', flexShrink: 0
+            }}>{t('commandCenter.suggestedOwner')}</span>
+            <Dropdown
+              value={dispatchTo}
+              ariaLabel={t('commandCenter.suggestedOwner')}
+              onChange={setDispatchTo}
+              width={160}
+              align="top"
+              options={[
+                { value: '', label: t('commandCenter.michaelDecides', { godName }) },
+                ...agents.filter((a) => !a.isGod).map((a) => ({
+                  value: a.id, label: a.name, tone: `var(--cth-${a.accent})`
+                }))
+              ]}
+            />
+            <span style={{ flex: 1 }} />
+            <button
+              onClick={dispatch}
+              disabled={!dispatchText.trim()}
+              style={{
+                height: 34, padding: '0 16px', flexShrink: 0,
+                border: 'none', borderRadius: 'var(--cth-radius-btn)',
+                cursor: dispatchText.trim() ? 'pointer' : 'not-allowed',
+                background: dispatchText.trim() ? 'var(--cth-lilac)' : 'transparent',
+                boxShadow: dispatchText.trim() ? 'var(--cth-shadow-btn)' : 'inset 0 0 0 1px var(--cth-ink-100)',
+                color: dispatchText.trim() ? '#FFFFFF' : 'var(--cth-ink-300)',
+                fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
+                transition: 'background 120ms ease, box-shadow 120ms ease, color 120ms ease'
+              }}
+            >{t('commandCenter.dispatch')}</button>
+          </div>
+          {dispatchMsg && (
+            <div style={{
+              fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-status-success)'
+            }}>{dispatchMsg}</div>
+          )}
         </div>
       </Section>
 
@@ -1237,8 +1275,11 @@ function Scroll({ children }: { children: React.ReactNode }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px', color: 'var(--cth-ink-500)', marginBottom: 6 }}>{title}</div>
+    <div style={{ marginBottom: 20 }}>
+      <div style={{
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12, lineHeight: '16px',
+        color: 'var(--cth-ink-500)', marginBottom: 10
+      }}>{title}</div>
       {children}
     </div>
   );
@@ -1279,18 +1320,33 @@ const textareaStyle: React.CSSProperties = {
 function Select({ value, onChange, disabled, children }: {
   value: string; onChange: (v: string) => void; disabled?: boolean; children: React.ReactNode;
 }) {
-  return (
-    <select
-      value={value}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.value)}
-      style={{
-        padding: '3px 10px', background: 'var(--cth-paper-100)',
-        border: 'none', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-        fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)', cursor: 'pointer',
-        // Never let a long option name push the sidebar wider than it is.
-        minWidth: 0, maxWidth: '100%'
-      }}
-    >{children}</select>
-  );
+  const options: { value: string; label: string }[] = [];
+  const walk = (node: React.ReactNode): void => {
+    React.Children.forEach(node, (child) => {
+      if (!React.isValidElement(child)) return;
+      if (child.type === 'option') {
+        const p = child.props as { value?: string; children?: React.ReactNode };
+        options.push({
+          value: String(p.value ?? ''),
+          label: React.Children.toArray(p.children).map((c) => (typeof c === 'string' || typeof c === 'number' ? String(c) : '')).join('')
+        });
+        return;
+      }
+      walk((child.props as { children?: React.ReactNode }).children);
+    });
+  };
+  walk(children);
+
+  if (disabled) {
+    const current = options.find((o) => o.value === value);
+    return (
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', height: 34, padding: '0 12px',
+        borderRadius: 'var(--cth-radius-btn)', background: 'var(--cth-cream-50)',
+        fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-300)',
+        minWidth: 0, maxWidth: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+      }}>{current?.label ?? value}</span>
+    );
+  }
+  return <Dropdown value={value} options={options} onChange={onChange} width="auto" align="top" />;
 }
