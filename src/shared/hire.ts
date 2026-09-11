@@ -30,8 +30,6 @@ export const HIRE_SPEC_V1 = 'munder-difflin/hire@1';
  *  in the `skills` field). A manifest can never name an arbitrary skill path —
  *  only these curated, read-only, no-secret skill ids are allowlisted. */
 export const BUNDLED_SKILL_IDS: ReadonlySet<string> = new Set([
-  'md-hive-sync',
-  'md-fetch-summarize',
   'md-audit'
 ]);
 

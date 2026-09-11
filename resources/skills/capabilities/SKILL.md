@@ -40,20 +40,20 @@ hand. Each skill prints inclusive civil dates (`YYYY-MM-DD`, your local
 timezone) **and** the half-open `[startUtc, endExclusiveUtc)` instants for
 timestamp queries. All are read-only (clock + stdout only; no writes, no network).
 
-Named shortcuts (invoke directly):
+Every window comes from `/temporal`. There are no per-window skills: one skill
+takes the window as an argument.
 
-| Skill | Range it resolves |
+| Window | Range it resolves |
 | --- | --- |
-| `/today`, `/yesterday` | the single civil day |
-| `/thisWeek`, `/lastWeek` | ISO week (Mon-start); this = Mon→today, last = prior full week |
-| `/last7Days`, `/last30Days` | rolling N-day window ending today |
-| `/thisMonth`, `/lastMonth` | this = 1st→today; last = prior full month |
-| `/thisQuarter`, `/lastQuarter` | this = quarter-start→today; last = prior full quarter |
-| `/thisYear`, `/lastYear` | this = Jan 1→today (YTD); last = prior full year |
+| `today`, `yesterday` | the single civil day |
+| `thisWeek`, `lastWeek` | ISO week (Mon-start); this = Mon→today, last = prior full week |
+| `last7Days`, `last30Days` | rolling N-day window ending today |
+| `thisMonth`, `lastMonth` | this = 1st→today; last = prior full month |
+| `thisQuarter`, `lastQuarter` | this = quarter-start→today; last = prior full quarter |
+| `thisYear`, `lastYear` | this = Jan 1→today (YTD); last = prior full year |
+| `last90Days`, `last12Months`, `lastNdays` / `lastNweeks` / `lastNmonths` | anything else |
 
-For **any** window — including `last90Days`, `last12Months`, or arbitrary
-`lastNdays` / `lastNweeks` / `lastNmonths` — use `/temporal`, or call the
-resolver directly:
+Use `/temporal`, or call the resolver directly:
 
 ```bash
 node "$AGENT_DIR/.claude/skills/temporal/when.mjs" last30Days   # one window

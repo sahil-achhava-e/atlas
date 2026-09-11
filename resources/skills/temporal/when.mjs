@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // when.mjs — temporal range resolver for spawned hive workers.
 //
-// Single source of truth for every /today, /yesterday, /thisWeek, /last30Days …
+// Single source of truth for every named window: today, yesterday, thisWeek,
+// last30Days, and the arbitrary lastNdays / lastNweeks / lastNmonths forms.
 // skill. Resolves named windows to CONCRETE ISO date ranges relative to the
 // worker's run time (`new Date()` at invocation), so a worker never re-derives
 // dates by hand.

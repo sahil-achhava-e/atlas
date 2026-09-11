@@ -63,6 +63,6 @@ Each window prints a human line plus a JSON record:
 - `days`, `inclusive`, `timezone`, `tzOffsetMinutes`, `asOf` — span, tz, and the
   instant the range was resolved
 
-Use the returned dates as the time bounds for the task. The named shortcuts
-`/today`, `/yesterday`, `/last30Days`, `/lastQuarter`, … each call this same
-resolver for their one window.
+Use the returned dates as the time bounds for the task. This skill is the only
+one for dates: pass the window as an argument rather than looking for a
+`/today` or `/last30Days` skill.
