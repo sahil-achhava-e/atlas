@@ -132,13 +132,19 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
                 <span style={{ width: 9, height: 9, background: state.dot, boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)' }} />
                 {state.label}
               </span>
-              {status?.available && (
+              {/* Shown whether or not a CLI is resolved yet. It used to require
+                  `available`, which deadlocked the one path that matters now:
+                  switch memory off before the container image is built and
+                  `available` stays false forever, so the button that would turn
+                  it back on never renders. Turning it ON is what starts the
+                  build. */}
+              {!status?.preparing && (
                 <PixelButton
-                  variant={status.enabled ? 'secondary' : 'primary'}
+                  variant={status?.enabled ? 'secondary' : 'primary'}
                   size="sm"
                   onClick={toggleEnabled}
                 >
-                  {status.enabled ? t('memoryPanel.turnOff') : t('memoryPanel.turnOn')}
+                  {status?.enabled ? t('memoryPanel.turnOff') : t('memoryPanel.turnOn')}
                 </PixelButton>
               )}
             </div>
@@ -149,7 +155,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
                 fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: 1.6,
                 background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', padding: 10
               }}>
-                {t('memoryPanel.notInstalled')}
+                {t('memoryPanel.needsDocker')}
                 {/* The commands used to be inlined here, hardcoded for macOS
                     (`curl … | sh`, `source ~/.zshrc`) — dead text under cmd.exe or
                     PowerShell, on the platform most likely to be missing the tool.
