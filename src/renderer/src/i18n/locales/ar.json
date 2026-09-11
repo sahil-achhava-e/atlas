@@ -1221,7 +1221,8 @@
     "legendPropose": "اقتراح",
     "legendAgreeDone": "موافقة/إنجاز",
     "legendRefuse": "رفض",
-    "legendInformTopic": "إخبار/موضوع"
+    "legendInformTopic": "إخبار/موضوع",
+    "noMessages": "لم يراسل أحد أحدًا بعد. تظهر الخطوط هنا عندما يتحدث الوكلاء."
   },
   "integrations": {
     "errLabel": "أعطِه تسمية.",

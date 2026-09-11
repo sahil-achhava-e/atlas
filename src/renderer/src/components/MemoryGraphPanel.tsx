@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next';
 import { useStore } from '@/store/store';
 import { PixelBadge } from './PixelBadge';
 import { Icon } from './Icon';
+import { StatusGlyph } from './StatusGlyph';
 import type { MessageAct } from '@/scene/office/MessageEnvelope';
 import {
   buildGraph,
@@ -190,11 +191,46 @@ export function MemoryGraphPanel({
       {/* toolbar */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', flexShrink: 0,
-        borderBottom: '1px solid var(--cth-ink-300)', background: 'var(--cth-cream-100)', flexWrap: 'wrap'
+        borderBottom: '1px solid var(--cth-ink-100)', background: 'var(--cth-paper-100)', flexWrap: 'wrap'
       }}>
-        <Toggle on={showTopics} onClick={() => setShowTopics((v) => !v)} label={t('memoryGraph.topics')} />
-        <button onClick={refresh} style={iconBtn}>
-          <Icon name="gear" /> {t('memoryGraph.refresh')}
+        <button
+          onClick={() => setShowTopics((v) => !v)}
+          aria-pressed={showTopics}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 7,
+            height: 30, padding: '0 12px', border: 'none', cursor: 'pointer',
+            borderRadius: 'var(--cth-radius-btn)',
+            background: showTopics ? 'var(--cth-lilac)' : 'var(--cth-cream-100)',
+            color: showTopics ? '#FFFFFF' : 'var(--cth-ink-700)',
+            boxShadow: showTopics ? 'var(--cth-shadow-sm)' : 'none',
+            fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, fontWeight: 600,
+            transition: 'background 120ms ease, color 120ms ease'
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <rect x="3.4" y="3.4" width="5.6" height="5.6" rx="1.6" stroke="currentColor" strokeWidth="1.7" />
+            <rect x="11" y="3.4" width="5.6" height="5.6" rx="1.6" stroke="currentColor" strokeWidth="1.7" />
+            <rect x="3.4" y="11" width="5.6" height="5.6" rx="1.6" stroke="currentColor" strokeWidth="1.7" />
+            <rect x="11" y="11" width="5.6" height="5.6" rx="1.6" stroke="currentColor" strokeWidth="1.7" />
+          </svg>
+          {t('memoryGraph.topics')}
+        </button>
+        <button
+          onClick={refresh}
+          className="cth-iconbar"
+          data-label={t('memoryGraph.refresh')}
+          aria-label={t('memoryGraph.refresh')}
+          style={{
+            width: 30, height: 30, border: 'none', cursor: 'pointer',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: 'var(--cth-radius-btn)', background: 'transparent',
+            color: 'var(--cth-sky)'
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M16.4 10a6.4 6.4 0 11-2.3-4.9" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+            <path d="M16.6 3.4v4h-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
         <div style={{ flex: 1 }} />
         {showTopics && (
@@ -296,24 +332,27 @@ export function MemoryGraphPanel({
                   onClick={() => { if (navigable && !moved.current) onJumpToMemory(n.id); }}
                   style={{ cursor: navigable ? 'pointer' : 'grab' }}
                 >
-                  {/* hard offset shadow */}
-                  <rect x={-half + 2} y={-half + 2} width={s} height={s} fill="var(--cth-ink-900)" />
-                  {/* body */}
-                  <rect
-                    x={-half} y={-half} width={s} height={s}
-                    fill={nodeFill(n)}
-                    stroke="var(--cth-ink-900)"
-                    strokeWidth={n.kind === 'agent' && n.isGod ? 2 : 1.5}
-                  />
-                  {/* double border for god + human */}
-                  {((n.kind === 'agent' && n.isGod) || (n.kind === 'pseudo' && n.id === 'human')) && (
-                    <rect x={-half + 3} y={-half + 3} width={s - 6} height={s - 6}
-                      fill="none" stroke="var(--cth-ink-900)" strokeWidth={1} />
-                  )}
-                  {/* status ring for agents */}
-                  {n.kind === 'agent' && (
-                    <rect x={-half - 2} y={-half - 2} width={s + 4} height={s + 4}
-                      fill="none" stroke={`var(--cth-status-${n.status})`} strokeWidth={1.5} />
+                  {n.kind === 'topic' ? (
+                    <rect
+                      x={-half} y={-half} width={s} height={s} rx={6}
+                      fill={nodeFill(n)}
+                      stroke="var(--cth-ink-100)"
+                      strokeWidth={1}
+                    />
+                  ) : (
+                    <>
+                      {/* the state ring doubles as the node's edge, so an agent
+                          carries its status without a second outline */}
+                      <circle
+                        r={half}
+                        fill={nodeFill(n)}
+                        stroke={n.kind === 'agent' ? `var(--cth-status-${n.status})` : 'var(--cth-ink-300)'}
+                        strokeWidth={n.kind === 'agent' ? 2.5 : 1.5}
+                      />
+                      {n.kind === 'agent' && n.isGod && (
+                        <circle r={half - 5} fill="none" stroke="var(--cth-paper-100)" strokeWidth={1.5} opacity={0.7} />
+                      )}
+                    </>
                   )}
                 </g>
               );
@@ -335,9 +374,10 @@ export function MemoryGraphPanel({
                   textAnchor="middle"
                   opacity={dim ? 0.25 : 1}
                   style={{
-                    fontFamily: isTopic ? 'var(--cth-font-mono)' : 'var(--cth-font-ui)',
-                    fontSize: isTopic ? 12 : 11,
-                    fill: isTopic ? 'var(--cth-ink-700)' : 'var(--cth-ink-900)'
+                    fontFamily: 'var(--cth-font-ui)',
+                    fontSize: isTopic ? 11 : 12,
+                    fontWeight: isTopic ? 400 : 600,
+                    fill: isTopic ? 'var(--cth-ink-500)' : 'var(--cth-ink-900)'
                   }}
                 >{truncate(n.label, isTopic ? 20 : 16)}</text>
               );
@@ -348,9 +388,20 @@ export function MemoryGraphPanel({
         {/* empty hint */}
         {messageEdgeCount === 0 && !showTopics && (
           <div style={{
-            position: 'absolute', top: 10, left: 0, right: 0, textAlign: 'center',
-            fontSize: 13, color: 'var(--cth-ink-500)', pointerEvents: 'none'
-          }}>No messages logged yet — the hive is quiet. Agents shown as roster.</div>
+            position: 'absolute', top: 18, left: '50%', transform: 'translateX(-50%)',
+            display: 'flex', alignItems: 'center', gap: 9,
+            padding: '9px 14px', maxWidth: 'calc(100% - 32px)',
+            borderRadius: 'var(--cth-radius-pill)',
+            background: 'var(--cth-paper-100)',
+            boxShadow: '0 0 0 1px var(--cth-ink-100), var(--cth-shadow-sm)',
+            fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, color: 'var(--cth-ink-500)',
+            pointerEvents: 'none'
+          }}>
+            <span style={{ display: 'inline-flex', color: 'var(--cth-status-idle)', flexShrink: 0 }}>
+              <StatusGlyph status="idle" size={15} />
+            </span>
+            {t('memoryGraph.noMessages')}
+          </div>
         )}
 
         {/* tooltip */}
@@ -434,13 +485,21 @@ function Legend() {
   ];
   return (
     <div style={{
-      position: 'absolute', bottom: 8, left: 8, padding: '5px 7px',
-      background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-      display: 'flex', flexWrap: 'wrap', gap: '2px 10px', maxWidth: 280, pointerEvents: 'none'
+      position: 'absolute', bottom: 10, left: 10, padding: '8px 10px',
+      background: 'var(--cth-paper-100)',
+      borderRadius: 'var(--cth-radius-input)',
+      boxShadow: '0 0 0 1px var(--cth-ink-100), var(--cth-shadow-sm)',
+      display: 'flex', flexWrap: 'wrap', gap: '4px 12px', maxWidth: 300, pointerEvents: 'none'
     }}>
       {items.map((it) => (
-        <span key={it.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--cth-ink-700)' }}>
-          <span style={{ width: 9, height: 3, background: it.c, display: 'inline-block' }} /> {it.label}
+        <span key={it.label} style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-500)'
+        }}>
+          <span style={{
+            width: 7, height: 7, borderRadius: 'var(--cth-radius-pill)',
+            background: it.c, display: 'inline-block', flexShrink: 0
+          }} /> {it.label}
         </span>
       ))}
     </div>
@@ -456,7 +515,9 @@ function Tooltip({ x, y, wrap, children }: { x: number; y: number; wrap: { w: nu
       position: 'absolute', left: Math.max(6, left), top: flipUp ? undefined : y + 14,
       bottom: flipUp ? wrap.h - y + 14 : undefined,
       width: W, padding: 12, pointerEvents: 'none', zIndex: 5,
-      background: 'var(--cth-cream-50)', boxShadow: '2px 2px 0 var(--cth-ink-900), inset 0 0 0 1px var(--cth-ink-300)'
+      background: 'var(--cth-paper-100)', borderRadius: 'var(--cth-radius-input)',
+      boxShadow: '0 0 0 1px var(--cth-ink-100), var(--cth-shadow-hover)',
+      fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '18px', color: 'var(--cth-ink-900)'
     }}>{children}</div>
   );
 }

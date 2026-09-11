@@ -1295,7 +1295,8 @@
     "legendPropose": "propose",
     "legendAgreeDone": "agree/done",
     "legendRefuse": "refuse",
-    "legendInformTopic": "inform/topic"
+    "legendInformTopic": "inform/topic",
+    "noMessages": "Nobody has messaged anyone yet. Lines appear here as agents talk."
   },
   "integrations": {
     "errLabel": "Give it a label.",
