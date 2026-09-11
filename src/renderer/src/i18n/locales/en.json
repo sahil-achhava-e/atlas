@@ -922,7 +922,9 @@
     "microphone": "Microphone",
     "speaker": "Speaker",
     "systemDefault": "System default",
-    "namesHint": "Device names appear after you first start a voice session and grant mic access. The microphone choice applies the next time {{godName}} connects; the speaker switches live."
+    "showNames": "Show device names",
+      "asking": "asking…",
+      "namesHint": "macOS hides device names until this app has been granted the microphone once. Grant it and both lists fill in. The microphone applies the next time {{godName}} connects; the speaker switches live."
   },
   "realtimeToggle": {
     "talk": "talk",

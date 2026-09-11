@@ -17,6 +17,7 @@
  * Branch feat/realtime-michael. See board.md "🎙 REALTIME MICHAEL".
  */
 import { useCallback, useEffect, useState } from 'react';
+import { PixelButton } from '@/components/PixelButton';
 import { useTranslation } from 'react-i18next';
 import { useRealtimeMichael } from './session';
 import { useStore } from '@/store/store';
@@ -67,6 +68,8 @@ export function RealtimeDevicePicker(): React.ReactElement {
   const [speakers, setSpeakers] = useState<AudioDevice[]>([]);
   /** True once at least one device exposes a real label ⇒ mic permission granted. */
   const [labelled, setLabelled] = useState(false);
+  const [asking, setAsking] = useState(false);
+  const [askError, setAskError] = useState('');
 
   const refresh = useCallback(async () => {
     const [ins, outs] = await Promise.all([
@@ -77,6 +80,23 @@ export function RealtimeDevicePicker(): React.ReactElement {
     setSpeakers(outs);
     setLabelled(ins.some((m) => m.label && !/^Microphone \d+$/.test(m.label)));
   }, []);
+
+  /** The browser hides device LABELS until a page has been granted the
+   *  microphone once — that is why the lists read "System default" and nothing
+   *  else. Asking for a stream and stopping it immediately is the whole trick:
+   *  permission sticks, labels appear, and no audio is ever captured. */
+  const askAccess = useCallback(async () => {
+    setAsking(true); setAskError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      await refresh();
+    } catch (e) {
+      setAskError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAsking(false);
+    }
+  }, [refresh]);
 
   useEffect(() => {
     void refresh();
@@ -125,9 +145,14 @@ export function RealtimeDevicePicker(): React.ReactElement {
       )}
 
       {!labelled && (
-        <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
-          {t('devicePicker.namesHint')}
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
+          <PixelButton variant="secondary" size="sm" onClick={() => { void askAccess(); }} disabled={asking}>
+            {asking ? t('devicePicker.asking') : t('devicePicker.showNames')}
+          </PixelButton>
+          <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+            {askError || t('devicePicker.namesHint')}
+          </span>
+        </div>
       )}
     </div>
   );
