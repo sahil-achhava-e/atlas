@@ -15,6 +15,8 @@ import { SkillsTab } from './SkillsTab';
 import { acquireTerminal, disposeTerminal, resetTerminal } from './terminalPool';
 import { terminalInstanceKey } from './terminalRecovery';
 import { Icon } from './Icon';
+import { MarkdownPreview } from '@/markdown/MarkdownPreview';
+import { StatusGlyph } from './StatusGlyph';
 import { Dropdown } from './Dropdown';
 import {
   TerminalIcon, BellIcon, TasksIcon, TeamIcon, MemoryIcon,
@@ -1027,17 +1029,76 @@ function ActivityTab() {
   return (
     <Scroll>
       <Section title={t('commandCenter.activity')}>
-        {log.length === 0 && <Muted>{t('commandCenter.nothingYet')}</Muted>}
-        {[...log].reverse().map((e, i) => (
-          <div key={i} style={{ fontSize: 13, color: 'var(--cth-ink-700)', padding: '2px 0', display: 'flex', gap: 8 }}>
-            <span style={{ color: 'var(--cth-ink-300)', flexShrink: 0 }}>{e.kind ?? '·'}</span>
-            <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fmt(e)}</span>
+        {log.length === 0 ? (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 9,
+            padding: '14px 14px', borderRadius: 'var(--cth-radius-input)',
+            background: 'var(--cth-cream-50)',
+            fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-500)'
+          }}>
+            <span style={{ display: 'inline-flex', color: 'var(--cth-status-idle)' }}>
+              <StatusGlyph status="idle" size={16} />
+            </span>
+            {t('commandCenter.nothingYet')}
           </div>
-        ))}
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {[...log].reverse().map((e, i, all) => {
+              const kind = String(e.kind ?? '');
+              const tone = kind === 'escalate' || kind === 'approval' ? 'var(--cth-coral)'
+                : kind === 'message' ? 'var(--cth-lilac)'
+                : kind === 'spawn' ? 'var(--cth-status-success)'
+                : kind === 'drain' ? 'var(--cth-sky)'
+                : 'var(--cth-ink-300)';
+              const when = typeof e.ts === 'number' ? new Date(e.ts) : null;
+              return (
+                <div key={i} style={{ display: 'flex', gap: 10, minWidth: 0 }}>
+                  {/* dot and rail: the rail stops at the last event so the
+                      timeline does not trail off into nothing */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 10 }}>
+                    <span style={{
+                      width: 8, height: 8, marginTop: 6, borderRadius: 'var(--cth-radius-pill)',
+                      background: tone, flexShrink: 0
+                    }} />
+                    {i < all.length - 1 && (
+                      <span style={{ flex: 1, width: 1, background: 'var(--cth-ink-100)', marginTop: 3 }} />
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0, paddingBottom: 12 }}>
+                    <div style={{
+                      fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '19px',
+                      color: 'var(--cth-ink-900)', wordBreak: 'break-word'
+                    }}>{fmt(e)}</div>
+                    <div style={{
+                      fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-500)', marginTop: 2
+                    }}>
+                      {kind}{when && !isNaN(when.getTime()) ? ` · ${when.toLocaleTimeString()}` : ''}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </Section>
 
       <Section title={t('commandCenter.board')}>
-        <Pre>{board || t('commandCenter.boardEmpty')}</Pre>
+        {board ? (
+          <div style={{
+            padding: 14, borderRadius: 'var(--cth-radius-input)',
+            background: 'var(--cth-cream-50)',
+            fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '20px',
+            color: 'var(--cth-ink-900)'
+          }}>
+            <MarkdownPreview source={board} variant="card" />
+          </div>
+        ) : (
+          <div style={{
+            padding: '14px', borderRadius: 'var(--cth-radius-input)',
+            background: 'var(--cth-cream-50)',
+            fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-500)'
+          }}>{t('commandCenter.boardEmpty')}</div>
+        )}
       </Section>
     </Scroll>
   );

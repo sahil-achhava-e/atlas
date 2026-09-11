@@ -260,6 +260,37 @@
     return Object.assign({}, config);
   },
   resolveSessionCwd: async function (_id, cwd) { return cwd || '/Users/you/atlas-data'; },
+  // A sample hive log, so the Activity timeline can be seen in a browser: one of
+  // each kind it knows how to format.
+  hiveLog: async function () {
+    var now = Date.now();
+    return [
+      { ts: now - 41 * 60000, kind: 'spawn', agentId: 'pam', name: 'Pam' },
+      { ts: now - 38 * 60000, kind: 'message', from: 'atlas', to: 'pam', act: 'request',
+        subject: 'Trace every caller of attachReceiptPdf' },
+      { ts: now - 26 * 60000, kind: 'drain', agentId: 'pam', count: 3 },
+      { ts: now - 22 * 60000, kind: 'message', from: 'pam', to: 'atlas', act: 'inform',
+        subject: 'Two callers, both in email.service.ts' },
+      { ts: now - 15 * 60000, kind: 'escalate', subject: 'Which branch for the booking migration?' },
+      { ts: now - 9 * 60000, kind: 'approval', approve: true },
+      { ts: now - 4 * 60000, kind: 'message', from: 'atlas', to: 'jim', act: 'request',
+        subject: 'Review the voucher endpoint removal' }
+    ];
+  },
+  hiveBoard: async function () {
+    return [
+      '## In flight',
+      '- **vms-1275** receipt PDF image inlining - Pam, PR open in ADO',
+      '- **vms-1288** smoke test for voucher redemption - Pam, writing tests',
+      '',
+      '## Waiting on the human',
+      '- **vms-1284** branch choice for the booking migration',
+      '- **vms-1290** SMTP password in the ADO library',
+      '',
+      '## Done this week',
+      '- **vms-1264** pipeline caches node_modules between stages'
+    ].join('\n');
+  },
   skillsDisabled: async () => (window.__skillsOff = window.__skillsOff || []),
   skillsSetEnabled: async (name, on) => {
     const cur = new Set(window.__skillsOff || []);
