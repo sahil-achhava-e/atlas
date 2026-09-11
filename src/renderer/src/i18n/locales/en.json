@@ -1016,7 +1016,7 @@
     "summaryNone": "none",
     "summary": "{{on}} of {{total}} on",
     "nothingScheduled": "Nothing is scheduled yet.",
-    "addSchedule": "add a schedule",
+    "addSchedule": "Add schedule",
     "newSchedule": "New schedule",
     "label": "Label",
     "labelPlaceholder": "What this run is for",

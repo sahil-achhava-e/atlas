@@ -127,7 +127,23 @@ export function SchedulesSection({ onSummary }: { onSummary?: (s: string) => voi
 
       {!adding && (
         <div style={{ marginTop: 8 }}>
-          <PixelButton variant="secondary" size="sm" onClick={() => setAdding(true)}>{t('schedulesSection.addSchedule')}</PixelButton>
+          {/* The one create action in this card, so it wears the brand the same
+              way Add skill does rather than a hairline that reads as optional. */}
+          <button
+            onClick={() => setAdding(true)}
+            style={{
+              height: 30, padding: '0 14px', border: 'none', cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
+              color: '#fff', background: 'var(--cth-lilac)',
+              borderRadius: 'var(--cth-radius-btn)', boxShadow: 'var(--cth-shadow-sm)'
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 3.2v9.6M3.2 8h9.6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+            </svg>
+            {t('schedulesSection.addSchedule')}
+          </button>
         </div>
       )}
       {adding && (
