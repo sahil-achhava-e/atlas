@@ -64,9 +64,21 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
    *  second does it. No modal — the row itself becomes the confirmation. */
   const [confirming, setConfirming] = useState<string | null>(null);
 
+  /** Names switched off. An agent never loads these: a bundled one is not copied
+   *  into its folder, and every scope is denied in the spawned settings. */
+  const [disabled, setDisabled] = useState<string[]>([]);
+
   const loadLocal = useCallback(async () => {
     try { setLocal(await window.cth.skillsLocal(agentCwd)); } catch { setLocal([]); }
+    try { setDisabled(await window.cth.skillsDisabled()); } catch { /* off list unknown → treat all as on */ }
   }, [agentCwd]);
+
+  const toggle = async (sk: LocalSkill, on: boolean) => {
+    // Optimistic: the switch must feel instant, and a failed write just leaves
+    // the next refresh to correct it.
+    setDisabled((d) => (on ? d.filter((n) => n !== sk.name) : [...new Set([...d, sk.name])]));
+    try { setDisabled(await window.cth.skillsSetEnabled(sk.name, on)); } catch { void loadLocal(); }
+  };
 
 
   useEffect(() => { void loadLocal(); }, [loadLocal]);
@@ -170,13 +182,29 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {shownLocal.map((s) => (
-                <div key={s.id + s.path} style={rowStyle}>
+                <div
+                  key={s.id + s.path}
+                  style={disabled.includes(s.name) ? { ...rowStyle, opacity: 0.55 } : rowStyle}
+                >
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 11, flex: 1, minWidth: 0 }}>
                       {s.name.toUpperCase()}
                     </span>
                     <Chip text={PROVIDER_LABEL[s.provider]} />
                     <Chip text={s.scope} tone={s.scope === 'project' ? 'accent' : 'quiet'} />
+                    <label style={{
+                      display: 'flex', gap: 5, alignItems: 'center', cursor: 'pointer',
+                      fontFamily: 'var(--cth-font-ui)', fontSize: 11,
+                      color: disabled.includes(s.name) ? 'var(--cth-ink-500)' : 'var(--cth-ink-800)'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={!disabled.includes(s.name)}
+                        onChange={(e) => void toggle(s, e.target.checked)}
+                        style={{ accentColor: 'var(--cth-mint)', cursor: 'pointer', margin: 0 }}
+                      />
+                      {disabled.includes(s.name) ? t('skillsTab.off') : t('skillsTab.on')}
+                    </label>
                   </div>
                   {s.description && (
                     <div style={{ fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: 1.45 }}>

@@ -695,6 +695,10 @@ export class HiveManager {
        *  copied into the agent's `.claude/skills/` per spawn; undefined or missing
        *  is a no-op (tolerated until Kevin populates the resource dir). */
       skillsDir?: string;
+      /** Skill names the human switched off in the Skills tab. Bundled ones are
+       *  not copied at all (their description would otherwise cost context in
+       *  every agent at boot); every scope is additionally denied in settings. */
+      disabledSkills?: string[];
       /** Extra directories the agent's sandbox may write (e.g. the shared
        *  MemPalace dir, which `mempalace` mutates). Absolute paths; ignored
        *  for providers without a sandbox. */
@@ -725,7 +729,7 @@ export class HiveManager {
     // app-resources skills/ dir on every spawn (same policy as identity.md), so an
     // agent always rides with the shipped safe skill set. Tolerant: a missing or
     // partial source dir is a no-op (Kevin populates the resource dir in lp-manifest).
-    if (opts.skillsDir) this.copyBundledSkills(opts.skillsDir, join(dir, '.claude', 'skills'));
+    if (opts.skillsDir) this.copyBundledSkills(opts.skillsDir, join(dir, '.claude', 'skills'), opts.disabledSkills ?? []);
 
     const memory = join(dir, 'memory.md');
     if (!existsSync(memory)) {
@@ -966,7 +970,7 @@ export class HiveManager {
     if (sock && shim) {
       env.HIVE_SOCK = sock;
       const settingsPath = join(dir, 'settings.json');
-      this.writeJson(settingsPath, this.hookSettings(shim, meta.cwd, opts.mcpDefaults, opts.theme, this.sandboxWritableDirs(meta, dir, root, opts.extraWritableDirs), opts.dbConnections ?? []));
+      this.writeJson(settingsPath, this.hookSettings(shim, meta.cwd, opts.mcpDefaults, opts.theme, this.sandboxWritableDirs(meta, dir, root, opts.extraWritableDirs), opts.dbConnections ?? [], opts.disabledSkills ?? []));
       args.push('--settings', settingsPath);
     }
     return { args, env };
@@ -1147,7 +1151,7 @@ export class HiveManager {
     return Array.from(new Set(out));
   }
 
-  private hookSettings(shim: string, cwd: string, cfg: McpDefaultsMap, theme?: 'light' | 'dark', writableDirs: string[] = [], dbConns: DbConnEnv = []): unknown {
+  private hookSettings(shim: string, cwd: string, cfg: McpDefaultsMap, theme?: 'light' | 'dark', writableDirs: string[] = [], dbConns: DbConnEnv = [], disabledSkills: string[] = []): unknown {
     // Bundled node, NOT bare `node` — see nodeLauncherPath(). Claude runs each of
     // these through `sh -c` with a stripped PATH, where `node` is often absent.
     const cmd = this.nodeRun(shim);
@@ -1191,9 +1195,21 @@ export class HiveManager {
       // failIfUnavailable stays false: a platform without a sandbox (Windows)
       // runs as before rather than refusing to spawn.
       ...(writableDirs.length
+        ? { sandbox: { enabled: true, filesystem: { allowWrite: writableDirs } } }
+        : {}),
+      // `permissions` carries two unrelated things, so it is built once rather
+      // than spread twice — a second spread would silently drop the first.
+      // Skill(name) deny is what turns a skill OFF for every scope at once: a
+      // user or project skill lives outside our control and cannot be un-copied,
+      // and the CLI honours the deny rule wherever the skill came from.
+      ...(writableDirs.length || disabledSkills.length
         ? {
-            sandbox: { enabled: true, filesystem: { allowWrite: writableDirs } },
-            permissions: { additionalDirectories: writableDirs }
+            permissions: {
+              ...(writableDirs.length ? { additionalDirectories: writableDirs } : {}),
+              ...(disabledSkills.length
+                ? { deny: disabledSkills.map((n) => `Skill(${n})`) }
+                : {})
+            }
           }
         : {}),
       hooks: {
@@ -1277,9 +1293,18 @@ export class HiveManager {
    * (Kevin populates the resource dir in lp-manifest), and any IO error is swallowed
    * so skill provisioning can never block a spawn.
    */
-  private copyBundledSkills(srcDir: string, destDir: string): void {
+  private copyBundledSkills(srcDir: string, destDir: string, disabled: string[] = []): void {
     try {
       if (!existsSync(srcDir)) return;
+      // A skill switched off after it was already copied must actually go, or
+      // the agent keeps reading it from its own folder forever. The deny rule
+      // would still block invocation, but the description would keep costing
+      // context at boot, which is half the point of switching it off.
+      const off = new Set(disabled);
+      for (const name of off) {
+        const stale = join(destDir, name);
+        if (existsSync(stale)) rmSync(stale, { recursive: true, force: true });
+      }
       const copyTree = (from: string, to: string): void => {
         const entries = readdirSync(from, { withFileTypes: true });
         if (!entries.length) return;
@@ -1291,7 +1316,14 @@ export class HiveManager {
           else if (ent.isFile()) copyFileSync(s, d);
         }
       };
-      copyTree(srcDir, destDir);
+      mkdirSync(destDir, { recursive: true });
+      for (const ent of readdirSync(srcDir, { withFileTypes: true })) {
+        if (ent.isDirectory() && off.has(ent.name)) continue;
+        const from = join(srcDir, ent.name);
+        const to = join(destDir, ent.name);
+        if (ent.isDirectory()) copyTree(from, to);
+        else if (ent.isFile()) copyFileSync(from, to);
+      }
     } catch (e) { console.error('[hive] copyBundledSkills failed:', e); }
   }
 

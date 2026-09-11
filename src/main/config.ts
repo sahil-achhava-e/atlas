@@ -188,6 +188,10 @@ export interface HarnessConfig {
   recentHives?: string[];
   /** Folders the user registered during onboarding (used as quick-picks). */
   registeredRepos: string[];
+  /** Skill names switched OFF in the Skills tab. Stored by name because that is
+   *  what `Skill(<name>)` deny rules match and what the CLI calls the skill —
+   *  a path would break the moment a skill moved scope. */
+  disabledSkills?: string[];
   /** When true, new agents are spawned with --permission-mode bypassPermissions. */
   autoMode: boolean;
   /** May the orchestrator ("Michael") spin up agents on its own?
@@ -664,6 +668,11 @@ export function writeConfig(patch: Partial<HarnessConfig>): HarnessConfig {
   // as it is picked from the folder dialog. Expand `~` here so the persisted list
   // (and therefore every agent's default cwd) is ABSOLUTE; Node's fs/spawn treat
   // `~` as a literal directory name and the spawn dies with `cwd does not exist`.
+  if (Array.isArray(patch.disabledSkills)) {
+    next.disabledSkills = [...new Set(
+      patch.disabledSkills.filter((n): n is string => typeof n === 'string' && !!n.trim()).map((n) => n.trim())
+    )];
+  }
   if (Array.isArray(patch.registeredRepos)) {
     const seen = new Set<string>();
     next.registeredRepos = patch.registeredRepos

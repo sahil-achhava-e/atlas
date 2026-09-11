@@ -2765,6 +2765,7 @@ async function spawnAgentCore(opts: AgentSpawnOptions, owner: Electron.WebConten
           theme: readConfig().terminalTheme ?? 'light',
           // W3 — default-MCP consent state + the bundled skills source dir.
           mcpDefaults: mcpDefaultsWithSecrets(),
+          disabledSkills: readConfig().disabledSkills ?? [],
           dbConnections: dbConnectionsWithUrls(),
           skillsDir: skillsResourceDir(),
           // The shared palace is mutated by the agent's own `mempalace` calls, so
@@ -3605,6 +3606,19 @@ ipcMain.handle('models:catalog', async (_evt, force: unknown) =>
 // ─── IPC: skills (installed locally, and the browsable catalog) ─────────────
 /** Skills the CLIs on this machine can already use. Scans the registered repos
  *  plus the agent's own cwd, so a project-scoped skill shows up where it applies. */
+/** The off list, and a flip. Kept in app config rather than per agent: a skill
+ *  is on or off for the whole floor, which is what the tab shows. */
+ipcMain.handle('skills:disabled', (): string[] => readConfig().disabledSkills ?? []);
+ipcMain.handle('skills:setEnabled', (_evt, name: unknown, enabled: unknown): string[] => {
+  const n = typeof name === 'string' ? name.trim() : '';
+  if (!n) return readConfig().disabledSkills ?? [];
+  const cur = new Set(readConfig().disabledSkills ?? []);
+  if (enabled === true) cur.delete(n); else cur.add(n);
+  const next = [...cur];
+  writeConfig({ disabledSkills: next });
+  return next;
+});
+
 ipcMain.handle('skills:local', (_evt, cwd: unknown): LocalSkill[] => {
   const cfg = readConfig();
   // Every agent's cwd counts as a project too. A repo with a skill in it is a

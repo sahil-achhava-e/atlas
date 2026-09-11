@@ -1170,7 +1170,10 @@
     "removeFailed": "تعذّرت إزالته",
     "uninstallFailed": "فشل إلغاء التثبيت",
     "catalogUnreachable": "تعذّر الوصول إلى الفهرس",
-    "plusBundled": "+ {{count}} مضمّنة مع أطلس"
+    "plusBundled": "+ {{count}} مضمّنة مع أطلس",
+    "on": "مفعّلة",
+    "off": "معطّلة",
+    "offNote": "المهارات المعطّلة لا يحمّلها أي وكيل."
   },
   "workersTab": {
     "stopping": "يتوقّف",
