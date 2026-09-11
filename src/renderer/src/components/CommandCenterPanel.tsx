@@ -1176,15 +1176,28 @@ function TokenLimitEditor({ value, onSet }: { value?: number; onSet: (tokens: nu
       <button
         onClick={() => { setText(value != null ? String(value) : ''); setEditing(true); }}
         style={{
-          flexShrink: 0, padding: '1px 10px', border: 'none', cursor: 'pointer',
-          background: value && value > 0 ? 'var(--cth-lemon)' : 'var(--cth-cream-200)',
-          boxShadow: `inset 0 0 0 1px ${value && value > 0 ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)'}`,
-            borderRadius: 'var(--cth-radius-input)',
-          fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-900)'
+          flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6,
+          height: 26, padding: '0 11px', border: 'none', cursor: 'pointer',
+          borderRadius: 'var(--cth-radius-pill)',
+          background: value && value > 0
+            ? 'color-mix(in srgb, var(--cth-lemon) 16%, transparent)'
+            : 'var(--cth-cream-100)',
+          color: value && value > 0 ? 'var(--cth-lemon)' : 'var(--cth-ink-500)',
+          fontFamily: 'var(--cth-font-ui)', fontSize: 11.5, fontWeight: 600,
+          transition: 'background 120ms ease, color 120ms ease'
         }}
-      >{value && value > 0
-        ? <>{t('commandCenter.tokenLimit', { value: fmtTokens(value) })}</>
-        : t('commandCenter.setLimit')}</button>
+      >
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M2.6 8h10.8M8 2.6v10.8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"
+            style={{ display: value && value > 0 ? 'none' : undefined }} />
+          <path d="M3 11.4l3.4-3.6 2.4 2.2 4.2-4.6" stroke="currentColor" strokeWidth="1.7"
+            strokeLinecap="round" strokeLinejoin="round"
+            style={{ display: value && value > 0 ? undefined : 'none' }} />
+        </svg>
+        {value && value > 0
+          ? <>{t('commandCenter.tokenLimit', { value: fmtTokens(value) })}</>
+          : t('commandCenter.setLimit')}
+      </button>
     );
   }
   return (
@@ -1199,16 +1212,30 @@ function TokenLimitEditor({ value, onSet }: { value?: number; onSet: (tokens: nu
         }}
         onBlur={() => { if (skipBlur.current) { skipBlur.current = false; return; } commit(); }}
         placeholder={t('common.tokens')}
+        className="cth-input"
         style={{
-          width: 84, padding: '2px 4px', background: 'var(--cth-paper-100)', border: 'none',
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)', fontFamily: 'var(--cth-font-mono)',
-          fontSize: 11, color: 'var(--cth-ink-900)', outline: 'none'
+          width: 104, height: 26, padding: '0 10px',
+          background: 'var(--cth-paper-100)', border: 'none',
+          borderRadius: 'var(--cth-radius-btn)',
+          fontFamily: 'var(--cth-font-mono)', fontSize: 12,
+          color: 'var(--cth-ink-900)', outline: 'none'
         }}
       />
       <button
         onMouseDown={(e) => e.preventDefault()} onClick={commit}
-        style={{ flexShrink: 0, padding: '1px 5px', border: 'none', cursor: 'pointer', background: 'var(--cth-mint)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', fontSize: 11, color: 'var(--cth-ink-900)' }}
-      >✓</button>
+        aria-label={t('common.save', { defaultValue: 'Save' })}
+        style={{
+          flexShrink: 0, width: 26, height: 26, padding: 0, border: 'none', cursor: 'pointer',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          borderRadius: 'var(--cth-radius-btn)',
+          background: 'var(--cth-lilac)', color: '#FFFFFF',
+          boxShadow: 'var(--cth-shadow-btn)'
+        }}
+      >
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M3.4 8.4l3 3 6.2-6.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
     </span>
   );
 }
