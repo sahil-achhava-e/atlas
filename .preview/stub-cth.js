@@ -201,7 +201,8 @@
       id: 'vms-1284', title: 'Booking migration: which branch?', status: 'blocked',
       agentId: 'atlas', agentName: 'Pam', updatedAt: Date.now() - 4 * 60_000,
       humanQA: [{
-        q: 'The migration touches bookings and tickets. Do I branch off develop, or off the release branch that already has the pricing fix?'
+        q: 'The migration touches bookings and tickets. Do I branch off develop, or off the release branch that already has the pricing fix?',
+        choices: ['Branch off develop', 'Branch off release/1.8 (has the pricing fix)', 'Wait until the release merges down']
       }]
     },
     {
@@ -214,9 +215,18 @@
       id: 'vms-1301', title: 'Delete the legacy voucher endpoint?', status: 'blocked',
       agentId: 'atlas', agentName: 'Jim', updatedAt: Date.now() - 90 * 60_000,
       humanQA: [
-        { askedAt: new Date().toISOString(), q: 'Nothing in the repo calls /api/v1/vouchers/redeem any more, but it is public. Remove it, or keep it and mark deprecated?' },
+        { askedAt: new Date().toISOString(), q: 'Nothing in the repo calls /api/v1/vouchers/redeem any more, but it is public. Which of these should I do?',
+          multi: true,
+          choices: ['Mark it deprecated in the docs', 'Add a sunset header', 'Log every remaining caller for a month', 'Delete it now'] },
         { askedAt: new Date(Date.now() - 3 * 3600e3).toISOString(), q: 'Should the old vouchers keep working?', a: 'Yes, until March.', answeredAt: new Date().toISOString() }
       ]
+    },
+    {
+      id: 'vms-1312', title: 'Voucher PDF font is missing in CI', status: 'blocked',
+      agentId: 'atlas', agentName: 'Pam', updatedAt: Date.now() - 8 * 60_000,
+      humanQA: [{ askedAt: new Date().toISOString(),
+        q: 'The pipeline cannot find DejaVuSans.ttf when it renders the voucher. Should I vendor the font into the repo, or install it in the build image?',
+        choices: ['Vendor the font into the repo', 'Install it in the build image'] }]
     }
   ] }),
   skillsDisabled: async () => (window.__skillsOff = window.__skillsOff || []),

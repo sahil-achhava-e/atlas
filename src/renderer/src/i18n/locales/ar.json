@@ -106,7 +106,10 @@
     "viewAnswersHistory": "افتح تفاصيل المهمة مع سجلّ الأسئلة والأجوبة كاملًا",
     "blockingDownstream": "يعطّل {{count}} مهمة لاحقة",
     "blockingDownstreamPlural": "يعطّل {{count}} مهام لاحقة",
-    "more": "… +{{count}} أخرى"
+    "more": "… +{{count}} أخرى",
+    "searchPlaceholder": "ابحث في الأسئلة",
+    "clearSearch": "مسح البحث",
+    "noMatches": "لا سؤال يطابق «{{query}}»."
   },
   "agentStrip": {
     "privateNote": "ملاحظة خاصة · {{name}}",

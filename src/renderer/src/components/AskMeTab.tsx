@@ -79,9 +79,17 @@ export function AskMeTab() {
   // ranked by comes from openQuestion() — the same predicate waitsOnHuman uses
   // — and only this OUTER list is sorted; a card's humanQA history stays
   // chronological (see askMeOrder.ts).
-  const waiting = tasks
+  const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
+  const allWaiting = tasks
     .filter(waitsOnHuman)
     .sort((a, b) => compareByNewestAsk(openQuestion(a), openQuestion(b)));
+  // Search covers the title AND the question, because you remember the wording
+  // of what was asked far more often than the name of the card it came from.
+  const waiting = q
+    ? allWaiting.filter((t) =>
+        t.title.toLowerCase().includes(q) || (openQuestion(t)?.q ?? '').toLowerCase().includes(q))
+    : allWaiting;
 
   /**
    * Apply `patch` to the OPEN humanQA entry of one card, on the RAW ledger.
@@ -168,7 +176,60 @@ export function AskMeTab() {
     // memory viewer uses. Pixelify Sans (font-ui) is too chunky for prose like
     // questions and answers. Display/badge bits keep their explicit faces.
     <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: 'var(--cth-paper-100)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12, fontFamily: 'var(--cth-font-ui)' }}>
-      {waiting.length === 0 && (
+      {/* Search appears once there is enough here to lose something in. */}
+      {allWaiting.length > 3 && (
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <span style={{
+            position: 'absolute', insetInlineStart: 12, top: '50%', transform: 'translateY(-50%)',
+            display: 'inline-flex', color: 'var(--cth-ink-300)', pointerEvents: 'none'
+          }}>
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <circle cx="9" cy="9" r="5.6" stroke="currentColor" strokeWidth="1.7" />
+              <path d="M13.2 13.2l3.4 3.4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+            </svg>
+          </span>
+          <input
+            className="cth-input"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={translate('askMe.searchPlaceholder')}
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              height: 36, padding: '0 34px 0 34px',
+              background: 'var(--cth-paper-100)', border: 'none',
+              borderRadius: 'var(--cth-radius-btn)',
+              fontFamily: 'var(--cth-font-ui)', fontSize: 13,
+              color: 'var(--cth-ink-900)', outline: 'none'
+            }}
+          />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              aria-label={translate('askMe.clearSearch')}
+              style={{
+                position: 'absolute', insetInlineEnd: 8, top: '50%', transform: 'translateY(-50%)',
+                width: 22, height: 22, border: 'none', background: 'transparent',
+                borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--cth-ink-300)'
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
+
+      {waiting.length === 0 && allWaiting.length > 0 && (
+        <div style={{
+          textAlign: 'center', padding: '28px 16px',
+          fontSize: 13, color: 'var(--cth-ink-500)'
+        }}>{translate('askMe.noMatches', { query })}</div>
+      )}
+
+      {allWaiting.length === 0 && (
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           textAlign: 'center', padding: '40px 16px', gap: 10
@@ -196,19 +257,23 @@ export function AskMeTab() {
         const stuck = dependentsTree(t.id, tasks);
         return (
           <div key={t.id} style={{
-            background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-            display: 'flex', flexDirection: 'column'
+            background: 'var(--cth-paper-100)',
+            borderRadius: 'var(--cth-radius-card)',
+            boxShadow: '0 0 0 1px var(--cth-ink-100), var(--cth-shadow-card)',
+            display: 'flex', flexDirection: 'column', flexShrink: 0, overflow: 'hidden'
           }}>
-            {/* header: title + assignee */}
+            {/* Header: the task, who is stuck on it. A lilac band with a hard
+                dark rule under it made every card look like a dialog; a card
+                only needs one surface and a title that reads as a title. */}
             <div style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
-              background: 'var(--cth-lilac-light, #ece2f5)', boxShadow: 'inset 0 -1px 0 var(--cth-ink-700)'
+              display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px 8px'
             }}>
               <button
                 onClick={() => openTaskDetail(t.id)}
                 style={{
                   border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, textAlign: 'left',
-                  fontFamily: 'var(--cth-font-mono)', fontSize: 15, color: 'var(--cth-ink-900)',
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 14, fontWeight: 600,
+                  letterSpacing: '-0.1px', color: 'var(--cth-ink-900)',
                   flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                 }}
               >
@@ -222,27 +287,88 @@ export function AskMeTab() {
                 onClick={() => void dismiss(t)}
                 disabled={sending === t.id}
                 aria-label={translate('askMe.dismissAria')}
+                className="cth-iconbar cth-quiet-danger"
+                data-label={translate('askMe.dismissTitle')}
                 style={{
-                  flexShrink: 0, width: 18, height: 18, padding: 0, marginLeft: 2,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
+                  flexShrink: 0, width: 26, height: 26, padding: 0, marginLeft: 2,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                   border: 'none', cursor: sending === t.id ? 'default' : 'pointer',
-                  background: 'transparent', color: 'var(--cth-ink-500)',
-                  fontFamily: 'var(--cth-font-ui)', fontSize: 13
+                  borderRadius: 'var(--cth-radius-btn)',
+                  background: 'transparent', color: 'var(--cth-ink-300)',
+                  transition: 'background 120ms ease, color 120ms ease'
                 }}
-                onMouseEnter={(e) => { if (sending !== t.id) e.currentTarget.style.color = 'var(--cth-coral)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--cth-ink-500)'; }}
-              >✕</button>
+              >
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                </svg>
+              </button>
             </div>
 
-            <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {/* The question, rendered as markdown. The god writes these with
                   emphasis, lists, `code` and links; as plain text the asterisks
                   and backticks were on screen literally. The card variant keeps
                   this card's mono face and turns a single newline into a break, so
                   a question with no markdown in it looks exactly as it did. */}
-              <div dir={rtl ? 'auto' : undefined} style={{ fontSize: 15, lineHeight: '19px', color: 'var(--cth-ink-900)' }}>
+              <div dir={rtl ? 'auto' : undefined} style={{
+                fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '20px',
+                color: 'var(--cth-ink-700)'
+              }}>
                 <MarkdownPreview source={open.q} variant="card" />
               </div>
+
+              {/* Choices, when the agent offered them. Radio for one, checkbox
+                  for several, and the text box stays underneath: the useful
+                  answer is often "neither, do this instead". Picking writes
+                  straight into the same draft the box edits, so there is one
+                  answer and one send. */}
+              {open.choices && open.choices.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {open.choices.map((choice) => {
+                    const draft = drafts[t.id] ?? '';
+                    const picked = open.multi
+                      ? draft.split('\n').map((x) => x.trim()).includes(choice)
+                      : draft.trim() === choice;
+                    return (
+                      <label
+                        key={choice}
+                        style={{
+                          display: 'flex', alignItems: 'flex-start', gap: 9,
+                          padding: '9px 11px', cursor: 'pointer',
+                          borderRadius: 'var(--cth-radius-input)',
+                          background: picked
+                            ? 'color-mix(in srgb, var(--cth-lilac) 8%, transparent)'
+                            : 'transparent',
+                          boxShadow: picked
+                            ? 'inset 0 0 0 1px var(--cth-lilac)'
+                            : 'inset 0 0 0 1px var(--cth-ink-100)',
+                          transition: 'background 120ms ease, box-shadow 120ms ease'
+                        }}
+                      >
+                        <input
+                          type={open.multi ? 'checkbox' : 'radio'}
+                          name={`ask-${t.id}`}
+                          checked={picked}
+                          onChange={(e) => {
+                            if (!open.multi) { setAnswerDraft(t.id, choice); return; }
+                            const lines = (drafts[t.id] ?? '').split('\n').map((x) => x.trim()).filter(Boolean);
+                            const next = e.target.checked
+                              ? [...lines.filter((x) => x !== choice), choice]
+                              : lines.filter((x) => x !== choice);
+                            setAnswerDraft(t.id, next.join('\n'));
+                          }}
+                          style={{ marginTop: 2, accentColor: 'var(--cth-lilac)', cursor: 'pointer' }}
+                        />
+                        <span style={{
+                          fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '19px',
+                          color: picked ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)',
+                          fontWeight: picked ? 600 : 400
+                        }}>{choice}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* answer box */}
               <textarea
@@ -252,29 +378,45 @@ export function AskMeTab() {
                 onKeyDown={(e) => { if (isComposingKey(e)) return; if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) void sendAnswer(t); }}
                 rows={3}
                 placeholder={translate('askMe.answerPlaceholder')}
+                className="cth-input"
                 style={{
                   width: '100%', boxSizing: 'border-box', padding: '10px 12px', resize: 'vertical',
                   background: 'var(--cth-paper-100)', border: 'none',
-                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-                  fontFamily: 'var(--cth-font-mono)', fontSize: 15, lineHeight: '18px',
+                  borderRadius: 'var(--cth-radius-input)',
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '20px',
                   color: 'var(--cth-ink-900)', outline: 'none'
                 }}
               />
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <PixelButton
-                  variant="primary" size="sm"
-                  disabled={!(drafts[t.id] ?? '').trim() || sending === t.id}
-                  onClick={() => void sendAnswer(t)}
-                >
-                  {sending === t.id ? translate('askMe.sending') : translate('askMe.respond')}
-                </PixelButton>
+                {(() => {
+                  const ready = !!(drafts[t.id] ?? '').trim() && sending !== t.id;
+                  return (
+                    <button
+                      onClick={() => void sendAnswer(t)}
+                      disabled={!ready}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 7,
+                        height: 32, padding: '0 14px', flexShrink: 0,
+                        border: 'none', borderRadius: 'var(--cth-radius-btn)',
+                        cursor: ready ? 'pointer' : 'not-allowed',
+                        background: ready ? 'var(--cth-lilac)' : 'transparent',
+                        boxShadow: ready ? 'var(--cth-shadow-btn)' : 'inset 0 0 0 1px var(--cth-ink-100)',
+                        color: ready ? '#FFFFFF' : 'var(--cth-ink-300)',
+                        fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
+                        transition: 'background 120ms ease, box-shadow 120ms ease, color 120ms ease'
+                      }}
+                    >
+                      {sending === t.id ? translate('askMe.sending') : translate('askMe.respond')}
+                    </button>
+                  );
+                })()}
                 {(t.humanQA?.filter((e) => e.a).length ?? 0) > 0 && (
                   <button
                     onClick={() => openTaskDetail(t.id)}
                     style={{
                       border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-                      fontSize: 11, color: 'var(--cth-ink-700)', fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-                      textDecoration: 'underline'
+                      fontSize: 12, color: 'var(--cth-lilac)',
+                      fontFamily: 'var(--cth-font-ui)', fontWeight: 600
                     }}
                   >
                     {(() => {

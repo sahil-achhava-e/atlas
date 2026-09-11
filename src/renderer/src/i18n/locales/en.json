@@ -106,7 +106,10 @@
     "viewAnswersHistory": "open the task detail with the full Q&A history",
     "blockingDownstream": "Blocking {{count}} other task",
     "blockingDownstreamPlural": "Blocking {{count}} other tasks",
-    "more": "… +{{count}} more"
+    "more": "… +{{count}} more",
+    "searchPlaceholder": "Search questions",
+    "clearSearch": "Clear search",
+    "noMatches": "No question matches “{{query}}”."
   },
   "agentStrip": {
     "privateNote": "PRIVATE NOTE · {{name}}",

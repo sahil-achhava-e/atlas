@@ -14,6 +14,13 @@ import { useRtl } from '@/i18n/useDirection';
 export interface HumanQA {
   q: string;
   a?: string;
+  /** Optional multiple choice. An agent that already knows the alternatives
+   *  should offer them: "develop or the release branch" is a question with two
+   *  answers, not an invitation to type prose. Free text stays available
+   *  underneath, because the right answer is often "neither, do X". */
+  choices?: string[];
+  /** More than one may be picked. */
+  multi?: boolean;
   askedAt?: string;
   answeredAt?: string;
   /** Set when the human dismisses the ask from the ASK ME board WITHOUT
@@ -105,7 +112,11 @@ export function parseTasks(raw: unknown): HiveTask[] {
             answeredAt: typeof e.answeredAt === 'string' ? e.answeredAt : undefined,
             // Preserve a dismissal across the 5s re-parse, else the card would
             // resurface on the next poll (openQuestion would see it as open).
-            dismissedAt: typeof e.dismissedAt === 'string' ? e.dismissedAt : undefined
+            dismissedAt: typeof e.dismissedAt === 'string' ? e.dismissedAt : undefined,
+            choices: Array.isArray(e.choices)
+              ? (e.choices as unknown[]).filter((c): c is string => typeof c === 'string' && !!c.trim()).slice(0, 8)
+              : undefined,
+            multi: e.multi === true
           }))
         : undefined
     }));
