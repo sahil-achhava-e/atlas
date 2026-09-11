@@ -58,7 +58,12 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
     await refreshStatus();
   };
   const toggleEnabled = async () => {
-    await window.cth.updateConfig({ semanticMemory: !(status?.enabled ?? true) });
+    // The label and the action must read the SAME value. This defaulted the
+    // unknown state to `true`, so before status loaded — or whenever the status
+    // call fails — the button said "Turn on" and wrote `false`: one click that
+    // claimed to enable memory and disabled it. The label already treats
+    // unknown as off, so this does too.
+    await window.cth.updateConfig({ semanticMemory: status?.enabled !== true });
     await refreshStatus();
   };
 

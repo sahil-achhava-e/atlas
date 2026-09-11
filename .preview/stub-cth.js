@@ -147,6 +147,16 @@
   // Real scan of this machine, taken by scratchpad/snap-skills.mjs. The browser
   // preview has no fs, and an empty list would make a working tab look broken.
   // Preview-only: the off list lives in app config, which the browser has none of.
+  // The panel calls this on mount and after every toggle. With it missing the
+  // call threw, status stayed null, and the button rendered "Turn on" over an
+  // unknown state — which is how the inverted-toggle bug stayed invisible.
+  // Nothing here can build an image: there is no main process in a browser.
+  memoryStatus: async () => ({
+    available: false, enabled: config.semanticMemory !== false, active: false,
+    initialized: false, palacePath: null, model: config.embeddingModel || 'minilm',
+    bin: null, preparing: false, prepareError: null, containerized: false
+  }),
+  memoryRefresh: async () => window.cth.memoryStatus(),
   skillsDisabled: async () => (window.__skillsOff = window.__skillsOff || []),
   skillsSetEnabled: async (name, on) => {
     const cur = new Set(window.__skillsOff || []);
