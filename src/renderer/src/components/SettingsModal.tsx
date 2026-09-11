@@ -701,7 +701,11 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: 840, maxWidth: '92vw', maxHeight: '88vh',
+          // FIXED, not max: the panel used to take its height from whichever
+          // tab was open, so switching from General to Voice made the whole
+          // dialog jump and the nav on the left shuffle under the cursor. One
+          // size for every tab; the content pane scrolls inside it.
+          width: 840, maxWidth: '92vw', height: 'min(80vh, 760px)',
           display: 'flex', flexDirection: 'column',
           filter: 'drop-shadow(4px 4px 0 rgba(26, 19, 32, 0.25))'
         }}
@@ -710,11 +714,11 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
           variant="dialog"
           title={modalTitle}
           noPadding
-          style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '88vh' }}
+          style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}
         >
           {/* === Change home sub-modal === */}
           {changeHome ? (
-            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto' }}>
+            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', flex: 1, minHeight: 0 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>{t('settings.changeHome.newHome')}</span>
                 <code style={{
