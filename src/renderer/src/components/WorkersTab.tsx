@@ -4,7 +4,7 @@ import { PixelButton } from './PixelButton';
 import { useStore } from '@/store/store';
 
 /**
- * WORKERS — live god-triggered ephemeral Slack workers (the Phase-1 spawn loop):
+ * WORKERS — the short-lived agents the orchestrator starts for one job:
  * fresh isolated worktree → does a job → replies in-thread → safe teardown. This
  * tab reads main's `liveWorkers` map (via workers:list) so a human can SEE what's
  * running and stop one by hand; it also surfaces worktrees PRESERVED at teardown
