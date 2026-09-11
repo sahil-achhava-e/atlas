@@ -355,7 +355,7 @@
       "voiceChatDesc": "Talk to the orchestrator in real time. Toggle it on from {{godName}}'s tab; choose which microphone and speaker the voice loop uses here.",
       "openaiKey": "OpenAI API key · voice",
       "openaiKeyDesc1": "Talking to {{godName}} runs on OpenAI's Realtime API — speech in, speech out, over a live connection to {{model}}. That is a different service from the Claude subscription your agents run on, so it needs its own OpenAI API key.",
-      "openaiKeyDesc2": "Paste it once below. It is encrypted on this machine and never shown again — each voice session mints its own short-lived token from it, and the key itself never leaves your computer. It is the same OpenAI key listed under Agents & Models; setting it in either place is enough.",
+      "openaiKeyDesc2": "Paste it once below. It is encrypted on this machine and never shown again — each voice session mints its own short-lived token from it, and the key itself never leaves your computer. This is the only place the app asks for it.",
       "keyPlaceholderSaved": "key saved — paste a new one to replace it",
       "save": "Save",
       "keySaved": "Key saved — Talk is ready. Start it from {{godName}}'s card.",

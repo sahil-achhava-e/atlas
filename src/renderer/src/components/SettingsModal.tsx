@@ -16,7 +16,6 @@ import { PixelButton } from './PixelButton';
 import { SetupPanel } from './SetupPanel';
 import { Icon } from './Icon';
 import { McpDefaultsSettings } from './McpDefaultsSettings';
-import { AiEnginesSettings } from './AiEnginesSettings';
 import { REALTIME_MODEL } from '@shared/realtimePricing';
 import { RealtimeDevicePicker } from '@/realtime/DevicePicker';
 import { isComposingKey } from '@shared/imeGuard';
@@ -1071,7 +1070,9 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
 
                       <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
 
-                      <AiEnginesSettings config={config} />
+                      {/* No key block here: the only key this floor needs is the
+                          OpenAI one for voice chat, and Voice asks for it. One
+                          field, one place. */}
 
                       <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
 
