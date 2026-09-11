@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SchedulesSection } from './SchedulesSection';
 import { ContextSection } from './ContextSection';
-import { WebhooksSection } from './WebhooksSection';
-import { OrgSection } from './OrgSection';
 import { Muted, Scroll, TriggerCard } from './ui';
 
 /**
@@ -21,8 +19,6 @@ export function TriggersTab() {
   const { t } = useTranslation();
   const [schedulesSummary, setSchedulesSummary] = useState('');
   const [contextSummary, setContextSummary] = useState('');
-  const [webhooksSummary, setWebhooksSummary] = useState('');
-  const [orgSummary, setOrgSummary] = useState('');
 
   return (
     <Scroll>
@@ -46,21 +42,9 @@ export function TriggersTab() {
         <ContextSection onSummary={setContextSummary} />
       </TriggerCard>
 
-      <TriggerCard
-        title={t('triggersTab.webhooks')}
-        blurb={t('triggersTab.webhooksBlurb')}
-        summary={webhooksSummary}
-      >
-        <WebhooksSection onSummary={setWebhooksSummary} />
-      </TriggerCard>
-
-      <TriggerCard
-        title={t('triggersTab.organisation')}
-        blurb={t('triggersTab.organisationBlurb')}
-        summary={orgSummary}
-      >
-        <OrgSection onSummary={setOrgSummary} />
-      </TriggerCard>
+      {/* No webhooks, no organisation key. A webhook is a public URL anyone
+          holding its secret can post work into, and the org key configured a
+          messaging service that does not exist. Both left Settings already. */}
     </Scroll>
   );
 }

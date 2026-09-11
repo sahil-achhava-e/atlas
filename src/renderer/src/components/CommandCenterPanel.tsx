@@ -9,7 +9,6 @@ import { MessageQueueComposer } from './MessageQueueComposer';
 import { TasksKanban } from './TasksKanban';
 import { AskMeTab } from './AskMeTab';
 import { TriggersTab } from './triggers/TriggersTab';
-import { TriggerHistoryTab } from './triggers/TriggerHistoryTab';
 import { WorkersTab } from './WorkersTab';
 import { SkillsTab } from './SkillsTab';
 import { acquireTerminal, disposeTerminal, resetTerminal } from './terminalPool';
@@ -23,7 +22,7 @@ import { MemoryGraphPanel } from './MemoryGraphPanel';
 import { useFleetTelemetry } from '@/hooks/useTelemetry';
 import { COMMAND_GROUPS } from '@shared/claudeCommands';
 import { roleForHiveSpawn } from '@shared/agentRole';
-import { useStore, triggerHistoryVisible, type Agent } from '@/store/store';
+import { useStore, type Agent } from '@/store/store';
 import { usePtyParser } from '@/hooks/usePtyParser';
 import {
   buildSpawnCommand,
@@ -50,7 +49,7 @@ import { useRtl } from '@/i18n/useDirection';
 // Both the AskMe (#human) tab and the Triggers tab live here. Triggers replaced
 // the old Schedules tab: schedules are now one of four trigger types, and the
 // whole surface lives in ./triggers (see src/shared/triggers.ts for the contract).
-type CCTab = 'terminal' | 'floor' | 'tasks' | 'human' | 'triggers' | 'trigger-history'
+type CCTab = 'terminal' | 'floor' | 'tasks' | 'human' | 'triggers'
   | 'memory' | 'graph' | 'activity' | 'skills' | 'workers';
 
 /** Fallback denominator for the per-agent token meter when no floor token budget
@@ -94,7 +93,6 @@ const TABS: { key: CCTab; labelKey: string; hintKey: string; icon: Parameters<ty
   { key: 'activity',        labelKey: 'commandCenter.tabs.activity', hintKey: 'commandCenter.tabHints.activity', icon: 'ledger' },
   { key: 'workers',         labelKey: 'commandCenter.tabs.workers',  hintKey: 'commandCenter.tabHints.workers',  icon: 'git' },
   { key: 'triggers',        labelKey: 'commandCenter.tabs.triggers', hintKey: 'commandCenter.tabHints.triggers', icon: 'clock' },
-  { key: 'trigger-history', labelKey: 'commandCenter.tabs.history',  hintKey: 'commandCenter.tabHints.history',  icon: 'ledger' },
   { key: 'skills',          labelKey: 'commandCenter.tabs.skills',   hintKey: 'commandCenter.tabHints.skills',   icon: 'sparkle' }
 ];
 
@@ -109,18 +107,9 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
   // panel and never reaches the Edit button every other agent gets, so his
   // name, one-liner and standing goal were unreachable from the app.
   const [editOpen, setEditOpen] = useState(false);
-  // The trigger-history ledger has nothing to say until an outside party can
-  // reach us, so its tab appears only once an org key or a webhook exists. This
-  // is the first config-gated tab in the panel: TABS stays the canonical order
-  // and the gate is applied at render, so nothing else has to know about it.
-  // The rule itself lives in the store (`triggerHistoryVisible`) beside the two
-  // mirrors it reads — a second copy here would drift from Settings.
-  const showHistory = useStore(triggerHistoryVisible);
-  // Never leave the panel parked on a tab that has just been hidden.
-  useEffect(() => {
-    if (!showHistory && tab === 'trigger-history') setTab('terminal');
-  }, [showHistory, tab]);
-  const visibleTabs = TABS.filter((t) => t.key !== 'trigger-history' || showHistory);
+  // Every tab is visible now: the one config-gated tab was the trigger ledger,
+  // and it went with the webhooks whose arrivals it listed.
+  const visibleTabs = TABS;
   const primaryTabs = visibleTabs.filter((x) => PRIMARY.includes(x.key));
   const secondaryTabs = visibleTabs.filter((x) => !PRIMARY.includes(x.key));
   // The one number on this panel that is about the human, not the machines.
@@ -134,9 +123,6 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
     if (!ccTabRequest) return;
     const key = ccTabRequest.tab as CCTab;
     if (!TABS.some((t) => t.key === key)) return;
-    // Read the gate live rather than depending on it — as a dependency it would
-    // re-fire a stale request the moment the tab appeared.
-    if (key === 'trigger-history' && !triggerHistoryVisible(useStore.getState())) return;
     setTab(key);
   }, [ccTabRequest]);
   // A task-detail "assign" pre-fills the Floor dispatch box and jumps to it.
@@ -372,7 +358,6 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         {tab === 'tasks' && <TasksKanban />}
         {tab === 'human' && <AskMeTab />}
         {tab === 'triggers' && <TriggersTab />}
-        {tab === 'trigger-history' && <TriggerHistoryTab />}
         {tab === 'memory' && (
           <MemoryTab godId={agent.id} who={selectedMemoryAgent ?? undefined} onWho={setSelectedMemoryAgent} />
         )}

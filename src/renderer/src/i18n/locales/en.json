@@ -971,11 +971,11 @@
     "manualDownloadingBody": "When it lands, quit this app, install the new version over the current one, open it and pick the same project. On {{os}}:"
   },
   "triggersTab": {
-    "intro": "Everything that can start work without you typing.",
+    "intro": "The two clocks that act on the floor when you are not at the keyboard: one that hands {{godName}} a recurring prompt, and one that boxes up an agent's context before it fills.",
     "schedules": "SCHEDULES",
-    "schedulesBlurb": "Run a prompt on a repeating clock.",
+    "schedulesBlurb": "A prompt delivered to an agent on a repeat. Each run is a real turn and costs real tokens, so a schedule earns its place only if you would have asked the same question yourself.",
     "context": "CONTEXT",
-    "contextBlurb": "Compact or clear an agent as its context fills.",
+    "contextBlurb": "Summarises an agent's session when it gets too full, between steps rather than mid-task. This is what stops a long-running agent hitting its context limit and losing the thread — leave it on.",
     "webhooks": "WEBHOOKS",
     "webhooksBlurb": "Let an outside system post work in.",
     "organisation": "ORGANISATION",
