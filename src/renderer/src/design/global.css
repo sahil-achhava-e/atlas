@@ -449,3 +449,50 @@ a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visib
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
 }
+
+/* ─── The brand panel ───────────────────────────────────────────────────────
+   The left column is a branded surface, not another white card. Rather than
+   rewriting forty components to know about it, the surface REDEFINES the tokens
+   its children already read: paper becomes a translucent white lift, ink
+   becomes the text ramp that works on violet, cream becomes the hover and rail
+   tints. Everything inside follows without knowing why.
+
+   The one thing that does not follow is the terminal, which sets its own
+   colours and should: a terminal is black. */
+.cth-brand-panel {
+  --cth-paper-100: rgba(255, 255, 255, 0.10);
+  --cth-paper-200: rgba(255, 255, 255, 0.14);
+  --cth-cream-50:  rgba(255, 255, 255, 0.06);
+  --cth-cream-100: rgba(255, 255, 255, 0.10);
+  --cth-cream-200: rgba(255, 255, 255, 0.18);
+  --cth-cream-300: rgba(255, 255, 255, 0.26);
+  --cth-ink-900: #FFFFFF;
+  --cth-ink-700: rgba(255, 255, 255, 0.78);
+  --cth-ink-500: rgba(255, 255, 255, 0.58);
+  --cth-ink-300: rgba(255, 255, 255, 0.24);
+  --cth-ink-100: rgba(255, 255, 255, 0.14);
+  --cth-lilac: #FFFFFF;              /* selection on violet is white, not more violet */
+  --cth-lilac-light: rgba(255, 255, 255, 0.18);
+  --cth-lilac-hover: rgba(255, 255, 255, 0.88);
+  --cth-on-accent: #2B1B7A;
+  --cth-shadow-card: 0 6px 24px rgba(20, 8, 70, 0.28);
+  --cth-shadow-sm: 0 2px 8px rgba(20, 8, 70, 0.22);
+  --cth-shadow-btn: 0 4px 14px rgba(12, 4, 48, 0.35);
+
+  color: #FFFFFF;
+  background:
+    radial-gradient(120% 90% at 12% 0%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 55%),
+    linear-gradient(168deg, #6B4BFF 0%, #4A2FD8 46%, #3A21B4 100%);
+  border-radius: var(--cth-radius-card);
+  box-shadow: 0 18px 44px rgba(28, 12, 92, 0.26), inset 0 1px 0 rgba(255,255,255,0.18);
+  overflow: hidden;
+}
+
+/* A selected pill on violet reads as white-on-violet; its label has to flip with
+   it or it is white on white. */
+.cth-brand-panel .cth-tabbar button[style*="rgb(255, 255, 255)"] { color: var(--cth-on-accent) !important; }
+
+/* The terminal keeps its own world: true black, inside the panel's inset. */
+.cth-brand-panel .xterm,
+.cth-brand-panel .xterm-viewport,
+.cth-brand-panel .xterm-screen { background: #000000 !important; }

@@ -10,7 +10,6 @@ import { useGodNameSync } from '@/i18n/useGodNameSync';
 import { useDirectionSync } from '@/i18n/useDirection';
 import { useArabicTerminalSync } from '@/terminal/useArabicTerminalSync';
 import { AgentDetailPanel } from '@/components/AgentDetailPanel';
-import { AgentStrip } from '@/components/AgentStrip';
 import { AddAgentModal } from '@/components/AddAgentModal';
 import { MichaelBooting } from '@/components/MichaelBooting';
 import { OnboardingWizard } from '@/components/OnboardingWizard';
@@ -375,8 +374,8 @@ export function App() {
           display: 'flex',
           alignItems: 'center',
           paddingLeft: 96,
-          paddingRight: 14,
-          gap: 8,
+          paddingRight: 16,
+          gap: 10,
           userSelect: 'none'
         }}
       >
@@ -387,8 +386,8 @@ export function App() {
         <span
           aria-hidden="true"
           style={{
-            position: 'absolute', left: 0, right: 0, bottom: 0, height: 2,
-            background: 'linear-gradient(90deg, var(--cth-lilac) 0%, color-mix(in srgb, var(--cth-lilac) 40%, transparent) 26%, var(--cth-ink-100) 58%, var(--cth-ink-100) 100%)'
+            position: 'absolute', left: 0, right: 0, bottom: 0, height: 3,
+            background: 'linear-gradient(90deg, #6B4BFF 0%, #5B3DF5 34%, #4A6BF5 68%, #3B82F6 100%)'
           }}
         />
         {/* The wordmark, and nothing else. This bar held a pixel portrait, a
@@ -404,7 +403,7 @@ export function App() {
             borderRadius: 'var(--cth-radius-btn)',
             boxShadow: '0 2px 8px color-mix(in srgb, var(--cth-lilac) 34%, transparent)'
           }}>
-            <AtlasMark size={30} />
+            <AtlasMark size={32} />
           </span>
           {/* Sentence case, 17px, tight tracking. ATLAS in caps at 14px was a
               label; a wordmark should look like a name. */}
@@ -442,30 +441,69 @@ export function App() {
         {/* v0.3.4: theme + fullscreen live HERE (top right), not buried in the
             terminal header — and the theme darkens the whole app, terminals
             included (design/theme.ts + tokens.css dark block). */}
-        {/* The floor, in one line, always on screen. The counts existed only
-            inside the panel's own tabs, so the question "is anything waiting on
-            me" needed a click to answer. */}
-        <span style={{
-          marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 14,
-          fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-500)'
-        }}>
-          {[
-            { n: fleet.working, c: 'var(--cth-status-working)', label: 'working', status: 'working' as const },
-            { n: fleet.blocked, c: 'var(--cth-status-blocked)', label: 'need you', status: 'blocked' as const },
-            { n: fleet.idle, c: 'var(--cth-status-idle)', label: 'idle', status: 'idle' as const }
-          ].filter((x) => x.n > 0).map((x) => (
-            <span key={x.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ display: 'inline-flex', color: x.c }}>
-                <StatusGlyph status={x.status} size={14} />
+        {/* One line, dead centre, answering the only question the chrome can
+            usefully answer: does anything want me. It is centred against the
+            WINDOW rather than the space between the two clusters, so it does
+            not drift when the workspace name is long. */}
+        <span
+          aria-live="polite"
+          style={{
+            position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 500,
+            color: fleet.blocked > 0 ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
+            pointerEvents: 'none', whiteSpace: 'nowrap'
+          }}
+        >
+          {fleet.blocked > 0 ? (
+            <>
+              <span style={{ display: 'inline-flex', color: 'var(--cth-status-blocked)' }}>
+                <StatusGlyph status="blocked" size={15} />
               </span>
-              <span style={{ color: 'var(--cth-ink-700)', fontWeight: 600 }}>{x.n}</span>
-              {x.label}
-            </span>
-          ))}
+              {fleet.blocked === 1 ? '1 agent needs you' : `${fleet.blocked} agents need you`}
+            </>
+          ) : fleet.working > 0 ? (
+            <>
+              <span style={{ display: 'inline-flex', color: 'var(--cth-status-working)' }}>
+                <StatusGlyph status="working" size={15} />
+              </span>
+              {fleet.working === 1 ? '1 agent working' : `${fleet.working} agents working`}
+              <span style={{ color: 'var(--cth-ink-300)' }}>·</span>
+              nothing needs you
+            </>
+          ) : (
+            <>
+              <span style={{ display: 'inline-flex', color: 'var(--cth-status-idle)' }}>
+                <StatusGlyph status="idle" size={15} />
+              </span>
+              The floor is quiet
+            </>
+          )}
         </span>
 
+        <span style={{ marginLeft: 'auto' }} />
+
+        <button
+          className="cth-titlebar-nodrag"
+          onClick={() => setAddAgentOpen(true)}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 7,
+            height: 34, padding: '0 16px', flexShrink: 0,
+            border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
+            background: 'var(--cth-lilac)', color: '#FFFFFF',
+            boxShadow: 'var(--cth-shadow-btn)',
+            fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
+            transition: 'background 120ms ease'
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 3.4v9.2M3.4 8h9.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+          </svg>
+          Add agent
+        </button>
+
         <span style={{
-          width: 1, height: 20, flexShrink: 0, marginInline: 4,
+          width: 1, height: 22, flexShrink: 0, marginInline: 6,
           background: 'var(--cth-ink-100)'
         }} />
 
@@ -490,12 +528,12 @@ export function App() {
           aria-label="Toggle dark mode"
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 32, height: 32, padding: 0,
+            width: 34, height: 34, padding: 0,
             background: 'transparent',
             boxShadow: 'none',
             border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
             transition: 'background 120ms ease, color 120ms ease',
-            color: 'var(--cth-ink-500)'
+            color: appThemeNow === 'dark' ? 'var(--cth-lemon)' : 'var(--cth-indigo)'
           }}
         >
           {appThemeNow === 'dark' ? <SunIcon /> : <MoonIcon />}
@@ -509,12 +547,12 @@ export function App() {
           aria-label="Settings"
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 32, height: 32, padding: 0,
+            width: 34, height: 34, padding: 0,
             background: 'transparent',
             boxShadow: 'none',
             border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
             transition: 'background 120ms ease, color 120ms ease',
-            color: 'var(--cth-ink-500)'
+            color: 'var(--cth-jade)'
           }}
         >
           <GearIcon />
@@ -537,12 +575,12 @@ export function App() {
           aria-label="Toggle focus mode"
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 32, height: 32, padding: 0,
+            width: 34, height: 34, padding: 0,
             background: 'transparent',
             boxShadow: 'none',
             border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
             transition: 'background 120ms ease, color 120ms ease',
-            color: 'var(--cth-ink-900)'
+            color: 'var(--cth-sky)'
           }}
         >
           {fullscreenAgentId ? <CollapseIcon /> : <ExpandIcon />}
@@ -592,11 +630,10 @@ export function App() {
           viewportWidth={vpWidth}
         />
 
-        <div style={{
+        <div className="cth-brand-panel" style={{
           width: sidebarWidth, flexShrink: 0,
-          minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12
+          minHeight: 0, display: 'flex', flexDirection: 'column'
         }}>
-          <AgentStrip config={config} />
           {agent ? (
             <AgentDetailPanel agent={agent} />
           ) : godStatus === 'booting' ? (

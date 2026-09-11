@@ -79,7 +79,7 @@
   /* The title bar is persistent chrome: every full-screen surface starts below
      it rather than covering it, so the height has to be one value that all of
      them read. */
-  --cth-titlebar-h: 48px;
+  --cth-titlebar-h: 64px;
 
   /* Spacing */
   --cth-space-0: 0px;

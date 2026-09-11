@@ -52,10 +52,10 @@ const zoomBtnStyle: CSSProperties = {
 // green/yellow are kept deep enough to read as text on cream (the brighter
 // variants are the lighter shades, per terminal convention).
 const lightTheme = {
-  background: '#FCFAF0',
-  foreground: '#1A1320',
-  cursor: '#D96A62',
-  cursorAccent: '#FCFAF0',
+  background: '#000000',
+  foreground: '#E6E3DE',
+  cursor: '#FF8A7E',
+  cursorAccent: '#000000',
   selectionBackground: '#FFEC99',
   selectionForeground: '#1A1320',
   black:        '#1A1320',
@@ -85,10 +85,10 @@ const lightTheme = {
 // apart from the panel holding it. Muted-professional ANSI: recognizable hues, no
 // fluorescing on the dark ground; brights are one legible step up, not pastels.
 const darkTheme = {
-  background: '#1A1A1F',        // = --cth-paper-100
+  background: '#000000',
   foreground: '#DEDBD6',        // = --cth-ink-900
   cursor: '#E08C82',
-  cursorAccent: '#1A1A1F',
+  cursorAccent: '#000000',
   selectionBackground: '#37363F',
   selectionForeground: '#DEDBD6',
   black:        '#222229',
@@ -359,7 +359,7 @@ export function PtyTerminalView({ ptyId, label, onStreamData, onUserPrompt, onTo
 
   return (
     <div style={{
-      background: 'var(--cth-paper-100)',
+      background: '#000000',
       boxShadow: embedded ? 'none' : 'var(--cth-panel-border-terminal)',
       padding: embedded ? 0 : 8,
       height: '100%',

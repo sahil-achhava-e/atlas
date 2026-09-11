@@ -83,17 +83,24 @@ const fmtK = (n: number): string => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed
  *  the app. */
 const PRIMARY: CCTab[] = ['terminal', 'human', 'tasks', 'floor'];
 
-const TABS: { key: CCTab; labelKey: string; hintKey: string; icon: Parameters<typeof Icon>[0]['name'] }[] = [
-  { key: 'terminal',        labelKey: 'commandCenter.tabs.terminal', hintKey: 'commandCenter.tabHints.terminal', icon: 'terminal' },
-  { key: 'human',           labelKey: 'commandCenter.tabs.human',    hintKey: 'commandCenter.tabHints.human',    icon: 'bell' },
-  { key: 'tasks',           labelKey: 'commandCenter.tabs.tasks',    hintKey: 'commandCenter.tabHints.tasks',    icon: 'check' },
-  { key: 'floor',           labelKey: 'commandCenter.tabs.floor',    hintKey: 'commandCenter.tabHints.floor',    icon: 'mcp' },
-  { key: 'memory',          labelKey: 'commandCenter.tabs.memory',   hintKey: 'commandCenter.tabHints.memory',   icon: 'sparkle' },
-  { key: 'graph',           labelKey: 'commandCenter.tabs.graph',    hintKey: 'commandCenter.tabHints.graph',    icon: 'web' },
-  { key: 'activity',        labelKey: 'commandCenter.tabs.activity', hintKey: 'commandCenter.tabHints.activity', icon: 'ledger' },
-  { key: 'workers',         labelKey: 'commandCenter.tabs.workers',  hintKey: 'commandCenter.tabHints.workers',  icon: 'git' },
-  { key: 'triggers',        labelKey: 'commandCenter.tabs.triggers', hintKey: 'commandCenter.tabHints.triggers', icon: 'clock' },
-  { key: 'skills',          labelKey: 'commandCenter.tabs.skills',   hintKey: 'commandCenter.tabHints.skills',   icon: 'sparkle' }
+const TABS: {
+  key: CCTab; labelKey: string; hintKey: string;
+  icon: Parameters<typeof Icon>[0]['name'];
+  /** A colour per destination, so ten glyphs are not ten grey squares. Shown
+   *  only when the tab is NOT selected: a selected pill is already the loudest
+   *  thing in the row, and a second colour inside it fights the fill. */
+  tone: string;
+}[] = [
+  { key: 'terminal', labelKey: 'commandCenter.tabs.terminal', hintKey: 'commandCenter.tabHints.terminal', icon: 'terminal', tone: 'var(--cth-status-idle)' },
+  { key: 'human',    labelKey: 'commandCenter.tabs.human',    hintKey: 'commandCenter.tabHints.human',    icon: 'bell',     tone: 'var(--cth-coral)' },
+  { key: 'tasks',    labelKey: 'commandCenter.tabs.tasks',    hintKey: 'commandCenter.tabHints.tasks',    icon: 'check',    tone: 'var(--cth-mint)' },
+  { key: 'floor',    labelKey: 'commandCenter.tabs.floor',    hintKey: 'commandCenter.tabHints.floor',    icon: 'mcp',      tone: 'var(--cth-lemon)' },
+  { key: 'memory',   labelKey: 'commandCenter.tabs.memory',   hintKey: 'commandCenter.tabHints.memory',   icon: 'sparkle',  tone: 'var(--cth-plum)' },
+  { key: 'graph',    labelKey: 'commandCenter.tabs.graph',    hintKey: 'commandCenter.tabHints.graph',    icon: 'web',      tone: 'var(--cth-sky)' },
+  { key: 'activity', labelKey: 'commandCenter.tabs.activity', hintKey: 'commandCenter.tabHints.activity', icon: 'ledger',   tone: 'var(--cth-peach)' },
+  { key: 'workers',  labelKey: 'commandCenter.tabs.workers',  hintKey: 'commandCenter.tabHints.workers',  icon: 'git',      tone: 'var(--cth-jade)' },
+  { key: 'triggers', labelKey: 'commandCenter.tabs.triggers', hintKey: 'commandCenter.tabHints.triggers', icon: 'clock',    tone: 'var(--cth-indigo)' },
+  { key: 'skills',   labelKey: 'commandCenter.tabs.skills',   hintKey: 'commandCenter.tabHints.skills',   icon: 'sparkle',  tone: 'var(--cth-rose)' }
 ];
 
 /** @param fullscreen this instance IS the fullscreen overlay, so it owns the pty
@@ -361,7 +368,10 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                 transition: 'background 120ms ease, color 120ms ease'
               }}
             >
-              <Icon name={d.icon} /> {t(d.labelKey)}
+              <span style={{ display: 'inline-flex', color: on ? 'inherit' : d.tone }}>
+                <Icon name={d.icon} />
+              </span>
+              {t(d.labelKey)}
               {badge > 0 && (
                 <span style={{
                   minWidth: 18, height: 18, padding: '0 6px',
@@ -401,6 +411,9 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                 transition: 'background 120ms ease, color 120ms ease'
               }}
             >
+              <span style={{ display: 'inline-flex', color: on ? 'inherit' : d.tone }}>
+                <Icon name={d.icon} />
+              </span>
               {t(d.labelKey)}
             </button>
           );
