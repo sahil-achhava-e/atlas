@@ -34,7 +34,7 @@ function StatusChip({ tool }: { tool: ToolStatus }) {
   return (
     <span style={{
       fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 0.5,
-      padding: '2px 6px', flexShrink: 0, whiteSpace: 'nowrap',
+      padding: '2px 10px', flexShrink: 0, whiteSpace: 'nowrap',
       background: ready ? 'var(--cth-mint-light)' : 'var(--cth-cream-200)',
       boxShadow: `inset 0 0 0 1px ${ready ? 'var(--cth-mint)' : 'var(--cth-ink-300)'}`,
             borderRadius: 'var(--cth-radius-input)',
@@ -56,7 +56,7 @@ function ToolRow({ tool }: { tool: ToolStatus }) {
   };
   return (
     <div style={{
-      padding: 10, display: 'flex', flexDirection: 'column', gap: 6,
+      padding: 16, display: 'flex', flexDirection: 'column', gap: 8,
       background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -83,10 +83,10 @@ function ToolRow({ tool }: { tool: ToolStatus }) {
 
       {/* Missing WITH a scripted install: the exact command, one click to copy. */}
       {!tool.found && tool.installCommand && (
-        <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
           <code style={{
             flex: 1, minWidth: 0, fontFamily: 'var(--cth-font-mono)', fontSize: 11,
-            padding: '4px 6px', background: 'var(--cth-cream-100)',
+            padding: '4px 10px', background: 'var(--cth-cream-100)',
             boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
             color: 'var(--cth-ink-900)', overflowX: 'auto', whiteSpace: 'pre'
           }}>{tool.installCommand}</code>
@@ -189,7 +189,7 @@ export function SetupPanel(
           above already says everything is ready. */}
       {missingEssential.length > 0 && (
       <div style={{
-        padding: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap',
+        padding: 16, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap',
         background: missingEssential.length ? 'var(--cth-lemon-light)' : 'var(--cth-cream-100)',
         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
       }}>
@@ -213,13 +213,13 @@ export function SetupPanel(
         const rows = visible.filter((t) => t.kind === section.kind);
         if (rows.length === 0) return null;
         return (
-          <div key={section.kind} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div key={section.kind} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{
               fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 0.5,
               color: 'var(--cth-ink-500)'
             }}>{t(section.titleKey)}</div>
             <div style={{ fontSize: 11, color: 'var(--cth-ink-500)', marginTop: -2 }}>{t(section.blurbKey)}</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {rows.map((t) => <ToolRow key={t.id} tool={t} />)}
             </div>
           </div>

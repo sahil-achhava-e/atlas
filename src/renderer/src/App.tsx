@@ -473,12 +473,12 @@ export function App() {
             }}>
               <div style={{ pointerEvents: 'auto', width: 360 }}>
                 <PixelPanel variant="dialog" title="EMPTY FLOOR" noPadding>
-                  <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <p style={{ margin: 0, fontSize: 13, lineHeight: '20px' }}>
                       No agents on the floor yet. Spawn one to see real claude output stream in here.
                     </p>
                     <PixelButton variant="primary" size="md" onClick={() => setAddAgentOpen(true)}>
-                      <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                      <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                         <Icon name="plus" /> Add agent
                       </span>
                     </PixelButton>
@@ -531,7 +531,7 @@ export function App() {
                 The terminal and command bar will land here.
               </p>
               <PixelButton variant="secondary" size="md" onClick={() => setAddAgentOpen(true)}>
-                <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                   <Icon name="plus" /> Add agent
                 </span>
               </PixelButton>

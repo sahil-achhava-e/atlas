@@ -18,7 +18,7 @@ import {
 /* ───────────────────────────── shared styles ─────────────────────────────── */
 
 export const inputStyle: CSSProperties = {
-  width: '100%', boxSizing: 'border-box', padding: '6px 8px',
+  width: '100%', boxSizing: 'border-box', padding: '10px 12px',
   background: 'var(--cth-paper-100)', border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '17px',
@@ -36,7 +36,7 @@ export const textareaStyle: CSSProperties = {
 };
 
 export const selectStyle: CSSProperties = {
-  padding: '3px 6px', background: 'var(--cth-paper-100)', border: 'none',
+  padding: '3px 10px', background: 'var(--cth-paper-100)', border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)',
   cursor: 'pointer', minWidth: 0, maxWidth: '100%'
@@ -70,7 +70,7 @@ export function Callout({ children, tone = 'warn' }: { children: ReactNode; tone
   const warn = tone === 'warn';
   return (
     <div style={{
-      marginTop: 6, padding: '6px 8px',
+      marginTop: 6, padding: '10px 12px',
       fontSize: 11, lineHeight: '15px', color: 'var(--cth-ink-900)',
       background: warn ? 'var(--cth-coral-light)' : 'var(--cth-cream-200)',
       boxShadow: `inset 0 0 0 1px ${warn ? 'var(--cth-coral)' : 'var(--cth-ink-100)'}`,
@@ -89,7 +89,7 @@ export function Toggle({ on, onClick, onLabel, offLabel }: {
     <button
       onClick={onClick}
       style={{
-        padding: '2px 8px 1px', border: 'none', cursor: 'pointer', flexShrink: 0,
+        padding: '2px 12px 1px', border: 'none', cursor: 'pointer', flexShrink: 0,
         background: on ? 'var(--cth-lemon)' : 'var(--cth-cream-200)',
         boxShadow: `inset 0 0 0 1px ${on ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)'}`,
             borderRadius: 'var(--cth-radius-input)',
@@ -150,7 +150,7 @@ export function Scroll({ children }: { children: ReactNode }) {
   return (
     <div style={{
       flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', overflowX: 'hidden',
-      padding: 10, background: 'var(--cth-paper-200)'
+      padding: 16, background: 'var(--cth-paper-200)'
     }}>{children}</div>
   );
 }
@@ -173,8 +173,8 @@ export function TriggerCard({ title, blurb, summary, defaultOpen = false, childr
       <button
         onClick={() => setOpen((o) => !o)}
         style={{
-          width: '100%', display: 'flex', alignItems: 'flex-start', gap: 6, textAlign: 'left',
-          padding: '8px 10px', border: 'none', cursor: 'pointer',
+          width: '100%', display: 'flex', alignItems: 'flex-start', gap: 8, textAlign: 'left',
+          padding: '12px 16px', border: 'none', cursor: 'pointer',
           background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
         }}
       >
@@ -192,7 +192,7 @@ export function TriggerCard({ title, blurb, summary, defaultOpen = false, childr
         </span>
         {summary !== undefined && <Chip>{summary}</Chip>}
       </button>
-      <div style={{ display: open ? 'block' : 'none', padding: '8px 10px 10px' }}>{children}</div>
+      <div style={{ display: open ? 'block' : 'none', padding: '12px 16px 16px' }}>{children}</div>
     </div>
   );
 }
@@ -201,7 +201,7 @@ export function TriggerCard({ title, blurb, summary, defaultOpen = false, childr
 export function SubCard({ children }: { children: ReactNode }) {
   return (
     <div style={{
-      marginBottom: 6, padding: '8px 10px 10px',
+      marginBottom: 6, padding: '12px 16px 16px',
       background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
     }}>{children}</div>
   );
@@ -212,11 +212,11 @@ export function SubHeader({ open, onToggle, title, sub, right }: {
   open: boolean; onToggle: () => void; title: ReactNode; sub?: ReactNode; right?: ReactNode;
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <button
         onClick={onToggle}
         style={{
-          flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, textAlign: 'left',
+          flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left',
           padding: 0, border: 'none', background: 'transparent', cursor: 'pointer'
         }}
       >
@@ -304,7 +304,7 @@ export function IntervalPicker({ value, onChange, minMs = MINUTE, maxMs = Number
   const showCustom = custom || !preset;
   const clamp = (ms: number) => Math.min(maxMs, Math.max(minMs, ms));
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
       <Select
         value={showCustom ? CUSTOM : String(value)}
         onChange={(v) => {
@@ -342,7 +342,7 @@ export function IntervalPicker({ value, onChange, minMs = MINUTE, maxMs = Number
 export function PctField({ value, onChange }: { value: number; onChange: (pct: number) => void }) {
   const pct = Math.max(0, Math.min(100, Math.round(value)));
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <input
         type="number"
         min={0}
@@ -382,7 +382,7 @@ export function SecretField({ value, revealed, onReveal, onCopy, copied, placeho
   const { t } = useTranslation();
   const readOnly = !onChange;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <input
         type={revealed ? 'text' : 'password'}
         value={value}
@@ -390,7 +390,7 @@ export function SecretField({ value, revealed, onReveal, onCopy, copied, placeho
         placeholder={placeholder}
         onChange={(e) => onChange?.(e.target.value)}
         onBlur={onBlur}
-        style={{ ...monoInputStyle, flex: 1, minWidth: 0, padding: '4px 6px' }}
+        style={{ ...monoInputStyle, flex: 1, minWidth: 0, padding: '4px 10px' }}
       />
       <MiniButton onClick={onReveal}>{revealed ? t('common.hide') : t('common.show')}</MiniButton>
       {onCopy && <MiniButton onClick={onCopy} tone={copied ? 'good' : 'plain'}>{copied ? `${t('common.copy')} ✓` : t('common.copy')}</MiniButton>}
@@ -433,8 +433,8 @@ export function WeeklyPicker({ value, onChange }: {
     value.days.length === days.length && days.every((d) => value.days.includes(d));
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
         {WEEKDAY_INITIALS.map((initial, d) => {
           const on = value.days.includes(d);
           return (
@@ -457,7 +457,7 @@ export function WeeklyPicker({ value, onChange }: {
           );
         })}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>{t('triggersUi.at')}</span>
         {/* A native time field, so typing 0930 works and the value is already
             the HH:MM the schedule stores. Minute granularity, not 5-minute
@@ -469,7 +469,7 @@ export function WeeklyPicker({ value, onChange }: {
             const [h, m] = e.target.value.split(':').map(Number);
             if (Number.isFinite(h) && Number.isFinite(m)) onChange({ ...value, minute: h * 60 + m });
           }}
-          style={{ ...inputStyle, width: 108, padding: '3px 6px' }}
+          style={{ ...inputStyle, width: 108, padding: '3px 10px' }}
         />
         <span style={{ flex: 1 }} />
         <MiniButton onClick={() => setDays(same([1, 2, 3, 4, 5]) ? [] : [1, 2, 3, 4, 5])}>{t('triggersUi.weekdays')}</MiniButton>
@@ -496,14 +496,14 @@ export function SchedulePicker({ intervalMs, weekly, onInterval, onWeekly }: {
 }) {
   const { t } = useTranslation();
   const tab = (active: boolean): CSSProperties => ({
-    padding: '3px 10px 2px', border: 'none', cursor: 'pointer',
+    padding: '3px 16px 2px', border: 'none', cursor: 'pointer',
     background: active ? 'var(--cth-cream-100)' : 'transparent',
     boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-ink-500)' : 'inset 0 0 0 1px var(--cth-ink-100)',
     fontFamily: 'var(--cth-font-ui)', fontSize: 11,
     color: active ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)'
   });
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', gap: 4 }}>
         <button type="button" style={tab(!weekly)} onClick={() => onWeekly(null)}>{t('triggersUi.every')}</button>
         <button type="button" style={tab(!!weekly)} onClick={() => onWeekly(weekly ?? DEFAULT_WEEKLY)}>{t('triggersUi.onDays')}</button>

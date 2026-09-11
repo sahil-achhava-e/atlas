@@ -415,7 +415,7 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
           background: 'var(--cth-cream-200)',
           borderRight: '1px solid var(--cth-ink-300)'
         }}>
-          <div style={{ padding: 8, borderBottom: '1px solid var(--cth-ink-300)' }}>
+          <div style={{ padding: 12, borderBottom: '1px solid var(--cth-ink-300)' }}>
             <button
               onClick={() => setAddAgentOpen(true)}
               title={t('fullscreenTerminal.addAgent')}
@@ -456,7 +456,7 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
                 <div
                   title={repoKey}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
+                    display: 'flex', alignItems: 'center', gap: 8,
                     padding: '0 10px 6px',
                     fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
                     fontSize: scale.group, lineHeight: 1.5,
@@ -493,15 +493,15 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
               so it can't be scrolled out of reach behind a long roster. */}
           {(restorableAgents.length > 0 || autoRestoring) && (
             <div style={{
-              flexShrink: 0, padding: 8, display: 'flex', flexDirection: 'column', gap: 6,
+              flexShrink: 0, padding: 12, display: 'flex', flexDirection: 'column', gap: 8,
               borderTop: '1px solid var(--cth-ink-300)'
             }}>
               {autoRestoring && (
                 // Same banner as the floor strip: terminals that open by
                 // themselves need to say why.
                 <div style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '4px 8px',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '4px 12px',
                   fontFamily: 'var(--cth-font-ui)', fontSize: 11,
                   color: 'var(--cth-ink-900)',
                   background: 'var(--cth-status-working)',
@@ -519,7 +519,7 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
                   style={{ width: '100%' }}
                   title={t('fullscreenTerminal.respawnTitle', { names: restorableAgents.map((a: Agent) => a.name).join(', ') })}
                 >
-                  <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                  <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                     <Icon name="play" /> {restoring ? t('agentStrip.restoringTeam') : t('agentStrip.restoreTeam', { count: restorableAgents.length })}
                   </span>
                 </PixelButton>
@@ -563,7 +563,7 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
         <div style={{
           flex: 1, minWidth: 0, minHeight: 0,
           display: 'flex', flexDirection: 'column',
-          padding: 12, gap: 10
+          padding: 12, gap: 12
         }}>
           {agent.isGod ? (
             // Michael runs the floor from the command center — its tabs (tasks,
@@ -637,7 +637,7 @@ function ContextBar({ tokens, limit, accent }: { tokens?: number; limit?: number
   return (
     <div
       title={t('fullscreenTerminal.contextTitle', { used: k(tokens), limit: k(limit), pct })}
-      style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}
+      style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}
     >
       <span style={{
         flex: 1, minWidth: 0, height: 3,
@@ -724,7 +724,7 @@ function SidebarRow({
         aria-current={active ? 'true' : undefined}
         style={{
           width: '100%',
-          padding: '6px 8px',
+          padding: '10px 12px',
           background: active ? 'var(--cth-cream-100)' : 'transparent',
           border: 'none',
           boxShadow: active
@@ -756,8 +756,8 @@ function SidebarRow({
               grows with the tile instead of floating in it. */}
           <SpritePortrait character={agent.character} scale={scale.portraitScale} />
         </div>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <span style={{
               flex: 1, minWidth: 0,
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -795,7 +795,7 @@ function SidebarRow({
               how full is its context", which is exactly what you need when the
               terminal is the whole screen and the sidebar is your only index. */}
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 6, minWidth: 0,
+            display: 'flex', alignItems: 'center', gap: 8, minWidth: 0,
             fontSize: Math.max(9, scale.name - 3), lineHeight: 1.4,
             color: 'var(--cth-ink-500)'
           }}>
@@ -816,13 +816,13 @@ function SidebarRow({
           <ContextBar tokens={agent.contextTokens} limit={agent.contextLimit} accent={agent.accent} />
           {/* Every line of every agent, always on screen — the roster's job is
               to answer "who is on what" without a single interaction. */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {bullets.map((line, i) => (
               <span
                 key={i}
                 title={line}
                 style={{
-                  display: 'flex', gap: 5, alignItems: 'baseline',
+                  display: 'flex', gap: 6, alignItems: 'baseline',
                   fontSize: scale.note, lineHeight: 1.35,
                   color: 'var(--cth-ink-500)'
                 }}
@@ -861,7 +861,7 @@ function SidebarRow({
             top: notePosition.top,
             width: noteWidth,
             zIndex: 450,
-            padding: 8,
+            padding: 12,
             background: 'var(--cth-paper-100)',
             boxShadow: 'inset 0 0 0 1.5px var(--cth-ink-500), 4px 4px 0 rgba(26,19,32,0.25)',
             boxSizing: 'border-box'
@@ -954,7 +954,7 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12,
-      padding: '6px 10px',
+      padding: '10px 16px',
       background: 'var(--cth-cream-50)',
       boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
     }}>
@@ -988,7 +988,7 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
         fontSize: 13, color: 'var(--cth-ink-700)',
         fontStyle: 'italic'
       }}>“{agent.description}”</span>
-      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
         {/* v0.3.4: the IDE opens from agent level — full Monaco editor + git
             diff over this agent's workspace. The id is passed EXPLICITLY:
             fullscreen does not change the selection, so leaving the IDE to infer

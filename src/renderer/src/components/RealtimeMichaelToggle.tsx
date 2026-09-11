@@ -204,7 +204,7 @@ export function RealtimeMichaelToggle({ compact = false }: RealtimeMichaelToggle
         // (no key) and when off/connecting, so those states are untouched.
         style={!noKey && view.activeBg ? { background: view.activeBg, color: 'var(--cth-ink-900)' } : undefined}
       >
-        <span style={{ display: 'inline-flex', gap: 5, alignItems: 'center' }}>
+        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
           {/* Live-state dot — only while something IS live. Off, it was a grey
               square sitting beside a mic icon saying the same nothing twice. */}
           {!noKey && status !== 'off' && (
@@ -265,10 +265,10 @@ export function RealtimeMichaelToggle({ compact = false }: RealtimeMichaelToggle
                 top: hint.top,
                 zIndex: 460,
                 width: HINT_W,
-                padding: '8px 10px',
+                padding: '12px 16px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 5,
+                gap: 6,
                 boxSizing: 'border-box',
                 background: 'var(--cth-paper-100)',
                 // Matches the note editor's portalled popover: hairline + a hard

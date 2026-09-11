@@ -99,14 +99,14 @@ export function TerminalView({ initialLines = [], feed = [] }: TerminalViewProps
     <div style={{
       background: 'var(--cth-paper-100)',
       boxShadow: 'var(--cth-panel-border-terminal)',
-      padding: 8,
+      padding: 12,
       height: '100%',
       minHeight: 0,
       display: 'flex',
       flexDirection: 'column'
     }}>
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 6,
+        display: 'flex', alignItems: 'center', gap: 8,
         fontFamily: 'var(--cth-font-ui)',
         fontSize: 13,
         color: 'var(--cth-ink-500)',

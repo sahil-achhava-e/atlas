@@ -80,7 +80,7 @@ export function PixelBadge({ status, label, style, dotOnly }: PixelBadgeProps) {
         // Same reason as PixelButton: a status chip that shrinks spills its text
         // under the controls beside it instead of holding its own width.
         flexShrink: 0,
-        gap: 6,
+        gap: 8,
         padding: '2px 8px 0',
         background: 'var(--cth-cream-100)',
         boxShadow: `inset 0 0 0 1px ${colorByStatus[status]}`, borderRadius: 'var(--cth-radius-input)',

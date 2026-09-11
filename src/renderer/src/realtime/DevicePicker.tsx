@@ -53,7 +53,7 @@ const labelStyle: React.CSSProperties = {
 const selectStyle: React.CSSProperties = {
   fontFamily: 'var(--cth-font-mono)',
   fontSize: 13,
-  padding: '6px 8px',
+  padding: '10px 12px',
   border: '2px solid var(--cth-ink-300)',
   background: 'var(--cth-paper-100)',
   color: 'var(--cth-ink-900)'
@@ -109,7 +109,7 @@ export function RealtimeDevicePicker(): React.ReactElement {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 280 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <span style={labelStyle}>{t('devicePicker.microphone')}</span>
         <select
           value={deviceId ?? ''}
@@ -126,7 +126,7 @@ export function RealtimeDevicePicker(): React.ReactElement {
       </div>
 
       {CAN_PICK_SPEAKER && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <span style={labelStyle}>{t('devicePicker.speaker')}</span>
           <select
             value={outputDeviceId ?? ''}
@@ -144,7 +144,7 @@ export function RealtimeDevicePicker(): React.ReactElement {
       )}
 
       {!labelled && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
           <PixelButton variant="secondary" size="sm" onClick={() => { void askAccess(); }} disabled={asking}>
             {asking ? t('devicePicker.asking') : t('devicePicker.showNames')}
           </PixelButton>

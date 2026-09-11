@@ -23,10 +23,10 @@ export function MichaelBooting() {
         <PixelPanel variant="dialog" title="CLOCKING IN" noPadding>
           <div style={{
             padding: 20,
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16
           }}>
             {/* Stepped pixel blocks — staggered blink, no easing (matches aesthetic) */}
-            <div style={{ display: 'flex', gap: 6 }}>
+            <div style={{ display: 'flex', gap: 8 }}>
               {[0, 1, 2, 3].map((i) => (
                 <span
                   key={i}

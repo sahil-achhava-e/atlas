@@ -26,17 +26,17 @@ function statusColor(code: string): string {
 }
 
 const rowStyle: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 6, padding: '2px 12px',
+  display: 'flex', alignItems: 'center', gap: 8, padding: '2px 12px',
   cursor: 'pointer', fontSize: 13, color: 'var(--cth-ink-900)'
 };
 const noteStyle: React.CSSProperties = {
-  padding: '6px 12px', fontSize: 13, color: 'var(--cth-ink-500)'
+  padding: '10px 12px', fontSize: 13, color: 'var(--cth-ink-500)'
 };
 const smallBtn: React.CSSProperties = {
   padding: '0 6px', height: 20, fontFamily: 'var(--cth-font-ui)', fontSize: 11,
   color: 'var(--cth-ink-900)', background: 'var(--cth-cream-100)', border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)', cursor: 'pointer',
-  display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0
+  display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0
 };
 
 function FileRow({ f, onClick }: { f: GitFileChange; onClick: () => void }) {
@@ -119,7 +119,7 @@ export function HistoryPane({ gitRoot, onOpenRevDiff }: {
           borderTop: '1px solid var(--cth-ink-300)', background: 'var(--cth-cream-50)'
         }}>
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px 3px',
+            display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px 3px',
             fontSize: 13, color: 'var(--cth-ink-700)'
           }}>
             <span style={{ fontFamily: 'var(--cth-font-mono)', color: 'var(--cth-ink-900)' }}>{selected.shortSha}</span>
@@ -206,7 +206,7 @@ export function ComparePane({ gitRoot, onOpenRevDiff }: {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '6px 12px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 12px', flexShrink: 0 }}>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           <select value={base} onChange={(e) => setBase(e.target.value)} style={sel} title={t('gitPanes.baseTitle')}>
             {branches.map((b) => <option key={b} value={b}>{b}</option>)}
@@ -217,7 +217,7 @@ export function ComparePane({ gitRoot, onOpenRevDiff }: {
             {branches.map((b) => <option key={b} value={b}>{b}</option>)}
           </select>
         </div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 11, color: 'var(--cth-ink-500)' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 11, color: 'var(--cth-ink-500)' }}>
           {result && (
             <span title={t('gitPanes.aheadBehind', { head, ahead: result.ahead, behind: result.behind, base })}>
               ↑{result.ahead} ↓{result.behind}

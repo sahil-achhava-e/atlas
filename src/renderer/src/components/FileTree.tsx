@@ -108,8 +108,8 @@ export function FileTree({ root, activeRel, onOpenFile, onCopyPath }: FileTreePr
       return (
         <div>
           {node.children?.map(c => renderNode(c, 0))}
-          {node.loading && <div style={{ padding: 8, fontSize: 13, color: 'var(--cth-ink-500)' }}>{t('fileTree.loading')}</div>}
-          {node.error && <div style={{ padding: 8, fontSize: 13, color: 'var(--cth-coral)' }}>{node.error}</div>}
+          {node.loading && <div style={{ padding: 12, fontSize: 13, color: 'var(--cth-ink-500)' }}>{t('fileTree.loading')}</div>}
+          {node.error && <div style={{ padding: 12, fontSize: 13, color: 'var(--cth-coral)' }}>{node.error}</div>}
         </div>
       );
     }
@@ -120,7 +120,7 @@ export function FileTree({ root, activeRel, onOpenFile, onCopyPath }: FileTreePr
           onClick={() => toggle(node)}
           style={{
             display: 'flex', alignItems: 'center', gap: 4,
-            padding: '2px 6px',
+            padding: '2px 10px',
             paddingLeft: 6 + depth * 14,
             background: isActive ? 'var(--cth-lemon-light)' : 'transparent',
             cursor: 'pointer',
@@ -159,12 +159,12 @@ export function FileTree({ root, activeRel, onOpenFile, onCopyPath }: FileTreePr
         {node.isDir && node.expanded && (
           <div>
             {node.loading && (
-              <div style={{ padding: '2px 6px', paddingLeft: 24 + depth * 14, fontSize: 13, color: 'var(--cth-ink-500)' }}>
+              <div style={{ padding: '2px 10px', paddingLeft: 24 + depth * 14, fontSize: 13, color: 'var(--cth-ink-500)' }}>
                 {t('fileTree.loading')}
               </div>
             )}
             {node.error && (
-              <div style={{ padding: '2px 6px', paddingLeft: 24 + depth * 14, fontSize: 13, color: 'var(--cth-coral)' }}>
+              <div style={{ padding: '2px 10px', paddingLeft: 24 + depth * 14, fontSize: 13, color: 'var(--cth-coral)' }}>
                 {node.error}
               </div>
             )}

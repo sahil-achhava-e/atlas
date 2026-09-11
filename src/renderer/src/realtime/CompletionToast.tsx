@@ -109,7 +109,7 @@ export function CompletionToast(): JSX.Element | null {
             padding: 12,
             display: 'flex',
             flexDirection: 'column',
-            gap: 6
+            gap: 8
           }}
         >
           <div

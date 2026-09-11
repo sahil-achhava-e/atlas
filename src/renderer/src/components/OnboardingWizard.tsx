@@ -316,7 +316,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         {/* ── Brand bar: who is asking, and how far in you are ─────────────── */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0,
-          padding: '14px 20px',
+          padding: '16px 20px',
           background: 'var(--cth-cream-100)',
           boxShadow: 'inset 0 -1px 0 var(--cth-ink-100)'
         }}>
@@ -399,7 +399,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, letterSpacing: 0.5, color: 'var(--cth-ink-700)' }}>
                   {t('onboarding.persona.ask')}
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <PersonaCard
                     icon="code"
                     title={t('onboarding.persona.technicalTitle')}
@@ -445,8 +445,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {FEATURES.map((f) => (
                     <div key={f.labelKey} style={{
-                      display: 'flex', gap: 10, alignItems: 'flex-start',
-                      padding: 10,
+                      display: 'flex', gap: 12, alignItems: 'flex-start',
+                      padding: 16,
                       background: f.tint,
                       boxShadow: `inset 0 0 0 2px ${f.edge}`
                     }}>
@@ -489,7 +489,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     style={inputStyle}
                   />
                   <PixelButton variant="secondary" size="lg" onClick={pickHome}>
-                    <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                    <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                       <Icon name="folder" /> {plain ? t('onboarding.home.createPick') : t('onboarding.home.pick')}
                     </span>
                   </PixelButton>
@@ -503,7 +503,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     : ['onboarding.home.holdsState', 'onboarding.home.holdsMemory', 'onboarding.home.holdsLogs']
                   ).map((k) => (
                     <span key={k} style={{
-                      padding: '4px 10px', fontSize: 13, lineHeight: '17px',
+                      padding: '4px 16px', fontSize: 13, lineHeight: '17px',
                       color: 'var(--cth-ink-700)',
                       background: 'var(--cth-cream-200)',
                       boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
@@ -518,7 +518,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     faith: show back the three answers it is about to write. */}
                 <div style={{ height: 1, background: 'var(--cth-ink-100)', margin: '4px 0' }} />
                 <FieldLabel>{t('onboarding.home.review')}</FieldLabel>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <ReviewRow
                     label={t('onboarding.home.reviewEngine')}
                     value={`${providerPreset(godProvider).label}${godModel ? ' · ' + (modelsForProvider(godProvider).find((m) => m.id === godModel)?.label ?? godModel) : ''}`}
@@ -555,7 +555,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 {/* The list scrolls inside itself. Twelve rows above the model
                     picker meant scrolling past every engine to reach it. */}
                 <div style={{
-                  display: 'flex', flexDirection: 'column', gap: 6,
+                  display: 'flex', flexDirection: 'column', gap: 8,
                   maxHeight: 268, overflowY: 'auto', paddingRight: 4
                 }}>
                   {onboardingEngineChoices().eligible.map((p) => {
@@ -563,7 +563,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     return (
                       <label key={p.id} className="cth-choice" style={{
                         display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '10px 12px',
+                        padding: '16px 12px',
                         background: sel ? 'var(--cth-sky-light)' : 'var(--cth-paper-100)',
                         boxShadow: sel
                           ? 'inset 0 0 0 2px var(--cth-sky)'
@@ -618,7 +618,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                           const bad = a.state === 'not-installable';
                           return (
                             <span title={a.path ?? undefined} style={{
-                              fontSize: 11, padding: '2px 6px', lineHeight: '16px',
+                              fontSize: 11, padding: '2px 10px', lineHeight: '16px',
                               background: a.state === 'installed' ? 'var(--cth-mint-light)' : bad ? 'var(--cth-paper-100)' : 'var(--cth-cream-200)',
                               color: bad ? 'var(--cth-ink-500)' : 'var(--cth-ink-900)',
                               boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
@@ -628,7 +628,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         })()}
                         {p.id === 'claude' && (
                           <span style={{
-                            fontSize: 11, padding: '2px 6px', lineHeight: '16px',
+                            fontSize: 11, padding: '2px 10px', lineHeight: '16px',
                             background: 'var(--cth-lemon)',
                             boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                             fontFamily: 'var(--cth-font-ui)', fontWeight: 600, flexShrink: 0
@@ -642,8 +642,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       real constraint — no inbox drain path — not as "unsupported". */}
                   {onboardingEngineChoices().workersOnly.map((p) => (
                     <label key={p.id} aria-disabled title={t('onboarding.orchestrator.workersOnlyHint', { godName })} style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '8px 10px',
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 16px',
                       background: 'var(--cth-paper-100)',
                       boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                       cursor: 'not-allowed', opacity: 0.75
@@ -665,7 +665,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         </span>
                       </span>
                       <span style={{
-                        fontSize: 11, padding: '2px 6px', lineHeight: '16px',
+                        fontSize: 11, padding: '2px 10px', lineHeight: '16px',
                         background: 'var(--cth-paper-100)', color: 'var(--cth-ink-500)',
                         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, flexShrink: 0
@@ -675,7 +675,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 </div>
                 {engineBlocked && (
                   <div style={{
-                    display: 'flex', flexDirection: 'column', gap: 8, padding: 10,
+                    display: 'flex', flexDirection: 'column', gap: 8, padding: 16,
                     background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 2px var(--cth-ink-900)',
                     fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-900)'
                   }}>
@@ -716,7 +716,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   {plain ? t('onboarding.repos.descPlain') : t('onboarding.repos.desc')}
                 </p>
 
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
                   <FieldLabel>{t('onboarding.repos.fieldLabel')}</FieldLabel>
                   {repos.length > 0 && (
                     <span style={{ fontSize: 13, color: 'var(--cth-ink-500)', marginBottom: -8 }}>
@@ -726,7 +726,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 </div>
 
                 <div style={{
-                  display: 'flex', flexDirection: 'column', gap: 6,
+                  display: 'flex', flexDirection: 'column', gap: 8,
                   maxHeight: 210, overflowY: 'auto'
                 }}>
                   {repos.length === 0 && (
@@ -750,7 +750,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     return (
                       <div key={r} style={{
                         display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '10px 12px',
+                        padding: '16px 12px',
                         background: 'var(--cth-paper-100)',
                         boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
                       }}>
@@ -788,7 +788,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 </div>
 
                 <PixelButton variant="secondary" size="lg" fullWidth onClick={pickRepo}>
-                  <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                  <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                     <Icon name="plus" /> {plain ? t('onboarding.repos.addProject') : t('onboarding.repos.addRepo')}
                   </span>
                 </PixelButton>
@@ -807,7 +807,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, letterSpacing: 0.5, color: 'var(--cth-ink-700)' }}>
                   {t('onboarding.permissions.autonomyHead')}
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <PersonaCard
                     icon="pause"
                     title={t('onboarding.permissions.askTitle')}
@@ -869,7 +869,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
                 {/* LEVER 4 "— instruction-only: the OS won't let the app flip its sleep setting itself, so we deep-link the pane where one exists (macOS/Windows) and fall back to text-only guidance on Linux. */}
                 <div style={{
-                  display: 'flex', gap: 10, alignItems: 'flex-start', padding: 10,
+                  display: 'flex', gap: 12, alignItems: 'flex-start', padding: 16,
                   background: 'var(--cth-lemon-light)',
                   boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                 }}>
@@ -892,7 +892,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     {stayAwakeUrl && (
                       <PixelButton variant="secondary" size="sm"
                         onClick={() => openSettings(stayAwakeUrl)}>
-                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                        <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                           <Icon name="arrow-right" /> {t(`onboarding.permissions.openBattery${stayAwakeOs === 'mac' ? 'Mac' : 'Windows'}`)}
                         </span>
                       </PixelButton>
@@ -904,7 +904,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
             {error && (
               <div style={{
-                padding: '6px 10px',
+                padding: '10px 16px',
                 background: 'var(--cth-coral-light)',
                 boxShadow: 'inset 0 0 0 1px var(--cth-coral)', borderRadius: 'var(--cth-radius-input)',
                 fontSize: 13,
@@ -920,7 +920,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         {/* ── Footer: how far along, and the way forward ───────────────────── */}
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16,
-          flexShrink: 0, padding: '14px 20px',
+          flexShrink: 0, padding: '16px 20px',
           background: 'var(--cth-cream-100)',
           boxShadow: 'inset 0 1px 0 var(--cth-ink-100)'
         }}>
@@ -1021,7 +1021,7 @@ function PersonaCard({ icon, title, desc, selected, onClick }: {
       aria-pressed={selected}
       style={{
         textAlign: 'left', cursor: 'pointer', border: 'none',
-        padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8,
+        padding: '16px 16px', display: 'flex', flexDirection: 'column', gap: 8,
         // Selection is cyan on purpose. Mint read as "success"; the brand
         // violet disappeared into an app painted violet everywhere else. The
         // one colour that is NOT the brand is the one that reads as "chosen".
@@ -1031,7 +1031,7 @@ function PersonaCard({ icon, title, desc, selected, onClick }: {
           : 'inset 0 0 0 1px var(--cth-ink-300)'
       }}
     >
-      <span style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
         <span style={{
           width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: selected ? 'var(--cth-sky)' : 'var(--cth-cream-200)',
@@ -1076,7 +1076,7 @@ function ToggleRow({ icon, label, desc, on, tint, edge, onChange }: {
 }) {
   return (
     <label style={{
-      display: 'flex', gap: 10, alignItems: 'flex-start', padding: 10,
+      display: 'flex', gap: 12, alignItems: 'flex-start', padding: 16,
       background: on ? tint : 'var(--cth-paper-100)',
       boxShadow: `inset 0 0 0 ${on ? 2 : 1}px ${on ? edge : 'var(--cth-ink-300)'}`,
       cursor: 'pointer'

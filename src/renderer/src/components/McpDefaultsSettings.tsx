@@ -107,7 +107,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
   };
 
   const fieldStyle = {
-    padding: '6px 8px 5px',
+    padding: '10px 12px 5px',
     background: 'var(--cth-cream-100)', border: 'none',
     boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
     fontFamily: 'var(--cth-font-mono)', fontSize: 13,
@@ -153,7 +153,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
         const isConsent = tier !== 'safe-readonly';
         return (
           <div key={tier} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span style={{
                 fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
                 color: isConsent ? '#6E1423' : 'var(--cth-ink-500)',
@@ -165,7 +165,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
               </span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {entries.map((entry) => {
                 const on = enabledFor(entry.id);
                 const envKeys = mcpSecretEnvKeys(entry.id);
@@ -174,7 +174,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                     key={entry.id}
                     style={{
                       display: 'flex', flexDirection: 'column', gap: 8,
-                      padding: '7px 10px',
+                      padding: '7px 16px',
                       background: 'var(--cth-paper-100)',
                       boxShadow: `inset 0 0 0 1px ${isConsent && on ? '#6E1423' : 'var(--cth-ink-300)'}`,
             borderRadius: 'var(--cth-radius-input)'
@@ -183,7 +183,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                   <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12
                   }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
                       <span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>
                         {entry.label}
                         <code style={{
@@ -203,7 +203,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                       onClick={() => { void toggle(entry.id); }}
                       style={{
                         flexShrink: 0,
-                        padding: '3px 10px 1px',
+                        padding: '3px 16px 1px',
                         background: on
                           ? (isConsent ? 'var(--cth-coral-light, #f6d3c4)' : 'var(--cth-lemon)')
                           : 'var(--cth-cream-200)',
@@ -226,9 +226,9 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                       own. URLs are write-only — they go to the encrypted store
                       and are never read back, so a row says "set", not the value. */}
                   {entry.id === 'db' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {conns.map((c) => (
-                        <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <input
                             value={c.label}
                             onChange={(e) => renameConn(c.id, e.target.value)}
@@ -273,7 +273,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                   )}
 
                   {entry.id !== 'db' && envKeys.map((envName) => (
-                    <div key={envName} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div key={envName} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <input
                         type="password"
                         autoComplete="off"
@@ -283,7 +283,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                           ? `${envName} · set — paste a new one to replace it`
                           : PLACEHOLDER[envName] ?? envName}
                         style={{
-                          flex: 1, minWidth: 0, padding: '6px 8px 5px',
+                          flex: 1, minWidth: 0, padding: '10px 12px 5px',
                           background: 'var(--cth-cream-100)', border: 'none',
                           boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                           fontFamily: 'var(--cth-font-mono)', fontSize: 13,

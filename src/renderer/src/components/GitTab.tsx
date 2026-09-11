@@ -110,13 +110,13 @@ export function GitTab({ cwd }: GitTabProps) {
       {/* Branch + ahead/behind header */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
-        padding: '6px 10px',
+        padding: '10px 16px',
         background: 'var(--cth-cream-200)',
         borderBottom: '1px solid var(--cth-ink-700)'
       }}>
         <span style={{
           fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
-          padding: '2px 6px',
+          padding: '2px 10px',
           background: 'var(--cth-sky-light)',
           boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
           color: 'var(--cth-ink-900)'
@@ -137,7 +137,7 @@ export function GitTab({ cwd }: GitTabProps) {
 
       {error && (
         <div style={{
-          padding: '4px 10px',
+          padding: '4px 16px',
           background: 'var(--cth-coral-light)',
           color: 'var(--cth-ink-900)',
           fontSize: 13,
@@ -208,7 +208,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <div style={{
         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
         color: 'var(--cth-ink-700)',
-        padding: '8px 10px 4px',
+        padding: '12px 16px 4px',
         background: 'var(--cth-cream-50)',
         borderBottom: '1px solid var(--cth-ink-100)'
       }}>{title}</div>
@@ -230,7 +230,7 @@ function StatusGroup({ label, entries }: {
       }}>{label}</div>
       {entries.map(e => (
         <div key={`${label}-${e.path}-${e.code}`} style={{
-          display: 'flex', alignItems: 'center', gap: 6,
+          display: 'flex', alignItems: 'center', gap: 8,
           padding: '2px 12px',
           fontSize: 13, color: 'var(--cth-ink-900)'
         }}>

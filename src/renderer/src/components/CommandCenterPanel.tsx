@@ -178,7 +178,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
           fixed sentence about the agent's role. */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
-        padding: '6px 8px', background: 'var(--cth-cream-100)',
+        padding: '10px 12px', background: 'var(--cth-cream-100)',
         borderBottom: '1px solid var(--cth-ink-700)', flexShrink: 0
       }}>
         <div style={{
@@ -193,7 +193,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
             width the old header wrapped its display-font title onto three lines
             and put "runs the floor" word-per-line under the buttons. */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <span style={{
               fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '15px',
               color: 'var(--cth-ink-900)',
@@ -251,7 +251,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         display: 'flex', gap: 4,
         flexWrap: fullscreen ? 'nowrap' : 'wrap',
         overflowX: fullscreen ? 'auto' : 'visible',
-        padding: '6px 8px 4px', background: 'var(--cth-cream-100)', flexShrink: 0
+        padding: '10px 12px 4px', background: 'var(--cth-cream-100)', flexShrink: 0
       }}>
         {primaryTabs.map((d) => {
           const on = d.key === tab;
@@ -264,8 +264,8 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
               data-tip={t(d.hintKey)}
               style={{
                 position: 'relative', whiteSpace: 'nowrap', flex: '1 0 auto',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                padding: '5px 10px 4px', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '5px 16px 4px', border: 'none', cursor: 'pointer',
                 background: on ? `var(--cth-${agent.accent})` : 'var(--cth-cream-200)',
                 // The active tab is filled with the agent's accent, a LIGHT colour
                 // in both themes; ink-900 flips to near-white in dark, so the one
@@ -676,7 +676,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
   return (
     <Scroll>
       <Section title={t('commandCenter.dispatchViaMichael', { godName: godName.toUpperCase() })}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
           <span style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>
             {t('commandCenter.suggestedOwner')}
           </span>
@@ -735,7 +735,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
           return (
           <div key={a.id} style={{
             display: 'flex', flexDirection: 'column', gap: 4,
-            padding: 6, marginBottom: 6,
+            padding: 10, marginBottom: 6,
             background: armed ? 'var(--cth-coral-light)' : 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -762,9 +762,9 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
             </div>
             <div style={{ fontSize: 11, color: 'var(--cth-ink-500)', wordBreak: 'break-all' }}>{a.cwd}</div>
             {/* Live telemetry (folded in from the old Fleet tab) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {hasSpark ? (
-                <span style={{ flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>{rateLabel}</span>
                   <Sparkline series={sparkSeries} />
                 </span>
@@ -796,7 +796,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                 200k/1M size). Distinct from the cumulative budget meter above,
                 which keeps growing forever and pins at 100% — that one is
                 spend, this one is headroom before compaction. */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ flex: 1 }} />
               <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-300)', flexShrink: 0 }}>{t('commandCenter.ctx')}</span>
               {a.contextTokens !== undefined && a.contextLimit ? (() => {
@@ -831,7 +831,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                 (provider+model+apply), so we DON'T render this second selector for
                 it — one model picker, not two. */}
             {!a.isGod && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <Select
                 value={encodeProviderModel(agentProvider, a.model)}
                 disabled={restarting === a.id}
@@ -906,7 +906,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
               </div>
             )}
             {a.isGod && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>{t('commandCenter.engine')}</span>
                 <Select
                   value={engineProvider}
@@ -967,7 +967,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
         })}
         {/* Fleet summary band */}
         <div style={{
-          display: 'flex', gap: 14, marginTop: 2, padding: '6px 8px',
+          display: 'flex', gap: 16, marginTop: 2, padding: '10px 12px',
           background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
           fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-900)', flexWrap: 'wrap'
         }}>
@@ -989,7 +989,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
       <Section title={t('commandCenter.directories')}>
         {repos.length === 0 && <Muted>{t('commandCenter.noRepos')}</Muted>}
         {repos.map((r) => (
-          <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+          <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
             <span style={{ flex: 1, fontSize: 13, color: 'var(--cth-ink-700)', wordBreak: 'break-all' }}>{r}</span>
             <button
               onClick={() => window.cth.openTerminalAt(r)}
@@ -1004,7 +1004,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
         {repos.length === 0 && <Muted>{t('commandCenter.noRepos')}</Muted>}
         {repos.length > 0 && (
           <>
-            <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
               <Select value={issueRepo || repos[0]} onChange={setIssueRepo}>
                 {repos.map((r) => (
                   <option key={r} value={r}>{r}</option>
@@ -1017,7 +1017,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
             {issuesError && (
               <div style={{
                 fontSize: 13, color: 'var(--cth-ink-700)', marginBottom: 6,
-                padding: 6, background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
+                padding: 10, background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                 wordBreak: 'break-word'
               }}>{issuesError}</div>
             )}
@@ -1025,10 +1025,10 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
             {issues.map((issue) => (
               <div key={issue.number} style={{
                 display: 'flex', flexDirection: 'column', gap: 4,
-                padding: 6, marginBottom: 6,
+                padding: 10, marginBottom: 6,
                 background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                   <span style={{ fontSize: 13, color: 'var(--cth-ink-900)', flex: 1, wordBreak: 'break-word' }}>
                     <strong>#{issue.number}</strong> {issue.title}
                   </span>
@@ -1070,7 +1070,7 @@ function ArchivedSection() {
         onClick={() => setOpen((v) => !v)}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 4,
-          padding: '2px 8px 1px', border: 'none', cursor: 'pointer',
+          padding: '2px 12px 1px', border: 'none', cursor: 'pointer',
           background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
           fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)',
           marginBottom: open ? 6 : 0
@@ -1079,7 +1079,7 @@ function ArchivedSection() {
       {open && archivedAgents.map((a) => (
         <div key={a.id} style={{
           display: 'flex', alignItems: 'center', gap: 8,
-          padding: 6, marginBottom: 6, opacity: 0.7,
+          padding: 10, marginBottom: 6, opacity: 0.7,
           background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
         }}>
           <div style={{
@@ -1148,7 +1148,7 @@ function MemoryTab({ godId, who: controlledWho, onWho }: { godId: string; who?: 
   return (
     <Scroll>
       <Section title={t('commandCenter.textSearch')}>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
           <input
             value={textQuery}
             onChange={(e) => setTextQuery(e.target.value)}
@@ -1174,7 +1174,7 @@ function MemoryTab({ godId, who: controlledWho, onWho }: { godId: string; who?: 
       </Section>
 
       <Section title={t('commandCenter.semanticSearch')}>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -1249,7 +1249,7 @@ function TokenLimitEditor({ value, onSet }: { value?: number; onSet: (tokens: nu
         onClick={() => { setText(value != null ? String(value) : ''); setEditing(true); }}
         title={t('commandCenter.tokenLimitTitle')}
         style={{
-          flexShrink: 0, padding: '1px 6px', border: 'none', cursor: 'pointer',
+          flexShrink: 0, padding: '1px 10px', border: 'none', cursor: 'pointer',
           background: value && value > 0 ? 'var(--cth-lemon)' : 'var(--cth-cream-200)',
           boxShadow: `inset 0 0 0 1px ${value && value > 0 ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)'}`,
             borderRadius: 'var(--cth-radius-input)',
@@ -1261,7 +1261,7 @@ function TokenLimitEditor({ value, onSet }: { value?: number; onSet: (tokens: nu
     );
   }
   return (
-    <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+    <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
       <input
         type="number" min="0" step="100000" value={text} autoFocus
         onChange={(e) => setText(e.target.value)}
@@ -1322,7 +1322,7 @@ function ActivityTab() {
       <Section title={t('commandCenter.activity')}>
         {log.length === 0 && <Muted>{t('commandCenter.nothingYet')}</Muted>}
         {[...log].reverse().map((e, i) => (
-          <div key={i} style={{ fontSize: 13, color: 'var(--cth-ink-700)', padding: '2px 0', display: 'flex', gap: 6 }}>
+          <div key={i} style={{ fontSize: 13, color: 'var(--cth-ink-700)', padding: '2px 0', display: 'flex', gap: 8 }}>
             <span style={{ color: 'var(--cth-ink-300)', flexShrink: 0 }}>{e.kind ?? '·'}</span>
             <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fmt(e)}</span>
           </div>
@@ -1343,7 +1343,7 @@ function Scroll({ children }: { children: React.ReactNode }) {
   // minWidth:0 + overflowX:hidden keep wide children (native selects, long paths,
   // budget rows) from forcing a horizontal scrollbar in the narrow sidebar — they
   // wrap/shrink instead. Vertical scroll stays.
-  return <div style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: 10, background: 'var(--cth-paper-200)' }}>{children}</div>;
+  return <div style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: 16, background: 'var(--cth-paper-200)' }}>{children}</div>;
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -1371,7 +1371,7 @@ function Pre({ children }: { children: React.ReactNode }) {
   const rtl = useRtl();
   return (
     <pre style={{
-      margin: '6px 0 0', padding: 8, maxHeight: 200, overflow: 'auto',
+      margin: '6px 0 0', padding: 12, maxHeight: 200, overflow: 'auto',
       background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
       fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '16px',
       color: 'var(--cth-ink-900)', whiteSpace: 'pre-wrap', wordBreak: 'break-word'
@@ -1380,7 +1380,7 @@ function Pre({ children }: { children: React.ReactNode }) {
 }
 
 const textareaStyle: React.CSSProperties = {
-  flex: 1, width: '100%', resize: 'none', padding: '6px 8px',
+  flex: 1, width: '100%', resize: 'none', padding: '10px 12px',
   background: 'var(--cth-paper-100)', border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '17px',
@@ -1396,7 +1396,7 @@ function Select({ value, onChange, disabled, children }: {
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
       style={{
-        padding: '3px 6px', background: 'var(--cth-paper-100)',
+        padding: '3px 10px', background: 'var(--cth-paper-100)',
         border: 'none', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
         fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)', cursor: 'pointer',
         // Never let a long option name push the sidebar wider than it is.

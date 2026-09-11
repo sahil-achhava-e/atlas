@@ -49,7 +49,7 @@ export function BlockedBanner({ reason, onAction }: BlockedBannerProps) {
           lineHeight: '18px',
           color: 'var(--cth-ink-900)',
           background: 'var(--cth-paper-100)',
-          padding: '4px 8px',
+          padding: '4px 12px',
           boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
@@ -58,7 +58,7 @@ export function BlockedBanner({ reason, onAction }: BlockedBannerProps) {
           $ {reason.command}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {reason.actions.map((a) => (
           <PixelButton
             key={a.label}

@@ -97,7 +97,7 @@ export function QuitWarningModal({ ptyCount, closing, onCancel, onConfirm, onClo
 
                 {/* ACK progress */}
                 <div style={{
-                  padding: 8,
+                  padding: 12,
                   background: 'var(--cth-cream-200)',
                   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                   fontSize: 13, lineHeight: '18px',
@@ -160,7 +160,7 @@ export function QuitWarningModal({ ptyCount, closing, onCancel, onConfirm, onClo
                 </div>
 
                 <div style={{
-                  padding: 8,
+                  padding: 12,
                   background: 'var(--cth-cream-200)',
                   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                   fontSize: 13, lineHeight: '18px',
@@ -173,7 +173,7 @@ export function QuitWarningModal({ ptyCount, closing, onCancel, onConfirm, onClo
 
                 {closing?.phase === 'error' && (
                   <div style={{
-                    padding: 8,
+                    padding: 12,
                     background: 'var(--cth-coral-light)',
                     boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                     fontSize: 13, lineHeight: '18px',
@@ -189,7 +189,7 @@ export function QuitWarningModal({ ptyCount, closing, onCancel, onConfirm, onClo
                   </PixelButton>
                   {onClosingTime && (
                     <PixelButton variant="primary" size="md" onClick={onClosingTime} disabled={busy}>
-                      <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                      <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                         <Icon name="clock" /> closing time
                       </span>
                     </PixelButton>

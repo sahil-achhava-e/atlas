@@ -107,7 +107,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
       <div onClick={(e) => e.stopPropagation()} style={{ width: 940, maxWidth: '95vw' }}>
         <PixelPanel variant="dialog" title="EDIT AGENT" style={{ padding: 16 }} noPadding>
           <div style={{
-            display: 'flex', flexDirection: 'column', gap: 14,
+            display: 'flex', flexDirection: 'column', gap: 16,
             padding: 16, maxHeight: '86vh', overflowY: 'auto'
           }}>
             {/* Two columns so the extra width is used rather than padded.
@@ -118,7 +118,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
               gap: 16, alignItems: 'start', minHeight: 260
             }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
             <Section label="Identity" hint="name · character · color">
               <Row label="Name">
                 <input
@@ -132,7 +132,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
 
               <Row label="Character">
                 <div style={{
-                  display: 'flex', gap: 6, flexWrap: 'wrap',
+                  display: 'flex', gap: 8, flexWrap: 'wrap',
                   maxHeight: 188, overflowY: 'auto', paddingRight: 4
                 }}>
                   {/* The SAME thirty faces Add agent offers, plus Atlas — the two
@@ -176,7 +176,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               </Row>
 
               <Row label="Color">
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                   {ACCENTS.map((a) => (
                     <button
                       key={a}
@@ -237,7 +237,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               <Row label="Provider">
                 <div style={{
                   display: 'inline-flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
-                  padding: '8px 12px',
+                  padding: '12px 12px',
                   background: 'var(--cth-cream-100)',
                   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
                 }}>
@@ -268,7 +268,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                           onClick={() => setModel(m.id)}
                           title={m.id ?? 'CLI default model'}
                           style={{
-                            padding: '6px 10px 5px',
+                            padding: '10px 16px 5px',
                             background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
                             boxShadow: active
                               ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
@@ -318,7 +318,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
             {/* The footer is a floor, not another row: a rule above it and its
                 own padding, so Save never floats against the last field. */}
             <div style={{
-              display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'flex-end',
+              display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'flex-end',
               marginTop: 6, paddingTop: 14, borderTop: '1px solid var(--cth-ink-100)'
             }}>
               <span style={{ flex: 1, fontSize: 13, color: 'var(--cth-ink-500)' }}>
@@ -336,7 +336,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
 
 const inputStyle: CSSProperties = {
   width: '100%',
-  padding: '9px 11px 8px',
+  padding: '12px 11px 12px',
   background: 'var(--cth-paper-100)',
   border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
@@ -374,7 +374,7 @@ function Section({
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <span style={{
         fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
         fontSize: 11, lineHeight: '13px', letterSpacing: '.04em',

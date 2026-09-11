@@ -167,7 +167,7 @@ export function TasksKanban() {
           through the dispatch box (which mails the god), not by the human
           inserting cards the orchestrator never heard about. */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', flexShrink: 0,
+        display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', flexShrink: 0,
         borderBottom: '1px solid var(--cth-ink-300)'
       }}>
         <span style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-ink-500)' }}>
@@ -180,7 +180,7 @@ export function TasksKanban() {
 
       {/* Columns */}
       <div style={{
-        flex: 1, minHeight: 0, display: 'flex', gap: 8, padding: 10, overflowX: 'auto'
+        flex: 1, minHeight: 0, display: 'flex', gap: 8, padding: 16, overflowX: 'auto'
       }}>
         {COLUMNS.map((col) => {
           const cards = tasks.filter((t) => t.status === col.key);
@@ -190,14 +190,14 @@ export function TasksKanban() {
               background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
             }}>
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '5px 8px 4px',
+                display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px 4px',
                 background: col.accent, boxShadow: 'inset 0 -1px 0 var(--cth-ink-900)',
                 fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-ink-900)'
               }}>
                 {t(col.labelKey)}
                 <span style={{ marginLeft: 'auto', fontSize: 11, fontFamily: 'var(--cth-font-ui)' }}>{cards.length}</span>
               </div>
-              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {cards.length === 0 && (
                   <div style={{ fontSize: 13, color: 'var(--cth-ink-300)', textAlign: 'center', padding: '8px 0' }}>—</div>
                 )}
@@ -248,7 +248,7 @@ function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
         }}
       >
         <span style={{ width: 4, flexShrink: 0, background: accent, boxShadow: 'inset -1px 0 0 var(--cth-ink-700)' }} />
-        <span style={{ flex: 1, minWidth: 0, padding: '6px 18px 6px 7px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <span style={{ flex: 1, minWidth: 0, padding: '10px 18px 10px 7px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {/* The id the god writes into tasks.json (bmt-12, or a synthetic
               t-xxxx). Cards get referred to by id in dispatches and in Slack,
               so it has to be readable without opening the detail view. Mono
@@ -334,7 +334,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
     >
       <div onClick={(e) => e.stopPropagation()} style={{ width: 720, maxWidth: '94vw', maxHeight: '90vh', display: 'flex' }}>
         <PixelPanel variant="dialog" title={t('kanban.taskTitle')} noPadding style={{ display: 'flex', flexDirection: 'column', width: '100%', minHeight: 0 }}>
-          <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10, minHeight: 0, overflowY: 'auto' }}>
+          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0, overflowY: 'auto' }}>
             {/* Title under a status-colored bar */}
             <div style={{ borderLeft: `4px solid ${col.accent}`, paddingLeft: 8 }}>
               <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 15, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
@@ -351,7 +351,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
                 fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)'
               }}>{task.id}</span>
               <span style={{
-                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, padding: '2px 6px 1px',
+                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, padding: '2px 10px 1px',
                 background: col.accent, color: 'var(--cth-ink-900)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
               }}>{t(col.labelKey)}</span>
               {assigneeName
@@ -365,7 +365,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
 
             {/* The contract — preserved line by line */}
             <div style={{
-              padding: 10, background: 'var(--cth-paper-100)',
+              padding: 16, background: 'var(--cth-paper-100)',
               boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
               fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '18px',
               color: 'var(--cth-ink-900)', whiteSpace: 'pre-wrap', wordBreak: 'break-word'
@@ -384,7 +384,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
                 {task.humanQA!.map((e, i) => (
                   <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <div style={{
-                      display: 'flex', gap: 6, padding: '5px 7px',
+                      display: 'flex', gap: 8, padding: '5px 7px',
                       background: 'var(--cth-lilac-light, #ece2f5)',
                       boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                       fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-900)'
@@ -396,7 +396,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
                     </div>
                     {e.a ? (
                       <div style={{
-                        display: 'flex', gap: 6, padding: '5px 7px',
+                        display: 'flex', gap: 8, padding: '5px 7px',
                         background: 'var(--cth-mint-light, #d9eed9)',
                         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                         fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-900)'
@@ -426,7 +426,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
                   const dc = COLUMNS.find((c) => c.key === d.status) ?? COLUMNS[0];
                   return (
                     <div key={d.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 6, padding: '3px 6px',
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '3px 10px',
                       background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                       fontSize: 13, color: 'var(--cth-ink-700)'
                     }}>
@@ -439,12 +439,12 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
             )}
 
             {/* Controls */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <select
                 value={task.status}
                 onChange={(e) => onMove(e.target.value as Status)}
                 style={{
-                  flex: 1, padding: '4px 6px', background: 'var(--cth-paper-100)', border: 'none',
+                  flex: 1, padding: '4px 10px', background: 'var(--cth-paper-100)', border: 'none',
                   boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', fontFamily: 'var(--cth-font-ui)',
                   fontSize: 13, color: 'var(--cth-ink-900)', cursor: 'pointer'
                 }}
@@ -452,7 +452,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
                 {COLUMNS.map((c) => (<option key={c.key} value={c.key}>{t(c.labelKey).toLowerCase()}</option>))}
               </select>
               <PixelButton variant="secondary" size="sm" onClick={onAssign}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                   <Icon name="arrow-right" /> {t('kanban.assign')}
                 </span>
               </PixelButton>
@@ -470,7 +470,7 @@ function PriorityDots({ level }: { level: number }) {
   // 1 = lowest, 5 = highest. Warmer fill as priority climbs.
   const color = level >= 4 ? 'var(--cth-coral)' : level === 3 ? 'var(--cth-lemon)' : 'var(--cth-mint)';
   return (
-    <span title={t('kanban.priority', { level })} style={{ display: 'inline-flex', gap: 1, flexShrink: 0, marginTop: 2 }}>
+    <span title={t('kanban.priority', { level })} style={{ display: 'inline-flex', gap: 2, flexShrink: 0, marginTop: 2 }}>
       {[1, 2, 3, 4, 5].map((i) => (
         <span key={i} style={{
           width: 4, height: 8,
@@ -483,13 +483,13 @@ function PriorityDots({ level }: { level: number }) {
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '6px 8px', background: 'var(--cth-paper-100)', border: 'none',
+  width: '100%', padding: '10px 12px', background: 'var(--cth-paper-100)', border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)', fontFamily: 'var(--cth-font-ui)',
   fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-900)', outline: 'none', boxSizing: 'border-box'
 };
 
 const selectStyle: React.CSSProperties = {
-  padding: '3px 6px', background: 'var(--cth-paper-100)', border: 'none',
+  padding: '3px 10px', background: 'var(--cth-paper-100)', border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)', fontFamily: 'var(--cth-font-ui)',
   fontSize: 13, color: 'var(--cth-ink-900)', cursor: 'pointer'
 };

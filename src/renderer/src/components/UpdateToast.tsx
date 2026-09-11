@@ -205,7 +205,7 @@ export function UpdateToast() {
   if (status.state === 'just-updated') return null;
 
   const buttonStyle: React.CSSProperties = {
-    padding: '3px 10px 1px',
+    padding: '3px 16px 1px',
     background: 'var(--cth-mint-light, #d0f0e0)',
     boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
     fontFamily: 'var(--cth-font-ui)', fontSize: 13,
@@ -223,11 +223,11 @@ export function UpdateToast() {
       maxWidth: 340,
       background: 'var(--cth-cream-50)',
       boxShadow: '0 0 0 2px var(--cth-ink-900), 4px 5px 0 0 rgba(26,19,32,0.25)',
-      padding: '10px 12px',
+      padding: '16px 12px',
       display: 'flex', flexDirection: 'column', gap: 8,
       fontFamily: 'var(--cth-font-ui)'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Icon name="sparkle" />
         <span style={{ fontSize: 13, color: 'var(--cth-ink-900)', fontWeight: 600 }}>
           {status.state === 'downloaded'
@@ -242,7 +242,7 @@ export function UpdateToast() {
       </span>
 
       {notes.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{
             fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
             color: 'var(--cth-ink-500)'
@@ -258,7 +258,7 @@ export function UpdateToast() {
           }}>
             {notes.map((line, i) => (
               <li key={i} style={{
-                display: 'flex', gap: 6,
+                display: 'flex', gap: 8,
                 fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-700)'
               }}>
                 <span aria-hidden style={{ color: 'var(--cth-ink-300)' }}>•</span>
@@ -266,7 +266,7 @@ export function UpdateToast() {
               </li>
             ))}
           </ul>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <a
               href={status.state === 'available-manual' ? status.url : GITHUB_RELEASES_URL}
               onClick={(e) => { e.preventDefault(); openRelease(); }}

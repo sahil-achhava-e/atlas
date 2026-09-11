@@ -162,7 +162,7 @@ export function CommitGraph({ commits, currentBranch, onCommitClick }: CommitGra
               height: ROW_H,
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 8,
               paddingLeft: railW + 4,
               paddingRight: 8,
               minWidth: 0,

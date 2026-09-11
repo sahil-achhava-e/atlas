@@ -166,7 +166,7 @@ export function SchedulesSection({ onSummary }: { onSummary?: (s: string) => voi
               style={textareaStyle}
             />
           </Field>
-          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <PixelButton variant="primary" size="sm" onClick={add} disabled={!mLabel.trim() || !mBody.trim() || !whenIsUsable}>
               {t('common.add')}
             </PixelButton>
@@ -257,7 +257,7 @@ function MissionRow({ mission, targetName, agents, onPatch, onDelete }: {
         open={open}
         onToggle={() => setOpen((o) => !o)}
         title={
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <Chip tone={mission.enabled ? 'on' : 'off'}>
               {heartbeat ? t('schedulesSection.beat') : storedWeekly ? formatWeekly(storedWeekly) : fmtInterval(mission.intervalMs)}
             </Chip>
@@ -274,7 +274,7 @@ function MissionRow({ mission, targetName, agents, onPatch, onDelete }: {
           you get the whole thing in an editor. It used to be invisible. */}
       {!open && (
         <div style={{
-          marginTop: 6, padding: '4px 6px',
+          marginTop: 6, padding: '4px 10px',
           background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
           fontFamily: 'var(--cth-font-mono)', fontSize: 11, lineHeight: '15px',
           color: 'var(--cth-ink-700)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
@@ -311,7 +311,7 @@ function MissionRow({ mission, targetName, agents, onPatch, onDelete }: {
               style={textareaStyle}
             />
           </Field>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
             <PixelButton variant="primary" size="sm" onClick={save} disabled={!dirty || !label.trim() || !whenIsUsable}>
               {saved && !dirty ? t('schedulesSection.saved') : t('common.save')}
             </PixelButton>

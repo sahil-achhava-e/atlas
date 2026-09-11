@@ -368,7 +368,7 @@ export function IdePanel() {
           background: 'linear-gradient(180deg, var(--cth-cream-100) 0%, var(--cth-cream-200) 100%)',
           borderBottom: '1px solid var(--cth-ink-300)',
           display: 'flex', alignItems: 'center',
-          paddingLeft: 96, paddingRight: 8, gap: 10,
+          paddingLeft: 96, paddingRight: 8, gap: 12,
           userSelect: 'none'
         }}
       >
@@ -384,7 +384,7 @@ export function IdePanel() {
             under. Name first, directory second: the name is the identity, the
             path is the detail. */}
         {target.agent ? (
-          <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
             <span
               title={target.inferred
                 ? t('idePanel.workspaceInferred', { name: target.agent.name })
@@ -457,7 +457,7 @@ export function IdePanel() {
             {/* Git rail: CHANGES · HISTORY · COMPARE (v0.3.4). History/compare
                 run at the repo's MAIN root so worktree branches all appear. */}
             <div style={{
-              flexShrink: 0, display: 'flex', gap: 2, padding: '6px 10px 4px',
+              flexShrink: 0, display: 'flex', gap: 2, padding: '10px 16px 4px',
               background: 'var(--cth-cream-50)', borderBottom: '1px solid var(--cth-ink-100)'
             }}>
               <button
@@ -474,7 +474,7 @@ export function IdePanel() {
                   // the tab labels are the only other clue), the caret says it
                   // folds, and together they are a bigger hit target than the
                   // caret alone was.
-                  display: 'flex', alignItems: 'center', gap: 3, width: 'auto', padding: '0 3px',
+                  display: 'flex', alignItems: 'center', gap: 4, width: 'auto', padding: '0 3px',
                   fontFamily: 'var(--cth-font-mono)', fontSize: 11, lineHeight: '14px',
                   color: 'var(--cth-ink-700)'
                 }}
@@ -489,7 +489,7 @@ export function IdePanel() {
                   // is the only reading of that click that isn't a dead end.
                   onClick={() => { setRailTab(k); if (gitCollapsed) toggleGitRail(); }}
                   style={{
-                    padding: '1px 8px', border: 'none', cursor: 'pointer',
+                    padding: '1px 12px', border: 'none', cursor: 'pointer',
                     fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px', color: 'var(--cth-ink-700)',
                     background: railTab === k && !gitCollapsed ? 'var(--cth-sky-light)' : 'transparent',
                     boxShadow: railTab === k && !gitCollapsed ? 'inset 0 0 0 1px var(--cth-ink-300)' : 'none'
@@ -512,10 +512,10 @@ export function IdePanel() {
                   off the bottom with no way to reach the end. */}
               <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
                 {isRepo === false && (
-                  <div style={{ padding: '6px 12px', fontSize: 13, color: 'var(--cth-ink-500)' }}>{t('gitTab.notARepo')}</div>
+                  <div style={{ padding: '10px 12px', fontSize: 13, color: 'var(--cth-ink-500)' }}>{t('gitTab.notARepo')}</div>
                 )}
                 {isRepo && changedFiles.length === 0 && (
-                  <div style={{ padding: '6px 12px', fontSize: 13, color: 'var(--cth-ink-500)' }}>{t('gitTab.clean')}</div>
+                  <div style={{ padding: '10px 12px', fontSize: 13, color: 'var(--cth-ink-500)' }}>{t('gitTab.clean')}</div>
                 )}
                 {changedFiles.map((f) => {
                   const active = activeKey === tabKey('diff', f.path);
@@ -525,7 +525,7 @@ export function IdePanel() {
                       onClick={() => openDiff(f.path)}
                       title={f.path}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: 6, padding: '2px 12px',
+                        display: 'flex', alignItems: 'center', gap: 8, padding: '2px 12px',
                         cursor: 'pointer', fontSize: 13, color: 'var(--cth-ink-900)',
                         background: active ? 'var(--cth-lemon-light)' : 'transparent'
                       }}
@@ -579,7 +579,7 @@ export function IdePanel() {
                     onClick={() => setActiveKey(tab.key)}
                     title={tab.rel}
                     style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0 8px', height: 30,
+                      display: 'inline-flex', alignItems: 'center', gap: 8, padding: '0 8px', height: 30,
                       cursor: 'pointer', flexShrink: 0, maxWidth: 240,
                       background: active ? 'var(--cth-paper-100)' : 'transparent',
                       boxShadow: active ? 'inset 0 -2px 0 var(--cth-sky)' : 'none',
@@ -616,7 +616,7 @@ export function IdePanel() {
               {!activeTab && (
                 <div style={{
                   height: '100%', display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--cth-ink-500)'
+                  alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--cth-ink-500)'
                 }}>
                   <Icon name="code" size={2} />
                   <div style={{
@@ -696,7 +696,7 @@ export function IdePanel() {
                 return (
                   <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <div style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '3px 8px',
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '3px 12px',
                       background: 'var(--cth-cream-200)', borderBottom: '1px solid var(--cth-ink-700)',
                       fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-700)'
                     }}>
@@ -723,7 +723,7 @@ export function IdePanel() {
                 return (
                   <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <div style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '3px 8px',
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '3px 12px',
                       background: 'var(--cth-cream-200)', borderBottom: '1px solid var(--cth-ink-700)',
                       fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-700)'
                     }}>
@@ -755,7 +755,7 @@ export function IdePanel() {
 function SectionHeader({ title, right }: { title: string; right?: React.ReactNode }) {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px 4px',
+      display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px 4px',
       fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
       color: 'var(--cth-ink-700)', background: 'var(--cth-cream-50)', borderBottom: '1px solid var(--cth-ink-100)'
     }}>
@@ -848,7 +848,7 @@ function ShortcutHint() {
       fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-300)'
     }}>
       {EDITOR_SHORTCUTS.map(([keys, label]) => (
-        <div key={label} style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>
+        <div key={label} style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
           <span style={{ fontFamily: 'var(--cth-font-mono)', color: 'var(--cth-ink-500)' }}>{keys}</span>
           <span>{label}</span>
         </div>

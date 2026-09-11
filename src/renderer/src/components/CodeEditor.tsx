@@ -181,8 +181,8 @@ export function CodeEditor({
     }}>
       {/* Mini header */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 6,
-        padding: '4px 8px',
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '4px 12px',
         background: 'var(--cth-cream-200)',
         borderBottom: '1px solid var(--cth-ink-700)',
         fontFamily: 'var(--cth-font-ui)', fontSize: 13,

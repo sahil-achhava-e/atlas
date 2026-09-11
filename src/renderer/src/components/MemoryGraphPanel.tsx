@@ -189,7 +189,7 @@ export function MemoryGraphPanel({
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: 'var(--cth-paper-200)' }}>
       {/* toolbar */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', flexShrink: 0,
+        display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', flexShrink: 0,
         borderBottom: '1px solid var(--cth-ink-300)', background: 'var(--cth-cream-100)', flexWrap: 'wrap'
       }}>
         <Toggle on={showTopics} onClick={() => setShowTopics((v) => !v)} label={t('memoryGraph.topics')} />
@@ -379,7 +379,7 @@ function NodeTip({ node, memories }: { node: GraphNode; memories: Record<string,
     return (
       <>
         <div style={tipTitle}>{node.label}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '2px 0 4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0 4px' }}>
           <PixelBadge status={node.status} />
           <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>{t('memoryGraph.messageLinks', { count: node.degree })}</span>
         </div>
@@ -455,7 +455,7 @@ function Tooltip({ x, y, wrap, children }: { x: number; y: number; wrap: { w: nu
     <div style={{
       position: 'absolute', left: Math.max(6, left), top: flipUp ? undefined : y + 14,
       bottom: flipUp ? wrap.h - y + 14 : undefined,
-      width: W, padding: 8, pointerEvents: 'none', zIndex: 5,
+      width: W, padding: 12, pointerEvents: 'none', zIndex: 5,
       background: 'var(--cth-cream-50)', boxShadow: '2px 2px 0 var(--cth-ink-900), inset 0 0 0 1px var(--cth-ink-300)'
     }}>{children}</div>
   );
@@ -466,7 +466,7 @@ function Toggle({ on, onClick, label }: { on: boolean; onClick: () => void; labe
     <button
       onClick={onClick}
       style={{
-        display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 9px 2px', border: 'none', cursor: 'pointer',
+        display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 12px 2px', border: 'none', cursor: 'pointer',
         background: on ? 'var(--cth-lilac)' : 'var(--cth-cream-200)',
         boxShadow: on ? 'inset 0 0 0 1px var(--cth-ink-300)' : 'inset 0 0 0 1px var(--cth-ink-100)',
         fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)'
@@ -531,7 +531,7 @@ function memorySnippet(text: unknown, t: TFunction): string {
 }
 
 const iconBtn: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 9px 2px', border: 'none', cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 12px 2px', border: 'none', cursor: 'pointer',
   background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)'
 };

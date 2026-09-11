@@ -372,7 +372,7 @@ export function PtyTerminalView({ ptyId, label, onStreamData, onUserPrompt, onTo
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
-        display: 'flex', alignItems: 'center', gap: 6,
+        display: 'flex', alignItems: 'center', gap: 8,
         fontFamily: 'var(--cth-font-ui)',
         fontSize: 13,
         color: 'var(--cth-ink-500)',

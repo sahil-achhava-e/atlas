@@ -19,7 +19,7 @@ export function RecentText({ accent, text, seed }: RecentTextProps) {
     <div style={{
       background: 'var(--cth-cream-50)',
       boxShadow: `inset 0 0 0 1px var(--cth-ink-100), inset 4px 0 0 var(--cth-${accent})`, borderRadius: 'var(--cth-radius-input)',
-      padding: '8px 10px 8px 16px',
+      padding: '12px 16px 12px 16px',
       display: 'flex',
       flexDirection: 'column',
       gap: 4

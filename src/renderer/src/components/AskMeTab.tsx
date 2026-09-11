@@ -166,7 +166,7 @@ export function AskMeTab() {
     // Body text is set in the mono face (VT323) — the same readable font the
     // memory viewer uses. Pixelify Sans (font-ui) is too chunky for prose like
     // questions and answers. Display/badge bits keep their explicit faces.
-    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: 'var(--cth-paper-200)', padding: 10, display: 'flex', flexDirection: 'column', gap: 10, fontFamily: 'var(--cth-font-mono)' }}>
+    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: 'var(--cth-paper-200)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12, fontFamily: 'var(--cth-font-mono)' }}>
       {waiting.length === 0 && (
         <div style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--cth-ink-500)', fontSize: 13 }}>
           {translate('askMe.emptyTitle')}<br />
@@ -185,7 +185,7 @@ export function AskMeTab() {
           }}>
             {/* header: title + assignee */}
             <div style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '6px 9px',
+              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
               background: 'var(--cth-lilac-light, #ece2f5)', boxShadow: 'inset 0 -1px 0 var(--cth-ink-700)'
             }}>
               <button
@@ -220,7 +220,7 @@ export function AskMeTab() {
               >✕</button>
             </div>
 
-            <div style={{ padding: 9, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {/* The question, rendered as markdown. The god writes these with
                   emphasis, lists, `code` and links; as plain text the asterisks
                   and backticks were on screen literally. The card variant keeps
@@ -239,7 +239,7 @@ export function AskMeTab() {
                 rows={3}
                 placeholder={translate('askMe.answerPlaceholder')}
                 style={{
-                  width: '100%', boxSizing: 'border-box', padding: '6px 8px', resize: 'vertical',
+                  width: '100%', boxSizing: 'border-box', padding: '10px 12px', resize: 'vertical',
                   background: 'var(--cth-paper-100)', border: 'none',
                   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                   fontFamily: 'var(--cth-font-mono)', fontSize: 15, lineHeight: '18px',
@@ -276,7 +276,7 @@ export function AskMeTab() {
 
               {/* the cascade: what's stuck behind this answer */}
               {stuck.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-coral)' }}>
                     {stuck.length === 1
                       ? translate('askMe.blockingDownstream', { count: stuck.length })
@@ -284,7 +284,7 @@ export function AskMeTab() {
                   </div>
                   {stuck.slice(0, 6).map((d, i) => (
                     <div key={d.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
+                      display: 'flex', alignItems: 'center', gap: 8,
                       paddingLeft: 8 + Math.min(i, 3) * 8,
                       fontSize: 13, color: 'var(--cth-ink-700)'
                     }}>

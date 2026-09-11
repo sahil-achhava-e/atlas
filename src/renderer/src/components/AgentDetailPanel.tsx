@@ -138,7 +138,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
       {/* Thin header strip */}
       <div ref={headerRef} style={{
         display: 'flex', alignItems: 'center', gap: 8,
-        padding: '6px 8px',
+        padding: '10px 12px',
         background: 'var(--cth-cream-100)',
         borderBottom: '1px solid var(--cth-ink-700)',
         flexShrink: 0
@@ -162,7 +162,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
             />
           </div>
           <div style={{
-            display: 'flex', gap: 6, alignItems: 'center', marginTop: 1,
+            display: 'flex', gap: 8, alignItems: 'center', marginTop: 1,
             minWidth: 0, overflow: 'hidden'
           }}>
             <PixelBadge status={agent.status} />
@@ -224,7 +224,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
       {openTerminalError && (
         <div style={{
           fontSize: 13, color: 'var(--cth-coral)',
-          padding: '2px 8px',
+          padding: '2px 12px',
           background: 'var(--cth-coral-light)',
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
         }}>{openTerminalError}</div>

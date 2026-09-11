@@ -120,7 +120,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
           onClick={() => { setOpen(true); refreshStatus(); }}
           title={t('memoryPanel.openTitle')}
           style={{
-            padding: '5px 10px 3px',
+            padding: '5px 16px 3px',
             background: active ? 'var(--cth-lemon-light)' : 'var(--cth-cream-200)',
             boxShadow: 'inset 0 0 0 1.5px var(--cth-ink-500)',
             fontFamily: 'var(--cth-font-ui)',
@@ -134,7 +134,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
         </button>
       ) : (
         <PixelPanel variant={docked ? 'default' : 'dialog'} title={docked ? undefined : t('memoryPanel.title')} noPadding>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16 }}>
 
             {/* What this is — one plain line. */}
             <div style={{ fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: 1.5 }}>
@@ -143,7 +143,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
 
             {/* Status + on/off — the two things the user controls at a glance. */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--cth-ink-900)', fontFamily: 'var(--cth-font-ui)' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--cth-ink-900)', fontFamily: 'var(--cth-font-ui)' }}>
                 <span style={{ width: 9, height: 9, background: state.dot, boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)' }} />
                 {state.label}
               </span>
@@ -168,7 +168,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
             {!status?.available && !status?.preparing && (
               <div style={{
                 fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: 1.6,
-                background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', padding: 10
+                background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', padding: 16
               }}>
                 {t('memoryPanel.needsDocker')}
                 {/* The commands used to be inlined here, hardcoded for macOS
@@ -186,7 +186,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
 
             {/* Model: a benefit-framed choice, not a codename dump. */}
             {status?.available && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <span style={{ fontSize: 11, color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-ui)', fontWeight: 600, letterSpacing: 0.5 }}>
                   {t('memoryPanel.searchLanguage')}
                 </span>
@@ -199,13 +199,13 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
                         onClick={() => setModel(m.id)}
                         style={{
                           flex: 1, textAlign: 'left', cursor: 'pointer', border: 'none',
-                          padding: '7px 9px 6px',
+                          padding: '7px 12px 10px',
                           background: sel ? 'var(--cth-lemon-light)' : 'var(--cth-cream-100)',
                           boxShadow: sel ? 'inset 0 0 0 1.5px var(--cth-ink-500)' : 'inset 0 0 0 1px var(--cth-ink-300)',
                           fontFamily: 'var(--cth-font-ui)'
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'var(--cth-ink-900)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--cth-ink-900)' }}>
                           <span style={{
                             width: 8, height: 8, flexShrink: 0,
                             background: sel ? 'var(--cth-ink-900)' : 'transparent',
@@ -226,14 +226,14 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
                 one. */}
             {!docked && canSearch && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 8 }}>
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={(e) => { if (isComposingKey(e)) return; if (e.key === 'Enter') run(); }}
                     placeholder={t('memoryPanel.searchPlaceholder')}
                     style={{
-                      flex: 1, padding: '6px 8px 4px',
+                      flex: 1, padding: '10px 12px 4px',
                       background: 'var(--cth-paper-100)', border: 'none',
                       boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                       fontFamily: 'var(--cth-font-ui)', fontSize: 13,
@@ -249,7 +249,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
                     margin: 0, maxHeight: '40vh', overflow: 'auto',
                     background: 'var(--cth-cream-100)',
                     boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-                    padding: 8, fontFamily: 'var(--cth-font-mono)', fontSize: 13,
+                    padding: 12, fontFamily: 'var(--cth-font-mono)', fontSize: 13,
                     whiteSpace: 'pre-wrap', color: 'var(--cth-ink-900)'
                   }} dir={rtl ? 'auto' : undefined}>{result}</pre>
                 )}

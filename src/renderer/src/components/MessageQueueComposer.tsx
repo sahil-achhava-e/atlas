@@ -188,8 +188,8 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
         background: 'var(--cth-cream-100)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 6,
-        padding: 8,
+        gap: 8,
+        padding: 12,
         boxShadow: dragOver ? 'inset 0 0 0 2px var(--cth-lilac)' : undefined
       }}>
       {dragOver && (
@@ -292,7 +292,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 4,
                 maxWidth: '100%',
-                padding: '2px 4px 2px 6px',
+                padding: '2px 4px 2px 10px',
                 background: 'var(--cth-cream-200)',
                 boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                 fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '16px',
@@ -343,7 +343,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             // derived from the same size so the visible line count is stable.
             minHeight: composerLineHeight * 5 + 14,
             maxHeight: composerLineHeight * 18,
-            padding: '6px 8px',
+            padding: '10px 12px',
             background: 'var(--cth-paper-100)',
             border: 'none',
             // Border lives in .cth-input so :focus can change it — an inline
@@ -361,9 +361,9 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             flexWrap so a narrow sidebar wraps rather than pushing Send off the
             edge. */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 6, rowGap: 6,
+          display: 'flex', alignItems: 'center', gap: 8, rowGap: 6,
           flexWrap: 'wrap', minWidth: 0,
-          padding: '5px 6px 6px',
+          padding: '5px 10px 10px',
           borderTop: '1px solid var(--cth-ink-100)'
         }}>
           {/* Talk to the orchestrator. It lives HERE, at the message you would
@@ -391,7 +391,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             }}>{t('queueComposer.enterHint')}</span>
           )}
           <PixelButton variant="primary" size="sm" onClick={queueIt} disabled={!canSend}>
-            <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+            <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
               {t('commandBar.send')} <Icon name="arrow-right" />
             </span>
           </PixelButton>
@@ -476,8 +476,8 @@ function QueuedMessageRow(
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'flex-start', gap: 6,
-      padding: '4px 6px',
+      display: 'flex', alignItems: 'flex-start', gap: 8,
+      padding: '4px 10px',
       background: 'var(--cth-paper-100)',
       boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
     }}>
@@ -505,7 +505,7 @@ function QueuedMessageRow(
           }}
         >{message.text}</div>
         {(clipped || expanded || paused) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {(clipped || expanded) && (
               <button
                 onClick={() => setExpanded((e) => !e)}

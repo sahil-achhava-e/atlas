@@ -135,10 +135,10 @@ export function ReleaseDrop({ version, html, onDismiss }: ReleaseDropProps) {
             white mono title, and the only control the chrome owns: close. */}
         <div style={{
           flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12,
-          padding: '10px 14px', background: INK, color: PAPER,
+          padding: '16px 16px', background: INK, color: PAPER,
           borderBottom: `3px solid ${INK}`
         }}>
-          <span aria-hidden style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+          <span aria-hidden style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
             <i style={{ width: 10, height: 10, background: YELLOW, display: 'block' }} />
             <i style={{ width: 10, height: 10, background: '#72C2DF', display: 'block' }} />
             <i style={{ width: 10, height: 10, background: '#B23A4E', display: 'block' }} />

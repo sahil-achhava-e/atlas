@@ -105,16 +105,16 @@ export function AgentStrip({ config }: AgentStripProps) {
   return (
     <div style={{
       display: 'flex',
-      gap: 10,
-      padding: '10px 16px',
+      gap: 12,
+      padding: '16px 16px',
       overflowX: 'auto',
       overflowY: 'hidden',
       borderTop: '1px solid var(--cth-ink-300)',
       background: 'var(--cth-cream-200)',
       // Tall enough for the god card to stand proud of the row (it's taller and
       // rides a drop shadow) plus the hover-lift on every card, without clipping.
-      height: 100,
-      minHeight: 100,
+      height: 108,
+      minHeight: 108,
       alignItems: 'center'
     }}>
       {agents.map(a => (
@@ -198,10 +198,10 @@ export function AgentStrip({ config }: AgentStripProps) {
                   onMouseDown={(e) => e.stopPropagation()}
                   style={{
                     position: 'fixed', left, bottom, width, zIndex: 350,
-                    padding: 10, boxSizing: 'border-box',
+                    padding: 16, boxSizing: 'border-box',
                     background: 'var(--cth-paper-100)',
                     boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 3px 3px 0 rgba(26,19,32,0.14)', borderRadius: 'var(--cth-radius-input)',
-                    display: 'flex', flexDirection: 'column', gap: 6
+                    display: 'flex', flexDirection: 'column', gap: 8
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -235,7 +235,7 @@ export function AgentStrip({ config }: AgentStripProps) {
                     placeholder={t('agentStrip.notePlaceholder')}
                     aria-label={t('agentCard.noteAria', { name: a.name })}
                     style={{
-                      width: '100%', padding: '6px 8px',
+                      width: '100%', padding: '10px 12px',
                       border: 'none', outline: 'none', resize: 'none', boxSizing: 'border-box',
                       background: 'var(--cth-cream-100)',
                       boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
@@ -300,7 +300,7 @@ export function AgentStrip({ config }: AgentStripProps) {
             disabled={restoreBusy}
             onClick={() => toggleRestoreMenu(restoreBtnRef.current)}
           >
-            <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', whiteSpace: 'nowrap' }}>
+            <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', whiteSpace: 'nowrap' }}>
               <Icon name="play" />
               {restoreBusy ? t('agentStrip.restoringTeam') : t('agentStrip.restoreTeam', { count: restorableAgents.length })}
             </span>
@@ -319,7 +319,7 @@ export function AgentStrip({ config }: AgentStripProps) {
             zIndex: 350, minWidth: 240, maxHeight: '50vh', overflowY: 'auto',
             background: 'var(--cth-cream-50)',
             boxShadow: '0 0 0 2px var(--cth-ink-900), 3px 4px 0 0 rgba(26,19,32,0.22)',
-            padding: 8, display: 'flex', flexDirection: 'column', gap: 6,
+            padding: 12, display: 'flex', flexDirection: 'column', gap: 8,
             fontFamily: 'var(--cth-font-ui)'
           }}>
             <span style={{
@@ -336,7 +336,7 @@ export function AgentStrip({ config }: AgentStripProps) {
                 key={a.id}
                 title={t('agentStrip.restorable', { name: a.name })}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
+                  display: 'flex', alignItems: 'center', gap: 8,
                   height: 26, padding: '0 4px 0 8px',
                   fontSize: 13, color: 'var(--cth-ink-900)',
                   background: 'var(--cth-paper-100)',
@@ -367,7 +367,7 @@ export function AgentStrip({ config }: AgentStripProps) {
               size="sm"
               onClick={() => { setRestoreMenuOpen(false); void restoreTeam(); }}
             >
-              <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', whiteSpace: 'nowrap' }}>
+              <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', whiteSpace: 'nowrap' }}>
                 <Icon name="play" /> {t('agentStrip.restoreAll', { count: restorableAgents.length })}
               </span>
             </PixelButton>
@@ -396,7 +396,7 @@ function AddAgentTile({ label, onClick }: { label: string; onClick: () => void }
       title={label}
       style={{
         width: CARD_WIDTH, height: CARD_HEIGHT, flexShrink: 0, alignSelf: 'center',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
         boxSizing: 'border-box', padding: 0, cursor: 'pointer',
         background: hover ? 'var(--cth-cream-100)' : 'transparent',
         border: `1px dashed var(--cth-ink-${hover ? '500' : '300'})`,

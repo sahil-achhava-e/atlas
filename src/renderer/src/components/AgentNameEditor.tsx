@@ -102,7 +102,7 @@ export function AgentNameEditor({
   }
 
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, minWidth: 0, flex: 1 }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, minWidth: 0, flex: 1 }}>
       <span
         onDoubleClick={(event) => { event.stopPropagation(); beginEditing(); }}
         title={`${name} — double-click to rename`}

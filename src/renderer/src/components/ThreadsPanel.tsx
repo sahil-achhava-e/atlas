@@ -101,7 +101,7 @@ export function ThreadsPanel({ agentId }: ThreadsPanelProps) {
               onClick={() => setOpenThreads(s => ({ ...s, [thread.conversation]: !open }))}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left',
-                padding: '6px 10px', border: 'none', cursor: 'pointer', background: 'var(--cth-cream-200)',
+                padding: '10px 16px', border: 'none', cursor: 'pointer', background: 'var(--cth-cream-200)',
                 fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 'var(--cth-text-display-sm)',
                 lineHeight: '14px', color: 'var(--cth-ink-900)', boxShadow: 'inset 0 -1px 0 var(--cth-ink-900)'
               }}
@@ -114,14 +114,14 @@ export function ThreadsPanel({ agentId }: ThreadsPanelProps) {
             </button>
 
             {open && (
-              <div style={{ padding: '8px 10px 10px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ padding: '12px 16px 16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {thread.messages.map(m => {
                   const isExp = expanded[m.id];
                   const long = m.body.length > 120;
                   const shown = isExp || !long ? m.body : m.body.slice(0, 120) + '…';
                   return (
                     <div key={m.id} style={{ borderLeft: '2px solid var(--cth-ink-100)', paddingLeft: 8 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 700, color: 'var(--cth-ink-900)' }}>{m.from}</span>
                         <span style={{
                           fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '16px', padding: '0 6px',
@@ -146,7 +146,7 @@ export function ThreadsPanel({ agentId }: ThreadsPanelProps) {
                   );
                 })}
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
                   <textarea
                     dir={rtl ? 'auto' : undefined}
                     value={drafts[thread.conversation] ?? ''}
@@ -154,7 +154,7 @@ export function ThreadsPanel({ agentId }: ThreadsPanelProps) {
                     placeholder={t('threads.replyPlaceholder', { name: last.from })}
                     rows={2}
                     style={{
-                      resize: 'vertical', width: '100%', boxSizing: 'border-box', padding: '6px 8px',
+                      resize: 'vertical', width: '100%', boxSizing: 'border-box', padding: '10px 12px',
                       fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '18px',
                       color: 'var(--cth-ink-900)', background: 'var(--cth-cream-50)',
                       border: 'none', boxShadow: 'inset 0 0 0 2px var(--cth-ink-700)'

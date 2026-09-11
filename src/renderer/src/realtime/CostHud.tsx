@@ -28,7 +28,7 @@ const WARN_RATIO = 0.8;
 const wrap: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 6,
+  gap: 8,
   fontFamily: 'var(--cth-font-mono)',
   fontSize: 13,
   color: 'var(--cth-ink-900)'
@@ -43,7 +43,7 @@ const capInputStyle: React.CSSProperties = {
   width: 92,
   fontFamily: 'var(--cth-font-mono)',
   fontSize: 13,
-  padding: '4px 6px',
+  padding: '4px 10px',
   border: '2px solid var(--cth-ink-300)',
   background: 'var(--cth-paper-100)',
   color: 'var(--cth-ink-900)'
@@ -105,7 +105,7 @@ export function CostHud({ compact = false }: CostHudProps): React.ReactElement |
 
   return (
     <div style={wrap}>
-      <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={labelStyle}>{t('costHud.spendCap')}</span>
         <input
           type="number"

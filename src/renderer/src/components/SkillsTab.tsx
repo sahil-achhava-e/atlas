@@ -30,7 +30,7 @@ function SkillSwitch({ on, label, onText, offText, onChange }: {
       title={on ? onText : offText}
       onClick={() => onChange(!on)}
       style={{
-        display: 'inline-flex', alignItems: 'center', gap: 6,
+        display: 'inline-flex', alignItems: 'center', gap: 8,
         padding: 0, border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0
       }}
     >
@@ -65,7 +65,7 @@ function Chip({ text, tone = 'quiet' }: { text: string; tone?: 'quiet' | 'accent
   return (
     <span style={{
       fontSize: 11, fontFamily: 'var(--cth-font-ui)', fontWeight: 600, letterSpacing: 0.4,
-      padding: '2px 6px', flexShrink: 0,
+      padding: '2px 10px', flexShrink: 0,
       color: 'var(--cth-ink-900)',
       background: tone === 'accent' ? 'var(--cth-mint-light)' : 'var(--cth-cream-200)',
       boxShadow: `inset 0 0 0 1px ${tone === 'accent' ? 'var(--cth-mint)' : 'var(--cth-ink-300)'}`,
@@ -157,7 +157,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
   };
 
   const actionBtn = (kind: 'primary' | 'quiet' | 'danger'): React.CSSProperties => ({
-    padding: '3px 9px 2px', border: 'none', cursor: 'pointer', flexShrink: 0,
+    padding: '3px 12px 2px', border: 'none', cursor: 'pointer', flexShrink: 0,
     fontFamily: 'var(--cth-font-ui)', fontSize: 11,
     color: 'var(--cth-ink-900)',
     background:
@@ -175,7 +175,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
       {/* Controls */}
       <div style={{
         flexShrink: 0, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap',
-        padding: 10, borderBottom: '1px solid var(--cth-ink-300)'
+        padding: 16, borderBottom: '1px solid var(--cth-ink-300)'
       }}>
         <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
           {(['yours', 'bundled'] as const).map((k) => (
@@ -183,7 +183,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
               key={k}
               onClick={() => setPane(k)}
               style={{
-                padding: '4px 10px 3px', border: 'none', cursor: 'pointer',
+                padding: '4px 16px 3px', border: 'none', cursor: 'pointer',
                 fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: '.4px',
                 color: pane === k ? 'var(--cth-ink-900)' : 'var(--cth-ink-600)',
                 background: pane === k ? 'var(--cth-cream-100)' : 'transparent',
@@ -200,7 +200,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('skillsTab.searchInstalled')}
           style={{
-            flex: 1, minWidth: 140, padding: '4px 8px',
+            flex: 1, minWidth: 140, padding: '4px 12px',
             background: 'var(--cth-paper-100)', color: 'var(--cth-ink-900)',
             border: 'none', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
             fontFamily: 'var(--cth-font-ui)', fontSize: 13
@@ -218,14 +218,14 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
 
       {addNote && (
         <div style={{
-          flexShrink: 0, padding: '6px 10px', fontSize: 13,
+          flexShrink: 0, padding: '10px 16px', fontSize: 13,
           color: 'var(--cth-ink-700)', background: 'var(--cth-cream-100)',
           borderBottom: '1px solid var(--cth-ink-300)'
         }}>{addNote}</div>
       )}
 
       {/* Body */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 10 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 16 }}>
         {local === null ? <Muted>{t('skillsTab.scanning')}</Muted>
           : shownLocal.length === 0 ? (
             <Muted>
@@ -234,7 +234,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
                 : t('skillsTab.nothingMatches')}
             </Muted>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {shownLocal.map((s) => (
                 <div
                   key={s.id + s.path}
@@ -263,7 +263,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
                     fontFamily: 'var(--cth-font-mono)', fontSize: 11,
                     color: 'var(--cth-ink-500)', wordBreak: 'break-all'
                   }}>{s.path}</div>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                     <button onClick={() => void window.cth.skillsReveal(s.path)} style={actionBtn('quiet')}>
                       {t('skillsTab.openFolder')}
                     </button>
@@ -302,11 +302,11 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
 }
 
 const rowStyle: React.CSSProperties = {
-  display: 'flex', flexDirection: 'column', gap: 5, padding: 10,
+  display: 'flex', flexDirection: 'column', gap: 6, padding: 16,
   background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
   color: 'var(--cth-ink-900)'
 };
 
 function Muted({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontSize: 13, color: 'var(--cth-ink-500)', padding: 6 }}>{children}</div>;
+  return <div style={{ fontSize: 13, color: 'var(--cth-ink-500)', padding: 10 }}>{children}</div>;
 }

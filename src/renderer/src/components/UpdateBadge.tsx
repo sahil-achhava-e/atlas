@@ -108,7 +108,7 @@ export function UpdateBadge() {
       aria-label={view.label ? `${view.title}` : `Version ${__APP_VERSION__} — check for updates`}
       aria-busy={view.busy || busy}
       style={{
-        display: 'inline-flex', alignItems: 'center', gap: 6,
+        display: 'inline-flex', alignItems: 'center', gap: 8,
         padding: view.label && view.tone !== 'idle' ? '2px 8px' : '2px 4px',
         margin: 0,
         background: chipBg,
@@ -139,7 +139,7 @@ export function UpdateBadge() {
         className="cth-titlebar-nodrag"
         style={{
           position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 400,
-          width: 340, padding: '10px 12px',
+          width: 340, padding: '16px 12px',
           background: 'var(--cth-paper-100)', color: INK,
           border: `2px solid ${INK}`, boxShadow: `4px 4px 0 ${INK}`,
           fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: 1.5, textAlign: 'left'
@@ -168,7 +168,7 @@ export function UpdateBadge() {
         className="cth-titlebar-nodrag"
         style={{
           position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 400,
-          width: 380, padding: '12px 14px',
+          width: 380, padding: '12px 16px',
           background: 'var(--cth-paper-100)', color: INK,
           border: `2px solid ${INK}`, boxShadow: `4px 4px 0 ${INK}`,
           fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: 1.5, textAlign: 'left'
@@ -199,7 +199,7 @@ export function UpdateBadge() {
         className="cth-titlebar-nodrag"
         style={{
           position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 400,
-          width: 300, padding: '10px 12px',
+          width: 300, padding: '16px 12px',
           background: 'var(--cth-paper-100)', color: INK,
           border: `2px solid ${INK}`, boxShadow: `4px 4px 0 ${INK}`,
           fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: 1.5, textAlign: 'left'

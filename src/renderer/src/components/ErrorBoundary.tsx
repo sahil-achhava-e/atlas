@@ -31,7 +31,7 @@ export class ErrorBoundary extends Component<
     if (!error) return this.props.children;
     return (
       <div style={{
-        padding: 16, display: 'flex', flexDirection: 'column', gap: 10,
+        padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
         alignItems: 'flex-start', fontFamily: 'var(--cth-font-ui)',
         color: 'var(--cth-ink-900)', background: 'var(--cth-cream-100)',
         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
@@ -47,7 +47,7 @@ export class ErrorBoundary extends Component<
         </div>
         <pre style={{
           margin: 0, maxWidth: '100%', maxHeight: 160, overflow: 'auto',
-          padding: 8, fontFamily: 'var(--cth-font-mono)', fontSize: 11,
+          padding: 12, fontFamily: 'var(--cth-font-mono)', fontSize: 11,
           background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
           whiteSpace: 'pre-wrap'
         }}>{error.message || String(error)}</pre>

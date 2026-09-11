@@ -78,7 +78,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
     }}>
       <div style={{ width: 560, maxWidth: '94vw' }}>
         <PixelPanel variant="dialog" title="CHOOSE A WORKSPACE" noPadding>
-          <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-700)' }}>
               A workspace is one folder holding one crew: its agents, their memory, the task board
               and the history. They are separate, so you can keep work apart and switch between them.
@@ -91,7 +91,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                   CURRENT WORKSPACE
                 </div>
                 <div style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
                   background: 'var(--cth-sky-light)', boxShadow: 'inset 0 0 0 2px var(--cth-sky)'
                 }}>
                   <span style={{
@@ -127,7 +127,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                 <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 1, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
                   RECENT WORKSPACES
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 220, overflowY: 'auto' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 220, overflowY: 'auto' }}>
                   {recents.map((h) => (
                     <button
                       key={h}
@@ -135,7 +135,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                       disabled={!!busy}
                       title={`Switch to ${h} (reloads the app)`}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+                        display: 'flex', alignItems: 'center', gap: 12, padding: '12px 12px',
                         background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                         border: 'none', cursor: busy ? 'default' : 'pointer', textAlign: 'left',
                         opacity: busy && busy !== h ? 0.5 : 1
@@ -162,7 +162,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
 
             {error && (
               <div style={{
-                padding: '6px 10px', background: 'var(--cth-coral-light)',
+                padding: '10px 16px', background: 'var(--cth-coral-light)',
                 boxShadow: 'inset 0 0 0 1px var(--cth-coral)', borderRadius: 'var(--cth-radius-input)', fontSize: 13, color: 'var(--cth-ink-900)'
               }}>{error}</div>
             )}
@@ -177,12 +177,12 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                 (bootstrapping an empty one, or reusing existing hive data in place). */}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <PixelButton variant="secondary" size="md" onClick={browse} disabled={!!busy}>
-                <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                   <Icon name="folder" /> Open another folder
                 </span>
               </PixelButton>
               <PixelButton variant="secondary" size="md" onClick={browse} disabled={!!busy}>
-                <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                   <Icon name="plus" /> New workspace
                 </span>
               </PixelButton>

@@ -57,7 +57,7 @@ function newWebhookId(): string {
 /** Pixel-aesthetic text input, mirroring AddAgentModal's inputStyle. */
 const slackInputStyle: CSSProperties = {
   width: '100%',
-  padding: '6px 8px 4px',
+  padding: '10px 12px 4px',
   background: 'var(--cth-paper-100)',
   border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
@@ -717,7 +717,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
           {/* === Change home sub-modal === */}
           {changeHome ? (
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', flex: 1, minHeight: 0 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <span style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>{t('settings.changeHome.newHome')}</span>
                 <code style={{
                   fontFamily: 'var(--cth-font-mono, monospace)', fontSize: 13,
@@ -740,9 +740,9 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                       disabled={changeBusy}
                       style={{
                         textAlign: 'left', cursor: changeBusy ? 'default' : 'pointer',
-                        padding: '10px 12px', background: 'var(--cth-paper-100)', border: 'none',
+                        padding: '16px 12px', background: 'var(--cth-paper-100)', border: 'none',
                         boxShadow: `inset 0 0 0 ${selected ? 2 : 1}px ${selected ? 'var(--cth-ink-900)' : 'var(--cth-ink-300)'}`,
-                        display: 'flex', flexDirection: 'column', gap: 3
+                        display: 'flex', flexDirection: 'column', gap: 4
                       }}
                     >
                       <span style={{
@@ -821,7 +821,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                         onClick={() => setActiveSection(section)}
                         style={{
                           display: 'block', width: '100%', textAlign: 'left',
-                          padding: '10px 16px 8px',
+                          padding: '16px 16px 12px',
                           border: 'none',
                           borderLeft: active ? '3px solid var(--cth-lemon)' : '3px solid transparent',
                           background: active ? 'var(--cth-ink-900)' : 'transparent',
@@ -1009,17 +1009,17 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                         <div style={sectionHead}>
                           {t('settings.agentsModels.defaultModel')}
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                             {t('settings.agentsModels.defaultModelDesc', { godName })}
                           </span>
-                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             {agentModels().map((m) => (
                               <button
                                 key={m.label}
                                 onClick={() => { if (m.id) void saveDefaultModel(m.id); }}
                                 style={{
-                                  padding: '3px 8px 1px', border: 'none', cursor: 'pointer',
+                                  padding: '3px 12px 1px', border: 'none', cursor: 'pointer',
                                   fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)',
                                   background: defaultModelSel === m.id ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
                                   boxShadow: defaultModelSel === m.id ? 'inset 0 0 0 1.5px var(--cth-ink-500)' : 'inset 0 0 0 1px var(--cth-ink-100)'
@@ -1110,7 +1110,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           free and offline, straight into this same box. */}
 
                       {/* Realtime Michael — voice device selection (rt-8) */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <div style={sectionHeadTight}>
                           {t('settings.voice.realtime')}
                         </div>
@@ -1132,7 +1132,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             main; only the presence boolean comes back. */}
                         <div style={{
                           display: 'flex', flexDirection: 'column', gap: 8,
-                          padding: 10,
+                          padding: 16,
                           background: 'var(--cth-paper-100)',
                           boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                         }}>
@@ -1145,7 +1145,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           <span style={{ fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-700)' }}>
                             {t('settings.voice.openaiKeyDesc2')}
                           </span>
-                          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                             <input
                               type="password"
                               value={openAiVoiceKey}
@@ -1164,7 +1164,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             </PixelButton>
                           </div>
                           <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                            display: 'inline-flex', alignItems: 'center', gap: 8,
                             fontSize: 13, lineHeight: '16px',
                             color: hasOpenAiKey ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)'
                           }}>
@@ -1236,7 +1236,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
               {/* Footer */}
               <div style={{
                 borderTop: '2px solid var(--cth-ink-300)',
-                padding: '10px 16px',
+                padding: '16px 16px',
                 display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8,
                 background: 'var(--cth-cream-50)'
               }}>

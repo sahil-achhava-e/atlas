@@ -51,7 +51,7 @@ export function SidebarTabs({ current, accent, onChange }: SidebarTabsProps) {
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 6
+              gap: 8
             }}
           >
             <Icon name={tab.icon} /> {t(tab.labelKey).toUpperCase()}

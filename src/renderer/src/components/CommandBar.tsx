@@ -41,14 +41,14 @@ export function CommandBar({ accent, busy, blocked, onSend }: CommandBarProps) {
     : 'var(--cth-ink-700)';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', gap: 4 }}>
         {(['free', 'slash', 'quick'] as Mode[]).map(m => (
           <button
             key={m}
             onClick={() => setMode(m)}
             style={{
-              padding: '4px 10px 2px',
+              padding: '4px 16px 2px',
               border: 'none',
               background: mode === m ? `var(--cth-${accent})` : 'var(--cth-cream-200)',
               color: 'var(--cth-ink-900)',
@@ -64,8 +64,8 @@ export function CommandBar({ accent, busy, blocked, onSend }: CommandBarProps) {
           </button>
         ))}
       </div>
-      <PixelPanel variant="inset" noPadding style={{ padding: 6 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <PixelPanel variant="inset" noPadding style={{ padding: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{
             fontFamily: 'var(--cth-font-mono)',
             fontSize: 18,
@@ -80,7 +80,7 @@ export function CommandBar({ accent, busy, blocked, onSend }: CommandBarProps) {
             placeholder={blocked ? t('commandBar.placeholderBlocked') : busy ? t('commandBar.placeholderBusy') : t('commandBar.placeholder')}
             style={{
               flex: 1,
-              padding: '4px 6px 2px',
+              padding: '4px 10px 2px',
               background: 'var(--cth-paper-100)',
               border: 'none',
               boxShadow: `inset 0 0 0 1px ${inputBorder}`, borderRadius: 'var(--cth-radius-input)',
@@ -92,7 +92,7 @@ export function CommandBar({ accent, busy, blocked, onSend }: CommandBarProps) {
             }}
           />
           <PixelButton variant="primary" size="md" onClick={send}>
-            <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+            <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
               {t('commandBar.send')} <Icon name="arrow-right" />
             </span>
           </PixelButton>

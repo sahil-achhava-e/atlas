@@ -37,7 +37,7 @@ function fmtTokens(n: number): string {
 
 const card: React.CSSProperties = {
   background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-  padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6
+  padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 8
 };
 const metaRow: React.CSSProperties = {
   display: 'flex', flexWrap: 'wrap', gap: '4px 14px', fontFamily: 'var(--cth-font-mono)',
@@ -52,7 +52,7 @@ function StatusBadge({ w }: { w: WorkerSnapshot }) {
   const releasing = w.status === 'releasing';
   return (
     <span style={{
-      fontFamily: 'var(--cth-font-mono)', fontSize: 11, padding: '1px 6px', letterSpacing: 0.5,
+      fontFamily: 'var(--cth-font-mono)', fontSize: 11, padding: '1px 10px', letterSpacing: 0.5,
       color: releasing ? 'var(--cth-paper-100)' : 'var(--cth-ink-900)',
       background: releasing ? 'var(--cth-ink-700)' : 'var(--cth-green, #2f8f4e)',
       boxShadow: releasing ? 'none' : 'inset 0 0 0 1px var(--cth-ink-100)'
@@ -90,7 +90,7 @@ export function WorkersTab() {
   const max = data?.maxWorkers ?? 4;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '12px 14px 16px', overflow: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '12px 16px 16px', overflow: 'auto' }}>
       <div>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
           <span style={sectionHead}>{t('workersTab.liveWorkers')}</span>

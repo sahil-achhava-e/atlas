@@ -49,7 +49,7 @@ const DEFAULT_ASK = 'something destructive, a schema change against real data, s
 
 // OSS quick-pick chip styling (ondev-c) — mirrors the model-picker chips.
 const ossChip = (active: boolean, accent: string): CSSProperties => ({
-  padding: '3px 8px 1px',
+  padding: '3px 12px 1px',
   background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
   boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-ink-500)' : 'inset 0 0 0 1px var(--cth-ink-100)',
   fontFamily: 'var(--cth-font-ui)', fontSize: 13,
@@ -496,7 +496,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, maxHeight: '90vh', overflowY: 'auto' }}>
             {hireMeta && (
               <div style={{
-                padding: '6px 10px',
+                padding: '10px 16px',
                 background: 'var(--cth-lemon-light, #fdf3cf)',
                 boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                 fontSize: 13,
@@ -557,7 +557,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                     (id) => MCP_CATALOG.find((e) => e.id === id)?.tier !== 'safe-readonly'
                   );
                   return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginTop: 2 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 2 }}>
                       {safe.length > 0 && (
                         <span style={{ display: 'flex', gap: 4, alignItems: 'baseline', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 13 }}>{tr('addAgent.mcpSafe')}:</span>
@@ -605,18 +605,18 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                       key={s.key}
                       onClick={() => setSection(s.key)}
                       style={{
-                        textAlign: 'left', padding: '6px 9px 5px', border: 'none', cursor: 'pointer',
+                        textAlign: 'left', padding: '10px 12px 5px', border: 'none', cursor: 'pointer',
                         background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
                         boxShadow: active
                           ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
                           : 'inset 0 0 0 1px var(--cth-ink-100)',
-                        display: 'flex', flexDirection: 'column', gap: 1
+                        display: 'flex', flexDirection: 'column', gap: 2
                       }}
                     >
                       <span style={{
                         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '13px',
                         color: 'var(--cth-ink-900)',
-                        display: 'flex', alignItems: 'baseline', gap: 6
+                        display: 'flex', alignItems: 'baseline', gap: 8
                       }}>
                         <span style={{ color: active ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)' }}>{i + 1}</span>
                         {tr(s.labelKey)}
@@ -652,7 +652,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           dimmed, since a missing tile only looks like a shorter
                           list. */}
                       <div style={{
-                        display: 'flex', gap: 6, flexWrap: 'wrap',
+                        display: 'flex', gap: 8, flexWrap: 'wrap',
                         maxHeight: 330, overflowY: 'auto', paddingRight: 4
                       }}>
                         {faceChoices.map((f) => {
@@ -670,7 +670,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               style={{
                                 width: 66, padding: '5px 4px 4px', border: 'none',
                                 cursor: used ? 'not-allowed' : 'pointer',
-                                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                                 background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
                                 boxShadow: active
                                   ? `inset 0 0 0 2px var(--cth-${accent})`
@@ -706,7 +706,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                     )}
 
                     <Row label={tr('addAgent.color')}>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                         {ACCENTS.map(a => (
                           <button
                             key={a}
@@ -777,7 +777,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           {tr('addAgent.noProjects')}
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           {repos.map((r) => {
                             const active = cwd === r;
                             return (
@@ -789,7 +789,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                                 className="cth-choice"
                                 style={{
                                   display: 'flex', alignItems: 'center', gap: 12,
-                                  padding: '10px 12px', border: 'none', cursor: 'pointer',
+                                  padding: '16px 12px', border: 'none', cursor: 'pointer',
                                   textAlign: 'left',
                                   background: active ? accentFillCss(accent) : 'var(--cth-paper-100)',
                                   boxShadow: active
@@ -825,7 +825,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                         setting that decides whether you can run four agents at
                         once, so it gets the room to say so. */}
                     <label style={{
-                      display: 'flex', gap: 12, alignItems: 'flex-start', padding: 14,
+                      display: 'flex', gap: 12, alignItems: 'flex-start', padding: 16,
                       cursor: resuming ? 'not-allowed' : 'pointer', opacity: resuming ? 0.5 : 1,
                       background: isolate && !resuming ? 'var(--cth-mint-light)' : 'var(--cth-cream-100)',
                       boxShadow: isolate && !resuming
@@ -866,7 +866,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                     <Row label={tr('addAgent.provider')}>
                       <div style={{
                         display: 'inline-flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
-                        padding: '8px 12px',
+                        padding: '12px 12px',
                         background: 'var(--cth-cream-100)',
                         boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
                       }}>
@@ -881,7 +881,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                     </Row>
 
                     {preset.supportsModel && <Row label={tr('addAgent.model')}>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         {(() => {
                           // An imported hire may name a model newer than this picker's
                           // hardcoded list (e.g. claude-fable-5). Surface it as a real,
@@ -899,7 +899,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               onClick={() => pickModel(m.id)}
                               title={m.id ?? tr('addAgent.cliDefaultModel')}
                               style={{
-                                padding: '3px 8px 1px',
+                                padding: '3px 12px 1px',
                                 background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
                                 boxShadow: active
                                   ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
@@ -925,7 +925,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           <div>
                             <div style={ossGroupHead}>{tr('addAgent.ossLocal')}</div>
-                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                               {OSS_LOCAL_PICKS.map((p) => {
                                 const slug = localSlugFor(provider, p.tag);
                                 const active = (model ?? '') === slug;
@@ -944,7 +944,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           </div>
                           <div>
                             <div style={ossGroupHead}>{tr('addAgent.ossByok')}</div>
-                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                               {OSS_PROVIDER_PICKS.map((p) => {
                                 const active = (model ?? '') === p.slug;
                                 return (
@@ -1060,7 +1060,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
             {error && (
               <div style={{
-                padding: '6px 10px',
+                padding: '10px 16px',
                 background: 'var(--cth-coral-light)',
                 boxShadow: 'inset 0 0 0 1px var(--cth-coral)', borderRadius: 'var(--cth-radius-input)',
                 fontSize: 13,
@@ -1110,7 +1110,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '6px 8px 4px',
+  padding: '10px 12px 4px',
   background: 'var(--cth-paper-100)',
   border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
