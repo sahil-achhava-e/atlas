@@ -1323,7 +1323,12 @@
     "emptySub": "تظهر المهام هنا بعد أن يقسّم أطلس الطلب إلى خطوات ويوزّعها.",
     "needsYouShort": "يحتاجك",
     "unassignedShort": "غير مُسندة",
-    "dismiss": "إزالة من اللوحة"
+    "dismiss": "إزالة من اللوحة",
+    "viewList": "قائمة",
+    "viewBoard": "لوحة",
+    "emptyColumn": "لا شيء هنا",
+    "priorityHigh": "عالية",
+    "priorityLow": "منخفضة"
   },
   "queueComposer": {
     "recording": "● يسجّل. انقر إيقاف للتفريغ النصي",

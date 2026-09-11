@@ -65,6 +65,8 @@ export function waitsOnHuman(t: HiveTask): boolean {
 
 type Status = HiveTask['status'];
 
+const VIEW_KEY = 'cth.tasks.view';
+
 const COLUMNS: { key: Status; labelKey: string; accent: string }[] = [
   { key: 'todo',    labelKey: 'kanban.colTodo',    accent: 'var(--cth-sky)' },
   { key: 'doing',   labelKey: 'kanban.colDoing',   accent: 'var(--cth-lemon)' },
@@ -169,6 +171,18 @@ export function TasksKanban() {
   /** Resolve an assignee id to a display name — falls back to the restorable
    *  roster so a done card keeps its author's name even after that worker's
    *  terminal is gone, then to the raw id. */
+  /** List or board. Remembered, because it is a preference about how you read,
+   *  not a thing you set per visit. The list wins in a 420px panel and the
+   *  board wins in focus mode, so both are right and neither is the default for
+   *  everyone. */
+  const [view, setView] = useState<'list' | 'board'>(() => {
+    try { return localStorage.getItem(VIEW_KEY) === 'board' ? 'board' : 'list'; } catch { return 'list'; }
+  });
+  const pickView = (v: 'list' | 'board') => {
+    setView(v);
+    try { localStorage.setItem(VIEW_KEY, v); } catch { /* private window */ }
+  };
+
   const characterFor = (id?: string): string | undefined =>
     id ? agents.find((a) => a.id === id)?.character : undefined;
   const nameFor = (id?: string): string | undefined =>
@@ -190,17 +204,108 @@ export function TasksKanban() {
         <span style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-ink-500)' }}>
           {t('kanban.count', { count: tasks.length })}
         </span>
-        <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--cth-ink-300)' }}>
-          {t('kanban.newWorkHint')}
+        <span style={{ flex: 1 }} />
+        <span className="cth-iconbar" style={{
+          display: 'inline-flex', gap: 2, padding: 3,
+          background: 'var(--cth-cream-100)', borderRadius: 'var(--cth-radius-btn)'
+        }}>
+          {([
+            { key: 'list' as const, label: t('kanban.viewList'), path: 'M4 5.5h12M4 10h12M4 14.5h12' },
+            { key: 'board' as const, label: t('kanban.viewBoard'), path: 'M4.5 4.5h3.6v11H4.5zM11.9 4.5h3.6v7h-3.6z' }
+          ]).map((v) => (
+            <button
+              key={v.key}
+              onClick={() => pickView(v.key)}
+              data-label={v.label}
+              aria-label={v.label}
+              aria-pressed={view === v.key}
+              style={{
+                width: 28, height: 26, border: 'none', cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: 'calc(var(--cth-radius-btn) - 2px)',
+                background: view === v.key ? 'var(--cth-paper-100)' : 'transparent',
+                boxShadow: view === v.key ? 'var(--cth-shadow-sm)' : 'none',
+                color: view === v.key ? 'var(--cth-lilac)' : 'var(--cth-ink-500)',
+                transition: 'background 120ms ease, color 120ms ease'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d={v.path} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          ))}
         </span>
       </div>
 
-      {/* Grouped list, not columns. Four columns inside a 420px panel gave
-          every card about 90px of width: the titles were cut mid-word, three of
-          the four columns were usually empty, and the whole thing scrolled
-          sideways. Work is grouped by status down the page instead, so a card
-          gets the full width and an empty status costs one line rather than a
-          whole column. */}
+      {view === 'board' ? (
+        /* Board: the same cards in columns. It needs width, so the columns keep
+           a real minimum and the board scrolls sideways rather than crushing
+           four of them into a sidebar — which is what the old default did. */
+        <div style={{
+          flex: 1, minHeight: 0, display: 'flex', gap: 10, padding: 14,
+          overflowX: 'auto', overflowY: 'hidden'
+        }}>
+          {COLUMNS.map((col) => {
+            const cards = tasks.filter((x) => x.status === col.key);
+            return (
+              <div key={col.key} style={{
+                flex: '1 0 280px', minWidth: 280, display: 'flex', flexDirection: 'column',
+                background: 'var(--cth-cream-50)',
+                borderRadius: 'var(--cth-radius-card)',
+                boxShadow: '0 0 0 1px var(--cth-ink-100)'
+              }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px',
+                  borderBottom: '1px solid var(--cth-ink-100)'
+                }}>
+                  <span style={{
+                    width: 8, height: 8, borderRadius: 'var(--cth-radius-pill)',
+                    background: col.accent, flexShrink: 0
+                  }} />
+                  <span style={{
+                    fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13,
+                    color: 'var(--cth-ink-900)'
+                  }}>{t(col.labelKey)}</span>
+                  <span style={{
+                    marginInlineStart: 'auto',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    minWidth: 20, height: 20, padding: '0 6px',
+                    borderRadius: 'var(--cth-radius-pill)', background: 'var(--cth-cream-200)',
+                    fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 600,
+                    color: 'var(--cth-ink-500)'
+                  }}>{cards.length}</span>
+                </div>
+                <div style={{
+                  flex: 1, minHeight: 0, overflowY: 'auto',
+                  padding: 10, display: 'flex', flexDirection: 'column', gap: 8
+                }}>
+                  {cards.length === 0 ? (
+                    <div style={{
+                      padding: '18px 8px', textAlign: 'center',
+                      fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-300)'
+                    }}>{t('kanban.emptyColumn')}</div>
+                  ) : cards.map((x) => (
+                    <TaskCard
+                      key={x.id}
+                      task={x}
+                      accent={col.accent}
+                      assigneeName={nameFor(x.assignee)}
+                      assigneeCharacter={characterFor(x.assignee)}
+                      onOpen={() => openTaskDetail(x.id)}
+                      onDismiss={() => dismissTask(x.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+      /* Grouped list, not columns. Four columns inside a 420px panel gave every
+         card about 90px of width: titles cut mid-word, three of the four columns
+         usually empty, and the whole thing scrolling sideways. Work is grouped
+         by status down the page instead, so a card gets the full width and an
+         empty status costs nothing. */
       <div style={{
         flex: 1, minHeight: 0, overflowY: 'auto', padding: 14,
         display: 'flex', flexDirection: 'column', gap: 16
@@ -268,6 +373,7 @@ export function TasksKanban() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
@@ -709,17 +815,25 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
 
 function PriorityDots({ level }: { level: number }) {
   const { t } = useTranslation();
-  // 1 = lowest, 5 = highest. Warmer fill as priority climbs.
-  const color = level >= 4 ? 'var(--cth-coral)' : level === 3 ? 'var(--cth-lemon)' : 'var(--cth-mint)';
+  if (level === 3) return null;
+  const high = level >= 4;
+  const tone = high ? 'var(--cth-coral)' : 'var(--cth-ink-500)';
   return (
-    <span style={{ display: 'inline-flex', gap: 2, flexShrink: 0, marginTop: 2 }}>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} style={{
-          width: 4, height: 8,
-          background: i <= level ? color : 'var(--cth-cream-200)',
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
-        }} />
-      ))}
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
+      padding: '2px 9px', borderRadius: 'var(--cth-radius-pill)',
+      background: high
+        ? 'color-mix(in srgb, var(--cth-coral) 13%, transparent)'
+        : 'var(--cth-cream-100)',
+      color: tone,
+      fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 600
+    }}>
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"
+        style={{ transform: high ? 'none' : 'rotate(180deg)' }}>
+        <path d="M8 12.6V3.4M4.4 7l3.6-3.6L11.6 7" stroke="currentColor" strokeWidth="1.7"
+          strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {high ? t('kanban.priorityHigh') : t('kanban.priorityLow')}
     </span>
   );
 }

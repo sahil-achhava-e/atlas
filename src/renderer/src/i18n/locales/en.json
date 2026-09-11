@@ -1399,7 +1399,12 @@
     "count_other": "{{count}} tasks",
     "needsYouShort": "Needs you",
     "unassignedShort": "Unassigned",
-    "dismiss": "Remove from board"
+    "dismiss": "Remove from board",
+    "viewList": "List",
+    "viewBoard": "Board",
+    "emptyColumn": "Nothing here",
+    "priorityHigh": "High",
+    "priorityLow": "Low"
   },
   "terminal": {
     "live": "live"
