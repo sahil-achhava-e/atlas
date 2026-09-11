@@ -1,0 +1,162 @@
+[
+  {
+    "id": "user:azure-devops",
+    "name": "azure-devops",
+    "description": "Azure DevOps plumbing — work item queries and updates, repro-step parsing, attachments, discussion comments, and pull requests via the az CLI and REST API. Use for any task touching ADO boards, PRs, or work items, and whenever an az command fails with an SSL certificate error. Covers the org-wide TLS interception setup that every az call depends on.",
+    "provider": "claude",
+    "scope": "user",
+    "path": "/Users/mohammed.sahil/.claude/skills/azure-devops"
+  },
+  {
+    "id": "bundled:capabilities",
+    "name": "capabilities",
+    "description": "Your capability catalog — read this at boot. Lists the temporal date-range skills and the external integrations (reached via the loopback broker) available to you as a spawned worker, and exactly how to call each. Read-only. Consult it whenever you're unsure what tools/integrations you have or how to invoke them.",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/capabilities"
+  },
+  {
+    "id": "project:create-migration",
+    "name": "create-migration",
+    "description": "",
+    "provider": "claude",
+    "scope": "project",
+    "path": "/Users/mohammed.sahil/Desktop/epicxp-events/.claude/skills/create-migration"
+  },
+  {
+    "id": "project:ian-xiaohei-illustrations",
+    "name": "ian-xiaohei-illustrations",
+    "description": "生成 Ian 风格的中文正文配图。用于用户要求为中文文章、帖子、博客、Notion 文档、工作流文档、方法论、流程、结构、状态、隐喻或观点生成“怪诞”“小黑”“手绘”“正文配图”“文章插图”“配图建议”“shot list”“去标题/改图”等任务；默认使用小黑 IP、纯白手绘、少量红橙蓝批注、简洁清爽但天马行空的视觉风格。",
+    "provider": "claude",
+    "scope": "project",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/.claude/skills/ian-xiaohei-illustrations"
+  },
+  {
+    "id": "bundled:last30Days",
+    "name": "last30Days",
+    "description": "Resolve \"last30Days\" to a concrete ISO date range relative to your run time — a rolling 30-day window ending today. Returns inclusive civil dates plus exact UTC instants so you have temporal context without computing dates by hand. Read-only: no writes, no network. Use before a \"last 30 days\" / trailing-month task (monthly trends, recent activity).",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/last30Days"
+  },
+  {
+    "id": "bundled:last7Days",
+    "name": "last7Days",
+    "description": "Resolve \"last7Days\" to a concrete ISO date range relative to your run time — a rolling 7-day window ending today. Returns inclusive civil dates plus exact UTC instants so you have temporal context without computing dates by hand. Read-only: no writes, no network. Use before a \"last 7 days\" / trailing-week task.",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/last7Days"
+  },
+  {
+    "id": "bundled:lastMonth",
+    "name": "lastMonth",
+    "description": "Resolve \"lastMonth\" to a concrete ISO date range relative to your run time — the previous full calendar month. Returns inclusive civil dates plus exact UTC instants so you have temporal context without computing dates by hand. Read-only: no writes, no network. Use before a task over last month (monthly reports, month-end summaries).",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/lastMonth"
+  },
+  {
+    "id": "bundled:lastQuarter",
+    "name": "lastQuarter",
+    "description": "Resolve \"lastQuarter\" to a concrete ISO date range relative to your run time — the previous full quarter. Returns inclusive civil dates plus exact UTC instants so you have temporal context without computing dates by hand. Read-only: no writes, no network. Use before a task over last quarter (quarterly reviews, QoQ comparisons).",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/lastQuarter"
+  },
+  {
+    "id": "bundled:lastWeek",
+    "name": "lastWeek",
+    "description": "Resolve \"lastWeek\" to a concrete ISO date range relative to your run time — the previous full week (Mon → Sun). Returns inclusive civil dates plus exact UTC instants so you have temporal context without computing dates by hand. Read-only: no writes, no network. Use before a task over the last complete week (weekly digests, week-over-week).",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/lastWeek"
+  },
+  {
+    "id": "bundled:lastYear",
+    "name": "lastYear",
+    "description": "Resolve \"lastYear\" to a concrete ISO date range relative to your run time — the previous full calendar year. Returns inclusive civil dates plus exact UTC instants so you have temporal context without computing dates by hand. Read-only: no writes, no network. Use before a task over last year (annual reports, year-over-year).",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/lastYear"
+  },
+  {
+    "id": "bundled:md-audit",
+    "name": "md-audit",
+    "description": "Read-only code quality audit — scan the current working directory for common issues (bugs, dead code, security hotspots, missing error handling) and return a prioritised findings report. No files are edited. Use when asked to \"audit the code\", \"quick audit\", \"find issues\", \"code scan\", or \"what's wrong with this codebase\". (munder-difflin)",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/md-audit"
+  },
+  {
+    "id": "bundled:md-fetch-summarize",
+    "name": "md-fetch-summarize",
+    "description": "Fetch a URL and return a concise markdown summary of its content. Read-only: no files are written; the summary is returned as output only. Use when asked to \"fetch and summarize\", \"summarize this URL\", \"what does this page say\", or \"get the content of <url>\". Proactively suggest when the user pastes a URL and asks what it contains. (munder-difflin)",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/md-fetch-summarize"
+  },
+  {
+    "id": "bundled:md-hive-sync",
+    "name": "md-hive-sync",
+    "description": "Munder Difflin hive sync — runs the start-of-task hive protocol steps: reads memory.md, checks inbox/ for new messages, and reminds you to record durable facts in memory.md and write coordination files before ending. Use when asked to \"sync with the hive\", \"check my inbox\", \"hive status\", or \"hive sync\". Proactively suggest at the start of a new task if you haven't checked your hive inbox in this conversation. (munder-difflin)",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/md-hive-sync"
+  },
+  {
+    "id": "bundled:temporal",
+    "name": "temporal",
+    "description": "Resolve ANY named time window — today, yesterday, thisWeek, lastWeek, last7Days, last30Days, last90Days, thisMonth, lastMonth, thisQuarter, lastQuarter, thisYear, lastYear, last12Months — or an arbitrary range (lastNdays / lastNweeks / lastNmonths) to a concrete ISO date range relative to your run time. Read-only: no writes, no network. Use whenever a task is time-scoped and you need exact start/end dates without computing them by hand.",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/temporal"
+  },
+  {
+    "id": "bundled:thisMonth",
+    "name": "thisMonth",
+    "description": "Resolve \"thisMonth\" to a concrete ISO date range relative to your run time — this month so far (1st → today). Returns inclusive civil dates plus exact UTC instants so you have temporal context without computing dates by hand. Read-only: no writes, no network. Use before a month-to-date task (MTD metrics, \"so far this month\").",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/thisMonth"
+  },
+  {
+    "id": "bundled:thisQuarter",
+    "name": "thisQuarter",
+    "description": "Resolve \"thisQuarter\" to a concrete ISO date range relative to your run time — this quarter so far (quarter start → today). Returns inclusive civil dates plus exact UTC instants so you have temporal context without computing dates by hand. Read-only: no writes, no network. Use before a quarter-to-date task (QTD metrics, \"this quarter\").",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/thisQuarter"
+  },
+  {
+    "id": "bundled:thisWeek",
+    "name": "thisWeek",
+    "description": "Resolve \"thisWeek\" to a concrete ISO date range relative to your run time — this week so far (Monday → today). Returns inclusive civil dates plus exact UTC instants so you have temporal context without computing dates by hand. Read-only: no writes, no network. Use before a week-to-date task (this week's activity, weekly standups).",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/thisWeek"
+  },
+  {
+    "id": "bundled:thisYear",
+    "name": "thisYear",
+    "description": "Resolve \"thisYear\" to a concrete ISO date range relative to your run time — this year so far (Jan 1 → today). Returns inclusive civil dates plus exact UTC instants so you have temporal context without computing dates by hand. Read-only: no writes, no network. Use before a year-to-date task (YTD metrics, \"so far this year\").",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/thisYear"
+  },
+  {
+    "id": "bundled:today",
+    "name": "today",
+    "description": "Resolve \"today\" to a concrete ISO date range relative to your run time — today. Returns inclusive civil dates plus exact UTC instants so you have temporal context without computing dates by hand. Read-only: no writes, no network. Use before any task scoped to today (today's logs, metrics, \"what happened today\").",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/today"
+  },
+  {
+    "id": "bundled:yesterday",
+    "name": "yesterday",
+    "description": "Resolve \"yesterday\" to a concrete ISO date range relative to your run time — yesterday. Returns inclusive civil dates plus exact UTC instants so you have temporal context without computing dates by hand. Read-only: no writes, no network. Use before a task scoped to yesterday (daily reports, \"what changed yesterday\").",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/yesterday"
+  }
+]

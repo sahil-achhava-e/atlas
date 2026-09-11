@@ -3607,10 +3607,14 @@ ipcMain.handle('models:catalog', async (_evt, force: unknown) =>
  *  plus the agent's own cwd, so a project-scoped skill shows up where it applies. */
 ipcMain.handle('skills:local', (_evt, cwd: unknown): LocalSkill[] => {
   const cfg = readConfig();
-  const cwds = [
+  // Every agent's cwd counts as a project too. A repo with a skill in it is a
+  // repo somebody works in, and waiting for it to be registered would hide a
+  // skill that is already live for that agent.
+  const cwds = [...new Set([
     ...(typeof cwd === 'string' && cwd ? [cwd] : []),
-    ...(cfg.registeredRepos ?? [])
-  ];
+    ...(cfg.registeredRepos ?? []),
+    ...Object.values(hive.registry().agents).map((a) => a?.cwd).filter((c): c is string => !!c)
+  ])];
   try {
     return listLocalSkills({ cwds, bundledDir: skillsResourceDir() });
   } catch (e) {
