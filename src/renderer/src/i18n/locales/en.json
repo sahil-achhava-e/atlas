@@ -496,19 +496,19 @@
     "sections": {
       "identity": {
         "label": "Identity",
-        "hint": "name · character · color"
+        "hint": "Name and face"
       },
       "workspace": {
         "label": "Workspace",
-        "hint": "folder · isolation · resume"
+        "hint": "Which project"
       },
       "engine": {
         "label": "Engine",
-        "hint": "provider · model · command"
+        "hint": "Model and command"
       },
       "briefing": {
         "label": "Briefing",
-        "hint": "what it does · done"
+        "hint": "What it does"
       }
     },
     "name": "Name",

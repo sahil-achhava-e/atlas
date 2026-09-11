@@ -119,7 +119,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               gap: 16, alignItems: 'start', minHeight: 260
             }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
-            <Section label="Identity" hint="name · character · color">
+            <Section label="Identity" hint="Name and face">
               <Row label="Name">
                 <input
                   className="cth-input"
@@ -235,7 +235,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               </Row>
             </Section>
 
-            <Section label="Engine" hint="provider · model · next restart">
+            <Section label="Engine" hint="Model, on next restart">
               {/* One engine per workspace: the row states which, it does not
                   offer a choice. Re-pointing a single agent at a CLI this
                   workspace was never set up for is how you get an agent that
@@ -301,7 +301,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
 
               </div>
               <div style={{ minWidth: 0 }}>
-            <Section label="Briefing" hint="description · goal">
+            <Section label="Briefing" hint="What it does">
               <Row label="Description">
                 <input
                   className="cth-input"
