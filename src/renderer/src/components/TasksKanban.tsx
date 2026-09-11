@@ -477,15 +477,19 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
                         display: 'flex', flexDirection: 'column', gap: 0,
                         borderRadius: 'var(--cth-radius-input)',
                         overflow: 'hidden',
+                        borderInlineStart: `3px solid ${open
+                          ? 'var(--cth-status-blocked)'
+                          : e.a ? 'var(--cth-status-success)' : 'var(--cth-ink-100)'}`,
+                        background: 'var(--cth-cream-50)',
                         boxShadow: open
-                          ? `inset 0 0 0 1px color-mix(in srgb, var(--cth-status-blocked) 40%, transparent)`
-                          : 'inset 0 0 0 1px var(--cth-ink-100)'
+                          ? `0 0 0 1px color-mix(in srgb, var(--cth-status-blocked) 35%, transparent), var(--cth-shadow-sm)`
+                          : '0 0 0 1px var(--cth-ink-100)'
                       }}
                     >
                       {/* Each exchange is one object with two halves, so a trail
                           of five reads as five conversations rather than ten
                           floating bubbles. */}
-                      <div style={{ padding: '10px 12px', background: 'var(--cth-paper-100)' }}>
+                      <div style={{ padding: '11px 13px', background: 'transparent' }}>
                         <div style={{
                           display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5,
                           fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-500)'
@@ -517,9 +521,9 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
 
                       {e.a && (
                         <div style={{
-                          padding: '10px 12px',
-                          background: 'color-mix(in srgb, var(--cth-status-success) 7%, transparent)',
-                          borderTop: '1px solid var(--cth-ink-100)'
+                          padding: '11px 13px',
+                          background: 'color-mix(in srgb, var(--cth-status-success) 9%, var(--cth-paper-100))',
+                          borderTop: '1px solid color-mix(in srgb, var(--cth-status-success) 22%, transparent)'
                         }}>
                           <div style={{
                             display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5,
@@ -589,12 +593,36 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
                 options={COLUMNS.map((c) => ({ value: c.key, label: t(c.labelKey), tone: c.accent }))}
               />
               <span style={{ flex: 1 }} />
-              <PixelButton variant="secondary" size="sm" onClick={onAssign}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <Icon name="arrow-right" /> {t('kanban.assign')}
-                </span>
-              </PixelButton>
-              <PixelButton variant="primary" size="sm" onClick={onClose}>{t('common.close')}</PixelButton>
+              <button
+                onClick={onClose}
+                style={{
+                  height: 34, padding: '0 14px', flexShrink: 0,
+                  border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
+                  background: 'transparent', color: 'var(--cth-ink-700)',
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
+                  transition: 'background 120ms ease, color 120ms ease'
+                }}
+                className="cth-ghost-btn"
+              >{t('common.close')}</button>
+              <button
+                onClick={onAssign}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7,
+                  height: 34, padding: '0 16px', flexShrink: 0,
+                  border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
+                  background: 'var(--cth-lilac)', color: '#FFFFFF',
+                  boxShadow: 'var(--cth-shadow-btn)',
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
+                  transition: 'background 120ms ease, box-shadow 120ms ease'
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <circle cx="8.4" cy="7" r="2.8" stroke="currentColor" strokeWidth="1.7" />
+                  <path d="M3.4 16.2c0-2.5 2.2-4.1 5-4.1 1.1 0 2.1.25 2.9.7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                  <path d="M13.4 13.6h4.2M15.5 11.5v4.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                </svg>
+                {t('kanban.assign')}
+              </button>
             </div>
           </div>
         </PixelPanel>

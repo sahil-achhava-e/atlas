@@ -589,3 +589,6 @@ input:focus-visible, textarea:focus-visible { outline: none; }
   background: var(--cth-coral-light) !important;
   color: var(--cth-coral) !important;
 }
+
+/* A text button that is an exit, not an action. */
+.cth-ghost-btn:hover { background: var(--cth-cream-100); color: var(--cth-ink-900); }

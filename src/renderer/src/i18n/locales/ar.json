@@ -1313,7 +1313,7 @@
     "humanQA": "الأسئلة والأجوبة",
     "awaitingAnswer": "بانتظار إجابتك",
     "dependsOn": "يعتمد على",
-    "assign": "إسناد",
+    "assign": "إسناد إلى وكيل",
     "priority": "الأولوية {{level}}/5",
     "asked": "سُئل",
     "youAnswered": "أجبتَ",

@@ -1387,7 +1387,7 @@
     "humanQA": "Questions and answers",
     "awaitingAnswer": "Waiting for your answer",
     "dependsOn": "DEPENDS ON",
-    "assign": "assign",
+    "assign": "Assign to an agent",
     "priority": "Priority {{level}}/5",
     "asked": "Asked",
     "youAnswered": "You answered",
