@@ -83,7 +83,7 @@ import {
 import { buildMissingCliScript, chooseInstallRung } from './cliInstall';
 import { detectNodeVersion, nodeIsUsable, resolveNodeInstaller } from './nodeInstall';
 import { toolCatalog, type ToolStatus } from '../shared/toolCatalog';
-import { listLocalSkills, loadCatalog, installSkill, uninstallSkill, type LocalSkill } from './skills';
+import { listLocalSkills, loadCatalog, installSkill, uninstallSkill, type LocalSkill , addLocalSkill } from './skills';
 import { loadHero } from './hero';
 import { loadModelCatalog } from './modelCatalog';
 import {
@@ -3621,6 +3621,9 @@ ipcMain.handle('skills:local', (_evt, cwd: unknown): LocalSkill[] => {
 /** The skills catalog, parsed from its README and cached in userData.
  *  `force` is the explicit refresh button; everything else is served from a
  *  day-old cache so opening the tab never waits on the network. */
+ipcMain.handle('skills:addLocal', (_evt, dir: unknown) =>
+  typeof dir === 'string' ? addLocalSkill(dir) : { ok: false, error: 'no folder given' });
+
 ipcMain.handle('skills:catalog', async (_evt, force: unknown) => {
   const cachePath = join(app.getPath('userData'), 'skill-catalog.json');
   return loadCatalog(cachePath, { force: force === true });

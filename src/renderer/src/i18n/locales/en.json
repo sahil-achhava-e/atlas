@@ -1214,6 +1214,9 @@
   "skillsTab": {
     "installed": "Installed",
     "browse": "browse",
+    "addSkill": "+ add a skill",
+    "adding": "adding…",
+    "added": "added {{name}} — agents pick it up on their next start",
     "searchInstalled": "Search installed skills…",
     "searchCatalog": "Search the skills catalog…",
     "categoryTitle": "Categories as published by the catalog",
@@ -1222,7 +1225,7 @@
     "loading": "loading…",
     "refresh": "refresh",
     "scanning": "Scanning…",
-    "noSkillsInstalled": "No skills installed yet. Open Browse to see what is available.",
+    "noSkillsInstalled": "No skills installed yet. Add one with the button above — point it at a folder containing a SKILL.md.",
     "nothingMatches": "Nothing matches that search.",
     "openFolder": "open folder",
     "shipsWithApp": "ships with the app",

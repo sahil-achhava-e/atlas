@@ -20,7 +20,7 @@
  * third-party skill means running someone else's instructions inside an agent
  * that has the user's tools, and that decision stays with the user.
  */
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync, rmSync, cpSync } from 'node:fs';
 import { join, basename, dirname, resolve, sep } from 'node:path';
 import { homedir } from 'node:os';
 import { getText } from './fetchText';
@@ -493,6 +493,50 @@ export async function installSkill(
  * inside a skills root — the failure mode of getting this wrong is deleting a
  * directory of the user's work.
  */
+/** Add a skill you already have: copy a folder from disk into
+ *  `~/.claude/skills/<name>`. The only route in now that the remote catalogue
+ *  is gone — a skill runs inside an agent holding your keys, so it should be one
+ *  you have read, not one picked off a list.
+ *
+ *  Validated, not trusted: the source must be a directory containing SKILL.md,
+ *  the destination name is sanitised, and an existing skill of that name is
+ *  never silently overwritten. */
+export function addLocalSkill(
+  sourceDir: string
+): { ok: true; path: string; name: string } | { ok: false; error: string } {
+  if (typeof sourceDir !== 'string' || !sourceDir.trim()) return { ok: false, error: 'no folder given' };
+  let src: string;
+  try { src = resolve(sourceDir); } catch { return { ok: false, error: 'unreadable path' }; }
+
+  try {
+    if (!statSync(src).isDirectory()) return { ok: false, error: 'Pick the skill FOLDER, not a file.' };
+  } catch { return { ok: false, error: 'That folder does not exist.' }; }
+
+  if (!existsSync(join(src, 'SKILL.md'))) {
+    return { ok: false, error: 'No SKILL.md in that folder — that is what makes it a skill.' };
+  }
+
+  const raw = parseSkillFrontmatter(readFileSync(join(src, 'SKILL.md'), 'utf8')).name
+    ?? src.split(sep).filter(Boolean).pop()
+    ?? '';
+  const name = safeSkillDirName(raw);
+  if (!name) return { ok: false, error: 'Could not work out a safe folder name for that skill.' };
+
+  const root = join(homedir(), '.claude', 'skills');
+  const dest = join(root, name);
+  if (existsSync(dest)) {
+    return { ok: false, error: `A skill called "${name}" is already installed. Remove it first.` };
+  }
+
+  try {
+    mkdirSync(root, { recursive: true });
+    cpSync(src, dest, { recursive: true });
+    return { ok: true, path: dest, name };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 export function uninstallSkill(
   skillPath: string,
   opts: { cwds: string[] }

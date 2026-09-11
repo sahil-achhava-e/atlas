@@ -801,6 +801,9 @@ const api = {
   /** Skills already installed for the coding agents on this machine. */
   skillsLocal: (cwd?: string): Promise<LocalSkill[]> => ipcRenderer.invoke('skills:local', cwd),
   /** The browsable skills catalog (cached; `force` re-fetches). */
+  /** Copy a skill folder you already have into ~/.claude/skills. */
+  skillsAddLocal: (dir: string): Promise<{ ok: true; path: string; name: string } | { ok: false; error: string }> =>
+    ipcRenderer.invoke('skills:addLocal', dir),
   skillsCatalog: (force?: boolean): Promise<{
     skills: CatalogSkill[]; fetchedAt: number; stale: boolean; error?: string;
   }> => ipcRenderer.invoke('skills:catalog', force),
