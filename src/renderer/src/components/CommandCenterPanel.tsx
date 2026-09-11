@@ -14,6 +14,10 @@ import { SkillsTab } from './SkillsTab';
 import { acquireTerminal, disposeTerminal, resetTerminal } from './terminalPool';
 import { terminalInstanceKey } from './terminalRecovery';
 import { Icon } from './Icon';
+import {
+  TerminalIcon, BellIcon, TasksIcon, TeamIcon, MemoryIcon,
+  MapIcon, EventsIcon, JobsIcon, TriggersIcon, SkillsIcon
+} from './TabIcons';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useOpenAsks } from '@/hooks/useOpenAsks';
 import { EditAgentModal } from './EditAgentModal';
@@ -85,22 +89,22 @@ const PRIMARY: CCTab[] = ['terminal', 'human', 'tasks', 'floor'];
 
 const TABS: {
   key: CCTab; labelKey: string; hintKey: string;
-  icon: Parameters<typeof Icon>[0]['name'];
+  Glyph: (p: { size?: number }) => JSX.Element;
   /** A colour per destination, so ten glyphs are not ten grey squares. Shown
    *  only when the tab is NOT selected: a selected pill is already the loudest
    *  thing in the row, and a second colour inside it fights the fill. */
   tone: string;
 }[] = [
-  { key: 'terminal', labelKey: 'commandCenter.tabs.terminal', hintKey: 'commandCenter.tabHints.terminal', icon: 'terminal', tone: 'var(--cth-status-idle)' },
-  { key: 'human',    labelKey: 'commandCenter.tabs.human',    hintKey: 'commandCenter.tabHints.human',    icon: 'bell',     tone: 'var(--cth-coral)' },
-  { key: 'tasks',    labelKey: 'commandCenter.tabs.tasks',    hintKey: 'commandCenter.tabHints.tasks',    icon: 'check',    tone: 'var(--cth-mint)' },
-  { key: 'floor',    labelKey: 'commandCenter.tabs.floor',    hintKey: 'commandCenter.tabHints.floor',    icon: 'mcp',      tone: 'var(--cth-lemon)' },
-  { key: 'memory',   labelKey: 'commandCenter.tabs.memory',   hintKey: 'commandCenter.tabHints.memory',   icon: 'sparkle',  tone: 'var(--cth-plum)' },
-  { key: 'graph',    labelKey: 'commandCenter.tabs.graph',    hintKey: 'commandCenter.tabHints.graph',    icon: 'web',      tone: 'var(--cth-sky)' },
-  { key: 'activity', labelKey: 'commandCenter.tabs.activity', hintKey: 'commandCenter.tabHints.activity', icon: 'ledger',   tone: 'var(--cth-peach)' },
-  { key: 'workers',  labelKey: 'commandCenter.tabs.workers',  hintKey: 'commandCenter.tabHints.workers',  icon: 'git',      tone: 'var(--cth-jade)' },
-  { key: 'triggers', labelKey: 'commandCenter.tabs.triggers', hintKey: 'commandCenter.tabHints.triggers', icon: 'clock',    tone: 'var(--cth-indigo)' },
-  { key: 'skills',   labelKey: 'commandCenter.tabs.skills',   hintKey: 'commandCenter.tabHints.skills',   icon: 'sparkle',  tone: 'var(--cth-rose)' }
+  { key: 'terminal', labelKey: 'commandCenter.tabs.terminal', hintKey: 'commandCenter.tabHints.terminal', Glyph: TerminalIcon, tone: 'var(--cth-status-idle)' },
+  { key: 'human',    labelKey: 'commandCenter.tabs.human',    hintKey: 'commandCenter.tabHints.human',    Glyph: BellIcon, tone: 'var(--cth-coral)' },
+  { key: 'tasks',    labelKey: 'commandCenter.tabs.tasks',    hintKey: 'commandCenter.tabHints.tasks',    Glyph: TasksIcon, tone: 'var(--cth-mint)' },
+  { key: 'floor',    labelKey: 'commandCenter.tabs.floor',    hintKey: 'commandCenter.tabHints.floor',    Glyph: TeamIcon, tone: 'var(--cth-lemon)' },
+  { key: 'memory',   labelKey: 'commandCenter.tabs.memory',   hintKey: 'commandCenter.tabHints.memory',   Glyph: MemoryIcon, tone: 'var(--cth-plum)' },
+  { key: 'graph',    labelKey: 'commandCenter.tabs.graph',    hintKey: 'commandCenter.tabHints.graph',    Glyph: MapIcon, tone: 'var(--cth-sky)' },
+  { key: 'activity', labelKey: 'commandCenter.tabs.activity', hintKey: 'commandCenter.tabHints.activity', Glyph: EventsIcon, tone: 'var(--cth-peach)' },
+  { key: 'workers',  labelKey: 'commandCenter.tabs.workers',  hintKey: 'commandCenter.tabHints.workers',  Glyph: JobsIcon, tone: 'var(--cth-jade)' },
+  { key: 'triggers', labelKey: 'commandCenter.tabs.triggers', hintKey: 'commandCenter.tabHints.triggers', Glyph: TriggersIcon, tone: 'var(--cth-indigo)' },
+  { key: 'skills',   labelKey: 'commandCenter.tabs.skills',   hintKey: 'commandCenter.tabHints.skills',   Glyph: SkillsIcon, tone: 'var(--cth-rose)' }
 ];
 
 /** @param fullscreen this instance IS the fullscreen overlay, so it owns the pty
@@ -291,7 +295,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
               <div style={{
                 width: `${contextPct}%`, height: '100%',
                 borderRadius: 'var(--cth-radius-pill)',
-                background: contextPct > 85 ? 'var(--cth-coral)' : 'var(--cth-ink-900)',
+                background: contextPct > 85 ? 'var(--cth-coral)' : 'var(--cth-lilac)',
                 transition: 'width 260ms ease'
               }} />
             </div>
@@ -365,7 +369,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                 transition: 'background 120ms ease, color 120ms ease'
               }}
             >
-              <Icon name={d.icon} />
+              <d.Glyph />
               {badge > 0 && (
                 <span style={{
                   position: 'absolute', top: 2, insetInlineEnd: 2,
