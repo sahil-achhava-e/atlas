@@ -17,7 +17,7 @@ import { existsSync, statSync, readdirSync, readFileSync, writeFileSync, rmSync 
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
-import { dockerBin, dockerReady, imageExists, writeShim, buildImage } from './mempalaceDocker';
+import { dockerBin, dockerReady, imageExists, writeShim, buildImage, dockerState } from './mempalaceDocker';
 import { ensureKilled } from './procKill';
 import { quarantineDirsToReap, quarantineStampMs, nextMineDelayMs } from './palaceReap';
 
@@ -70,6 +70,10 @@ export interface MemoryStatus {
   /** True when the resolved CLI is the container shim rather than a native
    *  install — worth saying, because it means Docker must stay running. */
   containerized: boolean;
+  /** Docker's own state. Without this the panel can only say "not set up",
+   *  which is true and useless: it does not say that the one thing standing in
+   *  the way is a stopped Docker. */
+  docker: { installed: boolean; running: boolean };
 }
 
 // Re-mine changed memories every 10 min, up from 3.
@@ -237,6 +241,7 @@ export class MemoryManager {
       preparing: this.buildState === 'building',
       prepareError: this.buildState === 'failed' ? this.buildError : null,
       containerized: !!bin && bin.startsWith(this.shimDir()),
+      docker: dockerState(),
       initialized: !!palace && existsSync(palace),
       palacePath: palace,
       model: this.model(),

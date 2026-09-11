@@ -154,7 +154,10 @@
   memoryStatus: async () => ({
     available: false, enabled: config.semanticMemory !== false, active: false,
     initialized: false, palacePath: null, model: config.embeddingModel || 'minilm',
-    bin: null, preparing: false, prepareError: null, containerized: false
+    bin: null, preparing: false, prepareError: null, containerized: false,
+    // A browser cannot see Docker. Reported as not running, which is what the
+    // panel should say anyway — nothing here can build an image.
+    docker: { installed: false, running: false }
   }),
   memoryRefresh: async () => window.cth.memoryStatus(),
   skillsDisabled: async () => (window.__skillsOff = window.__skillsOff || []),

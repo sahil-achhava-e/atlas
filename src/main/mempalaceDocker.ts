@@ -57,6 +57,14 @@ export function dockerReady(bin: string): boolean {
   } catch { return false; }
 }
 
+/** Is Docker present AND its daemon up? Surfaced on the memory status so the
+ *  panel can say "start Docker" instead of the useless "not set up". */
+export function dockerState(): { installed: boolean; running: boolean } {
+  const bin = dockerBin();
+  if (!bin) return { installed: false, running: false };
+  return { installed: true, running: dockerReady(bin) };
+}
+
 export function imageExists(bin: string): boolean {
   try {
     return spawnSync(bin, ['image', 'inspect', MEMPALACE_IMAGE],

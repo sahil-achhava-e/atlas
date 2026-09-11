@@ -1204,7 +1204,9 @@
     "searchFailed": "Couldn't search",
     "preparing": "Preparing memory (first run, about two minutes)…",
     "prepareFailed": "Could not prepare memory. Is Docker running?",
-    "needsDocker": "Memory runs in a container here, because this machine will not let Python load its native libraries. Atlas builds it on first use — start Docker and turn memory on. Nothing to download separately."
+    "needsDocker": "Memory runs in a container here, because this machine will not let Python load its native libraries. Atlas builds it on first use — start Docker and turn memory on. Nothing to download separately.",
+    "dockerStopped": "Docker is not running — start it and memory sets itself up.",
+    "dockerMissing": "Needs Docker. Install Docker Desktop and memory sets itself up."
   },
   "threads": {
     "noSubject": "(no subject)",

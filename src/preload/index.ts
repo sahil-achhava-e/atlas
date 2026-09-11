@@ -346,6 +346,7 @@ export interface MemoryStatus {
   prepareError: string | null;
   /** Running in a container, which means Docker has to stay running. */
   containerized: boolean;
+  docker: { installed: boolean; running: boolean };
 }
 
 /** Enterprise Knowledge Graph — corpus status, one document, and a search hit. */

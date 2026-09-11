@@ -116,7 +116,9 @@ function ToolRow({ tool }: { tool: ToolStatus }) {
   );
 }
 
-export function SetupPanel({ onDone }: { onDone?: () => void } = {}) {
+export function SetupPanel(
+  { onDone, only }: { onDone?: () => void; only?: ToolKind[] } = {}
+) {
   const { t } = useTranslation();
   const [tools, setTools] = useState<ToolStatus[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -188,7 +190,7 @@ export function SetupPanel({ onDone }: { onDone?: () => void } = {}) {
         </PixelButton>
       </div>
 
-      {SECTIONS.map((section) => {
+      {SECTIONS.filter((sec) => !only || only.includes(sec.kind)).map((section) => {
         const rows = (tools ?? []).filter((t) => t.kind === section.kind);
         if (rows.length === 0) return null;
         return (

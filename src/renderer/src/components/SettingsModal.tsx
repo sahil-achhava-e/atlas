@@ -167,18 +167,17 @@ const sectionHeadFlush = { ...sectionHead, marginBottom: 0 } as const;
 /** The 2px rule between Settings sections. */
 const sectionRule = { height: 2, background: 'var(--cth-ink-300)' } as const;
 
-export type Section = 'General' | 'Prerequisites' | 'Agents & Models' | 'Connections' | 'Voice';
+export type Section = 'General' | 'Agents & Models' | 'Connections' | 'Voice';
 // No Autonomy & Budgets tab: autonomy and who-may-hire moved next to the
 // model and the keys, and the circuit breaker is gone — it only ticked inside
 // the heartbeat, which ships disabled, so it governed nothing.
 // No Memory & Knowledge tab: semantic memory is MemPalace, which cannot run
 // on this machine, and the knowledge graph has no corpus to hold.
-const NAV_SECTIONS: Section[] = ['General', 'Prerequisites', 'Agents & Models', 'Connections', 'Voice'];
+const NAV_SECTIONS: Section[] = ['General', 'Agents & Models', 'Connections', 'Voice'];
 /** i18n key for each nav section's label — the Section values themselves stay
  *  as stable identifiers (tab state, deep links). */
 const NAV_SECTION_KEYS: Record<Section, string> = {
   'General': 'settings.nav.general',
-  'Prerequisites': 'settings.nav.prerequisites',
   'Agents & Models': 'settings.nav.agentsModels',
   'Connections': 'settings.nav.connections',
   'Voice': 'settings.nav.voice'
@@ -999,10 +998,15 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                       whether this machine has them. It was a Command Center tab,
                       which was the wrong home: it is machine-wide state, not
                       something about the agent whose terminal you are reading. */}
-                  {activeSection === 'Prerequisites' && <SetupPanel onDone={onClose} />}
 
                   {activeSection === 'Agents & Models' && (
                     <>
+                      {/* The engine and prerequisite checks used to be their own
+                          Prerequisites tab. They belong beside the model settings:
+                          "which engine runs my agents" and "is that engine even
+                          installed" are the same question. The memory half of that
+                          panel moved to the Memory tab, where the switch is. */}
+                      <SetupPanel only={['prerequisite', 'engine']} onDone={onClose} />
                       <div>
                         <div style={sectionHead}>
                           {t('settings.agentsModels.defaultModel')}

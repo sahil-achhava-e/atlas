@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
+import { SetupPanel } from './SetupPanel';
 import { isComposingKey } from '@shared/imeGuard';
 import { useRtl } from '@/i18n/useDirection';
 
@@ -10,6 +11,7 @@ interface MemoryStatus {
   preparing?: boolean;
   prepareError?: string | null;
   containerized?: boolean;
+  docker?: { installed: boolean; running: boolean };
   enabled: boolean;
   active: boolean;
   initialized: boolean;
@@ -87,10 +89,19 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
   // no native mempalace spends ~2 minutes building the container image, and
   // during that window `available` is false — so without this the panel tells
   // you to go and install something that is already installing itself.
+  // "Not set up" was true and useless: it never said that the one thing in the
+  // way is Docker. Turning memory on cannot do anything while the daemon is
+  // down, so the line says which.
+  const dockerBlocked = !!status?.enabled && !status?.available && !status?.preparing
+    && !!status?.docker && !status.docker.running;
   const state: { dot: string; label: string } = status?.preparing
     ? { dot: 'var(--cth-lemon)', label: t('memoryPanel.preparing') }
     : status?.prepareError
       ? { dot: 'var(--cth-coral)', label: t('memoryPanel.prepareFailed') }
+    : dockerBlocked
+      ? { dot: 'var(--cth-lemon)', label: status?.docker?.installed
+          ? t('memoryPanel.dockerStopped')
+          : t('memoryPanel.dockerMissing') }
     : !status?.available
     ? { dot: 'var(--cth-coral)', label: t('memoryPanel.notSetUp') }
     : !status.enabled
@@ -167,22 +178,11 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
                     Setup owns the platform-correct commands now, plus the uv
                     dependency, the live detected state, and the delegate-to-Michael
                     path. One source of truth beats two that disagree by OS. */}
+                {/* The memory checks used to live behind a button to the
+                    Prerequisites tab. That tab is gone — setup for a thing
+                    belongs with the switch for that thing — so they render here. */}
                 <div style={{ marginTop: 8 }}>
-                  <PixelButton
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      // Prerequisites moved from a Command Center tab into
-                      // Settings; requesting the old tab key is now a no-op that
-                      // silently does nothing on click.
-                      window.dispatchEvent(new CustomEvent('cth:open-settings', {
-                        detail: { section: 'Prerequisites' }
-                      }));
-                      setOpen(false);
-                    }}
-                  >
-                    {t('memoryPanel.setUpInPrereqs')}
-                  </PixelButton>
+                  <SetupPanel only={['memory']} />
                 </div>
                 <div style={{ marginTop: 8, color: 'var(--cth-ink-500)' }}>
                   {t('memoryPanel.plainNotesStill')}
