@@ -529,3 +529,38 @@ input:focus-visible, textarea:focus-visible { outline: none; }
   color: #FFFFFF !important;
 }
 .cth-termctl button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* The terminal's scrollbar is part of the terminal: the app's chunky cream one
+   looked like a strip of light-mode UI glued to the side of a black box. */
+.xterm-viewport::-webkit-scrollbar { width: 10px; height: 10px; }
+.xterm-viewport::-webkit-scrollbar-track { background: transparent; box-shadow: none; }
+.xterm-viewport::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.xterm-viewport::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.30); background-clip: content-box; }
+.xterm-viewport::-webkit-scrollbar-corner { background: transparent; }
+.xterm-viewport { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.22) transparent; }
+
+/* One hover for every icon button in the app: a soft tint plus a small lift, so
+   the thing under the pointer separates from the surface without moving. Edit,
+   IDE, the ten tabs, the composer's attach — all the same gesture, because they
+   are all the same kind of control. */
+.cth-iconbar button:hover:not(:disabled) {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, currentColor 18%, transparent),
+    0 4px 12px color-mix(in srgb, currentColor 22%, transparent);
+}
+.cth-iconbar button:active:not(:disabled) {
+  background: color-mix(in srgb, currentColor 18%, transparent);
+  box-shadow: none;
+}
+/* The selected tab is filled, so currentColor there is white: it takes the
+   brand's own shadow instead of glowing white on white. */
+.cth-iconbar button[aria-pressed="true"]:hover {
+  background: var(--cth-lilac);
+  box-shadow: var(--cth-shadow-btn);
+}

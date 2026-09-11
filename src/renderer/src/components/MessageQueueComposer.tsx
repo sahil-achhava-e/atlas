@@ -52,8 +52,8 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
   // the button stays VISIBLE but DISABLED with a tooltip pointing to Settings
   // The draft box is the terminal's twin — it should read at the same size the
   // agent's output does, at every zoom level.
-  const composerFontSize = useTerminalFontSize();
-  const composerLineHeight = Math.round(composerFontSize * 1.4);
+  const composerFontSize = 13;
+  const composerLineHeight = 20;
 
   const idle = agent.status === 'idle';
 
@@ -334,13 +334,13 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             // derived from the same size so the visible line count is stable.
             minHeight: composerLineHeight * 5 + 14,
             maxHeight: composerLineHeight * 18,
-            padding: '10px 12px',
+            padding: '12px 14px',
             background: 'var(--cth-paper-100)',
             border: 'none',
             // Border lives in .cth-input so :focus can change it — an inline
             // boxShadow here would outrank the stylesheet and the focus state
             // would silently never apply.
-            fontFamily: 'var(--cth-font-mono)',
+            fontFamily: 'var(--cth-font-ui)',
             fontSize: composerFontSize, lineHeight: `${composerLineHeight}px`,
             color: 'var(--cth-ink-900)',
             outline: 'none',
@@ -354,7 +354,8 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8, rowGap: 6,
           flexWrap: 'wrap', minWidth: 0,
-          padding: '5px 10px 10px',
+          padding: '8px 10px',
+          background: 'var(--cth-cream-50)',
           borderTop: '1px solid var(--cth-ink-100)'
         }}>
           {/* Talk to the orchestrator. It lives HERE, at the message you would
@@ -364,12 +365,16 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
           <button
             onClick={pickFiles}
             aria-label={t('queueComposer.files')}
+            className="cth-iconbar"
+            data-label={t('queueComposer.files')}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 26, height: 24, padding: 0, border: 'none', cursor: 'pointer',
-              background: 'transparent', color: 'var(--cth-ink-500)'
+              width: 30, height: 30, padding: 0, border: 'none', cursor: 'pointer',
+              borderRadius: 'var(--cth-radius-btn)',
+              background: 'transparent', color: 'var(--cth-mint)',
+              transition: 'background 120ms ease'
             }}
-          ><span style={{ display: 'inline-flex', color: 'var(--cth-mint)' }}><Icon name="plus" /></span></button>
+          ><Icon name="plus" /></button>
           {agent.isGod && <CostHud compact />}
           <span style={{ flex: 1 }} />
           {/* The one keystroke everybody gets wrong on a box that also takes
@@ -380,11 +385,23 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
               fontFamily: 'var(--cth-font-ui)'
             }}>{t('queueComposer.enterHint')}</span>
           )}
-          <PixelButton variant="primary" size="sm" onClick={queueIt} disabled={!canSend}>
-            <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-              {t('commandBar.send')} <Icon name="arrow-right" />
-            </span>
-          </PixelButton>
+          <button
+            onClick={queueIt}
+            disabled={!canSend}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              height: 32, padding: '0 14px', border: 'none',
+              borderRadius: 'var(--cth-radius-btn)',
+              cursor: canSend ? 'pointer' : 'not-allowed',
+              background: canSend ? 'var(--cth-lilac)' : 'transparent',
+              color: canSend ? '#FFFFFF' : 'var(--cth-ink-300)',
+              boxShadow: canSend ? 'var(--cth-shadow-btn)' : 'none',
+              fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
+              transition: 'background 120ms ease, box-shadow 120ms ease, color 120ms ease'
+            }}
+          >
+            {t('commandBar.send')} <Icon name="arrow-right" />
+          </button>
         </div>
       </div>
     </div>

@@ -293,10 +293,20 @@ export function PtyTerminalView({ ptyId, label, onStreamData, onUserPrompt, onTo
     fontSizeRef.current = fontSize;
     const entry = acquireTerminal(ptyId, THEMES[ptyThemeRef.current], fontSize);
     entry.term.options.fontSize = fontSize;
-    try {
-      entry.fit.fit();
-      window.cth.resizePty(ptyId, entry.term.cols, entry.term.rows);
-    } catch { /* host may not be sized yet */ }
+    let cancelled = false;
+    const refit = () => {
+      if (cancelled) return;
+      try {
+        entry.fit.fit();
+        window.cth.resizePty(ptyId, entry.term.cols, entry.term.rows);
+      } catch { /* host may not be sized yet */ }
+    };
+    const raf = requestAnimationFrame(refit);
+    // A second pass once the font metrics have settled: xterm measures a
+    // character to derive cell size, and the first frame after a size change can
+    // still be measuring the old face.
+    const timer = window.setTimeout(refit, 120);
+    return () => { cancelled = true; cancelAnimationFrame(raf); window.clearTimeout(timer); };
   }, [fontSize, ptyId]);
 
   // Drag-and-drop a file (image, etc.) onto the terminal → inject its absolute
@@ -435,7 +445,7 @@ export function PtyTerminalView({ ptyId, label, onStreamData, onUserPrompt, onTo
         </div>
       </div>
       <div ref={hostRef} onDragOver={onDragOver} onDrop={onDrop} style={{
-        flex: 1, minHeight: 0,
+        flex: 1, minHeight: 0, minWidth: 0, overflow: 'hidden',
         padding: embedded ? '0 8px 8px' : 0
       }} />
     </div>

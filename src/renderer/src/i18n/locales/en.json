@@ -1403,7 +1403,7 @@
     "pausedTitle": "Auto-delivery is paused for the whole floor. Resume it in the Command Center, or use \"send now\" on a message below.",
     "dropToAttach": "DROP TO ATTACH",
     "enterHint": "Enter sends, Shift+Enter for a new line",
-    "queue": "QUEUE",
+    "queue": "Queue",
     "closePicker": "close picker",
     "recoverPrompt": "recover prompt",
     "clearAllTitle": "Clear all queued messages",

@@ -310,31 +310,6 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
 
         </div>
 
-        {contextPct !== null && (
-          <div>
-            <div style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-              fontSize: 11, color: 'var(--cth-ink-500)', marginBottom: 5
-            }}>
-              <span>{t('commandCenter.context')}</span>
-              <span style={{
-                fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: 'var(--cth-ink-700)'
-              }}>{contextLine}</span>
-            </div>
-            <div style={{
-              height: 5, borderRadius: 'var(--cth-radius-pill)',
-              background: 'var(--cth-cream-200)', overflow: 'hidden'
-            }}>
-              <div style={{
-                width: `${contextPct}%`, height: '100%',
-                borderRadius: 'var(--cth-radius-pill)',
-                background: contextPct > 85 ? 'var(--cth-coral)' : 'var(--cth-lilac)',
-                transition: 'width 260ms ease'
-              }} />
-            </div>
-          </div>
-        )}
-
       </div>
 
       {/* Row one: the four screens you open all day, in the accent when active.

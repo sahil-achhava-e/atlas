@@ -201,7 +201,14 @@ export function RealtimeMichaelToggle({ compact = false }: RealtimeMichaelToggle
         // Live mic → a clear accent fill (mint listening / sky speaking) so the
         // active button never reads as a flat black primary. Skipped when disabled
         // (no key) and when off/connecting, so those states are untouched.
-        style={!noKey && view.activeBg ? { background: view.activeBg, color: 'var(--cth-ink-900)' } : undefined}
+        style={{
+          height: 32,
+          padding: '0 14px',
+          borderRadius: 'var(--cth-radius-btn)',
+          fontSize: 13,
+          fontWeight: 600,
+          ...(!noKey && view.activeBg ? { background: view.activeBg, color: 'var(--cth-ink-900)' } : {})
+        }}
       >
         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
           {/* Live-state dot — only while something IS live. Off, it was a grey
@@ -214,14 +221,17 @@ export function RealtimeMichaelToggle({ compact = false }: RealtimeMichaelToggle
                 height: 6,
                 flexShrink: 0,
                 background: view.dot,
-                boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
+                borderRadius: 'var(--cth-radius-pill)',
+                boxShadow: `0 0 0 3px color-mix(in srgb, ${view.dot} 22%, transparent)`,
                 animation: view.anim
               }}
             />
           )}
-          <Icon name="mic" />
+          <span style={{ display: 'inline-flex', color: noKey ? 'var(--cth-ink-300)' : 'var(--cth-coral)' }}>
+            <Icon name="mic" />
+          </span>
           {!compact && (
-            <span style={{ fontFamily: 'var(--cth-font-ui)' }}>
+            <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600 }}>
               {noKey ? t('realtimeToggle.talk') : t(view.labelKey)}
             </span>
           )}
