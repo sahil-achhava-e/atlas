@@ -1,4 +1,5 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { Children, isValidElement, useState, type CSSProperties, type ReactNode } from 'react';
+import { Dropdown } from '../Dropdown';
 import { useTranslation } from 'react-i18next';
 import { TRIGGER_MODES, type TriggerMode } from '@shared/triggers';
 import {
@@ -31,7 +32,8 @@ export const monoInputStyle: CSSProperties = {
 };
 
 export const textareaStyle: CSSProperties = {
-  ...monoInputStyle,
+  ...inputStyle,
+  lineHeight: '20px',
   resize: 'vertical'
 };
 
@@ -55,13 +57,17 @@ export function Hint({ children }: { children: ReactNode }) {
 }
 
 export function Chip({ children, tone = 'plain' }: { children: ReactNode; tone?: 'plain' | 'on' | 'off' }) {
-  const bg = tone === 'on' ? 'var(--cth-lemon)' : tone === 'off' ? 'var(--cth-cream-200)' : 'var(--cth-cream-100)';
-  const line = tone === 'on' ? 'var(--cth-ink-900)' : 'var(--cth-ink-100)';
+  const fg = tone === 'on' ? 'var(--cth-status-success)'
+    : tone === 'off' ? 'var(--cth-ink-500)' : 'var(--cth-ink-700)';
+  const bg = tone === 'on'
+    ? 'color-mix(in srgb, var(--cth-status-success) 14%, transparent)'
+    : 'var(--cth-cream-100)';
   return (
     <span style={{
-      flexShrink: 0, padding: '2px 5px 1px',
-      fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
-      background: bg, boxShadow: `inset 0 0 0 1px ${line}`, borderRadius: 'var(--cth-radius-input)', color: 'var(--cth-ink-900)'
+      flexShrink: 0, display: 'inline-flex', alignItems: 'center',
+      padding: '3px 10px', borderRadius: 'var(--cth-radius-pill)',
+      fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '15px',
+      background: bg, color: fg
     }}>{children}</span>
   );
 }
@@ -70,11 +76,14 @@ export function Callout({ children, tone = 'warn' }: { children: ReactNode; tone
   const warn = tone === 'warn';
   return (
     <div style={{
-      marginTop: 6, padding: '10px 12px',
-      fontSize: 11, lineHeight: '15px', color: 'var(--cth-ink-900)',
-      background: warn ? 'var(--cth-coral-light)' : 'var(--cth-cream-200)',
-      boxShadow: `inset 0 0 0 1px ${warn ? 'var(--cth-coral)' : 'var(--cth-ink-100)'}`,
-            borderRadius: 'var(--cth-radius-input)'
+      marginTop: 8, padding: '10px 12px',
+      fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '18px',
+      color: 'var(--cth-ink-700)',
+      background: warn
+        ? 'color-mix(in srgb, var(--cth-status-blocked) 9%, transparent)'
+        : 'var(--cth-cream-50)',
+      borderInlineStart: `3px solid ${warn ? 'var(--cth-status-blocked)' : 'var(--cth-ink-100)'}`,
+      borderRadius: 'var(--cth-radius-input)'
     }}>{children}</div>
   );
 }
@@ -88,14 +97,31 @@ export function Toggle({ on, onClick, onLabel, offLabel }: {
   return (
     <button
       onClick={onClick}
+      role="switch"
+      aria-checked={on}
       style={{
-        padding: '2px 12px 1px', border: 'none', cursor: 'pointer', flexShrink: 0,
-        background: on ? 'var(--cth-lemon)' : 'var(--cth-cream-200)',
-        boxShadow: `inset 0 0 0 1px ${on ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)'}`,
-            borderRadius: 'var(--cth-radius-input)',
-        fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)'
+        display: 'inline-flex', alignItems: 'center', gap: 7,
+        padding: 0, border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0
       }}
-    >{on ? (onLabel ?? t('common.on')) : (offLabel ?? t('common.off'))}</button>
+    >
+      <span style={{
+        position: 'relative', width: 30, height: 16, flexShrink: 0,
+        borderRadius: 'var(--cth-radius-pill)',
+        background: on ? 'var(--cth-status-success)' : 'var(--cth-cream-200)',
+        transition: 'background 120ms ease'
+      }}>
+        <span style={{
+          position: 'absolute', top: 2, left: on ? 16 : 2,
+          width: 12, height: 12, borderRadius: 'var(--cth-radius-pill)',
+          background: '#FFFFFF', transition: 'left 120ms ease',
+          boxShadow: '0 1px 2px rgba(17,20,24,0.25)'
+        }} />
+      </span>
+      <span style={{
+        fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600,
+        color: on ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)'
+      }}>{on ? (onLabel ?? t('common.on')) : (offLabel ?? t('common.off'))}</span>
+    </button>
   );
 }
 
@@ -107,12 +133,19 @@ export function MiniButton({ children, onClick, tone = 'plain', disabled }: {
       onClick={onClick}
       disabled={disabled}
       style={{
-        flexShrink: 0, padding: '2px 7px 1px', border: 'none',
-        cursor: disabled ? 'default' : 'pointer',
-        background: tone === 'good' ? 'var(--cth-mint)' : 'var(--cth-cream-200)',
-        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-        fontFamily: 'var(--cth-font-ui)', fontSize: 11,
-        color: disabled ? 'var(--cth-ink-300)' : tone === 'danger' ? 'var(--cth-coral)' : 'var(--cth-ink-900)'
+        flexShrink: 0, height: 28, padding: '0 12px', border: 'none',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        borderRadius: 'var(--cth-radius-btn)',
+        background: disabled ? 'transparent'
+          : tone === 'good' ? 'var(--cth-lilac)'
+          : tone === 'danger' ? 'color-mix(in srgb, var(--cth-coral) 12%, transparent)'
+          : 'var(--cth-cream-100)',
+        boxShadow: tone === 'good' && !disabled ? 'var(--cth-shadow-btn)' : 'none',
+        fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600,
+        color: disabled ? 'var(--cth-ink-300)'
+          : tone === 'good' ? '#FFFFFF'
+          : tone === 'danger' ? 'var(--cth-coral)' : 'var(--cth-ink-900)',
+        transition: 'background 120ms ease, color 120ms ease'
       }}
     >{children}</button>
   );
@@ -121,13 +154,27 @@ export function MiniButton({ children, onClick, tone = 'plain', disabled }: {
 export function Select({ value, onChange, children, style }: {
   value: string; onChange: (v: string) => void; children: ReactNode; style?: CSSProperties;
 }) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      style={{ ...selectStyle, ...style }}
-    >{children}</select>
-  );
+  // Reads its own <option> children so no call site changes, and renders the
+  // app's dropdown instead of the OS widget. Same shim as the command centre's.
+  const options: { value: string; label: string }[] = [];
+  const walk = (node: ReactNode): void => {
+    Children.forEach(node, (child) => {
+      if (!isValidElement(child)) return;
+      if (child.type === 'option') {
+        const p = child.props as { value?: string; children?: ReactNode };
+        options.push({
+          value: String(p.value ?? ''),
+          label: Children.toArray(p.children)
+            .map((c) => (typeof c === 'string' || typeof c === 'number' ? String(c) : '')).join('')
+        });
+        return;
+      }
+      walk((child.props as { children?: ReactNode }).children);
+    });
+  };
+  walk(children);
+  const width = (style?.width as number | string | undefined) ?? 150;
+  return <Dropdown value={value} options={options} onChange={onChange} width={width} align="top" />;
 }
 
 /** Label above a control. Stacked, never side-by-side — the sidebar is too
@@ -136,8 +183,8 @@ export function Field({ label, children }: { label: string; children: ReactNode 
   return (
     <div style={{ marginTop: 8 }}>
       <div style={{
-        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
-        color: 'var(--cth-ink-500)', marginBottom: 4
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12, lineHeight: '16px',
+        color: 'var(--cth-ink-500)', marginBottom: 6
       }}>{label}</div>
       {children}
     </div>
@@ -148,9 +195,9 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 
 export function Scroll({ children }: { children: ReactNode }) {
   return (
-    <div style={{
+    <div className="cth-scrollpane" style={{
       flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', overflowX: 'hidden',
-      padding: 16, background: 'var(--cth-paper-200)'
+      padding: 16, background: 'var(--cth-paper-100)'
     }}>{children}</div>
   );
 }
@@ -169,26 +216,38 @@ export function TriggerCard({ title, blurb, summary, defaultOpen = false, childr
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div style={{ marginBottom: 8, background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)' }}>
+    <div style={{
+      marginBottom: 12, background: 'var(--cth-paper-100)',
+      borderRadius: 'var(--cth-radius-card)',
+      boxShadow: '0 0 0 1px var(--cth-ink-100), var(--cth-shadow-sm)',
+      overflow: 'hidden'
+    }}>
       <button
         onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
         style={{
-          width: '100%', display: 'flex', alignItems: 'flex-start', gap: 8, textAlign: 'left',
-          padding: '12px 16px', border: 'none', cursor: 'pointer',
-          background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
+          width: '100%', display: 'flex', alignItems: 'flex-start', gap: 10, textAlign: 'left',
+          padding: '14px 16px', border: 'none', cursor: 'pointer',
+          background: 'transparent'
         }}
       >
-        <span style={{ flexShrink: 0, width: 8, fontSize: 11, lineHeight: '13px', color: 'var(--cth-ink-500)' }}>
-          {open ? '▾' : '▸'}
+        <span style={{
+          flexShrink: 0, marginTop: 2, display: 'inline-flex', color: 'var(--cth-ink-300)',
+          transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 140ms ease'
+        }}>
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M7.6 5l4.8 5-4.8 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </span>
         <span style={{ flex: 1, minWidth: 0 }}>
           <span style={{
-            display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '13px',
-            color: 'var(--cth-ink-900)'
+            display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 14,
+            lineHeight: '19px', letterSpacing: '-0.1px', color: 'var(--cth-ink-900)'
           }}>{title}</span>
-          <span style={{ display: 'block', fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)', marginTop: 2 }}>
-            {blurb}
-          </span>
+          <span style={{
+            display: 'block', fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, lineHeight: '18px',
+            color: 'var(--cth-ink-500)', marginTop: 3
+          }}>{blurb}</span>
         </span>
         {summary !== undefined && <Chip>{summary}</Chip>}
       </button>
@@ -201,8 +260,8 @@ export function TriggerCard({ title, blurb, summary, defaultOpen = false, childr
 export function SubCard({ children }: { children: ReactNode }) {
   return (
     <div style={{
-      marginBottom: 6, padding: '12px 16px 16px',
-      background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
+      marginBottom: 8, padding: '12px 14px 14px',
+      background: 'var(--cth-cream-50)', borderRadius: 'var(--cth-radius-input)'
     }}>{children}</div>
   );
 }

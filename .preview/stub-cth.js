@@ -291,6 +291,32 @@
       '- **vms-1264** pipeline caches node_modules between stages'
     ].join('\n');
   },
+  // Two live workers and one worktree kept back, so the Jobs tab can be seen
+  // populated. Fields match WorkerSnapshot in main (workerId / ageMs / idleMs /
+  // tokensUsed …) — my first pass invented friendlier names and the tab rendered
+  // "up NaNd, tokens NaNM", which is what a made-up shape looks like.
+  listWorkers: async function () {
+    var now = Date.now();
+    return {
+      maxWorkers: 4,
+      live: [
+        { workerId: 'w-4471', reqId: 'vms-1275', name: 'receipt-pdf',
+          baseBranch: 'develop', spawnedAt: now - 8 * 60000,
+          ageMs: 8 * 60000, idleMs: 42 * 1000,
+          tokensUsed: 184000, tokenCap: 1000000,
+          hasSlack: false, releasing: false, status: 'working' },
+        { workerId: 'w-4472', reqId: 'vms-1288', name: 'voucher-smoke',
+          baseBranch: 'develop', spawnedAt: now - 3 * 60000,
+          ageMs: 3 * 60000, idleMs: null,
+          tokensUsed: 61000, tokenCap: 1000000,
+          hasSlack: true, releasing: false, status: 'working' }
+      ],
+      preserved: [
+        { workerId: 'w-4460', wtPath: '/Users/you/.atlas/worktrees/w-4460',
+          baseBranch: 'develop', preservedAt: now - 26 * 3600e3 }
+      ]
+    };
+  },
   skillsDisabled: async () => (window.__skillsOff = window.__skillsOff || []),
   skillsSetEnabled: async (name, on) => {
     const cur = new Set(window.__skillsOff || []);
