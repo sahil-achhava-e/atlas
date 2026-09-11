@@ -7,7 +7,6 @@ import { Icon } from './Icon';
 import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
 import { AVATAR_LIBRARY, LIBRARY_BY_ID } from '@/scene/office/avatarLibrary';
-import { accentCss, accentFillCss } from '@/design/tokens';
 import { OFFICE_CAST, DEFAULT_CHARACTER, type OfficeCharacterName } from '@/scene/office/cast';
 import { type AccentColorName } from '@/design/tokens';
 import type { HireManifest } from '@shared/hire';
@@ -48,16 +47,19 @@ const DEFAULT_DONE = 'a pushed branch and an open pull request, never merged, wi
 const DEFAULT_ASK = 'something destructive, a schema change against real data, spending money, or a conflict you cannot resolve';
 
 // OSS quick-pick chip styling (ondev-c) — mirrors the model-picker chips.
-const ossChip = (active: boolean, accent: string): CSSProperties => ({
-  padding: '3px 12px 1px',
-  background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
-  boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-ink-500)' : 'inset 0 0 0 1px var(--cth-ink-100)',
-  fontFamily: 'var(--cth-font-ui)', fontSize: 13,
-  color: 'var(--cth-ink-900)', cursor: 'pointer', border: 'none'
+const ossChip = (active: boolean): CSSProperties => ({
+  height: 30, padding: '0 12px',
+  display: 'inline-flex', alignItems: 'center',
+  borderRadius: 'var(--cth-radius-btn)',
+  background: active ? 'var(--cth-lilac-light)' : 'var(--cth-cream-100)',
+  boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none',
+  fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, fontWeight: active ? 600 : 500,
+  color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-700)',
+  cursor: 'pointer', border: 'none'
 });
 const ossGroupHead: CSSProperties = {
-  fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
-  color: 'var(--cth-ink-500)', marginBottom: 4
+  fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11.5, lineHeight: '14px',
+  color: 'var(--cth-ink-500)', marginBottom: 6
 };
 const ossLink: CSSProperties = { color: 'var(--cth-ink-900)', textDecoration: 'underline', cursor: 'pointer' };
 
@@ -473,7 +475,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0,
-        background: 'rgba(26, 19, 32, 0.6)',
+        background: 'rgba(17, 20, 26, 0.5)', backdropFilter: 'blur(3px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         // Must sit above fullscreen terminal/file overlays (250/280) and their
         // hover popovers. The fullscreen Add Agent button uses this same modal.
@@ -498,7 +500,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               <div style={{
                 padding: '10px 16px',
                 background: 'var(--cth-lemon-light, #fdf3cf)',
-                boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
+                borderRadius: 'var(--cth-radius-card)',
                 fontSize: 13,
                 color: 'var(--cth-ink-900)',
                 display: 'flex', flexDirection: 'column', gap: 2
@@ -597,7 +599,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
             <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
               {/* LEFT — section index. Capabilities isn't a nav item: it isn't a
                   user field, it rides the imported hire manifest (banner above). */}
-              <nav style={{ width: 168, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <nav style={{ width: 186, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {SECTIONS.map((s, i) => {
                   const active = section === s.key;
                   return (
@@ -605,25 +607,32 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                       key={s.key}
                       onClick={() => setSection(s.key)}
                       style={{
-                        textAlign: 'left', padding: '10px 12px 5px', border: 'none', cursor: 'pointer',
-                        background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
-                        boxShadow: active
-                          ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
-                          : 'inset 0 0 0 1px var(--cth-ink-100)',
-                        display: 'flex', flexDirection: 'column', gap: 2
+                        textAlign: 'left', padding: '10px 12px', border: 'none', cursor: 'pointer',
+                        borderRadius: 'var(--cth-radius-btn)',
+                        background: active ? 'var(--cth-lilac-light)' : 'var(--cth-cream-100)',
+                        boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none',
+                        display: 'flex', flexDirection: 'column', gap: 3,
+                        transition: 'background 120ms ease, box-shadow 120ms ease'
                       }}
                     >
                       <span style={{
-                        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '13px',
-                        color: 'var(--cth-ink-900)',
-                        display: 'flex', alignItems: 'baseline', gap: 8
+                        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '16px',
+                        color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-900)',
+                        display: 'flex', alignItems: 'center', gap: 8
                       }}>
-                        <span style={{ color: active ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)' }}>{i + 1}</span>
+                        <span style={{
+                          width: 18, height: 18, flexShrink: 0, borderRadius: '50%',
+                          display: 'grid', placeItems: 'center',
+                          fontSize: 11, fontWeight: 700,
+                          color: active ? '#fff' : 'var(--cth-ink-500)',
+                          background: active ? 'var(--cth-lilac)' : 'var(--cth-paper-100)'
+                        }}>{i + 1}</span>
                         {tr(s.labelKey)}
                       </span>
-                      <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-500)' }}>
-                        {tr(s.hintKey)}
-                      </span>
+                      <span style={{
+                        fontFamily: 'var(--cth-font-ui)', fontSize: 11.5, lineHeight: '15px',
+                        color: 'var(--cth-ink-400)', paddingInlineStart: 26
+                      }}>{tr(s.hintKey)}</span>
                     </button>
                   );
                 })}
@@ -651,9 +660,11 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           belong next to each other. Taken ones stay visible and
                           dimmed, since a missing tile only looks like a shorter
                           list. */}
-                      <div style={{
+                      <div className="cth-scrollpane" style={{
                         display: 'flex', gap: 8, flexWrap: 'wrap',
-                        maxHeight: 330, overflowY: 'auto', paddingRight: 4
+                        maxHeight: 344, overflowY: 'auto',
+                        padding: 8, background: 'var(--cth-cream-100)',
+                        borderRadius: 'var(--cth-radius-card)'
                       }}>
                         {faceChoices.map((f) => {
                           const active = effectiveCharacter === f.id;
@@ -667,26 +678,29 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               onClick={() => { setCharacter(f.id); setName(f.name); }}
                               aria-pressed={active}
                               style={{
-                                width: 66, padding: '5px 4px 4px', border: 'none',
+                                width: 66, padding: '5px 4px 6px', border: 'none',
                                 cursor: used ? 'not-allowed' : 'pointer',
+                                borderRadius: 'var(--cth-radius-btn)',
                                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                                background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
+                                background: active ? 'var(--cth-lilac-light)' : 'var(--cth-paper-100)',
                                 boxShadow: active
-                                  ? `inset 0 0 0 2px var(--cth-${accent})`
+                                  ? 'inset 0 0 0 2px var(--cth-lilac)'
                                   : 'inset 0 0 0 1px var(--cth-ink-100)',
-                                opacity: used ? 0.45 : 1
+                                opacity: used ? 0.45 : 1,
+                                transition: 'background 120ms ease, box-shadow 120ms ease'
                               }}
                             >
                               <span style={{
                                 width: 54, height: 66, display: 'flex', alignItems: 'flex-end',
                                 justifyContent: 'center', overflow: 'hidden',
-                                background: 'var(--cth-cream-200)'
+                                borderRadius: 'calc(var(--cth-radius-btn) - 3px)',
+                                background: 'var(--cth-cream-100)'
                               }}>
                                 <SpritePortrait character={f.id} scale={3} />
                               </span>
                               <span style={{
-                                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '13px',
-                                color: 'var(--cth-ink-900)'
+                                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11.5, lineHeight: '14px',
+                                color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-900)'
                               }}>{f.name}</span>
                               <span style={{
                                 fontSize: 11, lineHeight: '12px',
@@ -715,9 +729,10 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                             style={{
                               width: 34, height: 34, padding: 0,
                               display: 'grid', placeItems: 'center',
+                              borderRadius: 'var(--cth-radius-btn)',
                               background: `var(--cth-${a})`,
                               boxShadow: accent === a
-                                ? `0 0 0 2px var(--cth-cream-50), 0 0 0 4px var(--cth-${a})`
+                                ? `0 0 0 2px var(--cth-paper-100), 0 0 0 4px var(--cth-${a})`
                                 : 'inset 0 0 0 1px var(--cth-ink-300)',
                               color: 'var(--cth-on-accent)',
                               fontSize: 15, lineHeight: 1,
@@ -734,9 +749,10 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           style={{
                             width: 34, height: 34, display: 'grid', placeItems: 'center',
                             cursor: 'pointer', position: 'relative',
-                            background: accent.startsWith('#') ? accent : 'var(--cth-cream-200)',
+                            borderRadius: 'var(--cth-radius-btn)',
+                            background: accent.startsWith('#') ? accent : 'var(--cth-cream-100)',
                             boxShadow: accent.startsWith('#')
-                              ? `0 0 0 2px var(--cth-cream-50), 0 0 0 4px ${accent}`
+                              ? `0 0 0 2px var(--cth-paper-100), 0 0 0 4px ${accent}`
                               : 'inset 0 0 0 1px var(--cth-ink-300)',
                             color: accent.startsWith('#') ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)',
                             fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13
@@ -769,7 +785,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                       {repos.length === 0 ? (
                         <div style={{
                           padding: '16px 12px', fontSize: 13, textAlign: 'center',
-                          color: 'var(--cth-ink-500)', border: '1px dashed var(--cth-ink-300)'
+                          color: 'var(--cth-ink-500)', borderRadius: 'var(--cth-radius-card)',
+                          border: '1px dashed var(--cth-ink-300)'
                         }}>
                           {tr('addAgent.noProjects')}
                         </div>
@@ -785,29 +802,33 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                                 className="cth-choice"
                                 style={{
                                   display: 'flex', alignItems: 'center', gap: 12,
-                                  padding: '16px 12px', border: 'none', cursor: 'pointer',
-                                  textAlign: 'left',
-                                  background: active ? accentFillCss(accent) : 'var(--cth-paper-100)',
+                                  padding: '12px 14px', border: 'none', cursor: 'pointer',
+                                  textAlign: 'left', borderRadius: 'var(--cth-radius-card)',
+                                  background: active ? 'var(--cth-lilac-light)' : 'var(--cth-paper-100)',
                                   boxShadow: active
-                                    ? `inset 0 0 0 2px ${accentCss(accent)}`
-                                    : 'inset 0 0 0 1px var(--cth-ink-100)'
+                                    ? 'inset 0 0 0 2px var(--cth-lilac)'
+                                    : 'inset 0 0 0 1px var(--cth-ink-100)',
+                                  transition: 'background 120ms ease, box-shadow 120ms ease'
                                 }}
                               >
                                 <span style={{
                                   width: 30, height: 30, flexShrink: 0, display: 'grid', placeItems: 'center',
-                                  background: 'var(--cth-cream-200)', color: 'var(--cth-ink-700)',
-                                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
+                                  borderRadius: 'var(--cth-radius-btn)',
+                                  background: active ? 'var(--cth-paper-100)' : 'var(--cth-cream-100)',
+                                  color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-500)'
                                 }}>
                                   <Icon name="folder" />
                                 </span>
                                 <span style={{
                                   flex: 1, minWidth: 0,
-                                  fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '18px',
+                                  fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13.5, lineHeight: '18px',
+                                  color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-900)'
                                 }}>{basename(r)}</span>
                                 {active && (
-                                  <span style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>
-                                    {tr('addAgent.assigned')}
-                                  </span>
+                                  <span style={{
+                                    fontSize: 11, fontWeight: 600, padding: '2px 9px', borderRadius: 999,
+                                    color: 'var(--cth-lilac)', background: 'var(--cth-paper-100)'
+                                  }}>{tr('addAgent.assigned')}</span>
                                 )}
                               </button>
                             );
@@ -821,24 +842,28 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                         setting that decides whether you can run four agents at
                         once, so it gets the room to say so. */}
                     <label style={{
-                      display: 'flex', gap: 12, alignItems: 'flex-start', padding: 16,
+                      display: 'flex', gap: 12, alignItems: 'flex-start', padding: 14,
                       cursor: resuming ? 'not-allowed' : 'pointer', opacity: resuming ? 0.5 : 1,
+                      borderRadius: 'var(--cth-radius-card)',
                       background: isolate && !resuming ? 'var(--cth-mint-light)' : 'var(--cth-cream-100)',
-                      boxShadow: isolate && !resuming
-                        ? 'inset 0 0 0 2px var(--cth-mint)'
-                        : 'inset 0 0 0 1px var(--cth-ink-300)'
+                      boxShadow: isolate && !resuming ? 'inset 0 0 0 2px var(--cth-mint)' : 'none',
+                      transition: 'background 120ms ease, box-shadow 120ms ease'
                     }}>
                       <input
                         type="checkbox"
                         checked={resuming ? false : isolate}
                         disabled={resuming}
                         onChange={(e) => setIsolate(e.target.checked)}
-                        style={{ width: 18, height: 18, marginTop: 3, flexShrink: 0, cursor: resuming ? 'not-allowed' : 'pointer' }}
+                        style={{
+                          width: 17, height: 17, marginTop: 2, flexShrink: 0,
+                          accentColor: 'var(--cth-mint)',
+                          cursor: resuming ? 'not-allowed' : 'pointer'
+                        }}
                       />
                       <span style={{ minWidth: 0 }}>
                         <span style={{
                           display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-                          fontSize: 14, lineHeight: '19px', letterSpacing: 0.5, marginBottom: 5
+                          fontSize: 13.5, lineHeight: '19px', marginBottom: 4
                         }}>{tr('addAgent.gitIsolation')}</span>
                         <span style={{
                           display: 'block', fontSize: 13, lineHeight: '19px', color: 'var(--cth-ink-700)'
@@ -862,9 +887,9 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                     <Row label={tr('addAgent.provider')}>
                       <div style={{
                         display: 'inline-flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
-                        padding: '12px 12px',
+                        padding: '8px 12px',
                         background: 'var(--cth-cream-100)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
+                        borderRadius: 'var(--cth-radius-btn)'
                       }}>
                         <ProviderLogo provider={provider} size={16} />
                         <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)' }}>
@@ -894,13 +919,16 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               key={m.label}
                               onClick={() => pickModel(m.id)}
                               style={{
-                                padding: '3px 12px 1px',
-                                background: active ? accentFillCss(accent) : 'var(--cth-cream-100)',
-                                boxShadow: active
-                                  ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
-                                  : 'inset 0 0 0 1px var(--cth-ink-100)',
-                                fontFamily: 'var(--cth-font-ui)', fontSize: 13,
-                                color: 'var(--cth-ink-900)', cursor: 'pointer', border: 'none'
+                                height: 32, padding: '0 14px',
+                                display: 'inline-flex', alignItems: 'center',
+                                borderRadius: 'var(--cth-radius-btn)',
+                                background: active ? 'var(--cth-lilac-light)' : 'var(--cth-cream-100)',
+                                boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none',
+                                fontFamily: 'var(--cth-font-ui)', fontSize: 12.5,
+                                fontWeight: active ? 600 : 500,
+                                color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-700)',
+                                cursor: 'pointer', border: 'none',
+                                transition: 'background 120ms ease, color 120ms ease'
                               }}
                             >
                               {m.label}
@@ -928,7 +956,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                                   <button
                                     key={p.tag}
                                     onClick={() => pickModel(slug)}
-                                    style={ossChip(active, accent)}
+                                    style={ossChip(active)}
                                   >
                                     {p.label}
                                   </button>
@@ -945,7 +973,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                                   <button
                                     key={p.slug}
                                     onClick={() => pickModel(p.slug)}
-                                    style={ossChip(active, accent)}
+                                    style={ossChip(active)}
                                   >
                                     {p.label}
                                   </button>
@@ -1055,7 +1083,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               <div style={{
                 padding: '10px 16px',
                 background: 'var(--cth-coral-light)',
-                boxShadow: 'inset 0 0 0 1px var(--cth-coral)', borderRadius: 'var(--cth-radius-input)',
+                borderRadius: 'var(--cth-radius-card)',
+                boxShadow: 'inset 0 0 0 1px var(--cth-coral)',
                 fontSize: 13,
                 color: 'var(--cth-ink-900)'
               }}>
@@ -1067,13 +1096,16 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                 Next until the last one, then Hire. The rail stays clickable, so
                 an imported hire (every field already filled) can still be sent
                 straight from section 1 by jumping to Briefing. */}
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+            <div style={{
+              display: 'flex', gap: 10, justifyContent: 'flex-end',
+              marginTop: 6, paddingTop: 14, borderTop: '1px solid var(--cth-ink-100)'
+            }}>
               {pendingHire && (
                 <PixelButton variant="secondary" size="md" onClick={skipHire} disabled={busy}>{tr('addAgent.skipHire')}</PixelButton>
               )}
-              <PixelButton variant="ghost" size="md" onClick={onClose} disabled={busy}>{tr('common.cancel')}</PixelButton>
+              <PixelButton variant="secondary" size="md" onClick={onClose} disabled={busy}>{tr('common.cancel')}</PixelButton>
               {sectionIndex > 0 && (
-                <PixelButton variant="ghost" size="md" onClick={() => setSection(SECTIONS[sectionIndex - 1].key)} disabled={busy}>
+                <PixelButton variant="secondary" size="md" onClick={() => setSection(SECTIONS[sectionIndex - 1].key)} disabled={busy}>
                   {tr('common.back')}
                 </PixelButton>
               )}
@@ -1103,14 +1135,17 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '10px 12px 4px',
+  padding: '9px 12px',
   background: 'var(--cth-paper-100)',
   border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
+  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+  borderRadius: 'var(--cth-radius-btn)',
   fontFamily: 'var(--cth-font-ui)',
-  fontSize: 16,
+  fontSize: 13.5,
+  lineHeight: '20px',
   color: 'var(--cth-ink-900)',
-  outline: 'none'
+  outline: 'none',
+  boxSizing: 'border-box'
 };
 
 /** A briefing question. The 8px display caps the rest of the form uses are a
@@ -1120,12 +1155,12 @@ function Question({ q, hint, children }: { q: string; hint: string; children: Re
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <span style={{
-        fontFamily: 'var(--cth-font-ui)', fontSize: 14, fontWeight: 600,
+        fontFamily: 'var(--cth-font-ui)', fontSize: 14, fontWeight: 700,
         lineHeight: '19px', color: 'var(--cth-ink-900)'
       }}>{q}</span>
       <span style={{
-        fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '17px',
-        color: 'var(--cth-ink-500)', marginBottom: 2
+        fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, lineHeight: '17px',
+        color: 'var(--cth-ink-500)', marginBottom: 4
       }}>{hint}</span>
       {children}
     </label>
@@ -1134,11 +1169,11 @@ function Question({ q, hint, children }: { q: string; hint: string; children: Re
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <span style={{
         fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-        fontSize: 11, lineHeight: '12px',
-        color: 'var(--cth-ink-700)',
+        fontSize: 12, lineHeight: '14px',
+        color: 'var(--cth-ink-600)',
       }}>{label}</span>
       {children}
     </label>
