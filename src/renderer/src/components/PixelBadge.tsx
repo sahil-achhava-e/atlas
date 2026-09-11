@@ -1,3 +1,4 @@
+import { StatusGlyph } from './StatusGlyph';
 import { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -97,13 +98,9 @@ export function PixelBadge({ status, label, style, dotOnly }: PixelBadgeProps) {
         ...style
       }}
     >
-      <span
-        style={{
-          width: 7, height: 7, flexShrink: 0,
-          background: colorByStatus[status],
-          borderRadius: 'var(--cth-radius-pill)'
-        }}
-      />
+      <span style={{ display: 'inline-flex', flexShrink: 0, color: colorByStatus[status] }}>
+        <StatusGlyph status={status} />
+      </span>
       {text}
     </span>
   );

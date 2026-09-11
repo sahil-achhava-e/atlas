@@ -27,6 +27,7 @@ import { SidebarSplitter } from '@/components/SidebarSplitter';
 import { acquireTerminal, notifyThemeChangeAll } from '@/components/terminalPool';
 import { FullscreenTerminal } from '@/components/FullscreenTerminal';
 import { AtlasMark } from '@/components/AtlasMark';
+import { StatusGlyph } from '@/components/StatusGlyph';
 import { MoonIcon, SunIcon, GearIcon, ExpandIcon, CollapseIcon } from '@/components/ChromeIcons';
 import { TaskDetailOverlay } from '@/components/TaskDetailOverlay';
 import { IdePanel } from '@/ide/IdePanel';
@@ -449,12 +450,14 @@ export function App() {
           fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-500)'
         }}>
           {[
-            { n: fleet.working, c: 'var(--cth-status-working)', label: 'working' },
-            { n: fleet.blocked, c: 'var(--cth-status-blocked)', label: 'need you' },
-            { n: fleet.idle, c: 'var(--cth-status-idle)', label: 'idle' }
+            { n: fleet.working, c: 'var(--cth-status-working)', label: 'working', status: 'working' as const },
+            { n: fleet.blocked, c: 'var(--cth-status-blocked)', label: 'need you', status: 'blocked' as const },
+            { n: fleet.idle, c: 'var(--cth-status-idle)', label: 'idle', status: 'idle' as const }
           ].filter((x) => x.n > 0).map((x) => (
             <span key={x.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: x.c }} />
+              <span style={{ display: 'inline-flex', color: x.c }}>
+                <StatusGlyph status={x.status} size={14} />
+              </span>
               <span style={{ color: 'var(--cth-ink-700)', fontWeight: 600 }}>{x.n}</span>
               {x.label}
             </span>
