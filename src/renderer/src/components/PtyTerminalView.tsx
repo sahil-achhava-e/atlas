@@ -366,7 +366,9 @@ export function PtyTerminalView({ ptyId, label, onStreamData, onUserPrompt, onTo
       width: '100%',
       minHeight: 0,
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      overflow: 'hidden',
+      borderRadius: embedded ? 0 : 'var(--cth-radius-input)'
     }}>
       <div
         onMouseEnter={() => setHovered(true)}

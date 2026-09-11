@@ -16,7 +16,7 @@ import { terminalInstanceKey } from './terminalRecovery';
 import { Icon } from './Icon';
 import {
   TerminalIcon, BellIcon, TasksIcon, TeamIcon, MemoryIcon,
-  MapIcon, EventsIcon, JobsIcon, TriggersIcon, SkillsIcon
+  MapIcon, EventsIcon, JobsIcon, TriggersIcon, SkillsIcon, EditIcon, CodeIcon
 } from './TabIcons';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useOpenAsks } from '@/hooks/useOpenAsks';
@@ -156,7 +156,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
   // What it is doing NOW while it works; where it lives when it is not.
   const headerLine = (agent.status !== 'idle' && agent.action)
     ? agent.action
-    : (agent.cwd ? agent.cwd.split('/').filter(Boolean).pop() ?? agent.project : agent.project);
+    : (agent.description?.trim() || (agent.isGod ? t('commandCenter.roleGod') : t('commandCenter.roleWorker')));
   // Context as a number, not a bar: in a header the useful question is how much
   // room is left before a compaction, and a 4px rail cannot answer it.
   // What is actually running in the terminal below, in the words the picker
@@ -191,7 +191,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                   <Centered>{t('commandCenter.terminalFullscreen')}</Centered>
                 ) : agent.ptyId ? (
                   <>
-                    <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+                    <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
                       <PtyTerminalView
                         key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}
                         ptyId={agent.ptyId}
@@ -263,18 +263,51 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
           </span>
 
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 19, lineHeight: '23px',
-              letterSpacing: '-0.4px', color: 'var(--cth-ink-900)',
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-            }}>{agent.name}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <span style={{
+                fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 19, lineHeight: '23px',
+                letterSpacing: '-0.4px', color: 'var(--cth-ink-900)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+              }}>{agent.name}</span>
+              <PixelBadge status={agent.status} />
+            </div>
             <div style={{
               fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
             }}>{headerLine}</div>
           </div>
 
-          <PixelBadge status={agent.status} />
+          {/* Edit and IDE, in the corner the state pill used to hold. Icon-only
+              with the tab row's hover label: two labelled buttons here cost more
+              width than the agent's own name. */}
+          <span className="cth-iconbar" style={{ display: 'inline-flex', gap: 2, flexShrink: 0 }}>
+            {[
+              { key: 'edit', Glyph: EditIcon, tone: 'var(--cth-lemon)',
+                label: t('common.edit', { defaultValue: 'Edit' }),
+                onClick: () => setEditOpen(true) },
+              { key: 'ide', Glyph: CodeIcon, tone: 'var(--cth-sky)',
+                label: t('commandCenter.ide'),
+                onClick: () => { const st = useStore.getState(); st.setIdeOpen(true, st.selectedId); } }
+            ].map((a) => (
+              <button
+                key={a.key}
+                onClick={a.onClick}
+                data-label={a.label}
+                aria-label={a.label}
+                style={{
+                  width: 32, height: 32, flexShrink: 0,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  border: 'none', background: 'transparent', cursor: 'pointer',
+                  borderRadius: 'var(--cth-radius-btn)',
+                  color: a.tone,
+                  transition: 'background 120ms ease, color 120ms ease'
+                }}
+              >
+                <a.Glyph />
+              </button>
+            ))}
+          </span>
+
         </div>
 
         {contextPct !== null && (
@@ -302,37 +335,6 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
           </div>
         )}
 
-        {/* One segmented group rather than two outlined buttons: the actions are
-            peers, they share a container, and none of them is loud enough to
-            compete with the agent's name. */}
-        <div className="cth-seg" style={{
-          display: 'flex', gap: 2, padding: 3,
-          background: 'var(--cth-cream-100)',
-          borderRadius: 'var(--cth-radius-btn)'
-        }}>
-          {[
-            { key: 'edit', icon: 'edit' as const, label: t('common.edit', { defaultValue: 'Edit' }),
-              onClick: () => setEditOpen(true) },
-            { key: 'ide', icon: 'code' as const, label: t('commandCenter.ide'),
-              onClick: () => { const st = useStore.getState(); st.setIdeOpen(true, st.selectedId); } },
-            { key: 'focus', icon: 'expand' as const, label: t('commandCenter.focus'),
-              onClick: () => setFullscreen(fullscreen ? null : agent.id) }
-          ].map((a) => (
-            <button
-              key={a.key}
-              onClick={a.onClick}
-              style={{
-                flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                height: 30, border: 'none', background: 'transparent',
-                borderRadius: 'calc(var(--cth-radius-btn) - 2px)', cursor: 'pointer',
-                fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600,
-                color: 'var(--cth-ink-700)'
-              }}
-            >
-              <Icon name={a.icon} /> {a.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Row one: the four screens you open all day, in the accent when active.
@@ -343,8 +345,8 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
           Hidden in focus mode, where every pane is already on screen. */}
       {!fullscreen && (
       <div className="cth-tabbar cth-iconbar" style={{
-        display: 'flex', gap: 2, flexWrap: 'wrap',
-        padding: '10px 12px', flexShrink: 0,
+        display: 'flex', gap: 2,
+        padding: '10px 10px', flexShrink: 0,
         borderBottom: '1px solid var(--cth-ink-100)'
       }}>
         {TABS.map((d) => {
@@ -359,7 +361,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
               aria-pressed={on}
               style={{
                 position: 'relative',
-                width: 36, height: 36, flexShrink: 0,
+                flex: '1 1 0', minWidth: 0, height: 36,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 border: 'none', cursor: 'pointer',
                 borderRadius: 'var(--cth-radius-btn)',

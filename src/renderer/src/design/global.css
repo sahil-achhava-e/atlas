@@ -109,17 +109,32 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
    click into the box. Both :focus and :focus-visible: a textarea you clicked
    into is exactly as focused as one you tabbed into, and here we WANT the mouse
    case — it is the one the founder is looking at while typing. */
-.cth-input { box-shadow: inset 0 0 0 1px var(--cth-ink-100); }
+.cth-input {
+  box-shadow: inset 0 0 0 1px var(--cth-ink-100);
+  transition: box-shadow 120ms ease;
+}
 .cth-input:focus,
-.cth-input:focus-visible { box-shadow: inset 0 0 0 2px var(--cth-ink-700); }
+.cth-input:focus-visible {
+  box-shadow:
+    inset 0 0 0 1px var(--cth-lilac),
+    0 0 0 3px color-mix(in srgb, var(--cth-lilac) 18%, transparent);
+}
 
 /* A composer is ONE field: the box you type in and the row of controls under it
    share a border, and focusing the text lights the whole thing. The textarea
    inside carries `.cth-input-bare` so it draws no border of its own — two
    nested rectangles read as a box inside a box, which is what this looked like
    before. */
-.cth-field { box-shadow: inset 0 0 0 1px var(--cth-ink-100); }
-.cth-field:focus-within { box-shadow: inset 0 0 0 2px var(--cth-ink-700); }
+.cth-field {
+  box-shadow: inset 0 0 0 1px var(--cth-ink-100);
+  border-radius: var(--cth-radius-input);
+  transition: box-shadow 120ms ease;
+}
+.cth-field:focus-within {
+  box-shadow:
+    inset 0 0 0 1px var(--cth-lilac),
+    0 0 0 3px color-mix(in srgb, var(--cth-lilac) 18%, transparent);
+}
 .cth-input-bare { box-shadow: none; }
 .cth-input-bare:focus,
 .cth-input-bare:focus-visible { box-shadow: none; }
@@ -402,10 +417,13 @@ button:hover, [role="button"]:hover, [role="switch"]:hover,
 /* Keyboard users get the same affordance, and it is the brand colour so it
    reads as "this app", not as the browser's default blue. */
 button:focus-visible, [role="button"]:focus-visible, [role="switch"]:focus-visible,
-a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+a:focus-visible, select:focus-visible {
   outline: 2px solid var(--cth-lilac);
   outline-offset: 2px;
 }
+/* Fields carry their own ring (.cth-input / .cth-field), so the generic outline
+   would draw a second rectangle 2px outside the first. */
+input:focus-visible, textarea:focus-visible { outline: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
@@ -497,3 +515,9 @@ a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visib
   opacity: 1;
   transform: translate(-50%, 0);
 }
+
+/* xterm sizes its canvas from a measured cell grid, so between a resize and the
+   next fit it can be a few pixels taller than the box it was handed. Black made
+   that overhang visible, painting over the composer beneath it. */
+.cth-brand-panel .xterm { overflow: hidden; }
+.cth-brand-panel .xterm-viewport { overflow-y: auto; }

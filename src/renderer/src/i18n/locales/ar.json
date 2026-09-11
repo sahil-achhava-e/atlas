@@ -474,7 +474,9 @@
     "deliveryHoldAria": "احتجز التسليم التلقائي للأرضية كلها",
     "openIdeAria": "افتح بيئة التطوير",
     "context": "السياق",
-    "focus": "تركيز"
+    "focus": "تركيز",
+    "roleGod": "يدير الطابق",
+    "roleWorker": "لا دور محدد بعد"
   },
   "addAgent": {
     "title": "إضافة وكيل",

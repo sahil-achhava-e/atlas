@@ -48,7 +48,7 @@
      act), GREEN available (it just finished and is free), pale grey idle.
      Ten states share four colours on purpose — the colour answers "can I give
      it work", the label beside it answers "what exactly is it doing". */
-  --cth-status-idle:     #3B82F6;   /* idle    — free, nothing in hand */
+  --cth-status-idle:     #22C55E;   /* idle    — free, nothing in hand */
   --cth-status-thinking: #DC2626;   /* busy */
   --cth-status-working: #DC2626;   /* busy */
   --cth-status-compacting: #DC2626; /* busy    — boxing up its own context */
@@ -215,7 +215,7 @@
   --cth-slate: #9BA6B3;   --cth-slate-light: #262B31;
 
   /* Status — dark-tuned counterparts (same hue language) */
-  --cth-status-idle:     #60A5FA;
+  --cth-status-idle:     #4ADE80;
   --cth-status-thinking: #F87171;
   --cth-status-working: #F87171;
   --cth-status-waiting: #FBBF24;

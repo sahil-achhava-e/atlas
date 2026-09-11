@@ -487,7 +487,9 @@
     "deliveryHoldAria": "Hold automatic delivery for the whole floor",
     "openIdeAria": "Open the IDE",
     "context": "Context",
-    "focus": "Focus"
+    "focus": "Focus",
+    "roleGod": "runs the floor",
+    "roleWorker": "no role set yet"
   },
   "addAgent": {
     "title": "ADD AGENT",

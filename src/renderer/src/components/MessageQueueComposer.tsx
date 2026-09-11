@@ -291,7 +291,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
                 color: 'var(--cth-ink-900)'
               }}
             >
-              <Icon name="folder" />
+              <span style={{ display: 'inline-flex', color: 'var(--cth-lemon)' }}><Icon name="folder" /></span>
               <span style={{
                 overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', maxWidth: 180
               }}>{a.name}</span>
@@ -369,7 +369,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
               width: 26, height: 24, padding: 0, border: 'none', cursor: 'pointer',
               background: 'transparent', color: 'var(--cth-ink-500)'
             }}
-          ><Icon name="plus" /></button>
+          ><span style={{ display: 'inline-flex', color: 'var(--cth-mint)' }}><Icon name="plus" /></span></button>
           {agent.isGod && <CostHud compact />}
           <span style={{ flex: 1 }} />
           {/* The one keystroke everybody gets wrong on a box that also takes

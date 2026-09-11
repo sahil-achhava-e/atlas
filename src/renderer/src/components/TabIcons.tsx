@@ -57,3 +57,12 @@ export const TriggersIcon = ({ size = 18 }: P) => (
 export const SkillsIcon = ({ size = 18 }: P) => (
   <svg {...box(size)}><path {...S} d="M8.2 3.2h3.6v2.2a1.6 1.6 0 103.2 0h2.2v3.4h-2.2a1.6 1.6 0 100 3.2h2.2v4.8h-4.4v-2a1.6 1.6 0 10-3.2 0v2H3.4v-4.4h2a1.6 1.6 0 100-3.2h-2V5.4h4.8z" /></svg>
 );
+
+/** Header actions, same grid and stroke as the tabs above. */
+export const EditIcon = ({ size = 17 }: P) => (
+  <svg {...box(size)}><path {...S} d="M12.4 3.8l3.8 3.8-8.2 8.2-4.4.6.6-4.4z" />
+    <path {...S} d="M11 5.2l3.8 3.8" /></svg>
+);
+export const CodeIcon = ({ size = 17 }: P) => (
+  <svg {...box(size)}><path {...S} d="M7.4 6.6L3.8 10l3.6 3.4M12.6 6.6L16.2 10l-3.6 3.4M10.8 4.4l-1.6 11.2" /></svg>
+);

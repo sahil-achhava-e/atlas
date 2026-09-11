@@ -469,12 +469,19 @@ export function App() {
               <span style={{ color: 'var(--cth-ink-300)' }}>·</span>
               nothing needs you
             </>
-          ) : (
+          ) : fleet.idle > 0 ? (
             <>
               <span style={{ display: 'inline-flex', color: 'var(--cth-status-idle)' }}>
                 <StatusGlyph status="idle" size={15} />
               </span>
-              The floor is quiet
+              {fleet.idle === 1 ? '1 agent free and waiting for work' : `${fleet.idle} agents free and waiting for work`}
+            </>
+          ) : (
+            <>
+              <span style={{ display: 'inline-flex', color: 'var(--cth-ink-300)' }}>
+                <StatusGlyph status="ghost" size={15} />
+              </span>
+              Nobody on the floor yet. Add an agent to start.
             </>
           )}
         </span>
