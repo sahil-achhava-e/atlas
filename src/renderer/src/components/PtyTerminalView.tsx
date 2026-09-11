@@ -26,19 +26,22 @@ const MAX_FONT_SIZE = MAX_TERMINAL_FONT_SIZE;
 type PtyTheme = 'light' | 'dark';
 
 const zoomBtnStyle: CSSProperties = {
-  width: 18,
-  height: 18,
+  width: 26,
+  height: 26,
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
   fontFamily: 'var(--cth-font-ui)',
   fontSize: 13,
+  fontWeight: 600,
   lineHeight: 1,
-  color: 'var(--cth-ink-700)',
-  background: 'var(--cth-paper-100)',
-  border: '1px solid var(--cth-ink-300)',
+  color: 'rgba(255, 255, 255, 0.72)',
+  background: 'rgba(255, 255, 255, 0.08)',
+  border: 'none',
+  borderRadius: 'var(--cth-radius-sm)',
   cursor: 'pointer',
-  padding: 0
+  padding: 0,
+  transition: 'background 120ms ease, color 120ms ease'
 };
 
 // Light theme — cream paper. The ANSI "white" / "yellow" / bright slots are
@@ -376,20 +379,21 @@ export function PtyTerminalView({ ptyId, label, onStreamData, onUserPrompt, onTo
         style={{
         display: 'flex', alignItems: 'center', gap: 8,
         fontFamily: 'var(--cth-font-ui)',
-        fontSize: 13,
-        color: 'var(--cth-ink-500)',
-        // A hairline, not a dashed rule: dashes read as "unfinished" on the one
-        // surface that is always on screen.
-        borderBottom: '1px solid var(--cth-ink-100)',
-        paddingBottom: 4,
-        marginBottom: 4,
-        paddingLeft: embedded ? 8 : 0,
+        fontSize: 12,
+        color: 'rgba(255, 255, 255, 0.55)',
+        // The strip belongs to the terminal, not to the panel: it names what is
+        // running inside the black box, so it is drawn on the black box.
+        borderBottom: '1px solid rgba(255, 255, 255, 0.10)',
+        paddingBottom: 7,
+        marginBottom: 6,
+        paddingLeft: embedded ? 12 : 0,
         paddingRight: embedded ? 8 : 0,
-        paddingTop: embedded ? 6 : 0
+        paddingTop: embedded ? 9 : 0
       }}>
         <span style={{
-          width: 8, height: 8, background: 'var(--cth-mint)',
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
+          width: 7, height: 7, flexShrink: 0, background: '#4ADE80',
+          borderRadius: 'var(--cth-radius-pill)',
+          boxShadow: '0 0 0 3px rgba(74, 222, 128, 0.18)',
           animation: 'cth-pulse 1200ms steps(2, end) infinite'
         }} />
         <span style={{
@@ -398,8 +402,8 @@ export function PtyTerminalView({ ptyId, label, onStreamData, onUserPrompt, onTo
         {/* Zoom is a once-a-year control sitting beside the thing you read all
             day: it fades in on hover (and stays while focused), and Cmd +/- and
             Cmd 0 work whether it is visible or not. */}
-        <div style={{
-          marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 2,
+        <div className="cth-termctl" style={{
+          marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3,
           opacity: hovered ? 1 : 0,
           transition: 'opacity 120ms linear'
         }}>
@@ -423,7 +427,7 @@ export function PtyTerminalView({ ptyId, label, onStreamData, onUserPrompt, onTo
           {fullscreen && onToggleFullscreen && (
             <button
               onClick={onToggleFullscreen}
-              style={{ ...zoomBtnStyle, width: 22, height: 22, marginLeft: 4 }}
+              style={{ ...zoomBtnStyle, marginLeft: 6 }}
             >
               <Icon name="minimize" />
             </button>

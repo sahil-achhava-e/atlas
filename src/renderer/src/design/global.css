@@ -521,3 +521,11 @@ input:focus-visible, textarea:focus-visible { outline: none; }
    that overhang visible, painting over the composer beneath it. */
 .cth-brand-panel .xterm { overflow: hidden; }
 .cth-brand-panel .xterm-viewport { overflow-y: auto; }
+
+/* The terminal's own controls live on black, so their hover is a lift in white
+   rather than the app's grey tint. */
+.cth-termctl button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #FFFFFF !important;
+}
+.cth-termctl button:disabled { opacity: 0.35; cursor: not-allowed; }
