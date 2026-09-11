@@ -449,8 +449,6 @@
     "noMemory": "لم تُسجَّل أي ذاكرة بعد.",
     "activity": "النشاط",
     "nothingYet": "لم يحدث شيء بعد.",
-    "board": "اللوحة",
-    "boardEmpty": "اللوحة فارغة. يكتبها أطلس مع تقدّم العمل.",
     "logSpawn": "أُنشئ {{name}}",
     "logMessage": "{{from}} ← {{to}}: {{subject}}",
     "logDrain": "سحب {{agent}} عدد {{count}} رسالة",

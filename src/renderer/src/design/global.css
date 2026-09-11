@@ -597,3 +597,11 @@ input:focus-visible, textarea:focus-visible { outline: none; }
    which is otherwise a permanent x on every row. */
 .cth-task-card:hover { box-shadow: 0 0 0 1px var(--cth-ink-300), var(--cth-shadow-card) !important; }
 div:hover > .cth-iconbar[data-label] { opacity: 1 !important; }
+
+/* A panel scrolls with a bar that appears when the pointer is inside it. A
+   permanent 10px rail beside a list of six events is furniture; the gutter is
+   reserved either way so content never shifts when the bar arrives. */
+.cth-scrollpane { scrollbar-gutter: stable; }
+.cth-scrollpane::-webkit-scrollbar-thumb { background: transparent; background-clip: content-box; }
+.cth-scrollpane:hover::-webkit-scrollbar-thumb { background: var(--cth-ink-300); background-clip: content-box; }
+.cth-scrollpane:hover::-webkit-scrollbar-thumb:hover { background: var(--cth-ink-500); background-clip: content-box; }

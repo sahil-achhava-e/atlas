@@ -15,7 +15,6 @@ import { SkillsTab } from './SkillsTab';
 import { acquireTerminal, disposeTerminal, resetTerminal } from './terminalPool';
 import { terminalInstanceKey } from './terminalRecovery';
 import { Icon } from './Icon';
-import { MarkdownPreview } from '@/markdown/MarkdownPreview';
 import { StatusGlyph } from './StatusGlyph';
 import { Dropdown } from './Dropdown';
 import {
@@ -1002,13 +1001,11 @@ interface LogEntry { ts?: number; kind?: string; [k: string]: unknown }
 function ActivityTab() {
   const { t } = useTranslation();
   const [log, setLog] = useState<LogEntry[]>([]);
-  const [board, setBoard] = useState('');
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const refresh = async () => {
       try { setLog((await window.cth.hiveLog(60)) as LogEntry[]); } catch { /* noop */ }
-      try { setBoard(await window.cth.hiveBoard()); } catch { /* noop */ }
     };
     refresh();
     timer.current = setInterval(refresh, 3000);
@@ -1082,24 +1079,6 @@ function ActivityTab() {
         )}
       </Section>
 
-      <Section title={t('commandCenter.board')}>
-        {board ? (
-          <div style={{
-            padding: 14, borderRadius: 'var(--cth-radius-input)',
-            background: 'var(--cth-cream-50)',
-            fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '20px',
-            color: 'var(--cth-ink-900)'
-          }}>
-            <MarkdownPreview source={board} variant="card" />
-          </div>
-        ) : (
-          <div style={{
-            padding: '14px', borderRadius: 'var(--cth-radius-input)',
-            background: 'var(--cth-cream-50)',
-            fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-500)'
-          }}>{t('commandCenter.boardEmpty')}</div>
-        )}
-      </Section>
     </Scroll>
   );
 }
@@ -1111,7 +1090,13 @@ function Scroll({ children }: { children: React.ReactNode }) {
   // minWidth:0 + overflowX:hidden keep wide children (native selects, long paths,
   // budget rows) from forcing a horizontal scrollbar in the narrow sidebar — they
   // wrap/shrink instead. Vertical scroll stays.
-  return <div style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: 16, background: 'var(--cth-paper-200)' }}>{children}</div>;
+  return (
+    <div className="cth-scrollpane" style={{
+      flex: 1, minWidth: 0, minHeight: 0,
+      overflowY: 'auto', overflowX: 'hidden',
+      padding: 16, background: 'var(--cth-paper-100)'
+    }}>{children}</div>
+  );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
