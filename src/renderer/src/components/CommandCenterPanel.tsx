@@ -169,6 +169,60 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
     ? `${fmtK(agent.contextTokens as number)}/${fmtK(agent.contextLimit ?? (/1m/i.test(agent.model ?? '') ? 1_000_000 : 200_000))}`
     : '';
 
+  /** One pane, by key. Pulled out of the tab switch so focus mode can render
+   *  several at once: at 1700px the panel was showing one column and hiding
+   *  nine, which is a tab bar earning its keep in a 420px sidebar and wasting
+   *  the screen everywhere else. */
+  const paneFor = (key: CCTab) => (
+    <>
+      {key === 'terminal' && (
+                isFullscreenedHere ? (
+                  <Centered>{t('commandCenter.terminalFullscreen')}</Centered>
+                ) : agent.ptyId ? (
+                  <>
+                    <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+                      <PtyTerminalView
+                        key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}
+                        ptyId={agent.ptyId}
+                        label={engineLabel}
+                        onStreamData={onPtyStream}
+                        onUserPrompt={(t) => {
+                          updateAgent(agent.id, { lastPrompt: t });
+                          if (t.trim().toLowerCase() === '/clear') {
+                            updateAgent(agent.id, { contextTokens: 0, contextLimit: undefined, progress: 0 });
+                          }
+                          void window.cth.historyAdd({ agentId: agent.id, cwd: agent.cwd, text: t });
+                        }}
+                        onToggleFullscreen={() => setFullscreen(fullscreen ? null : agent.id)}
+                        fullscreen={fullscreen}
+                        embedded={!fullscreen}
+                      />
+                    </div>
+                    <MessageQueueComposer agent={agent} />
+                  </>
+                ) : (
+                  <Centered>{t('commandCenter.noTerminal', { name: agent.name })}</Centered>
+                )
+              )}
+              {key === 'floor' && <FloorTab seed={dispatchSeed} />}
+              {key === 'tasks' && <TasksKanban />}
+              {key === 'human' && <AskMeTab />}
+              {key === 'triggers' && <TriggersTab />}
+              {key === 'memory' && (
+                <MemoryTab godId={agent.id} who={selectedMemoryAgent ?? undefined} onWho={setSelectedMemoryAgent} />
+              )}
+              {key === 'graph' && (
+                <MemoryGraphPanel
+                  godId={agent.id}
+                  onJumpToMemory={(id) => { setSelectedMemoryAgent(id); setTab('memory'); }}
+                />
+              )}
+              {key === 'activity' && <ActivityTab />}
+              {key === 'skills' && <SkillsTab agentCwd={agent.cwd} />}
+              {key === 'workers' && <WorkersTab />}
+    </>
+  );
+
   return (
     <PixelPanel
       variant="default"
@@ -277,7 +331,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         overflowX: fullscreen ? 'auto' : 'visible',
         padding: '12px 12px 4px', background: 'transparent', flexShrink: 0
       }}>
-        {primaryTabs.map((d) => {
+        {(fullscreen ? [] : primaryTabs).map((d) => {
           const on = d.key === tab;
           const badge = d.key === 'human' ? openAsks : 0;
           return (
@@ -357,55 +411,49 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
           terminal, the queue and the rest of the window with it — which is
           exactly what happened when the Triggers panel read a field that was
           not there. `key={tab}` re-arms it when you switch away. */}
+      {fullscreen ? (
+        /* Focus mode: panes side by side, not stacked behind a tab bar. The
+           terminal keeps the room it needs; the queue and the board sit beside
+           it because they are what you glance at while it runs. The secondary
+           row still switches the last column, so nothing became unreachable. */
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 1, background: 'var(--cth-ink-100)' }}>
+          {([
+            { key: 'terminal' as CCTab, grow: 2, basis: 520, min: 420 },
+            { key: 'human' as CCTab, grow: 1, basis: 340, min: 260 },
+            { key: 'tasks' as CCTab, grow: 1, basis: 340, min: 260 },
+            { key: (PRIMARY.includes(tab) ? 'floor' : tab) as CCTab, grow: 1, basis: 340, min: 260 }
+          ]).map((col, i) => (
+            <div
+              key={`${col.key}-${i}`}
+              style={{
+                flex: `${col.grow} 1 ${col.basis}px`,
+                minWidth: col.min, minHeight: 0,
+                display: 'flex', flexDirection: 'column',
+                background: 'var(--cth-paper-100)'
+              }}
+            >
+              <div style={{
+                flexShrink: 0, padding: '8px 12px',
+                fontSize: 11, fontWeight: 600, color: 'var(--cth-ink-500)',
+                borderBottom: '1px solid var(--cth-ink-100)'
+              }}>
+                {t(TABS.find((x) => x.key === col.key)?.labelKey ?? '')}
+              </div>
+              <ErrorBoundary key={col.key} label={col.key}>
+                <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+                  {paneFor(col.key)}
+                </div>
+              </ErrorBoundary>
+            </div>
+          ))}
+        </div>
+      ) : (
       <ErrorBoundary key={tab} label={tab}>
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        {tab === 'terminal' && (
-          isFullscreenedHere ? (
-            <Centered>{t('commandCenter.terminalFullscreen')}</Centered>
-          ) : agent.ptyId ? (
-            <>
-              <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-                <PtyTerminalView
-                  key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}
-                  ptyId={agent.ptyId}
-                  label={engineLabel}
-                  onStreamData={onPtyStream}
-                  onUserPrompt={(t) => {
-                    updateAgent(agent.id, { lastPrompt: t });
-                    if (t.trim().toLowerCase() === '/clear') {
-                      updateAgent(agent.id, { contextTokens: 0, contextLimit: undefined, progress: 0 });
-                    }
-                    void window.cth.historyAdd({ agentId: agent.id, cwd: agent.cwd, text: t });
-                  }}
-                  onToggleFullscreen={() => setFullscreen(fullscreen ? null : agent.id)}
-                  fullscreen={fullscreen}
-                  embedded={!fullscreen}
-                />
-              </div>
-              <MessageQueueComposer agent={agent} />
-            </>
-          ) : (
-            <Centered>{t('commandCenter.noTerminal', { name: agent.name })}</Centered>
-          )
-        )}
-        {tab === 'floor' && <FloorTab seed={dispatchSeed} />}
-        {tab === 'tasks' && <TasksKanban />}
-        {tab === 'human' && <AskMeTab />}
-        {tab === 'triggers' && <TriggersTab />}
-        {tab === 'memory' && (
-          <MemoryTab godId={agent.id} who={selectedMemoryAgent ?? undefined} onWho={setSelectedMemoryAgent} />
-        )}
-        {tab === 'graph' && (
-          <MemoryGraphPanel
-            godId={agent.id}
-            onJumpToMemory={(id) => { setSelectedMemoryAgent(id); setTab('memory'); }}
-          />
-        )}
-        {tab === 'activity' && <ActivityTab />}
-        {tab === 'skills' && <SkillsTab agentCwd={agent.cwd} />}
-        {tab === 'workers' && <WorkersTab />}
+        {paneFor(tab)}
       </div>
       </ErrorBoundary>
+      )}
 
       {editOpen && <EditAgentModal agent={agent} onClose={() => setEditOpen(false)} />}
     </PixelPanel>
