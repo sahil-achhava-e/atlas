@@ -20,7 +20,7 @@
  * then means the same thing on both sides and no argument needs rewriting.
  */
 import { spawnSync, spawn } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync, copyFileSync, chmodSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, copyFileSync, chmodSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir, tmpdir } from 'node:os';
 
@@ -73,6 +73,40 @@ export function imageExists(bin: string): boolean {
 }
 
 /**
+ * A CA bundle for the build, or null when the machine can offer none.
+ *
+ * This network re-signs TLS, so `pip install` inside the container fails with
+ * CERTIFICATE_VERIFY_FAILED unless the corporate root is trusted. The first
+ * version of this read one file under ~/.claude/certs, which exists on exactly
+ * one machine — every colleague's build would have died at pip.
+ *
+ * macOS keeps the root IT installed in the System keychain, so it is exported
+ * at build time. BOTH keychains are needed and this was measured: the System
+ * keychain alone (12 certs) gets pip through the intercepting proxy and then
+ * fails downloading the embedding model, because it holds no public roots.
+ * SystemRootCertificates supplies those; together, 170.
+ */
+function caBundle(): string | null {
+  const explicit = join(homedir(), '.claude', 'certs', 'combined-ca-bundle.pem');
+  if (existsSync(explicit)) {
+    try { return readFileSync(explicit, 'utf8'); } catch { /* fall through */ }
+  }
+  if (process.platform !== 'darwin') return null;
+  const pems: string[] = [];
+  for (const keychain of [
+    '/Library/Keychains/System.keychain',
+    '/System/Library/Keychains/SystemRootCertificates.keychain'
+  ]) {
+    try {
+      const r = spawnSync('/usr/bin/security', ['find-certificate', '-a', '-p', keychain],
+        { encoding: 'utf8', timeout: 20000, maxBuffer: 1 << 24 });
+      if (r.status === 0 && r.stdout.includes('BEGIN CERTIFICATE')) pems.push(r.stdout);
+    } catch { /* a keychain we cannot read is not fatal */ }
+  }
+  return pems.length ? pems.join('\n') : null;
+}
+
+/**
  * Build the image from the Dockerfile shipped in app resources.
  *
  * The build context is a temp directory rather than the resources folder: the
@@ -96,10 +130,8 @@ export function buildImage(
     try {
       mkdirSync(ctx, { recursive: true });
       copyFileSync(dockerfile, join(ctx, 'Dockerfile'));
-      // Optional: only some networks intercept TLS. The Dockerfile's `COPY ca.pem*`
-      // tolerates the file being absent.
-      const ca = join(homedir(), '.claude', 'certs', 'combined-ca-bundle.pem');
-      if (existsSync(ca)) copyFileSync(ca, join(ctx, 'ca.pem'));
+      const ca = caBundle();
+      if (ca) writeFileSync(join(ctx, 'ca.pem'), ca, 'utf8');
     } catch (e) {
       resolve({ ok: false, error: `build context: ${(e as Error).message}` });
       return;
