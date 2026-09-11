@@ -634,25 +634,6 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
 
 
 
-  // Set/clear one agent's token limit atomically in main. Renderer config objects
-  // are snapshots, so persisting this whole map could clobber a cap added by the
-  // hire flow after this panel loaded.
-  const setAgentCap = (id: string, tokens: number | undefined) => {
-    setAgentTokenCaps((current) => {
-      const optimistic = { ...current };
-      if (tokens && tokens > 0) optimistic[id] = tokens;
-      else delete optimistic[id];
-      return optimistic;
-    });
-    void window.cth.setAgentTokenCap(id, tokens).then((updated) => {
-      setAgentTokenCaps(updated.agentTokenCaps ?? {});
-    }).catch(() => {
-      // Reconcile a failed optimistic edit with the persisted source of truth.
-      void window.cth.getConfig().then((current) => {
-        setAgentTokenCaps(current.agentTokenCaps ?? {});
-      }).catch(() => { /* noop */ });
-    });
-  };
 
   // The token meter is scaled to the agent's own limit when set, else the floor
   // token budget — so each bar reads as "tokens used vs budget" with the remaining
@@ -822,8 +803,6 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
 
               <AgentRowMenu
                 agent={a}
-                cap={agentCap}
-                onCap={(v: number | undefined) => setAgentCap(a.id, v)}
                 onRestart={() => void restartWithModel(a, a.model, { resume: true })}
                 onEdit={() => setEditAgent(a)}
                 restarting={restarting === a.id}
@@ -1013,88 +992,6 @@ function fmtTokens(n: number): string {
   return String(Math.round(n));
 }
 
-/** Per-agent token-limit control (top-right of each agent card). Shows the
- *  current limit as a lemon chip, or "set limit"; click to edit a token number.
- *  Enter / ✓ / blur commit; Escape cancels. */
-function TokenLimitEditor({ value, onSet }: { value?: number; onSet: (tokens: number | undefined) => void }) {
-  const { t } = useTranslation();
-  const [editing, setEditing] = useState(false);
-  const [text, setText] = useState(value != null ? String(value) : '');
-  const skipBlur = useRef(false);
-  const commit = () => {
-    const raw = text.trim();
-    const n = raw === '' ? undefined : Number(raw);
-    onSet(typeof n === 'number' && Number.isFinite(n) && n > 0 ? n : undefined);
-    setEditing(false);
-  };
-  if (!editing) {
-    return (
-      <button
-        onClick={() => { setText(value != null ? String(value) : ''); setEditing(true); }}
-        style={{
-          flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6,
-          height: 26, padding: '0 11px', border: 'none', cursor: 'pointer',
-          borderRadius: 'var(--cth-radius-pill)',
-          background: value && value > 0
-            ? 'color-mix(in srgb, var(--cth-lemon) 16%, transparent)'
-            : 'var(--cth-cream-100)',
-          color: value && value > 0 ? 'var(--cth-lemon)' : 'var(--cth-ink-500)',
-          fontFamily: 'var(--cth-font-ui)', fontSize: 11.5, fontWeight: 600,
-          transition: 'background 120ms ease, color 120ms ease'
-        }}
-      >
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M2.6 8h10.8M8 2.6v10.8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"
-            style={{ display: value && value > 0 ? 'none' : undefined }} />
-          <path d="M3 11.4l3.4-3.6 2.4 2.2 4.2-4.6" stroke="currentColor" strokeWidth="1.7"
-            strokeLinecap="round" strokeLinejoin="round"
-            style={{ display: value && value > 0 ? undefined : 'none' }} />
-        </svg>
-        {value && value > 0
-          ? <>{t('commandCenter.tokenLimit', { value: fmtTokens(value) })}</>
-          : t('commandCenter.setLimit')}
-      </button>
-    );
-  }
-  return (
-    <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-      <input
-        type="number" min="0" step="100000" value={text} autoFocus
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => {
-          if (isComposingKey(e)) return;
-          if (e.key === 'Enter') commit();
-          else if (e.key === 'Escape') { skipBlur.current = true; setEditing(false); }
-        }}
-        onBlur={() => { if (skipBlur.current) { skipBlur.current = false; return; } commit(); }}
-        placeholder={t('common.tokens')}
-        className="cth-input"
-        style={{
-          width: 104, height: 26, padding: '0 10px',
-          background: 'var(--cth-paper-100)', border: 'none',
-          borderRadius: 'var(--cth-radius-btn)',
-          fontFamily: 'var(--cth-font-mono)', fontSize: 12,
-          color: 'var(--cth-ink-900)', outline: 'none'
-        }}
-      />
-      <button
-        onMouseDown={(e) => e.preventDefault()} onClick={commit}
-        aria-label={t('common.save', { defaultValue: 'Save' })}
-        style={{
-          flexShrink: 0, width: 26, height: 26, padding: 0, border: 'none', cursor: 'pointer',
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          borderRadius: 'var(--cth-radius-btn)',
-          background: 'var(--cth-lilac)', color: '#FFFFFF',
-          boxShadow: 'var(--cth-shadow-btn)'
-        }}
-      >
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M3.4 8.4l3 3 6.2-6.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-    </span>
-  );
-}
 
 // ─── Activity tab — hive event log + board ───────────────────────────────────
 
@@ -1241,23 +1138,20 @@ function Select({ value, onChange, disabled, children }: {
  * control. Three items, and each exists because it has no other home: the token
  * limit, restart-and-continue, and a jump to Edit (which owns engine and model).
  */
-function AgentRowMenu({ agent, cap, onCap, onRestart, onEdit, restarting }: {
+function AgentRowMenu({ agent, onRestart, onEdit, restarting }: {
   agent: Agent;
-  cap?: number;
-  onCap: (tokens: number | undefined) => void;
   onRestart: () => void;
   onEdit: () => void;
   restarting: boolean;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [capOpen, setCapOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (root.current && !root.current.contains(e.target as Node)) { setOpen(false); setCapOpen(false); }
+      if (root.current && !root.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
@@ -1301,28 +1195,7 @@ function AgentRowMenu({ agent, cap, onCap, onRestart, onEdit, restarting }: {
           background: 'var(--cth-paper-100)',
           boxShadow: '0 0 0 1px var(--cth-ink-100), var(--cth-shadow-hover)'
         }}>
-          {capOpen ? (
-            <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-500)' }}>
-                {t('commandCenter.setLimit')}
-              </span>
-              <TokenCapField
-                value={cap}
-                onCommit={(v) => { onCap(v); setCapOpen(false); setOpen(false); }}
-              />
-            </div>
-          ) : (
-            <>
-              <button style={item} onClick={() => setCapOpen(true)}>
-                <span style={{ display: 'inline-flex', color: 'var(--cth-lemon)' }}>
-                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M2.6 8h10.8M8 2.6v10.8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                  </svg>
-                </span>
-                {cap && cap > 0
-                  ? t('commandCenter.tokenLimit', { value: fmtTokens(cap) })
-                  : t('commandCenter.setLimit')}
-              </button>
+          <>
               <button style={item} disabled={restarting} onClick={() => { onRestart(); setOpen(false); }}>
                 <span style={{ display: 'inline-flex', color: 'var(--cth-sky)' }}>
                   <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -1343,49 +1216,10 @@ function AgentRowMenu({ agent, cap, onCap, onRestart, onEdit, restarting }: {
                 </span>
                 {t('commandCenter.editAgent')}
               </button>
-            </>
-          )}
+          </>
         </div>
       )}
     </div>
   );
 }
 
-/** The number field behind "token limit", extracted so the menu can host it. */
-function TokenCapField({ value, onCommit }: { value?: number; onCommit: (v: number | undefined) => void }) {
-  const { t } = useTranslation();
-  const [text, setText] = useState(value != null ? String(value) : '');
-  const commit = () => {
-    const n = Number(text);
-    onCommit(Number.isFinite(n) && n > 0 ? Math.round(n) : undefined);
-  };
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-      <input
-        type="number" min="0" step="100000" value={text} autoFocus
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => { if (!isComposingKey(e) && e.key === 'Enter') commit(); }}
-        placeholder={t('common.tokens')}
-        className="cth-input"
-        style={{
-          width: 120, height: 30, padding: '0 10px', border: 'none',
-          borderRadius: 'var(--cth-radius-btn)', background: 'var(--cth-paper-100)',
-          fontFamily: 'var(--cth-font-mono)', fontSize: 12,
-          color: 'var(--cth-ink-900)', outline: 'none'
-        }}
-      />
-      <button
-        onMouseDown={(e) => e.preventDefault()} onClick={commit}
-        style={{
-          width: 30, height: 30, flexShrink: 0, border: 'none', cursor: 'pointer',
-          borderRadius: 'var(--cth-radius-btn)', background: 'var(--cth-lilac)', color: '#FFFFFF',
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center'
-        }}
-      >
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M3.4 8.4l3 3 6.2-6.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-    </span>
-  );
-}

@@ -458,8 +458,6 @@
     "logApprovalGranted": "مُنحت الموافقة",
     "logApprovalDenied": "رُفضت الموافقة",
     "tokenLimitTitle": "اضبط حدّ رموز هذا الوكيل (رموز العمل: الإدخال + الإخراج + الكتابة إلى ذاكرة التخزين المؤقت؛ لا تُحتسب القراءة منها)",
-    "tokenLimit": "الحد {{value}}",
-    "setLimit": "حد التوكنات",
     "saveLimit": "احفظ الحدّ",
     "fleetTokens": "Σ {{value}} رمز",
     "openIssue": "مشكلة GitHub رقم {{num}}: {{title}}",

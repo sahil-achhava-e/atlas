@@ -471,8 +471,6 @@
     "logApprovalGranted": "approval granted",
     "logApprovalDenied": "approval denied",
     "tokenLimitTitle": "Set this agent's token limit (work tokens: input + output + cache writes; cache reads don't count)",
-    "tokenLimit": "Limit {{value}}",
-    "setLimit": "Token limit",
     "saveLimit": "Save limit",
     "fleetTokens": "Σ {{value}} tok",
     "openIssue": "GitHub Issue #{{num}}: {{title}}",
