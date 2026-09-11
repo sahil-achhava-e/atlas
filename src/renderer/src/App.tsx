@@ -28,7 +28,6 @@ import { acquireTerminal, notifyThemeChangeAll } from '@/components/terminalPool
 import { FullscreenTerminal } from '@/components/FullscreenTerminal';
 import { TaskDetailOverlay } from '@/components/TaskDetailOverlay';
 import { IdePanel } from '@/ide/IdePanel';
-import { useHoldOptionToTalk } from '@/freeflow/holdOption';
 import { go, parseRoute, type Route } from '@/routes';
 
 // Injected at build time from package.json (see electron.vite.config.ts).
@@ -109,13 +108,6 @@ export function App() {
     window.cth.getConfig().then(c => {
       if (cancelled) return;
       setConfig(c);
-      // Mirror the Free Flow flag into the store so the composer mic button shows
-      // only when enabled (Settings keeps this in sync on save).
-      useStore.getState().setFreeflowEnabled(!!c.freeflowEnabled);
-      // Mirror boolean key-presence ONLY (never the key value) so the composer can
-      // show the voice button disabled-with-tooltip when Free Flow is on but no
-      // Groq key is set (Settings keeps this in sync on save).
-      useStore.getState().setHasGroqKey(!!c.groqApiKey);
       // Mirror the active office theme so OfficeFloor renders it (gated on the
       // tvShowOffices flag; off = always the office). Settings keeps this synced.
       useStore.getState().setOfficeTheme(c.tvShowOffices ? (c.officeTheme ?? 'office') : 'office');
@@ -141,8 +133,6 @@ export function App() {
 
   // Free Flow entry point B — hold-Option (⌥) to talk. In-renderer push-to-talk
   // for whichever agent the user is viewing; gated on the flag, terminal-safe
-  // (solo-hold threshold, aborts on any other key). See freeflow/holdOption.ts.
-  useHoldOptionToTalk();
 
   // Config subscription — the copy loaded above would otherwise go stale the
   // moment anything saves a setting.

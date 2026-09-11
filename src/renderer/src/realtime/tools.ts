@@ -290,7 +290,6 @@ export function realtimeReadTools(): ReturnType<typeof tool>[] {
           const features = [
             c.slackEnabled && 'Slack',
             c.webhookEnabled && 'webhooks',
-            c.freeflowEnabled && 'Free Flow voice',
             c.realtimeVoiceEnabled && 'realtime voice (this session)',
             c.semanticMemory && 'semantic memory',
             obj(c.knowledgeGraph).enabled && 'the knowledge graph'

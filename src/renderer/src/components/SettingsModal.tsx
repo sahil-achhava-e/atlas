@@ -459,8 +459,6 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
   };
 
   // --- Free Flow (voice dictation → message queue) ---
-  const setFreeflowEnabledStore = useStore((s) => s.setFreeflowEnabled);
-  const setHasGroqKeyStore = useStore((s) => s.setHasGroqKey);
   // Talk (Realtime Michael) is gated on the OpenAI key — read the live presence
   // boolean so the Realtime Michael section can show its enabled/disabled status.
   const hasOpenAiKey = useStore((s) => s.hasOpenAiKey);
@@ -486,12 +484,6 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
   };
   // v0.3.4 fix: the config default is ON ('now on by default', 0.2.7) — seeding
   // with `?? false` displayed OFF while the feature was actually running.
-  const [freeflowEnabled, setFreeflowEnabled] = useState(config.freeflowEnabled !== false);
-  const [groqKey, setGroqKey] = useState(config.groqApiKey ?? '');
-  const [freeflowModel, setFreeflowModel] = useState(config.freeflowModel ?? 'whisper-large-v3-turbo');
-  const [showGroqKey, setShowGroqKey] = useState(false);
-  const [freeflowBusy, setFreeflowBusy] = useState(false);
-  const [freeflowNote, setFreeflowNote] = useState('');
   // rt-9 idle-tunable: realtime voice idle auto-disconnect window (ms); 0 = never.
   const [idleDisconnectMs, setIdleDisconnectMs] = useState<number>(
     (config as HarnessConfig).realtimeIdleDisconnectMs ?? 180_000
@@ -516,9 +508,6 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
       setSlackProactivePosting(cc.slackProactivePosting ?? false);
       const kgOn = (cc as { knowledgeGraph?: { enabled?: boolean } }).knowledgeGraph?.enabled === true;
       setKgEnabled(kgOn);
-      setFreeflowEnabled(cc.freeflowEnabled !== false);
-      setGroqKey(cc.groqApiKey ?? '');
-      setFreeflowModel(cc.freeflowModel ?? 'whisper-large-v3-turbo');
       setIdleDisconnectMs((c as HarnessConfig).realtimeIdleDisconnectMs ?? 180_000);
     }).catch(() => { /* keep prop-seeded values */ });
     window.cth.kgStatus().then((s) => { if (alive) setKgDocCount(s.docCount); })
@@ -700,36 +689,6 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
     } catch (e) {
       setOrgNote(e instanceof Error ? e.message : String(e));
     } finally { setOrgBusy(false); }
-  };
-
-  // --- Free Flow handlers ---
-  /** Persist Free Flow settings; main re-arms the global hotkey. Also mirror the
-   *  flag into the store so the composer mic button appears/disappears live. */
-  const saveFreeflow = async (enabledOverride?: boolean) => {
-    const enabled = enabledOverride ?? freeflowEnabled;
-    setFreeflowBusy(true); setFreeflowNote('');
-    try {
-      await window.cth.freeflowSetConfig({
-        enabled,
-        apiKey: groqKey,
-        model: freeflowModel.trim() || 'whisper-large-v3-turbo'
-      });
-      setFreeflowEnabledStore(enabled);
-      // Mirror boolean key-presence so the voice button enables/disables live
-      // without an app restart (presence only — never the key value).
-      setHasGroqKeyStore(!!groqKey.trim());
-      setFreeflowNote('saved');
-    } catch (e) {
-      setFreeflowNote(e instanceof Error ? e.message : String(e));
-    } finally { setFreeflowBusy(false); }
-  };
-
-  /** Toggle on/off and persist immediately so the change takes effect (and the
-   *  global hotkey arms/disarms) without a separate Save click. */
-  const toggleFreeflow = () => {
-    const next = !freeflowEnabled;
-    setFreeflowEnabled(next);
-    void saveFreeflow(next);
   };
 
   const reset = async () => {
@@ -1245,79 +1204,9 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                   {/* VOICE — Free Flow dictation + Realtime Michael (v0.3.4: its own tab) */}
                   {activeSection === 'Voice' && (
                     <>
-                      {/* Free Flow (voice dictation) */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <div style={sectionHeadTight}>
-                          {t('settings.voice.freeFlow')}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
-                              {t('settings.voice.freeFlowTitle')}
-                            </span>
-                            <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
-                              {t('settings.voice.freeFlowDesc')}
-                            </span>
-                          </div>
-                          <PixelButton
-                            variant={freeflowEnabled ? 'primary' : 'secondary'}
-                            size="sm"
-                            onClick={toggleFreeflow}
-                            disabled={freeflowBusy}
-                          >
-                            {freeflowEnabled ? t('common.on') : t('common.off')}
-                          </PixelButton>
-                        </div>
-
-                        {freeflowEnabled && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            {/* Groq API key — stored in main config, used only there. */}
-                            <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              <span style={slackLabelStyle}>{t('settings.voice.groqKey')}</span>
-                              <div style={{ display: 'flex', gap: 6 }}>
-                                <input
-                                  type={showGroqKey ? 'text' : 'password'}
-                                  value={groqKey}
-                                  onChange={(e) => setGroqKey(e.target.value)}
-                                  placeholder={t('settings.voice.groqPlaceholder')}
-                                  style={{ ...slackInputStyle, fontFamily: 'var(--cth-font-mono)' }}
-                                />
-                                <PixelButton variant="secondary" size="sm" onClick={() => setShowGroqKey((v) => !v)} disabled={!groqKey}>
-                                  {showGroqKey ? t('common.hide') : t('common.show')}
-                                </PixelButton>
-                              </div>
-                            </label>
-
-                            {/* Model picker */}
-                            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 280 }}>
-                              <span style={slackLabelStyle}>{t('settings.voice.model')}</span>
-                              <select
-                                value={freeflowModel}
-                                onChange={(e) => setFreeflowModel(e.target.value)}
-                                style={{ ...slackInputStyle, fontFamily: 'var(--cth-font-mono)' }}
-                              >
-                                <option value="whisper-large-v3-turbo">{t('settings.voice.fast')}</option>
-                                <option value="whisper-large-v3">{t('settings.voice.accurate')}</option>
-                              </select>
-                            </label>
-
-                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                              <PixelButton variant="ghost" size="sm" onClick={() => saveFreeflow()} disabled={freeflowBusy}>
-                                {t('common.save')}
-                              </PixelButton>
-                              {freeflowNote && (
-                                <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>{freeflowNote}</span>
-                              )}
-                            </div>
-
-                            <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
-                              {t('settings.voice.freeFlowHint')}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div style={sectionRule} />
+                      {/* No Free Flow: dictation went through Groq Whisper and
+                          needed its own key for something macOS Dictation does
+                          free and offline, straight into this same box. */}
 
                       {/* Realtime Michael — voice device selection (rt-8) */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
