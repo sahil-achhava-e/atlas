@@ -167,11 +167,13 @@ const sectionHeadFlush = { ...sectionHead, marginBottom: 0 } as const;
 /** The 2px rule between Settings sections. */
 const sectionRule = { height: 2, background: 'var(--cth-ink-300)' } as const;
 
-export type Section = 'General' | 'Prerequisites' | 'Agents & Models' | 'Connections' | 'Voice' | 'Memory & Knowledge';
+export type Section = 'General' | 'Prerequisites' | 'Agents & Models' | 'Connections' | 'Voice';
 // No Autonomy & Budgets tab: autonomy and who-may-hire moved next to the
 // model and the keys, and the circuit breaker is gone — it only ticked inside
 // the heartbeat, which ships disabled, so it governed nothing.
-const NAV_SECTIONS: Section[] = ['General', 'Prerequisites', 'Agents & Models', 'Connections', 'Voice', 'Memory & Knowledge'];
+// No Memory & Knowledge tab: semantic memory is MemPalace, which cannot run
+// on this machine, and the knowledge graph has no corpus to hold.
+const NAV_SECTIONS: Section[] = ['General', 'Prerequisites', 'Agents & Models', 'Connections', 'Voice'];
 /** i18n key for each nav section's label — the Section values themselves stay
  *  as stable identifiers (tab state, deep links). */
 const NAV_SECTION_KEYS: Record<Section, string> = {
@@ -179,8 +181,7 @@ const NAV_SECTION_KEYS: Record<Section, string> = {
   'Prerequisites': 'settings.nav.prerequisites',
   'Agents & Models': 'settings.nav.agentsModels',
   'Connections': 'settings.nav.connections',
-  'Voice': 'settings.nav.voice',
-  'Memory & Knowledge': 'settings.nav.memoryKnowledge'
+  'Voice': 'settings.nav.voice'
 };
 
 export function SettingsModal({ config, onClose, initialSection }: SettingsModalProps) {
@@ -283,13 +284,6 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
     const n = maxTurnsVal.trim() === '' ? undefined : Number(maxTurnsVal);
     return { maxTurns: Number.isFinite(n as number) && (n as number) > 0 ? Math.round(n as number) : undefined } as Partial<HarnessConfig>;
   };
-  const [semMemOn, setSemMemOn] = useState<boolean>(cfgX.semanticMemory !== false);
-  const toggleSemMem = async () => {
-    const next = !semMemOn;
-    setSemMemOn(next);
-    stage({ semanticMemory: next } as Partial<HarnessConfig>);
-  };
-
   // --- circuit-breaker config (Lane A #6 canonical fields, widened view) ---
   // Drives Jim's real breaker: floor-wide TOKEN budget (costCapTokens) + output-
   // token velocity ceiling (circuitBreaker.tokenVelocityPerMin). The token cap
@@ -409,40 +403,6 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
   const [orgBusy, setOrgBusy] = useState(false);
   const [orgNote, setOrgNote] = useState('');
 
-  // ─── Knowledge Graph (enterprise multimodal context for agents) ───────────
-  const [kgEnabled, setKgEnabled] = useState<boolean>(
-    (config as HarnessConfig & { knowledgeGraph?: { enabled?: boolean } }).knowledgeGraph?.enabled === true
-  );
-  const [kgDocCount, setKgDocCount] = useState(0);
-  const [kgBusy, setKgBusy] = useState(false);
-  const [kgNote, setKgNote] = useState('');
-
-  const refreshKgStatus = async () => {
-    try { const s = await window.cth.kgStatus(); setKgDocCount(s.docCount); }
-    catch { /* status unavailable */ }
-  };
-
-  const toggleKg = async () => {
-    const next = !kgEnabled;
-    setKgEnabled(next);
-    try {
-      stage({ knowledgeGraph: { enabled: next } });
-      if (next) await refreshKgStatus();
-    } catch { setKgEnabled(!next); }
-  };
-
-  const addKgFiles = async () => {
-    setKgBusy(true); setKgNote('');
-    try {
-      const res = await window.cth.kgAddFiles();
-      if (!res.ok) { setKgNote(res.error === 'cancelled' ? '' : (res.error ?? 'failed')); return; }
-      const added = res.results.filter((r) => r.ok).length;
-      const failed = res.results.length - added;
-      setKgNote(`added ${added} document${added === 1 ? '' : 's'}${failed ? `, ${failed} failed` : ''}`);
-      await refreshKgStatus();
-    } catch (e) { setKgNote(e instanceof Error ? e.message : String(e)); }
-    finally { setKgBusy(false); }
-  };
 
   // ─── Scheduled auto-compact — the compact-maintenance mission's enabled flag.
   // The mission itself stays the single source of truth (the Triggers tab edits
@@ -504,12 +464,8 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
       setSlackChannel(cc.slackChannelId ?? '');
       setSlackPort(String(cc.slackPort ?? 3847));
       setSlackProactivePosting(cc.slackProactivePosting ?? false);
-      const kgOn = (cc as { knowledgeGraph?: { enabled?: boolean } }).knowledgeGraph?.enabled === true;
-      setKgEnabled(kgOn);
       setIdleDisconnectMs((c as HarnessConfig).realtimeIdleDisconnectMs ?? 60_000);
     }).catch(() => { /* keep prop-seeded values */ });
-    window.cth.kgStatus().then((s) => { if (alive) setKgDocCount(s.docCount); })
-      .catch(() => { /* status unavailable */ });
     // Hydrate live connection state + the persisted Request URL: the
     // tunnel URL lives in main, so reopening Settings while connected re-shows it.
     window.cth.slackStatus().then((s) => {
@@ -1123,67 +1079,6 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                       {/* No Advanced/max-turns box: a cap that stops an agent
                           mid-task is a worse failure than a long run, and the
                           token budget and the breaker already bound spend. */}
-                    </>
-                  )}
-
-                  {/* MEMORY & KNOWLEDGE */}
-                  {activeSection === 'Memory & Knowledge' && (
-                    <>
-                      <div>
-                        <div style={sectionHead}>
-                          {t('settings.memory.semanticMemory')}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>{t('settings.memory.crossSession')}</span>
-                            <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
-                              {t('settings.memory.crossSessionDesc')}
-                            </span>
-                          </div>
-                          <PixelButton variant={semMemOn ? 'primary' : 'secondary'} size="sm" onClick={toggleSemMem}>
-                            {semMemOn ? t('common.on') : t('common.off')}
-                          </PixelButton>
-                        </div>
-                      </div>
-
-                      <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
-
-                      {/* Knowledge Graph — enterprise multimodal context for agents */}
-                      <div>
-                        <div style={sectionHead}>
-                          {t('settings.memory.kg')}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
-                              {t('settings.memory.kgTitle')}
-                            </span>
-                            <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
-                              {t('settings.memory.kgDesc')}
-                            </span>
-                          </div>
-                          <PixelButton
-                            variant={kgEnabled ? 'primary' : 'secondary'}
-                            size="sm"
-                            onClick={toggleKg}
-                          >
-                            {kgEnabled ? t('common.on') : t('common.off')}
-                          </PixelButton>
-                        </div>
-                        {kgEnabled && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
-                            <PixelButton variant="secondary" size="sm" onClick={addKgFiles} disabled={kgBusy}>
-                              {kgBusy ? t('settings.memory.adding') : t('settings.memory.addFiles')}
-                            </PixelButton>
-                            <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
-                              {kgDocCount === 1
-                                ? t('settings.memory.docCount', { count: kgDocCount })
-                                : t('settings.memory.docCountPlural', { count: kgDocCount })}
-                            </span>
-                            {kgNote && <span style={{ fontSize: 12, color: 'var(--cth-mint)' }}>{kgNote}</span>}
-                          </div>
-                        )}
-                      </div>
                     </>
                   )}
 
