@@ -286,7 +286,7 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
   // twice over (Esc, and the terminal toolbar's own fullscreen toggle).
   return (
     <div style={{
-      position: 'fixed', inset: 0,
+      position: 'fixed', top: 'var(--cth-titlebar-h)', left: 0, right: 0, bottom: 0,
       background: 'var(--cth-cream-100)',
       zIndex: 250,
       display: 'flex',

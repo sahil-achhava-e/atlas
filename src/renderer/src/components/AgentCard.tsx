@@ -106,7 +106,7 @@ export function AgentCard({
   // missing) has somewhere to sit rather than pushing the row apart.
   const width = CARD_WIDTH;
   const height = CARD_HEIGHT;
-  const lift = (isGod ? -2 : 0) - (hover ? 1 : 0) - (selected ? 1 : 0);
+  const lift = isGod ? -2 : 0;
   /** God's distinction: a tinted surface plus a thin accent border all the way
    *  around — NOT the 3px rule that used to sit on the top edge alone. That rule
    *  read as a stray yellow bar rather than as part of the card, and an edge

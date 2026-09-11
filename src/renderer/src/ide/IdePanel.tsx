@@ -355,10 +355,9 @@ export function IdePanel() {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 290,
+      position: 'fixed', top: 'var(--cth-titlebar-h)', left: 0, right: 0, bottom: 0, zIndex: 290,
       background: 'var(--cth-cream-100)',
-      display: 'flex', flexDirection: 'column',
-      paddingTop: 36
+      display: 'flex', flexDirection: 'column'
     }}>
       {/* Title bar */}
       <div

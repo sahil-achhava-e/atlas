@@ -1,8 +1,8 @@
 /* Design tokens — mirrors tokens.ts. Update both together. */
 :root {
   /* Base */
-  --cth-cream-50: #F6F7F9;
-  --cth-cream-100: #EEF0F4;
+  --cth-cream-50: #FFFFFF;
+  --cth-cream-100: #F5F6F8;
   --cth-cream-200: #E2E6EC;
   --cth-cream-300: #D3D9E2;
   --cth-paper-100: #FFFFFF;
@@ -10,9 +10,9 @@
 
   /* App ground (global.css) — the wash behind everything, plus the bloom that
      marks where the content sits. */
-  --cth-ground-centre: #FBFCFD;
-  --cth-ground-edge: #EAEDF2;
-  --cth-ground-bloom: rgba(91, 61, 245, 0.06);
+  --cth-ground-centre: #FFFFFF;
+  --cth-ground-edge: #FFFFFF;
+  --cth-ground-bloom: rgba(91, 61, 245, 0.00);
 
   /* Ink */
   --cth-ink-900: #111418;
@@ -75,6 +75,11 @@
   /* A primary button carries its own colour into its shadow. */
   --cth-shadow-btn: 0 4px 12px rgba(91, 61, 245, 0.28);
   --cth-shadow-btn-hover: 0 6px 16px rgba(91, 61, 245, 0.38);
+
+  /* The title bar is persistent chrome: every full-screen surface starts below
+     it rather than covering it, so the height has to be one value that all of
+     them read. */
+  --cth-titlebar-h: 48px;
 
   /* Spacing */
   --cth-space-0: 0px;

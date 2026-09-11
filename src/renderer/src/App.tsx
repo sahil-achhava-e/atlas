@@ -26,6 +26,8 @@ import { Icon } from '@/components/Icon';
 import { SidebarSplitter } from '@/components/SidebarSplitter';
 import { acquireTerminal, notifyThemeChangeAll } from '@/components/terminalPool';
 import { FullscreenTerminal } from '@/components/FullscreenTerminal';
+import { AtlasMark } from '@/components/AtlasMark';
+import { MoonIcon, SunIcon, GearIcon, ExpandIcon, CollapseIcon } from '@/components/ChromeIcons';
 import { TaskDetailOverlay } from '@/components/TaskDetailOverlay';
 import { IdePanel } from '@/ide/IdePanel';
 import { go, parseRoute, type Route } from '@/routes';
@@ -59,6 +61,18 @@ export function App() {
   const sidebarTab = useStore(s => s.sidebarTab);
 
   const [config, setConfig] = useState<HarnessConfig | null>(null);
+  /** Live floor counts for the title bar. Derived rather than stored: the
+   *  statuses already live on each agent, and a second copy would drift. */
+  const fleet = useStore((st) => {
+    let working = 0, blocked = 0, idle = 0;
+    for (const a of st.agents) {
+      if (a.archived) continue;
+      if (a.status === 'blocked' || a.status === 'waiting') blocked++;
+      else if (a.status === 'idle' || a.status === 'ghost') idle++;
+      else working++;
+    }
+    return { working, blocked, idle };
+  });
   // Whether the user has passed the launch-time hive picker this session. Starts
   // true (skip the picker) right after a hive SWITCH — changeHome relaunches and
   // leaves a one-shot localStorage flag so we don't bounce back onto the picker for
@@ -350,33 +364,108 @@ export function App() {
       <div
         className="cth-titlebar-drag"
         style={{
-          height: 36, minHeight: 36,
-          background: 'var(--cth-cream-100)',
-          borderBottom: '1px solid var(--cth-ink-100)',
+          height: 'var(--cth-titlebar-h)', minHeight: 'var(--cth-titlebar-h)',
+          // Above the fullscreen terminal (250) and the IDE (290): the header is
+          // the one thing that never goes away, so it cannot be something an
+          // overlay paints over.
+          position: 'relative', zIndex: 400,
+          background: 'var(--cth-paper-100)',
+          borderBottom: 'none',
           display: 'flex',
           alignItems: 'center',
           paddingLeft: 96,
-          paddingRight: 12,
-          gap: 12,
+          paddingRight: 14,
+          gap: 8,
           userSelect: 'none'
         }}
       >
+        {/* The signature: the bar's bottom edge is a 2px gradient that starts in
+            the brand colour under the mark and fades into an ordinary hairline
+            across the window. One deliberate graphic gesture; everything else in
+            the bar stays quiet and white. */}
+        <span
+          aria-hidden="true"
+          style={{
+            position: 'absolute', left: 0, right: 0, bottom: 0, height: 2,
+            background: 'linear-gradient(90deg, var(--cth-lilac) 0%, color-mix(in srgb, var(--cth-lilac) 40%, transparent) 26%, var(--cth-ink-100) 58%, var(--cth-ink-100) 100%)'
+          }}
+        />
         {/* The wordmark, and nothing else. This bar held a pixel portrait, a
             version chip and a running commentary on auto mode — three things
             competing for the calmest strip in the app, none of them something
             you act on. Updates live in Settings, and auto mode is a switch in
             the agent's own header, where it can actually be flipped. */}
-        <span style={{
-          fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-          fontSize: 'var(--cth-text-display-sm)',
-          lineHeight: 'var(--cth-lh-display-sm)',
-          color: 'var(--cth-ink-700)',
-          userSelect: 'none'
-        }}>ATLAS</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, userSelect: 'none' }}>
+          {/* The mark carries its own tile, gradient and shadow. Wrapping it in a
+              coloured square was two competing shapes doing one job. */}
+          <span style={{
+            display: 'inline-flex', flexShrink: 0,
+            borderRadius: 'var(--cth-radius-btn)',
+            boxShadow: '0 2px 8px color-mix(in srgb, var(--cth-lilac) 34%, transparent)'
+          }}>
+            <AtlasMark size={30} />
+          </span>
+          {/* Sentence case, 17px, tight tracking. ATLAS in caps at 14px was a
+              label; a wordmark should look like a name. */}
+          <span style={{
+            fontFamily: 'var(--cth-font-ui)', fontWeight: 700,
+            fontSize: 17, lineHeight: '20px', letterSpacing: '-0.5px',
+            color: 'var(--cth-ink-900)'
+          }}>Atlas</span>
+
+          {/* Which floor you are standing on. It was only ever visible inside the
+              agent panel, which is the one place you already know the answer. */}
+          {config.harnessHome && (
+            <span
+              className="cth-tip"
+              data-tip={config.harnessHome}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                marginInlineStart: 4, padding: '4px 10px',
+                borderRadius: 'var(--cth-radius-pill)',
+                background: 'var(--cth-cream-100)',
+                fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 500,
+                color: 'var(--cth-ink-700)', maxWidth: 240,
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3 7.2a2 2 0 012-2h3.9l1.8 2.1H19a2 2 0 012 2v8.5a2 2 0 01-2 2H5a2 2 0 01-2-2V7.2z"
+                  stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              </svg>
+              {config.harnessHome.split('/').filter(Boolean).pop()}
+            </span>
+          )}
+        </span>
 
         {/* v0.3.4: theme + fullscreen live HERE (top right), not buried in the
             terminal header — and the theme darkens the whole app, terminals
             included (design/theme.ts + tokens.css dark block). */}
+        {/* The floor, in one line, always on screen. The counts existed only
+            inside the panel's own tabs, so the question "is anything waiting on
+            me" needed a click to answer. */}
+        <span style={{
+          marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 14,
+          fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-500)'
+        }}>
+          {[
+            { n: fleet.working, c: 'var(--cth-status-working)', label: 'working' },
+            { n: fleet.blocked, c: 'var(--cth-status-blocked)', label: 'need you' },
+            { n: fleet.idle, c: 'var(--cth-status-idle)', label: 'idle' }
+          ].filter((x) => x.n > 0).map((x) => (
+            <span key={x.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: x.c }} />
+              <span style={{ color: 'var(--cth-ink-700)', fontWeight: 600 }}>{x.n}</span>
+              {x.label}
+            </span>
+          ))}
+        </span>
+
+        <span style={{
+          width: 1, height: 20, flexShrink: 0, marginInline: 4,
+          background: 'var(--cth-ink-100)'
+        }} />
+
         <button
           className="cth-titlebar-nodrag cth-tip"
           onClick={() => {
@@ -397,16 +486,16 @@ export function App() {
           data-tip={appThemeNow === 'dark' ? 'Light theme' : 'Dark theme'}
           aria-label="Toggle dark mode"
           style={{
-            marginLeft: 'auto',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 28, height: 28, padding: 0,
-            background: 'var(--cth-paper-100)',
-            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
-            border: 'none', borderRadius: 2, cursor: 'pointer',
-            color: 'var(--cth-ink-900)', fontSize: 13, lineHeight: 1
+            width: 32, height: 32, padding: 0,
+            background: 'transparent',
+            boxShadow: 'none',
+            border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
+            transition: 'background 120ms ease, color 120ms ease',
+            color: 'var(--cth-ink-500)'
           }}
         >
-          {appThemeNow === 'dark' ? '☀' : '☾'}
+          {appThemeNow === 'dark' ? <SunIcon /> : <MoonIcon />}
         </button>
         {/* v0.3.4: the IDE button moved to agent level — every agent's header
             (sidebar detail, god Command Center, fullscreen) carries it. */}
@@ -417,14 +506,15 @@ export function App() {
           aria-label="Settings"
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 28, height: 28, padding: 0,
-            background: 'var(--cth-paper-100)',
-            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
-            border: 'none', borderRadius: 2, cursor: 'pointer',
-            color: 'var(--cth-ink-900)'
+            width: 32, height: 32, padding: 0,
+            background: 'transparent',
+            boxShadow: 'none',
+            border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
+            transition: 'background 120ms ease, color 120ms ease',
+            color: 'var(--cth-ink-500)'
           }}
         >
-          <GearGlyph />
+          <GearIcon />
         </button>
         {/* Fullscreen. The title bar is chrome, not canvas, so these two use
             clean stroke icons rather than the 16x16 pixel set the rest of the UI
@@ -444,14 +534,15 @@ export function App() {
           aria-label="Toggle focus mode"
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 28, height: 28, padding: 0,
-            background: 'var(--cth-paper-100)',
-            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
-            border: 'none', borderRadius: 2, cursor: 'pointer',
+            width: 32, height: 32, padding: 0,
+            background: 'transparent',
+            boxShadow: 'none',
+            border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
+            transition: 'background 120ms ease, color 120ms ease',
             color: 'var(--cth-ink-900)'
           }}
         >
-          {fullscreenAgentId ? <CollapseGlyph /> : <ExpandGlyph />}
+          {fullscreenAgentId ? <CollapseIcon /> : <ExpandIcon />}
         </button>
 
       </div>
@@ -598,37 +689,11 @@ function Glyph({ children }: { children: React.ReactNode }) {
 }
 
 /** Four outward corner brackets — enter fullscreen. */
-function ExpandGlyph() {
-  return (
-    <Glyph>
-      <path d="M6.2 3H3v3.2M9.8 3H13v3.2M6.2 13H3V9.8M9.8 13H13V9.8" />
-    </Glyph>
-  );
-}
 
 /** The same brackets turned inward — leave fullscreen. */
-function CollapseGlyph() {
-  return (
-    <Glyph>
-      <path d="M3 6.2h3.2V3M13 6.2H9.8V3M3 9.8h3.2V13M13 9.8H9.8V13" />
-    </Glyph>
-  );
-}
 
 /** A wrench. The previous glyph was a hub with eight radiating spokes, which at
  *  18px is indistinguishable from a sun — sitting immediately beside a theme
  *  toggle whose light-mode icon IS a sun. A tool shape carries "settings"
  *  without competing with its neighbour. Drawn on a 24 box for curve headroom
  *  and rendered at 16. */
-function GearGlyph() {
-  return (
-    <svg
-      width="16" height="16" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={2}
-      strokeLinecap="round" strokeLinejoin="round"
-      aria-hidden="true" focusable="false"
-    >
-      <path d="M15.5 3.5a5 5 0 0 0-6.1 6.1l-5.6 5.6a2.3 2.3 0 1 0 3.2 3.2l5.6-5.6a5 5 0 0 0 6.1-6.1l-3 3-2.2-.6-.6-2.2z" />
-    </svg>
-  );
-}

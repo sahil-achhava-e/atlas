@@ -75,7 +75,7 @@ export function PixelButton({
         };
       case 'destructive':
         return {
-          fill:    disabled ? 'var(--cth-cream-300)' : (hover ? 'var(--cth-coral-light)' : 'var(--cth-coral)'),
+          fill:    disabled ? 'var(--cth-cream-300)' : (hover ? 'color-mix(in srgb, var(--cth-coral) 86%, #000)' : 'var(--cth-coral)'),
           text:    disabled ? disabledText : 'var(--cth-ink-900)',
           border:  'var(--cth-ink-500)',
           shadow:  'var(--cth-ink-300)'

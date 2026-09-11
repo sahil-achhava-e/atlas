@@ -400,14 +400,13 @@ function AddAgentTile({ label, onClick }: { label: string; onClick: () => void }
         boxSizing: 'border-box', padding: 0, cursor: 'pointer',
         background: hover ? 'var(--cth-cream-100)' : 'transparent',
         border: `1px dashed var(--cth-ink-${hover ? '500' : '300'})`,
-        transform: hover ? 'translateY(-1px)' : 'none',
         transition: 'transform 90ms steps(2, end), background 90ms linear, border-color 90ms linear'
       }}
     >
       <span style={{
         width: 24, height: 24, flexShrink: 0,
         display: 'grid', placeItems: 'center',
-        background: hover ? 'var(--cth-lilac)' : 'var(--cth-paper-100)',
+        background: hover ? 'var(--cth-lilac-light)' : 'var(--cth-paper-100)',
         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
         color: hover ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)'
       }}>

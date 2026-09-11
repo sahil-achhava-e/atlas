@@ -200,15 +200,18 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
 
 /* Settings (gear) button in the title bar — a clear bordered chip with a
    neo-brutalist hover (lemon fill + offset shadow) so it reads as a button. */
-.cth-settings-btn { transition: background 80ms steps(2), box-shadow 80ms steps(2), transform 80ms steps(2); }
-.cth-settings-btn:hover {
-  background: var(--cth-lemon) !important;
-  box-shadow: inset 0 0 0 1px var(--cth-ink-300), 2px 2px 0 0 var(--cth-ink-900) !important;
-  transform: translate(-1px, -1px);
+/* Title-bar controls: ghost buttons that only show their shape on hover. The
+   settings one used to fill with lemon and jump 1px on a neo-brutalist offset
+   shadow, which made the calmest strip in the app the most animated thing in
+   it. */
+.cth-titlebar-nodrag:hover {
+  background: var(--cth-cream-100) !important;
+  color: var(--cth-ink-900) !important;
 }
-.cth-settings-btn:active {
-  transform: translate(0, 0);
-  box-shadow: inset 0 0 0 1px var(--cth-ink-300) !important;
+.cth-titlebar-nodrag:active { background: var(--cth-cream-200) !important; }
+.cth-titlebar-nodrag:focus-visible {
+  outline: 2px solid var(--cth-lilac);
+  outline-offset: 1px;
 }
 
 /* Keyframes — pixel-style: step-based, no easing */
@@ -409,3 +412,40 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
 .cth-md-card hr { margin: 0.8em 0; }
 .cth-md-card table { margin: 0.5em 0; }
 .cth-md-card th, .cth-md-card td { padding: 3px 7px; font-size: 0.9em; }
+
+/* ─── Interaction, one rule for the whole app ───────────────────────────────
+   Hover used to mean something different on every control: a button inverted
+   its fill, a card lifted 1px, the add-agent tile jumped and flooded with the
+   brand colour, the settings gear turned lemon and moved diagonally. Pointing
+   at something should acknowledge you, not rearrange the page.
+
+   So: no transforms on hover anywhere, one transition curve, and a pointer
+   cursor on everything that responds to a click. */
+button:not(:disabled), [role="button"]:not([aria-disabled="true"]), [role="switch"],
+label:has(input:not(:disabled)), select:not(:disabled), summary {
+  cursor: pointer;
+}
+button:disabled, [aria-disabled="true"] { cursor: not-allowed; }
+
+button, [role="button"], [role="switch"], .cth-choice, .cth-tabbar button {
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+/* A hover must never move what it is hovering. Anything that still wants to
+   animate position has to say so deliberately with its own class. */
+button:hover, [role="button"]:hover, [role="switch"]:hover,
+.cth-choice:hover, .cth-tabbar button:hover {
+  transform: none;
+}
+
+/* Keyboard users get the same affordance, and it is the brand colour so it
+   reads as "this app", not as the browser's default blue. */
+button:focus-visible, [role="button"]:focus-visible, [role="switch"]:focus-visible,
+a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--cth-lilac);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
+}
