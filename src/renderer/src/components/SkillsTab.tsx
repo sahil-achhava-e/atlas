@@ -14,6 +14,46 @@ import { PixelButton } from './PixelButton';
 import type { LocalSkill } from '../../../preload';
 
 
+/** A switch, not a checkbox: it flips a thing that is already running rather
+ *  than ticking a box in a form nobody submits. Square knob, no radius — the
+ *  rest of the app has no rounded corners. role/aria make it a real switch for
+ *  the keyboard and for a screen reader. */
+function SkillSwitch({ on, label, onText, offText, onChange }: {
+  on: boolean; label: string; onText: string; offText: string;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <button
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      title={on ? onText : offText}
+      onClick={() => onChange(!on)}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        padding: 0, border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0
+      }}
+    >
+      <span style={{
+        position: 'relative', width: 26, height: 14, flexShrink: 0,
+        background: on ? 'var(--cth-mint)' : 'var(--cth-cream-200)',
+        boxShadow: `inset 0 0 0 1px var(--cth-ink-${on ? '400' : '300'})`,
+        transition: 'background 120ms steps(2)'
+      }}>
+        <span style={{
+          position: 'absolute', top: 2, left: on ? 14 : 2, width: 10, height: 10,
+          background: on ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
+          transition: 'left 120ms steps(3)'
+        }} />
+      </span>
+      <span style={{
+        fontFamily: 'var(--cth-font-ui)', fontSize: 11,
+        color: on ? 'var(--cth-ink-800)' : 'var(--cth-ink-500)'
+      }}>{on ? onText : offText}</span>
+    </button>
+  );
+}
+
 const PROVIDER_LABEL: Record<LocalSkill['provider'], string> = {
   claude: 'Claude Code',
   opencode: 'OpenCode',
@@ -68,6 +108,10 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
    *  into its folder, and every scope is denied in the spawned settings. */
   const [disabled, setDisabled] = useState<string[]>([]);
 
+  /** Two panes, because they answer different questions: what did WE add here,
+   *  and what shipped in the app. Both switch on and off the same way. */
+  const [pane, setPane] = useState<'yours' | 'bundled'>('yours');
+
   const loadLocal = useCallback(async () => {
     try { setLocal(await window.cth.skillsLocal(agentCwd)); } catch { setLocal([]); }
     try { setDisabled(await window.cth.skillsDisabled()); } catch { /* off list unknown → treat all as on */ }
@@ -84,18 +128,19 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
   useEffect(() => { void loadLocal(); }, [loadLocal]);
   const q = query.trim().toLowerCase();
 
-  /** Skills that came with Atlas are not yours to manage — you cannot uninstall
-   *  them from here and nothing about them changes. Listing them buried the two
-   *  or three you actually added. The count below still names them, because a
-   *  tab that silently omits live skills is lying about what agents can do. */
-  const bundledCount = (local ?? []).filter((s) => s.scope === 'bundled').length;
+  const counts = useMemo(() => {
+    const all = local ?? [];
+    const bundled = all.filter((s) => s.scope === 'bundled').length;
+    return { bundled, yours: all.length - bundled };
+  }, [local]);
 
   const shownLocal = useMemo(() => {
-    const list = (local ?? []).filter((s) => s.scope !== 'bundled');
+    const want = pane === 'bundled';
+    const list = (local ?? []).filter((s) => (s.scope === 'bundled') === want);
     if (!q) return list;
     return list.filter((s) =>
       s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q));
-  }, [local, q]);
+  }, [local, q, pane]);
 
   const uninstall = async (sk: LocalSkill) => {
     setConfirming(null);
@@ -129,20 +174,25 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
         flexShrink: 0, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap',
         padding: 10, borderBottom: '1px solid var(--cth-ink-300)'
       }}>
-        <span style={{
-          fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '13px',
-          color: 'var(--cth-ink-700)', textTransform: 'uppercase'
-        }}>
-          {t('skillsTab.installed')}{local ? ` (${local.length - bundledCount})` : ''}
-        </span>
-        {bundledCount > 0 && (
-          <span style={{
-            fontFamily: 'var(--cth-font-ui)', fontSize: 11,
-            color: 'var(--cth-ink-600)', flexShrink: 0
-          }}>
-            {t('skillsTab.plusBundled', { count: bundledCount })}
-          </span>
-        )}
+        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+          {(['yours', 'bundled'] as const).map((k) => (
+            <button
+              key={k}
+              onClick={() => setPane(k)}
+              style={{
+                padding: '4px 10px 3px', border: 'none', cursor: 'pointer',
+                fontFamily: 'var(--cth-font-display)', fontSize: 9,
+                textTransform: 'uppercase', letterSpacing: '.4px',
+                color: pane === k ? 'var(--cth-ink-900)' : 'var(--cth-ink-600)',
+                background: pane === k ? 'var(--cth-cream-100)' : 'transparent',
+                boxShadow: pane === k ? 'inset 0 -2px 0 var(--cth-mint)' : 'none'
+              }}
+            >
+              {t(k === 'yours' ? 'skillsTab.paneYours' : 'skillsTab.paneBundled')}
+              {local ? ` (${k === 'yours' ? counts.yours : counts.bundled})` : ''}
+            </button>
+          ))}
+        </div>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -157,9 +207,11 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
         <PixelButton variant="ghost" size="sm" onClick={() => void loadLocal()} disabled={busy}>
           {busy ? t('skillsTab.loading') : t('skillsTab.refresh')}
         </PixelButton>
-        <PixelButton variant="secondary" size="sm" onClick={() => void addSkill()} disabled={adding}>
-          {adding ? t('skillsTab.adding') : t('skillsTab.addSkill')}
-        </PixelButton>
+        {pane === 'yours' && (
+          <PixelButton variant="secondary" size="sm" onClick={() => void addSkill()} disabled={adding}>
+            {adding ? t('skillsTab.adding') : t('skillsTab.addSkill')}
+          </PixelButton>
+        )}
       </div>
 
       {addNote && (
@@ -175,8 +227,8 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
         {local === null ? <Muted>{t('skillsTab.scanning')}</Muted>
           : shownLocal.length === 0 ? (
             <Muted>
-              {local.length - bundledCount === 0
-                ? t('skillsTab.noSkillsInstalled')
+              {(pane === 'yours' ? counts.yours : counts.bundled) === 0
+                ? t(pane === 'yours' ? 'skillsTab.noSkillsInstalled' : 'skillsTab.noneBundled')
                 : t('skillsTab.nothingMatches')}
             </Muted>
           ) : (
@@ -192,19 +244,13 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
                     </span>
                     <Chip text={PROVIDER_LABEL[s.provider]} />
                     <Chip text={s.scope} tone={s.scope === 'project' ? 'accent' : 'quiet'} />
-                    <label style={{
-                      display: 'flex', gap: 5, alignItems: 'center', cursor: 'pointer',
-                      fontFamily: 'var(--cth-font-ui)', fontSize: 11,
-                      color: disabled.includes(s.name) ? 'var(--cth-ink-500)' : 'var(--cth-ink-800)'
-                    }}>
-                      <input
-                        type="checkbox"
-                        checked={!disabled.includes(s.name)}
-                        onChange={(e) => void toggle(s, e.target.checked)}
-                        style={{ accentColor: 'var(--cth-mint)', cursor: 'pointer', margin: 0 }}
-                      />
-                      {disabled.includes(s.name) ? t('skillsTab.off') : t('skillsTab.on')}
-                    </label>
+                    <SkillSwitch
+                      on={!disabled.includes(s.name)}
+                      label={s.name}
+                      onText={t('skillsTab.on')}
+                      offText={t('skillsTab.off')}
+                      onChange={(next) => void toggle(s, next)}
+                    />
                   </div>
                   {s.description && (
                     <div style={{ fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: 1.45 }}>

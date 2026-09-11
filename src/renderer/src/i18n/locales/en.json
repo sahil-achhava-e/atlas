@@ -1244,10 +1244,13 @@
     "removeFailed": "could not remove it",
     "uninstallFailed": "uninstall failed",
     "catalogUnreachable": "could not reach the catalog",
-    "plusBundled": "+ {{count}} bundled with Atlas",
     "on": "on",
     "off": "off",
-    "offNote": "Off skills are not loaded by any agent."
+    "offNote": "Off skills are not loaded by any agent.",
+    "paneYours": "Yours",
+    "paneBundled": "In Atlas",
+    "noneBundled": "This build ships no skills of its own.",
+    "bundledNote": "Ships with Atlas, so everyone who installs it has these. Switch one off and no agent loads it."
   },
   "workersTab": {
     "stopping": "stopping",
