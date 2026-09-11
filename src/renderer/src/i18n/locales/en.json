@@ -428,7 +428,7 @@
     "dispatchSuggestion": "(The human suggests {{name}} ({{id}}) for this: your call as orchestrator.)",
     "taskFromHuman": "Task from the human",
     "agents": "Agents",
-    "godTag": "god",
+    "godTag": "boss",
     "toolCalls": "{{count}} tool calls",
     "rate": "rate",
     "budget": "budget",

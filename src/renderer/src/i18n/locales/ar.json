@@ -415,7 +415,7 @@
     "dispatchSuggestion": "(يقترح المستخدم {{name}} ({{id}}) لهذه المهمة. والقرار لك كمنسّق.)",
     "taskFromHuman": "مهمة من المستخدم",
     "agents": "الوكلاء",
-    "godTag": "القائد",
+    "godTag": "المدير",
     "toolCalls": "{{count}} استدعاء أداة",
     "rate": "المعدّل",
     "budget": "الميزانية",
