@@ -1327,8 +1327,11 @@
     "viewList": "قائمة",
     "viewBoard": "لوحة",
     "emptyColumn": "لا شيء هنا",
-    "priorityHigh": "عالية",
-    "priorityLow": "منخفضة"
+    "priority_urgent": "عاجلة",
+    "priority_high": "عالية",
+    "priority_normal": "عادية",
+    "priority_low": "منخفضة",
+    "priority_lowest": "الأدنى"
   },
   "queueComposer": {
     "recording": "● يسجّل. انقر إيقاف للتفريغ النصي",

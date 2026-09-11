@@ -1403,8 +1403,11 @@
     "viewList": "List",
     "viewBoard": "Board",
     "emptyColumn": "Nothing here",
-    "priorityHigh": "High",
-    "priorityLow": "Low"
+    "priority_urgent": "Urgent",
+    "priority_high": "High",
+    "priority_normal": "Normal",
+    "priority_low": "Low",
+    "priority_lowest": "Lowest"
   },
   "terminal": {
     "live": "live"

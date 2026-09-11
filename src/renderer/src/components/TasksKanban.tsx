@@ -815,25 +815,31 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
 
 function PriorityDots({ level }: { level: number }) {
   const { t } = useTranslation();
-  if (level === 3) return null;
-  const high = level >= 4;
-  const tone = high ? 'var(--cth-coral)' : 'var(--cth-ink-500)';
+  // Five levels, each with its own name and its own colour, because "P4" and a
+  // row of bars both need a key card. The tint is the colour at low alpha so a
+  // board full of these reads as a board, not as a traffic light.
+  const band = level >= 5
+    ? { key: 'urgent', tone: 'var(--cth-coral)' }
+    : level === 4
+      ? { key: 'high', tone: 'var(--cth-lemon)' }
+      : level === 3
+        ? { key: 'normal', tone: 'var(--cth-ink-500)' }
+        : level === 2
+          ? { key: 'low', tone: 'var(--cth-sky)' }
+          : { key: 'lowest', tone: 'var(--cth-ink-300)' };
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
       padding: '2px 9px', borderRadius: 'var(--cth-radius-pill)',
-      background: high
-        ? 'color-mix(in srgb, var(--cth-coral) 13%, transparent)'
-        : 'var(--cth-cream-100)',
-      color: tone,
+      background: `color-mix(in srgb, ${band.tone} 14%, transparent)`,
+      color: band.tone,
       fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 600
     }}>
-      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"
-        style={{ transform: high ? 'none' : 'rotate(180deg)' }}>
-        <path d="M8 12.6V3.4M4.4 7l3.6-3.6L11.6 7" stroke="currentColor" strokeWidth="1.7"
-          strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      {high ? t('kanban.priorityHigh') : t('kanban.priorityLow')}
+      <span style={{
+        width: 6, height: 6, borderRadius: 'var(--cth-radius-pill)',
+        background: band.tone, flexShrink: 0
+      }} />
+      {t(`kanban.priority_${band.key}`)}
     </span>
   );
 }
