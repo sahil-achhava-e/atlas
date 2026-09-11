@@ -96,7 +96,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0,
-        background: 'rgba(26, 19, 32, 0.6)',
+        background: 'rgba(17, 20, 26, 0.5)', backdropFilter: 'blur(3px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 500
       }}
@@ -105,7 +105,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
           one job — describe an agent — and a tall narrow dialog next to a wide
           one reads as two unrelated screens. */}
       <div onClick={(e) => e.stopPropagation()} style={{ width: 940, maxWidth: '95vw' }}>
-        <PixelPanel variant="dialog" title="EDIT AGENT" style={{ padding: 16 }} noPadding>
+        <PixelPanel variant="dialog" title="Edit agent" style={{ padding: 16 }} noPadding>
           <div style={{
             display: 'flex', flexDirection: 'column', gap: 16,
             padding: 16, maxHeight: '86vh', overflowY: 'auto'
@@ -122,6 +122,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
             <Section label="Identity" hint="name · character · color">
               <Row label="Name">
                 <input
+                  className="cth-input"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Stanley"
@@ -131,9 +132,13 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               </Row>
 
               <Row label="Character">
-                <div style={{
+                {/* The faces live in their own trough: a bare scrolling list cut
+                    a row in half against the dialog's white and read as clipped. */}
+                <div className="cth-scrollpane" style={{
                   display: 'flex', gap: 8, flexWrap: 'wrap',
-                  maxHeight: 188, overflowY: 'auto', paddingRight: 4
+                  maxHeight: 196, overflowY: 'auto',
+                  padding: 8, background: 'var(--cth-cream-100)',
+                  borderRadius: 'var(--cth-radius-card)'
                 }}>
                   {/* The SAME thirty faces Add agent offers, plus Atlas — the two
                       panels used to draw from different libraries, so an agent
@@ -149,12 +154,14 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                         onClick={() => setCharacter(c.id)}
                         style={{
                           padding: 4,
-                          background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
+                          borderRadius: 'var(--cth-radius-btn)',
+                          background: active ? 'var(--cth-lilac-light)' : 'var(--cth-cream-100)',
                           boxShadow: active
-                            ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
+                            ? 'inset 0 0 0 2px var(--cth-lilac)'
                             : 'inset 0 0 0 1px var(--cth-ink-100)',
                           cursor: 'pointer', border: 'none', width: 52,
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                          transition: 'background 120ms ease, box-shadow 120ms ease'
                         }}
                       >
                         <div style={{
@@ -165,7 +172,8 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                           <SpritePortrait character={c.id} scale={1.5} />
                         </div>
                         <span style={{
-                          fontSize: 11, color: 'var(--cth-ink-700)',
+                          fontSize: 11, fontWeight: active ? 600 : 400,
+                          color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-600)',
                           maxWidth: 46, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                         }}>{c.name}</span>
                       </button>
@@ -186,11 +194,12 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                       style={{
                         width: 30, height: 30, padding: 0,
                         display: 'grid', placeItems: 'center',
+                        borderRadius: 'var(--cth-radius-btn)',
                         background: `var(--cth-${a})`,
                         // A halo in the swatch's OWN colour, not an ink ring:
                         // ink-900 flips to near-white in dark and vanished.
                         boxShadow: accent === a
-                          ? `0 0 0 2px var(--cth-cream-50), 0 0 0 4px var(--cth-${a})`
+                          ? `0 0 0 2px var(--cth-paper-100), 0 0 0 4px var(--cth-${a})`
                           : 'inset 0 0 0 1px var(--cth-ink-300)',
                         color: 'var(--cth-on-accent)',
                         fontSize: 14, lineHeight: 1,
@@ -202,9 +211,10 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                     style={{
                       width: 30, height: 30, display: 'grid', placeItems: 'center',
                       cursor: 'pointer', position: 'relative',
+                      borderRadius: 'var(--cth-radius-btn)',
                       background: accent.startsWith('#') ? accent : 'var(--cth-cream-200)',
                       boxShadow: accent.startsWith('#')
-                        ? `0 0 0 2px var(--cth-cream-50), 0 0 0 4px ${accent}`
+                        ? `0 0 0 2px var(--cth-paper-100), 0 0 0 4px ${accent}`
                         : 'inset 0 0 0 1px var(--cth-ink-300)',
                       color: accent.startsWith('#') ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)',
                       fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13
@@ -234,9 +244,9 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               <Row label="Provider">
                 <div style={{
                   display: 'inline-flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
-                  padding: '12px 12px',
+                  padding: '8px 12px',
                   background: 'var(--cth-cream-100)',
-                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
+                  borderRadius: 'var(--cth-radius-btn)'
                 }}>
                   <ProviderLogo provider={provider} size={16} />
                   <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)' }}>
@@ -264,13 +274,16 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                           type="button"
                           onClick={() => setModel(m.id)}
                           style={{
-                            padding: '10px 16px 5px',
-                            background: active ? `var(--cth-${accent}-light)` : 'var(--cth-cream-100)',
-                            boxShadow: active
-                              ? 'inset 0 0 0 1.5px var(--cth-ink-500)'
-                              : 'inset 0 0 0 1px var(--cth-ink-100)',
-                            fontFamily: 'var(--cth-font-ui)', fontSize: 13,
-                            color: 'var(--cth-ink-900)', cursor: 'pointer', border: 'none'
+                            height: 32, padding: '0 14px',
+                            display: 'inline-flex', alignItems: 'center',
+                            borderRadius: 'var(--cth-radius-btn)',
+                            background: active ? 'var(--cth-lilac-light)' : 'var(--cth-cream-100)',
+                            boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none',
+                            fontFamily: 'var(--cth-font-ui)', fontSize: 12.5,
+                            fontWeight: active ? 600 : 500,
+                            color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-700)',
+                            cursor: 'pointer', border: 'none',
+                            transition: 'background 120ms ease, color 120ms ease'
                           }}
                         >
                           {m.label}
@@ -281,7 +294,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                 </Row>
               )}
 
-              <span style={{ fontSize: 13, color: 'var(--cth-ink-500)', lineHeight: '16px' }}>
+              <span style={{ fontSize: 12.5, color: 'var(--cth-ink-500)', lineHeight: 1.45 }}>
                 Engine changes are saved for the next restart. Use Command Center → Floor to restart a live session onto a new provider/model now.
               </span>
             </Section>
@@ -291,6 +304,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
             <Section label="Briefing" hint="description · goal">
               <Row label="Description">
                 <input
+                  className="cth-input"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="what is this agent for"
@@ -300,6 +314,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
 
               <Row label="Goal (optional)">
                 <textarea
+                  className="cth-input"
                   value={goal}
                   onChange={(e) => setGoal(e.target.value)}
                   placeholder="long-running directive injected on every prompt"
@@ -317,11 +332,11 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'flex-end',
               marginTop: 6, paddingTop: 14, borderTop: '1px solid var(--cth-ink-100)'
             }}>
-              <span style={{ flex: 1, fontSize: 13, color: 'var(--cth-ink-500)' }}>
+              <span style={{ flex: 1, fontSize: 12.5, color: 'var(--cth-ink-500)', lineHeight: 1.45 }}>
                 Name, face and colour apply at once. Engine changes wait for the next restart.
               </span>
-              <PixelButton variant="ghost" size="md" onClick={onClose}>cancel</PixelButton>
-              <PixelButton variant="primary" size="md" onClick={save}>save changes</PixelButton>
+              <PixelButton variant="secondary" size="md" onClick={onClose}>Cancel</PixelButton>
+              <PixelButton variant="primary" size="md" onClick={save}>Save changes</PixelButton>
             </div>
           </div>
         </PixelPanel>
@@ -332,12 +347,12 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
 
 const inputStyle: CSSProperties = {
   width: '100%',
-  padding: '12px 11px 12px',
+  padding: '9px 12px',
   background: 'var(--cth-paper-100)',
   border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
+  borderRadius: 'var(--cth-radius-btn)',
   fontFamily: 'var(--cth-font-ui)',
-  fontSize: 14,
+  fontSize: 13.5,
   lineHeight: '20px',
   color: 'var(--cth-ink-900)',
   outline: 'none',
@@ -357,11 +372,11 @@ function Section({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span style={{
-          fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-          fontSize: 11, lineHeight: '12px',
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 700,
+          fontSize: 13, lineHeight: '16px',
           color: 'var(--cth-ink-900)',
         }}>{label}</span>
-        <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>{hint}</span>
+        <span style={{ fontSize: 11.5, color: 'var(--cth-ink-400)' }}>{hint}</span>
       </div>
       {children}
     </div>
@@ -373,8 +388,8 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
     <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <span style={{
         fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-        fontSize: 11, lineHeight: '13px', letterSpacing: '.04em',
-        color: 'var(--cth-ink-700)',
+        fontSize: 12, lineHeight: '14px',
+        color: 'var(--cth-ink-600)',
       }}>{label}</span>
       {children}
     </label>

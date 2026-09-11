@@ -77,7 +77,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
       padding: 32
     }}>
       <div style={{ width: 560, maxWidth: '94vw' }}>
-        <PixelPanel variant="dialog" title="CHOOSE A WORKSPACE" noPadding>
+        <PixelPanel variant="dialog" title="Choose a workspace" noPadding>
           <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-700)' }}>
               A workspace is one folder holding one crew: its agents, their memory, the task board
