@@ -38,5 +38,13 @@
     "provider": "claude",
     "scope": "bundled",
     "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/temporal"
+  },
+  {
+    "id": "bundled:this-machine",
+    "name": "this-machine",
+    "description": "What is locked down on this Mac and what to do instead. Read BEFORE installing anything with a compiled component (pip packages, node native addons, standalone binaries), and the moment you see `mmap(...) failed with errno=1`, a `dlopen` failure, a process killed on launch, or an `UnknownIssuer` / certificate error on a download. Saves re-diagnosing a policy that no reinstall will fix.",
+    "provider": "claude",
+    "scope": "bundled",
+    "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/this-machine"
   }
 ]

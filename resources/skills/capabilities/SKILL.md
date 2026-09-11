@@ -33,6 +33,11 @@ At boot you also have `identity.md` (who you are) and `HIVE_ROOT/PROTOCOL.md`
 message JSON into `$AGENT_DIR/outbox/` (schema in PROTOCOL.md). When finished,
 send god an `"act":"done"` outbox message with a substantive result summary.
 
+This Mac is locked down by ThreatLocker: compiled code will not load from your
+home directory, and TLS is intercepted. Read the `/this-machine` skill BEFORE
+installing anything with a compiled component, and the moment an install fails
+with `errno=1` or a certificate error. No reinstall fixes either one.
+
 ## 2. Temporal skills — concrete date ranges, relative to now
 
 When your task is time-scoped, resolve the dates instead of computing them by
