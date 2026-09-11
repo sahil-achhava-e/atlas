@@ -19,7 +19,6 @@ import { McpDefaultsSettings } from './McpDefaultsSettings';
 import { AiEnginesSettings } from './AiEnginesSettings';
 import { REALTIME_MODEL } from '@shared/realtimePricing';
 import { RealtimeDevicePicker } from '@/realtime/DevicePicker';
-import { CostHud } from '@/realtime/CostHud';
 import { isComposingKey } from '@shared/imeGuard';
 import { LANGUAGES, setLanguage } from '@/i18n';
 
@@ -486,7 +485,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
   // with `?? false` displayed OFF while the feature was actually running.
   // rt-9 idle-tunable: realtime voice idle auto-disconnect window (ms); 0 = never.
   const [idleDisconnectMs, setIdleDisconnectMs] = useState<number>(
-    (config as HarnessConfig).realtimeIdleDisconnectMs ?? 180_000
+    (config as HarnessConfig).realtimeIdleDisconnectMs ?? 60_000
   );
 
   // Re-seed every editable field from the on-disk config when the modal opens.
@@ -508,7 +507,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
       setSlackProactivePosting(cc.slackProactivePosting ?? false);
       const kgOn = (cc as { knowledgeGraph?: { enabled?: boolean } }).knowledgeGraph?.enabled === true;
       setKgEnabled(kgOn);
-      setIdleDisconnectMs((c as HarnessConfig).realtimeIdleDisconnectMs ?? 180_000);
+      setIdleDisconnectMs((c as HarnessConfig).realtimeIdleDisconnectMs ?? 60_000);
     }).catch(() => { /* keep prop-seeded values */ });
     window.cth.kgStatus().then((s) => { if (alive) setKgDocCount(s.docCount); })
       .catch(() => { /* status unavailable */ });
@@ -1279,7 +1278,9 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                         </div>
 
                         <RealtimeDevicePicker />
-                        <CostHud />
+                        {/* No spend-cap readout: it reported a cap nobody set
+                            and a session nobody had open. The idle disconnect is
+                            the control that actually bounds a voice session. */}
                         {/* rt-9 idle-tunable: how long an idle voice session stays open before
                             it auto-closes. The spend cap remains the real runaway guard. */}
                         <label style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 280 }}>

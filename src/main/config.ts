@@ -462,7 +462,9 @@ const DEFAULTS: HarnessConfig = {
   groqApiKey: undefined,
   freeflowModel: 'whisper-large-v3-turbo',
   realtimeVoiceEnabled: false,
-  realtimeIdleDisconnectMs: 180_000,
+  // One minute. A voice session bills per minute of audio while it is open,
+  // so the default should be the one that costs least when you walk away.
+  realtimeIdleDisconnectMs: 60_000,
   webhookEnabled: false,
   webhookSecret: undefined,
   webhookPort: undefined,

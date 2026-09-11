@@ -426,7 +426,7 @@ export async function connect(): Promise<void> {
     });
     // rt-9 cost guard: periodically stop the session if the hard cap is hit, or after an
     // idle open mic, so a forgotten session doesn't bleed audio cost. The idle window is
-    // user-configurable (config.realtimeIdleDisconnectMs; default 3 min; 0 = never — the
+    // user-configurable (config.realtimeIdleDisconnectMs; default 1 min; 0 = never — the
     // cost cap stays the runaway guard). disconnect() clears this timer + tears down.
     const idleCfg = (await window.cth.getConfig()).realtimeIdleDisconnectMs;
     const idleMs = typeof idleCfg === 'number' ? idleCfg : DEFAULT_IDLE_DISCONNECT_MS;
