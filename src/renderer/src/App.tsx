@@ -553,6 +553,9 @@ export function App() {
       <div style={{
         flex: 1, minHeight: 0,
         display: 'flex',
+        // Panel first, floor second. Reading order is left to right, and the
+        // panel is where the work is; the floor is the view.
+        flexDirection: 'row-reverse',
         padding: 16,
         gap: 0
       }}>
@@ -591,8 +594,9 @@ export function App() {
 
         <div style={{
           width: sidebarWidth, flexShrink: 0,
-          minHeight: 0, display: 'flex', flexDirection: 'column'
+          minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12
         }}>
+          <AgentStrip config={config} />
           {agent ? (
             <AgentDetailPanel agent={agent} />
           ) : godStatus === 'booting' ? (
@@ -621,7 +625,7 @@ export function App() {
                 color: 'var(--cth-ink-500)'
               }}>NO AGENT SELECTED</div>
               <p style={{ margin: 0, fontSize: 13, textAlign: 'center', color: 'var(--cth-ink-700)' }}>
-                Spawn an agent from the strip below.<br />
+                Pick an agent above, or spawn a new one.<br />
                 The terminal and command bar will land here.
               </p>
               <PixelButton variant="secondary" size="md" onClick={() => setAddAgentOpen(true)}>
@@ -633,8 +637,6 @@ export function App() {
           )}
         </div>
       </div>
-
-      <AgentStrip config={config} />
 
       {addAgentOpen && (
         <AddAgentModal

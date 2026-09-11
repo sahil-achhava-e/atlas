@@ -24,7 +24,7 @@ export function SidebarSplitter({
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       if (!startRef.current) return;
-      const delta = startRef.current.clientX - e.clientX; // left drag = positive delta → grow sidebar
+      const delta = e.clientX - startRef.current.clientX; // the panel is on the left: drag right = grow
       const clampMax = Math.min(max, Math.max(min, viewportWidth - 360));
       const next = Math.min(clampMax, Math.max(min, startRef.current.width + delta));
       onChange(next);

@@ -107,14 +107,17 @@ export function AgentStrip({ config }: AgentStripProps) {
       display: 'flex',
       gap: 12,
       padding: '16px 16px',
-      overflowX: 'auto',
-      overflowY: 'hidden',
-      borderTop: '1px solid var(--cth-ink-300)',
-      background: 'var(--cth-cream-200)',
-      // Tall enough for the god card to stand proud of the row (it's taller and
-      // rides a drop shadow) plus the hover-lift on every card, without clipping.
-      height: 108,
-      minHeight: 108,
+      // It lives in a 420px column now, not a full-width shelf: cards wrap and
+      // the strip scrolls down rather than sideways.
+      overflowX: 'hidden',
+      overflowY: 'auto',
+      flexWrap: 'wrap',
+      borderTop: 'none',
+      borderRadius: 'var(--cth-radius-card)',
+      background: 'var(--cth-paper-100)',
+      boxShadow: 'var(--cth-shadow-card)',
+      minHeight: 96,
+      maxHeight: 232,
       alignItems: 'center'
     }}>
       {agents.map(a => (
