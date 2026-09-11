@@ -16,8 +16,11 @@
 
   /* Ink */
   --cth-ink-900: #111418;
+  --cth-ink-800: #303845;   /* strong secondary: a label that still leads */
   --cth-ink-700: #596273;
+  --cth-ink-600: #6B7484;   /* field labels, quiet button text */
   --cth-ink-500: #8A93A3;
+  --cth-ink-400: #9CA5B4;   /* paths, timestamps: present but never read first */
   --cth-ink-300: #C3CAD5;
   --cth-ink-100: #E2E6EC;
 
@@ -131,11 +134,10 @@
      boxed every surface in thick chrome; structure now comes from surface
      contrast, not outlines. Dialogs keep one slightly stronger line. */
   --cth-panel-border:          inset 0 0 0 1px var(--cth-ink-300);
-  /* Text that sits ON an accent fill (a selected tab, a filled chip). The
-     accents are LIGHT surfaces in BOTH themes, so this is dark in both — using
-     ink-900 here inverts with the theme and paints near-white on a pale accent,
-     which is the one place the theme switch actively hurts legibility. */
-  --cth-on-accent: #1A1320;
+  /* Text that sits ON an accent fill (a primary button, a filled chip). The
+     accents are saturated fills in BOTH themes, so this is white in both —
+     ink-900 would invert with the theme and go near-black on lilac. */
+  --cth-on-accent: #FFFFFF;
 
   --cth-panel-border-inset:    inset 0 0 0 1px var(--cth-ink-100);
   --cth-panel-border-terminal: inset 0 0 0 1px var(--cth-ink-300);
@@ -186,8 +188,11 @@
 
   /* Ink → off-white text ramp (never #FFF — glare) */
   --cth-ink-900: #F2F4F7;   /* 10.9-13.0:1 — primary text, warm off-white */
+  --cth-ink-800: #C4CBD7;   /*  8.7-10.3:1 — strong secondary */
   --cth-ink-700: #A8B0BE;   /*  7.0-8.3:1  — secondary text */
+  --cth-ink-600: #8E96A5;   /*  5.8-6.9:1  — field labels, quiet button text */
   --cth-ink-500: #737C8B;   /*  4.9-5.8:1  — tertiary / hints */
+  --cth-ink-400: #5E6675;   /*  4.1-4.8:1  — paths, timestamps */
   --cth-ink-300: #4A515E;   /*  3.4-4.0:1  — BORDERS. must stay >= 3.0 */
   --cth-ink-100: #262B34;   /*  1.4-1.7:1  — dividers, meant to recede */
 

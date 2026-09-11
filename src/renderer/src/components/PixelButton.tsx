@@ -14,8 +14,8 @@ export interface PixelButtonProps {
   title?: string;
 }
 
-const heightBySize: Record<Size, number> = { sm: 24, md: 32, lg: 40 };
-const padBySize: Record<Size, string> = { sm: '0 8px', md: '0 12px', lg: '0 16px' };
+const heightBySize: Record<Size, number> = { sm: 26, md: 34, lg: 42 };
+const padBySize: Record<Size, string> = { sm: '0 10px', md: '0 16px', lg: '0 20px' };
 
 export function PixelButton({
   variant = 'primary',
@@ -43,7 +43,7 @@ export function PixelButton({
   // `--cth-ink-500` is the one foreground that works against cream-300 in BOTH
   // themes, because both tokens flip together — and a muted label is what a
   // disabled control should look like anyway.
-  const disabledText = 'var(--cth-ink-500)';
+  const disabledText = 'var(--cth-ink-600)';
 
   const palette = (() => {
     switch (variant) {
@@ -54,7 +54,7 @@ export function PixelButton({
         // One accent reads the same way in both themes, and it is the one thing
         // on screen that should look clickable before you read it.
         return {
-          fill:    disabled ? 'var(--cth-cream-300)' : (hover ? 'var(--cth-lilac-hover)' : 'var(--cth-lilac)'),
+          fill:    disabled ? 'var(--cth-cream-200)' : (hover ? 'var(--cth-lilac-hover)' : 'var(--cth-lilac)'),
           text:    disabled ? disabledText : 'var(--cth-on-accent)',
           border:  disabled ? 'var(--cth-ink-300)' : 'var(--cth-lilac)',
           shadow:  'var(--cth-lilac-hover)'
@@ -63,15 +63,15 @@ export function PixelButton({
         // White with a hairline, not a grey fill: beside a filled primary, two
         // filled buttons make you decide which one is the answer.
         return {
-          fill:    disabled ? 'transparent' : (hover ? 'var(--cth-cream-50)' : 'var(--cth-paper-100)'),
-          text:    disabled ? disabledText : 'var(--cth-ink-900)',
-          border:  disabled ? 'var(--cth-ink-100)' : 'var(--cth-ink-300)',
+          fill:    disabled ? 'var(--cth-cream-200)' : (hover ? 'var(--cth-cream-100)' : 'var(--cth-paper-100)'),
+          text:    disabled ? disabledText : 'var(--cth-ink-800)',
+          border:  disabled ? 'var(--cth-ink-300)' : 'var(--cth-ink-300)',
           shadow:  'var(--cth-ink-100)'
         };
       case 'ghost':
         return {
           fill:    hover ? 'var(--cth-cream-100)' : 'transparent',
-          text:    disabled ? disabledText : 'var(--cth-ink-700)',
+          text:    disabled ? disabledText : 'var(--cth-ink-800)',
           border:  'transparent',
           shadow:  'transparent'
         };
@@ -137,6 +137,7 @@ export function PixelButton({
         transform: pressed && !disabled ? 'translateY(1px)' : 'none',
         transition: 'box-shadow 140ms ease, transform 90ms ease',
         fontFamily: 'var(--cth-font-ui)',
+        fontWeight: 600,
         fontSize: size === 'lg' ? 'var(--cth-text-body-md)' : 'var(--cth-text-body-sm)',
         cursor: disabled ? 'not-allowed' : 'pointer',
         width: fullWidth ? '100%' : 'auto',
