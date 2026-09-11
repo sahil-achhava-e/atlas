@@ -472,7 +472,8 @@
     "openIssue": "مشكلة GitHub رقم {{num}}: {{title}}",
     "deliveryResumeAria": "استأنف التسليم التلقائي للأرضية كلها",
     "deliveryHoldAria": "احتجز التسليم التلقائي للأرضية كلها",
-    "openIdeAria": "افتح بيئة التطوير"
+    "openIdeAria": "افتح بيئة التطوير",
+    "context": "السياق"
   },
   "addAgent": {
     "title": "إضافة وكيل",

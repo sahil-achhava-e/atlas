@@ -161,6 +161,10 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
 
   // Below 1k there is nothing to report and the rounding says "0k", which reads
   // as a broken gauge rather than as a session that has barely started.
+  const contextLimit = agent.contextLimit ?? (/1m/i.test(agent.model ?? '') ? 1_000_000 : 200_000);
+  const contextPct = (agent.contextTokens ?? 0) >= 1000
+    ? Math.min(100, Math.round(((agent.contextTokens as number) / contextLimit) * 100))
+    : null;
   const contextLine = (agent.contextTokens ?? 0) >= 1000
     ? `${fmtK(agent.contextTokens as number)}/${fmtK(agent.contextLimit ?? (/1m/i.test(agent.model ?? '') ? 1_000_000 : 200_000))}`
     : '';
@@ -195,22 +199,42 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <span style={{
-              fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '15px',
-              color: 'var(--cth-ink-900)',
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 16, lineHeight: '20px',
+              letterSpacing: '-0.2px', color: 'var(--cth-ink-900)',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-            }}>{agent.name.toUpperCase()}</span>
-            <PixelBadge status={agent.status} dotOnly />
-            {contextLine && (
-              <span
-                title={t('agentCard.contextGaugeTitle')}
-                style={{
-                  marginInlineStart: 'auto', flexShrink: 0,
-                  fontFamily: 'var(--cth-font-mono)', fontSize: 11, lineHeight: '15px',
-                  color: 'var(--cth-ink-500)'
-                }}
-              >{contextLine}</span>
-            )}
+            }}>{agent.name}</span>
+            {/* The word, not only the dot. A bare colour makes you learn a code;
+                a tinted pill with the state written in it does not, and it still
+                reads at a glance. */}
+            <PixelBadge status={agent.status} />
           </div>
+          {/* Context as a bar. `42k/200k` makes you do the division before you
+              know whether to care; a bar answers it first and keeps the exact
+              number beside it, grouped and tabular so the digits line up. */}
+          {contextPct !== null && (
+            <div style={{ marginTop: 8 }} title={t('agentCard.contextGaugeTitle')}>
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                fontSize: 11, color: 'var(--cth-ink-500)', marginBottom: 4
+              }}>
+                <span>{t('commandCenter.context')}</span>
+                <span style={{
+                  fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: 'var(--cth-ink-700)'
+                }}>{contextLine}</span>
+              </div>
+              <div style={{
+                height: 4, borderRadius: 'var(--cth-radius-pill)',
+                background: 'var(--cth-cream-200)', overflow: 'hidden'
+              }}>
+                <div style={{
+                  width: `${contextPct}%`, height: '100%',
+                  borderRadius: 'var(--cth-radius-pill)',
+                  background: contextPct > 85 ? 'var(--cth-coral)' : 'var(--cth-lilac)',
+                  transition: 'width 260ms ease'
+                }} />
+              </div>
+            </div>
+          )}
           <div style={{
             fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)',
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'

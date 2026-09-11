@@ -160,6 +160,9 @@
     docker: { installed: false, running: false }
   }),
   memoryRefresh: async () => window.cth.memoryStatus(),
+  // A live-looking context so the gauge renders. Returning null (the default
+  // empty) hid the whole block, so nothing about it could be checked here.
+  agentContext: async () => 42100,
   skillsDisabled: async () => (window.__skillsOff = window.__skillsOff || []),
   skillsSetEnabled: async (name, on) => {
     const cur = new Set(window.__skillsOff || []);

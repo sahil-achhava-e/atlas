@@ -80,13 +80,18 @@ export function PixelBadge({ status, label, style, dotOnly }: PixelBadgeProps) {
         // Same reason as PixelButton: a status chip that shrinks spills its text
         // under the controls beside it instead of holding its own width.
         flexShrink: 0,
-        gap: 8,
-        padding: '2px 8px 0',
-        background: 'var(--cth-cream-100)',
-        boxShadow: `inset 0 0 0 1px ${colorByStatus[status]}`, borderRadius: 'var(--cth-radius-input)',
+        gap: 6,
+        padding: '3px 10px',
+        // A tinted pill in the state's own colour, rather than a cream chip
+        // outlined in it. The tint is the colour at low alpha so the pill reads
+        // as that state at a glance and the text still passes contrast.
+        background: `color-mix(in srgb, ${colorByStatus[status]} 14%, var(--cth-paper-100))`,
+        boxShadow: 'none',
+        borderRadius: 'var(--cth-radius-pill)',
         fontFamily: 'var(--cth-font-ui)',
-        fontSize: 'var(--cth-text-body-sm)',
-        lineHeight: '18px',
+        fontSize: 11,
+        fontWeight: 500,
+        lineHeight: '16px',
         color: 'var(--cth-ink-900)',
         userSelect: 'none',
         ...style
@@ -94,10 +99,9 @@ export function PixelBadge({ status, label, style, dotOnly }: PixelBadgeProps) {
     >
       <span
         style={{
-          width: 8,
-          height: 8,
+          width: 7, height: 7, flexShrink: 0,
           background: colorByStatus[status],
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
+          borderRadius: 'var(--cth-radius-pill)'
         }}
       />
       {text}
