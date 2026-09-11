@@ -428,7 +428,7 @@
     "dispatchSuggestion": "(The human suggests {{name}} ({{id}}) for this: your call as orchestrator.)",
     "taskFromHuman": "Task from the human",
     "agents": "Agents",
-    "godTag": " (god)",
+    "godTag": "god",
     "toolCalls": "{{count}} tool calls",
     "rate": "rate",
     "budget": "budget",
@@ -439,7 +439,7 @@
     "contextTitle": "Context window: {{used}} of {{limit}} tokens ({{pct}}%)",
     "noStatusTick": "no status tick yet",
     "modelRestarts": "{{provider}} model (restarts agent)",
-    "restartContinue": "restart & continue",
+    "restartContinue": "Restart and continue",
     "restartContinueTitle": "Kill and respawn {{name}}, resuming its current conversation. Fixes a corrupted/garbled terminal without losing context",
     "engine": "engine:",
     "apply": "Apply",
@@ -482,7 +482,10 @@
     "context": "Context",
     "focus": "Focus",
     "roleGod": "runs the floor",
-    "roleWorker": "no role set yet"
+    "roleWorker": "no role set yet",
+    "agentActions": "{{name}} actions",
+    "editAgent": "Edit agent",
+    "restarting": "restarting…"
   },
   "addAgent": {
     "title": "ADD AGENT",

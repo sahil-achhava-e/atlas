@@ -425,6 +425,9 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
   // Per-agent token limit (overrides the floor budget for that agent), keyed by id.
   const [agentTokenCaps, setAgentTokenCaps] = useState<Record<string, number>>({});
   const [restarting, setRestarting] = useState<string | null>(null);
+  /** Which agent's Edit dialog is open, if any. The panel header's own Edit
+   *  covers the SELECTED agent; this covers any row in the roster. */
+  const [editAgent, setEditAgent] = useState<Agent | null>(null);
   const [engineProvider, setEngineProvider] = useState<AgentProvider>('claude');
   const [engineModel, setEngineModel] = useState<string | undefined>(undefined);
   const [restartErrors, setRestartErrors] = useState<Record<string, string>>({});
@@ -723,256 +726,105 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
         </div>
       </Section>
 
+      {editAgent && (
+        <EditAgentModal agent={editAgent} onClose={() => setEditAgent(null)} />
+      )}
+
       <Section title={t('commandCenter.agents')}>
+        {/* One row per agent, carrying only what is NOT available elsewhere:
+            live usage, the token limit, and restart. Identity is the floor (a
+            character click selects) and the panel header; engine and model are
+            the Edit dialog, which is the one place that owns them. This was a
+            settings form repeated per agent, with its own Apply that disagreed
+            with Edit about when a model change takes effect. */}
         {agents.map((a) => {
-          const agentProvider = inferAgentProvider(a.command, a.provider);
-          const agentPreset = providerPreset(agentProvider);
           const sample = samples[a.id];
           const breaker = breakers[a.id];
           const armed = !!breaker && (breaker.level === 'constrained' || breaker.level === 'stopped');
           const tokens = sample ? sample.input + sample.output + sample.cacheRead + sample.cacheCreation : 0;
-          // The per-agent cap is measured in WORK tokens — input + output + cache
-          // writes, cache reads excluded (breaker.ts, #189) — so the meter against
-          // that cap reads the same figure; otherwise a cache-heavy agent shows a
-          // full red bar while the breaker is (correctly) calm. The floor budget
-          // sums all kinds, so its meter keeps `tokens`; the count beside the bar
-          // stays the all-kinds spend either way.
           const workTokens = sample ? sample.input + sample.output + sample.cacheCreation : 0;
-          const agentCap = agentTokenCaps[a.id]; // per-agent limit, if set
+          const agentCap = agentTokenCaps[a.id];
           const hasAgentCap = !!agentCap && agentCap > 0;
           const denom = hasAgentCap ? agentCap : floorCap;
           const used = hasAgentCap ? workTokens : tokens;
           const pct = Math.min(100, Math.round((used / denom) * 100));
-          const meterColor = armed || pct >= 90 ? 'var(--cth-coral)' : pct >= 60 ? 'var(--cth-lemon)' : 'var(--cth-mint)';
-          // Sparkline only when the agent is actually burning tokens; otherwise the
-          // flat baseline is just a mystery line. Label it with the live rate.
-          const sparkSeries = spark[a.id] ?? [];
-          const hasSpark = sparkSeries.some((v) => v > 0);
+          const meterColor = armed || pct >= 90 ? 'var(--cth-coral)'
+            : pct >= 60 ? 'var(--cth-lemon)' : 'var(--cth-status-success)';
           const rateVal = Math.round(rate[a.id] ?? 0);
-          const rateLabel = rateVal > 0 ? `${fmtTokens(rateVal)}/m` : 'rate';
-          const currentModelKnown = modelsForProvider(agentProvider)
-            .some((model) => model.id === a.model);
           return (
-          <div key={a.id} style={{
-            display: 'flex', flexDirection: 'column', gap: 4,
-            padding: 10, marginBottom: 6,
-            background: armed ? 'var(--cth-coral-light)' : 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{
-                width: 24, height: 24, background: `var(--cth-${a.accent}-light)`,
-                boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-                display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden', flexShrink: 0
-              }}>
-                <SpritePortrait character={a.character} scale={1} />
-              </div>
+            <div
+              key={a.id}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 12px', marginBottom: 8,
+                background: 'var(--cth-paper-100)',
+                borderRadius: 'var(--cth-radius-input)',
+                boxShadow: armed
+                  ? `0 0 0 1px color-mix(in srgb, var(--cth-coral) 40%, transparent)`
+                  : '0 0 0 1px var(--cth-ink-100)'
+              }}
+            >
               <button
                 onClick={() => select(a.id)}
+                aria-label={a.name}
                 style={{
-                  border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-                  fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)'
-                }}
-              >{a.name}{a.isGod ? t('commandCenter.godTag') : ''}</button>
-              <PixelBadge status={armed ? 'looping' : a.status} />
-              {armed && <span style={{ color: 'var(--cth-coral)', fontSize: 13 }}>⚠</span>}
-              <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--cth-ink-500)' }}>
-                {t('commandCenter.toolCalls', { count: toolCounts[a.id] ?? 0 })}
-              </span>
-              <TokenLimitEditor value={agentCap} onSet={(t) => setAgentCap(a.id, t)} />
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--cth-ink-500)', wordBreak: 'break-all' }}>{a.cwd}</div>
-            {/* Live telemetry (folded in from the old Fleet tab) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {hasSpark ? (
-                <span style={{ flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>{rateLabel}</span>
-                  <Sparkline series={sparkSeries} />
-                </span>
-              ) : (
-                <span style={{ flex: 1 }} />
-              )}
-              {lastTool[a.id] && (
-                <span style={{
-                  fontSize: 11, lineHeight: '14px', padding: '0 5px', flexShrink: 0,
-                  background: 'var(--cth-paper-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', color: 'var(--cth-ink-700)'
-                }}>{lastTool[a.id]}</span>
-              )}
-              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-300)', flexShrink: 0 }}>{t('commandCenter.budget')}</span>
-              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-900)', width: 56, textAlign: 'right' }}>{fmtTokens(tokens)}</span>
-              <div
-                style={{ width: 96, height: 8, background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', flexShrink: 0 }}
-              >
-                <div style={{ width: `${pct}%`, height: '100%', background: meterColor }} />
-              </div>
-              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)', width: 30, textAlign: 'right' }}>{pct}%</span>
-            </div>
-            {/* Context window — the SAME exact statusLine-fed numbers as the
-                avatar-card gauge (tokens currently in the window vs the real
-                200k/1M size). Distinct from the cumulative budget meter above,
-                which keeps growing forever and pins at 100% — that one is
-                spend, this one is headroom before compaction. */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ flex: 1 }} />
-              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-300)', flexShrink: 0 }}>{t('commandCenter.ctx')}</span>
-              {a.contextTokens !== undefined && a.contextLimit ? (() => {
-                const cpct = Math.min(100, Math.round((a.contextTokens! / a.contextLimit!) * 100));
-                const ccolor = cpct >= 88 ? 'var(--cth-coral)' : cpct >= 75 ? 'var(--cth-lemon)' : `var(--cth-${a.accent})`;
-                return (
-                  <>
-                    <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-900)', width: 56, textAlign: 'right' }}>
-                      {fmtTokens(a.contextTokens!)}
-                    </span>
-                    <div
-                      style={{ width: 96, height: 8, background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', flexShrink: 0 }}
-                    >
-                      <div style={{ width: `${cpct}%`, height: '100%', background: ccolor }} />
-                    </div>
-                    <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)', width: 30, textAlign: 'right' }}>{cpct}%</span>
-                  </>
-                );
-              })() : (
-                <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-300)' }}>
-                  {t('commandCenter.noStatusTick')}
-                </span>
-              )}
-            </div>
-            {/* Non-god agents get the cross-provider model picker + restart controls
-                here. The GOD agent's model lives in the engine row below
-                (provider+model+apply), so we DON'T render this second selector for
-                it — one model picker, not two. */}
-            {!a.isGod && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <Select
-                value={encodeProviderModel(agentProvider, a.model)}
-                disabled={restarting === a.id}
-                onChange={(value) => {
-                  const choice = decodeProviderModel(value);
-                  if (!choice) return;
-                  // Switching model within the SAME provider continues the
-                  // conversation — that's the whole point of switching mid-task
-                  // ("this got hard, go up a tier"), and starting fresh threw
-                  // away the context that made the switch necessary.
-                  // `resume` is best-effort: restartWithModel already refuses it
-                  // across providers, and falls back to a fresh session when no
-                  // session id or transcript is recorded.
-                  void restartWithModel(a, choice.model, {
-                    provider: choice.provider,
-                    resume: choice.provider === agentProvider,
-                    resumeOptional: true
-                  });
+                  width: 32, height: 32, flexShrink: 0, padding: 0, border: 'none',
+                  borderRadius: 10, overflow: 'hidden', cursor: 'pointer',
+                  background: 'var(--cth-cream-200)',
+                  boxShadow: `0 0 0 2px var(--cth-status-${a.status})`,
+                  display: 'inline-flex', alignItems: 'flex-end', justifyContent: 'center'
                 }}
               >
-                {(!agentPreset.supportsModel || !currentModelKnown) && (
-                  <option value={encodeProviderModel(agentProvider, a.model)}>
-                    {agentPreset.label} · {a.model ?? 'current'}
-                  </option>
-                )}
-                {modelProvidersForAgent(a.isGod).map((preset) => (
-                  <optgroup key={preset.id} label={preset.label}>
-                    {modelsForProvider(preset.id).map((model) => {
-                      // `defaultModel` is a Claude model id, so it can only mark
-                      // an entry in the Claude group.
-                      const isHarnessDefault = preset.id === 'claude'
-                        && !!defaultModel && model.id === defaultModel;
-                      return (
-                        <option
-                          key={`${preset.id}:${model.id ?? 'cli-default'}`}
-                          value={encodeProviderModel(preset.id, model.id)}
-                        >
-                          {model.label}{isHarnessDefault ? ' · default' : ''}
-                        </option>
-                      );
-                    })}
-                  </optgroup>
-                ))}
-              </Select>
-              <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>
-                {restarting === a.id
-                  ? t('common.restarting')
-                  : t('commandCenter.modelRestarts', { provider: agentPreset.label })}
-              </span>
-              {/* Restart & Continue — kill + respawn keeping the SAME model and
-                  resuming the prior conversation (--resume). Use this to redraw a
-                  garbled TUI (e.g. after dragging the window across displays)
-                  without losing the thread. */}
-              {(agentProvider === 'claude' || agentPreset.resumeFlag || agentPreset.resumeSubcommand) && <>
-                <span style={{ flex: 1 }} />
-                <PixelButton
-                  variant="secondary"
-                  size="sm"
-                  disabled={restarting === a.id}
-                  onClick={() => restartWithModel(a, a.model, { resume: true })}
-                >
-                  <span>
-                    {t('commandCenter.restartContinue')}
+                <SpritePortrait character={a.character} scale={0.85} />
+              </button>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+                  <button
+                    onClick={() => select(a.id)}
+                    style={{
+                      border: 'none', background: 'transparent', padding: 0, cursor: 'pointer',
+                      fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
+                      color: 'var(--cth-ink-900)', textAlign: 'start',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                    }}
+                  >{a.name}</button>
+                  {a.isGod && (
+                    <span style={{
+                      flexShrink: 0, padding: '2px 7px', borderRadius: 'var(--cth-radius-pill)',
+                      background: 'var(--cth-lilac-light)', color: 'var(--cth-lilac)',
+                      fontFamily: 'var(--cth-font-ui)', fontSize: 10, fontWeight: 700
+                    }}>{t('commandCenter.godTag')}</span>
+                  )}
+                </div>
+                {/* Usage: a bar, the spend, and the burn rate only while it burns. */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                  <span style={{
+                    flex: 1, minWidth: 40, height: 4, borderRadius: 'var(--cth-radius-pill)',
+                    background: 'var(--cth-cream-200)', overflow: 'hidden'
+                  }}>
+                    <span style={{
+                      display: 'block', width: `${pct}%`, height: '100%',
+                      background: meterColor, borderRadius: 'var(--cth-radius-pill)',
+                      transition: 'width 260ms ease'
+                    }} />
                   </span>
-                </PixelButton>
-              </>}
+                  <span style={{
+                    flexShrink: 0, fontFamily: 'var(--cth-font-mono)', fontSize: 11,
+                    color: 'var(--cth-ink-500)', fontVariantNumeric: 'tabular-nums'
+                  }}>{fmtTokens(used)}{rateVal > 0 ? ` · ${fmtTokens(rateVal)}/m` : ''}</span>
+                </div>
+              </div>
+
+              <AgentRowMenu
+                agent={a}
+                cap={agentCap}
+                onCap={(v: number | undefined) => setAgentCap(a.id, v)}
+                onRestart={() => void restartWithModel(a, a.model, { resume: true })}
+                onEdit={() => setEditAgent(a)}
+                restarting={restarting === a.id}
+              />
             </div>
-            )}
-            {restartErrors[a.id] && (
-              <div style={{ fontSize: 11, color: 'var(--cth-coral)' }}>
-                {restartErrors[a.id]}
-              </div>
-            )}
-            {a.isGod && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>{t('commandCenter.engine')}</span>
-                <Select
-                  value={engineProvider}
-                  disabled={restarting === a.id}
-                  onChange={(v) => {
-                    const p = v as AgentProvider;
-                    setEngineProvider(p);
-                    const preset = AGENT_PROVIDER_PRESETS.find((x) => x.id === p);
-                    setEngineModel(preset?.recommendedOrchestratorModel);
-                  }}
-                >
-                  {AGENT_PROVIDER_PRESETS.filter((p) => canReceiveInbox(p.id)).map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.label}{p.id === 'claude' ? ' ★' : ''}
-                    </option>
-                  ))}
-                </Select>
-                <Select
-                  value={engineModel ?? ''}
-                  disabled={restarting === a.id}
-                  onChange={(v) => setEngineModel(v || undefined)}
-                >
-                  {modelsForProvider(engineProvider).map((m) => (
-                    <option key={m.label} value={m.id ?? ''}>{m.label}</option>
-                  ))}
-                </Select>
-                <PixelButton
-                  variant="secondary"
-                  size="sm"
-                  disabled={restarting === a.id}
-                  onClick={async () => {
-                    const currentProvider = inferAgentProvider(a.command, a.provider);
-                    if (engineProvider !== currentProvider) {
-                      if (!window.confirm(t('commandCenter.confirmRestartEngine', { name: a.name }))) return;
-                    }
-                    await window.cth.updateConfig({ godProvider: engineProvider, godModel: engineModel });
-                    await restartWithModel(a, engineModel, { provider: engineProvider, resume: false });
-                  }}
-                >
-                  {restarting === a.id ? t('common.restarting') : t('commandCenter.apply')}
-                </PixelButton>
-                {/* Redraw a garbled terminal without losing the thread (resume the
-                    SAME engine+model). Kept here since the god has no per-agent row above. */}
-                <PixelButton
-                  variant="secondary"
-                  size="sm"
-                  disabled={restarting === a.id}
-                  onClick={() => restartWithModel(a, a.model, { resume: true })}
-                >
-                  <span>
-                    {t('commandCenter.restartContinue')}
-                  </span>
-                </PixelButton>
-              </div>
-            )}
-          </div>
           );
         })}
       </Section>
@@ -1376,4 +1228,160 @@ function Select({ value, onChange, disabled, children }: {
     );
   }
   return <Dropdown value={value} options={options} onChange={onChange} width="auto" align="top" />;
+}
+
+/**
+ * The per-agent overflow menu.
+ *
+ * The row shows live state; everything you can DO to an agent hides behind one
+ * control. Three items, and each exists because it has no other home: the token
+ * limit, restart-and-continue, and a jump to Edit (which owns engine and model).
+ */
+function AgentRowMenu({ agent, cap, onCap, onRestart, onEdit, restarting }: {
+  agent: Agent;
+  cap?: number;
+  onCap: (tokens: number | undefined) => void;
+  onRestart: () => void;
+  onEdit: () => void;
+  restarting: boolean;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [capOpen, setCapOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (root.current && !root.current.contains(e.target as Node)) { setOpen(false); setCapOpen(false); }
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open]);
+
+  const item: React.CSSProperties = {
+    width: '100%', height: 32, padding: '0 10px',
+    display: 'flex', alignItems: 'center', gap: 8,
+    border: 'none', background: 'transparent', cursor: 'pointer',
+    borderRadius: 'var(--cth-radius-btn)',
+    fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)',
+    textAlign: 'start'
+  };
+
+  return (
+    <div ref={root} style={{ position: 'relative', flexShrink: 0 }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-label={t('commandCenter.agentActions', { name: agent.name })}
+        aria-expanded={open}
+        className="cth-iconbar"
+        data-label={t('commandCenter.agentActions', { name: agent.name })}
+        style={{
+          width: 28, height: 28, border: 'none', background: 'transparent',
+          borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          color: 'var(--cth-ink-500)'
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <circle cx="10" cy="4.6" r="1.5" fill="currentColor" />
+          <circle cx="10" cy="10" r="1.5" fill="currentColor" />
+          <circle cx="10" cy="15.4" r="1.5" fill="currentColor" />
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', insetInlineEnd: 0, top: 'calc(100% + 6px)', zIndex: 60,
+          minWidth: 210, padding: 4, borderRadius: 'var(--cth-radius-input)',
+          background: 'var(--cth-paper-100)',
+          boxShadow: '0 0 0 1px var(--cth-ink-100), var(--cth-shadow-hover)'
+        }}>
+          {capOpen ? (
+            <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-500)' }}>
+                {t('commandCenter.setLimit')}
+              </span>
+              <TokenCapField
+                value={cap}
+                onCommit={(v) => { onCap(v); setCapOpen(false); setOpen(false); }}
+              />
+            </div>
+          ) : (
+            <>
+              <button style={item} onClick={() => setCapOpen(true)}>
+                <span style={{ display: 'inline-flex', color: 'var(--cth-lemon)' }}>
+                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M2.6 8h10.8M8 2.6v10.8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                  </svg>
+                </span>
+                {cap && cap > 0
+                  ? t('commandCenter.tokenLimit', { value: fmtTokens(cap) })
+                  : t('commandCenter.setLimit')}
+              </button>
+              <button style={item} disabled={restarting} onClick={() => { onRestart(); setOpen(false); }}>
+                <span style={{ display: 'inline-flex', color: 'var(--cth-sky)' }}>
+                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M13.2 8a5.2 5.2 0 11-1.9-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                    <path d="M13.4 2.6v3.2h-3.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                {restarting ? t('commandCenter.restarting') : t('commandCenter.restartContinue')}
+              </button>
+              <button
+                style={item}
+                onClick={() => { onEdit(); setOpen(false); }}
+              >
+                <span style={{ display: 'inline-flex', color: 'var(--cth-plum)' }}>
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path d="M12.4 3.8l3.8 3.8-8.2 8.2-4.4.6.6-4.4z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                {t('commandCenter.editAgent')}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The number field behind "token limit", extracted so the menu can host it. */
+function TokenCapField({ value, onCommit }: { value?: number; onCommit: (v: number | undefined) => void }) {
+  const { t } = useTranslation();
+  const [text, setText] = useState(value != null ? String(value) : '');
+  const commit = () => {
+    const n = Number(text);
+    onCommit(Number.isFinite(n) && n > 0 ? Math.round(n) : undefined);
+  };
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <input
+        type="number" min="0" step="100000" value={text} autoFocus
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => { if (!isComposingKey(e) && e.key === 'Enter') commit(); }}
+        placeholder={t('common.tokens')}
+        className="cth-input"
+        style={{
+          width: 120, height: 30, padding: '0 10px', border: 'none',
+          borderRadius: 'var(--cth-radius-btn)', background: 'var(--cth-paper-100)',
+          fontFamily: 'var(--cth-font-mono)', fontSize: 12,
+          color: 'var(--cth-ink-900)', outline: 'none'
+        }}
+      />
+      <button
+        onMouseDown={(e) => e.preventDefault()} onClick={commit}
+        style={{
+          width: 30, height: 30, flexShrink: 0, border: 'none', cursor: 'pointer',
+          borderRadius: 'var(--cth-radius-btn)', background: 'var(--cth-lilac)', color: '#FFFFFF',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center'
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M3.4 8.4l3 3 6.2-6.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+    </span>
+  );
 }

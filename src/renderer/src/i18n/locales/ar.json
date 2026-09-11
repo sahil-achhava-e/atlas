@@ -415,7 +415,7 @@
     "dispatchSuggestion": "(يقترح المستخدم {{name}} ({{id}}) لهذه المهمة. والقرار لك كمنسّق.)",
     "taskFromHuman": "مهمة من المستخدم",
     "agents": "الوكلاء",
-    "godTag": " (الإله)",
+    "godTag": "القائد",
     "toolCalls": "{{count}} استدعاء أداة",
     "rate": "المعدّل",
     "budget": "الميزانية",
@@ -426,7 +426,7 @@
     "contextTitle": "نافذة السياق: {{used}} من {{limit}} رمز ({{pct}}%)",
     "noStatusTick": "لا نبضة حالة بعد",
     "modelRestarts": "نموذج {{provider}} (يُعيد تشغيل الوكيل)",
-    "restartContinue": "أعِد التشغيل وتابع",
+    "restartContinue": "أعد التشغيل وتابع",
     "restartContinueTitle": "أنهِ {{name}} وأعِد إنشاءه مع استئناف محادثته الحالية. يُصلح طرفية تالفة أو مشوّشة دون فقدان السياق",
     "engine": "المحرّك:",
     "apply": "طبّق",
@@ -469,7 +469,10 @@
     "context": "السياق",
     "focus": "تركيز",
     "roleGod": "يدير الطابق",
-    "roleWorker": "لا دور محدد بعد"
+    "roleWorker": "لا دور محدد بعد",
+    "agentActions": "إجراءات {{name}}",
+    "editAgent": "تعديل الوكيل",
+    "restarting": "يعيد التشغيل…"
   },
   "addAgent": {
     "title": "إضافة وكيل",
