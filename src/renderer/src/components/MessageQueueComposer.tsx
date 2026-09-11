@@ -77,8 +77,13 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
 
   // '+' button → OS picker (images group + all files).
   const pickFiles = async () => {
-    const res = await window.cth.attachFiles();
-    if (res.ok) addAttachments(res.files);
+    try {
+      const res = await window.cth.attachFiles();
+      if (res.ok) { setAttachError(null); addAttachments(res.files); }
+      else if (res.error && res.error !== 'cancelled') setAttachError(res.error);
+    } catch (e) {
+      setAttachError(e instanceof Error ? e.message : String(e));
+    }
   };
 
   // Drop files onto the composer → resolve each to its absolute path.
@@ -116,6 +121,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
     }
   };
 
+  const [attachError, setAttachError] = useState<string | null>(null);
   const canSend = !!text.trim() || attachments.length > 0;
 
   const queueIt = () => {
@@ -352,8 +358,8 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             flexWrap so a narrow sidebar wraps rather than pushing Send off the
             edge. */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 8, rowGap: 6,
-          flexWrap: 'wrap', minWidth: 0,
+          display: 'flex', alignItems: 'center', gap: 8,
+          flexWrap: 'nowrap', minWidth: 0,
           padding: '8px 10px',
           background: 'var(--cth-cream-50)',
           borderTop: '1px solid var(--cth-ink-100)'
@@ -361,7 +367,9 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
           {/* Talk to the orchestrator. It lives HERE, at the message you would
               otherwise type, rather than on his floor card: speaking and typing
               are the same intent. */}
-          {agent.isGod && <RealtimeMichaelToggle />}
+          <span style={{ flexShrink: 0, display: 'inline-flex' }}>
+            {agent.isGod && <RealtimeMichaelToggle />}
+          </span>
           <button
             onClick={pickFiles}
             aria-label={t('queueComposer.files')}
@@ -369,7 +377,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             data-label={t('queueComposer.files')}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 30, height: 30, padding: 0, border: 'none', cursor: 'pointer',
+              width: 30, height: 30, padding: 0, border: 'none', cursor: 'pointer', flexShrink: 0,
               borderRadius: 'var(--cth-radius-btn)',
               background: 'transparent', color: 'var(--cth-mint)',
               transition: 'background 120ms ease'
@@ -381,8 +389,10 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
               multi-line input. Hidden while empty: it is instruction, not decor. */}
           {canSend && (
             <span style={{
-              fontSize: 11, color: 'var(--cth-ink-500)', whiteSpace: 'nowrap',
-              fontFamily: 'var(--cth-font-ui)'
+              fontSize: 11, color: 'var(--cth-ink-500)',
+              fontFamily: 'var(--cth-font-ui)',
+              minWidth: 0, flexShrink: 1,
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
             }}>{t('queueComposer.enterHint')}</span>
           )}
           <button
@@ -390,7 +400,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             disabled={!canSend}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 7,
-              height: 32, padding: '0 14px', border: 'none',
+              height: 32, padding: '0 14px', border: 'none', flexShrink: 0,
               borderRadius: 'var(--cth-radius-btn)',
               cursor: canSend ? 'pointer' : 'not-allowed',
               background: canSend ? 'var(--cth-lilac)' : 'transparent',
@@ -403,6 +413,14 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             {t('commandBar.send')} <Icon name="arrow-right" />
           </button>
         </div>
+        {attachError && (
+          <div style={{
+            padding: '8px 12px', fontSize: 12, lineHeight: '16px',
+            color: 'var(--cth-coral)', background: 'var(--cth-coral-light)'
+          }}>
+            {t('queueComposer.attachFailed', { error: attachError })}
+          </div>
+        )}
       </div>
     </div>
   );

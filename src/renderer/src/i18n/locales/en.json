@@ -1402,7 +1402,7 @@
     "sendingOneByOne": "sending to {{name}} one-by-one…",
     "pausedTitle": "Auto-delivery is paused for the whole floor. Resume it in the Command Center, or use \"send now\" on a message below.",
     "dropToAttach": "DROP TO ATTACH",
-    "enterHint": "Enter sends, Shift+Enter for a new line",
+    "enterHint": "Enter sends",
     "queue": "Queue",
     "closePicker": "close picker",
     "recoverPrompt": "recover prompt",
@@ -1411,7 +1411,7 @@
     "removeAttachment": "Remove attachment",
     "messagePlaceholder": "Message {{name}}",
     "busyPlaceholder": "{{name}} is busy: queue a message",
-    "files": "files",
+    "files": "Attach files",
     "collapse": "Collapse this message",
     "showFull": "Show the full message",
     "seeLess": "see less",
@@ -1430,7 +1430,8 @@
     "ffCreateKey": "Create a free key at",
     "ffPasteKey": "Paste it into Settings → Voice → Groq API key",
     "ffClickOrHold": "Click voice, or hold the right Option key to talk",
-    "ffHoldHint": "Hold it ALONE for a moment to start; release to transcribe into the composer, where you can edit before sending. Either Option key works, and Option+key combos still reach the terminal untouched."
+    "ffHoldHint": "Hold it ALONE for a moment to start; release to transcribe into the composer, where you can edit before sending. Either Option key works, and Option+key combos still reach the terminal untouched.",
+    "attachFailed": "Could not attach: {{error}}"
   },
   "idePanel": {
     "workspace": "{{name}}'s workspace",

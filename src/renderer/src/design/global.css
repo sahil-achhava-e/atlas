@@ -564,3 +564,17 @@ input:focus-visible, textarea:focus-visible { outline: none; }
   background: var(--cth-lilac);
   box-shadow: var(--cth-shadow-btn);
 }
+
+/* The office and the panel are the same kind of object: same white, same
+   radius, same elevation. Before this the panel was a card and the floor was a
+   bare rectangle butted against it. */
+.cth-stage-card {
+  background: var(--cth-paper-100);
+  border-radius: var(--cth-radius-card);
+  box-shadow:
+    0 0 0 1px rgba(17, 20, 24, 0.06),
+    0 1px 2px rgba(17, 20, 24, 0.04),
+    0 12px 32px rgba(17, 20, 24, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+}

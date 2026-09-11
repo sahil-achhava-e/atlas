@@ -369,7 +369,7 @@ export function App() {
           // the one thing that never goes away, so it cannot be something an
           // overlay paints over.
           position: 'relative', zIndex: 400,
-          background: 'var(--cth-paper-100)',
+          background: 'linear-gradient(100deg, color-mix(in srgb, var(--cth-lilac) 13%, var(--cth-paper-100)) 0%, color-mix(in srgb, #3B82F6 8%, var(--cth-paper-100)) 38%, var(--cth-paper-100) 72%)',
           borderBottom: 'none',
           display: 'flex',
           alignItems: 'center',
@@ -599,7 +599,7 @@ export function App() {
         padding: 16,
         gap: 0
       }}>
-        <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
+        <div className="cth-stage-card" style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
           <OfficeFloor />
           {agentCount === 0 && godStatus === 'booting' && <MichaelBooting />}
           {agentCount === 0 && godStatus !== 'booting' && (

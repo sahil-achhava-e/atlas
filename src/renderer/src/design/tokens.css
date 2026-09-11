@@ -1,7 +1,7 @@
 /* Design tokens — mirrors tokens.ts. Update both together. */
 :root {
   /* Base */
-  --cth-cream-50: #FFFFFF;
+  --cth-cream-50: #F4F5F7;
   --cth-cream-100: #F5F6F8;
   --cth-cream-200: #E2E6EC;
   --cth-cream-300: #D3D9E2;
@@ -10,9 +10,9 @@
 
   /* App ground (global.css) — the wash behind everything, plus the bloom that
      marks where the content sits. */
-  --cth-ground-centre: #FFFFFF;
-  --cth-ground-edge: #FFFFFF;
-  --cth-ground-bloom: rgba(91, 61, 245, 0.00);
+  --cth-ground-centre: #F7F8FA;
+  --cth-ground-edge: #EFF1F4;
+  --cth-ground-bloom: rgba(91, 61, 245, 0.05);
 
   /* Ink */
   --cth-ink-900: #111418;

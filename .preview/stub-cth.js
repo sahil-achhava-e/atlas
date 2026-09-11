@@ -163,6 +163,36 @@
   // A live-looking context so the gauge renders. Returning null (the default
   // empty) hid the whole block, so nothing about it could be checked here.
   agentContext: async () => 42100,
+  // A real multi-file chooser, because that is what the packaged app opens:
+  // dialog.showOpenDialog with ['openFile','multiSelections']. A browser cannot
+  // read absolute paths, so the fake path is the file name — enough for the
+  // attachment list to render and for the button to be exercised.
+  attachFiles: function () {
+    return new Promise(function (resolve) {
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.multiple = true;
+      input.style.display = 'none';
+      document.body.appendChild(input);
+      input.addEventListener('change', function () {
+        var files = Array.prototype.slice.call(input.files || []);
+        input.remove();
+        if (!files.length) { resolve({ ok: false, error: 'cancelled' }); return; }
+        resolve({ ok: true, files: files.map(function (f) {
+          return { path: '/preview/' + f.name, name: f.name };
+        }) });
+      });
+      // A cancelled picker fires no event in most browsers; resolve on the next
+      // focus so the promise never dangles.
+      window.addEventListener('focus', function once() {
+        window.removeEventListener('focus', once);
+        setTimeout(function () {
+          if (document.body.contains(input)) { input.remove(); resolve({ ok: false, error: 'cancelled' }); }
+        }, 400);
+      });
+      input.click();
+    });
+  },
   skillsDisabled: async () => (window.__skillsOff = window.__skillsOff || []),
   skillsSetEnabled: async (name, on) => {
     const cur = new Set(window.__skillsOff || []);
