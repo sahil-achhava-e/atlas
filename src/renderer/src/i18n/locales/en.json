@@ -486,7 +486,8 @@
     "deliveryResumeAria": "Resume automatic delivery for the whole floor",
     "deliveryHoldAria": "Hold automatic delivery for the whole floor",
     "openIdeAria": "Open the IDE",
-    "context": "Context"
+    "context": "Context",
+    "focus": "Focus"
   },
   "addAgent": {
     "title": "ADD AGENT",

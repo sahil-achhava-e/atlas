@@ -473,7 +473,8 @@
     "deliveryResumeAria": "استأنف التسليم التلقائي للأرضية كلها",
     "deliveryHoldAria": "احتجز التسليم التلقائي للأرضية كلها",
     "openIdeAria": "افتح بيئة التطوير",
-    "context": "السياق"
+    "context": "السياق",
+    "focus": "تركيز"
   },
   "addAgent": {
     "title": "إضافة وكيل",

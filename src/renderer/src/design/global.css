@@ -457,3 +457,7 @@ a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visib
 .cth-brand-panel .xterm,
 .cth-brand-panel .xterm-viewport,
 .cth-brand-panel .xterm-screen { background: #000000 !important; }
+
+/* The segmented action group in the panel header: the hovered segment lifts out
+   of the trough, the pressed one stays put. */
+.cth-brand-panel .cth-seg button:hover { background: var(--cth-cream-200) !important; color: var(--cth-ink-900) !important; }

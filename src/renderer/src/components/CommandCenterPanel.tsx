@@ -236,94 +236,99 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
       noPadding
       style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0, overflow: 'hidden' }}
     >
-      {/* Header — two lines, and both of them say something you cannot read
-          anywhere else on screen: WHO plus how full its context is, then what
-          it is doing at this moment. It used to spend the big line on the words
-          COMMAND CENTER (identical on every render) and the small one on a
-          fixed sentence about the agent's role. */}
+      {/* Header. Three bands, in the order you actually ask questions: who and
+          how it is doing, how full its head is, and what I can do about it. The
+          old one crammed all three into one 10px row with two outlined buttons
+          fighting the name for width. */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        padding: '10px 12px', background: 'var(--cth-cream-100)',
-        borderBottom: '1px solid var(--cth-ink-700)', flexShrink: 0
+        flexShrink: 0, padding: '16px 16px 14px',
+        display: 'flex', flexDirection: 'column', gap: 14,
+        borderBottom: '1px solid var(--cth-ink-100)'
       }}>
-        <div style={{
-          width: 32, height: 32, background: `var(--cth-${agent.accent}-light)`,
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-          display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden', flexShrink: 0
-        }}>
-          <SpritePortrait character={agent.character} scale={1} />
-        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+          {/* The portrait wears the agent's state as a ring, so identity and
+              status are one object instead of two things to scan. */}
+          <span style={{
+            position: 'relative', flexShrink: 0,
+            width: 46, height: 46, borderRadius: 14,
+            background: 'var(--cth-paper-200)',
+            boxShadow: `0 0 0 2px var(--cth-status-${agent.status})`,
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden'
+          }}>
+            <SpritePortrait character={agent.character} scale={1.25} />
+          </span>
 
-        {/* Both lines truncate; the control cluster never shrinks. At sidebar
-            width the old header wrapped its display-font title onto three lines
-            and put "runs the floor" word-per-line under the buttons. */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-            <span style={{
-              fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 16, lineHeight: '20px',
-              letterSpacing: '-0.2px', color: 'var(--cth-ink-900)',
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 19, lineHeight: '23px',
+              letterSpacing: '-0.4px', color: 'var(--cth-ink-900)',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-            }}>{agent.name}</span>
-            {/* The word, not only the dot. A bare colour makes you learn a code;
-                a tinted pill with the state written in it does not, and it still
-                reads at a glance. */}
-            <PixelBadge status={agent.status} />
+            }}>{agent.name}</div>
+            <div style={{
+              fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+            }}>{headerLine}</div>
           </div>
-          {/* Context as a bar. `42k/200k` makes you do the division before you
-              know whether to care; a bar answers it first and keeps the exact
-              number beside it, grouped and tabular so the digits line up. */}
-          {contextPct !== null && (
-            <div style={{ marginTop: 8 }}>
-              <div style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-                fontSize: 11, color: 'var(--cth-ink-500)', marginBottom: 4
-              }}>
-                <span>{t('commandCenter.context')}</span>
-                <span style={{
-                  fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: 'var(--cth-ink-700)'
-                }}>{contextLine}</span>
-              </div>
-              <div style={{
-                height: 4, borderRadius: 'var(--cth-radius-pill)',
-                background: 'var(--cth-cream-200)', overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: `${contextPct}%`, height: '100%',
-                  borderRadius: 'var(--cth-radius-pill)',
-                  background: contextPct > 85 ? 'var(--cth-coral)' : 'var(--cth-lilac)',
-                  transition: 'width 260ms ease'
-                }} />
-              </div>
-            </div>
-          )}
-          <div style={{
-            fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-          }}>{headerLine}</div>
+
+          <PixelBadge status={agent.status} />
         </div>
 
-        <PixelButton variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
-          <span
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-          >
-            <Icon name="edit" /> {t('common.edit', { defaultValue: 'edit' })}
-          </span>
-        </PixelButton>
+        {contextPct !== null && (
+          <div>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+              fontSize: 11, color: 'var(--cth-ink-500)', marginBottom: 5
+            }}>
+              <span>{t('commandCenter.context')}</span>
+              <span style={{
+                fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: 'var(--cth-ink-700)'
+              }}>{contextLine}</span>
+            </div>
+            <div style={{
+              height: 5, borderRadius: 'var(--cth-radius-pill)',
+              background: 'var(--cth-cream-200)', overflow: 'hidden'
+            }}>
+              <div style={{
+                width: `${contextPct}%`, height: '100%',
+                borderRadius: 'var(--cth-radius-pill)',
+                background: contextPct > 85 ? 'var(--cth-coral)' : 'var(--cth-ink-900)',
+                transition: 'width 260ms ease'
+              }} />
+            </div>
+          </div>
+        )}
 
-        {/* Floor-level surface with no agent of its own: the honest target is
-            whoever is selected, stated explicitly rather than left to the IDE's
-            fallback so the intent is visible at the call site. */}
-        <PixelButton variant="secondary" size="sm" onClick={() => {
-          const s = useStore.getState();
-          s.setIdeOpen(true, s.selectedId);
+        {/* One segmented group rather than two outlined buttons: the actions are
+            peers, they share a container, and none of them is loud enough to
+            compete with the agent's name. */}
+        <div className="cth-seg" style={{
+          display: 'flex', gap: 2, padding: 3,
+          background: 'var(--cth-cream-100)',
+          borderRadius: 'var(--cth-radius-btn)'
         }}>
-          <span
-            aria-label={t('commandCenter.openIdeAria')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-          >
-            <Icon name="code" /> {t('commandCenter.ide')}
-          </span>
-        </PixelButton>
+          {[
+            { key: 'edit', icon: 'edit' as const, label: t('common.edit', { defaultValue: 'Edit' }),
+              onClick: () => setEditOpen(true) },
+            { key: 'ide', icon: 'code' as const, label: t('commandCenter.ide'),
+              onClick: () => { const st = useStore.getState(); st.setIdeOpen(true, st.selectedId); } },
+            { key: 'focus', icon: 'expand' as const, label: t('commandCenter.focus'),
+              onClick: () => setFullscreen(fullscreen ? null : agent.id) }
+          ].map((a) => (
+            <button
+              key={a.key}
+              onClick={a.onClick}
+              style={{
+                flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                height: 30, border: 'none', background: 'transparent',
+                borderRadius: 'calc(var(--cth-radius-btn) - 2px)', cursor: 'pointer',
+                fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600,
+                color: 'var(--cth-ink-700)'
+              }}
+            >
+              <Icon name={a.icon} /> {a.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Row one: the four screens you open all day, in the accent when active.
