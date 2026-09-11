@@ -251,7 +251,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         display: 'flex', gap: 4,
         flexWrap: fullscreen ? 'nowrap' : 'wrap',
         overflowX: fullscreen ? 'auto' : 'visible',
-        padding: '10px 12px 4px', background: 'var(--cth-cream-100)', flexShrink: 0
+        padding: '12px 12px 4px', background: 'transparent', flexShrink: 0
       }}>
         {primaryTabs.map((d) => {
           const on = d.key === tab;
@@ -265,22 +265,31 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
               style={{
                 position: 'relative', whiteSpace: 'nowrap', flex: '1 0 auto',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                padding: '5px 16px 4px', border: 'none', cursor: 'pointer',
-                background: on ? `var(--cth-${agent.accent})` : 'var(--cth-cream-200)',
-                // The active tab is filled with the agent's accent, a LIGHT colour
-                // in both themes; ink-900 flips to near-white in dark, so the one
-                // tab you most need to read went pale-on-pale.
-                color: on ? 'var(--cth-on-accent)' : 'var(--cth-ink-900)',
-                boxShadow: on ? 'inset 0 0 0 1px var(--cth-ink-300)' : 'inset 0 0 0 1px var(--cth-ink-100)',
-                fontFamily: 'var(--cth-font-ui)', fontSize: 13
+                height: 32, padding: '0 14px', border: 'none', cursor: 'pointer',
+                borderRadius: 'var(--cth-radius-btn)',
+                // A pill, and only the active one is filled. The inactive tabs were
+                // filled too (cream-200 on cream-100), so five near-identical boxes
+                // competed and the selected one barely won.
+                // The brand colour, NOT the agent's accent. An accent is identity:
+                // this agent is the coral one. Filling the selected tab with it
+                // meant Pam's active tab rendered red, which every user reads as
+                // an error before they read it as a selection. Identity stays on
+                // the avatar; selection is always the same colour.
+                background: on ? 'var(--cth-lilac)' : 'transparent',
+                color: on ? '#FFFFFF' : 'var(--cth-ink-700)',
+                boxShadow: on ? 'var(--cth-shadow-sm)' : 'none',
+                fontFamily: 'var(--cth-font-ui)', fontSize: 13,
+                fontWeight: on ? 600 : 500,
+                transition: 'background 120ms ease, color 120ms ease'
               }}
             >
               <Icon name={d.icon} /> {t(d.labelKey)}
               {badge > 0 && (
                 <span style={{
-                  minWidth: 16, height: 15, padding: '0 4px',
+                  minWidth: 18, height: 18, padding: '0 6px',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'var(--cth-status-blocked)', color: 'var(--cth-on-accent)',
+                  borderRadius: 'var(--cth-radius-pill)',
+                  background: 'var(--cth-coral)', color: '#FFFFFF',
                   fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: 1
                 }}>{badge}</span>
               )}
@@ -293,8 +302,8 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         display: 'flex', gap: 2, alignItems: 'center',
         flexWrap: fullscreen ? 'nowrap' : 'wrap',
         overflowX: fullscreen ? 'auto' : 'visible',
-        padding: '0 8px 5px', background: 'var(--cth-cream-100)',
-        borderBottom: '1px solid var(--cth-ink-700)', flexShrink: 0
+        padding: '0 12px 10px', background: 'transparent',
+        borderBottom: '1px solid var(--cth-ink-100)', flexShrink: 0
       }}>
         {secondaryTabs.map((d) => {
           const on = d.key === tab;
@@ -307,10 +316,11 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
               style={{
                 whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
                 display: 'inline-flex', alignItems: 'center', gap: 4,
-                padding: '2px 7px 3px', background: 'transparent',
+                height: 26, padding: '0 10px', background: on ? 'var(--cth-cream-200)' : 'transparent',
+                borderRadius: 'var(--cth-radius-btn)',
                 color: on ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
-                boxShadow: on ? `inset 0 -2px 0 0 var(--cth-${agent.accent})` : 'none',
-                fontFamily: 'var(--cth-font-ui)', fontSize: 13
+                fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: on ? 600 : 400,
+                transition: 'background 120ms ease, color 120ms ease'
               }}
             >
               {t(d.labelKey)}
