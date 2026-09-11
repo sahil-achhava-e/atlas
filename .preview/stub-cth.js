@@ -136,12 +136,16 @@
     // never sits in, because it always brings Atlas up on landing.
     spawnPty: function (opts) {
       if (opts && opts.id) ptys[opts.id] = { id: opts.id, cwd: opts.cwd || '' };
-      return Promise.resolve({ ok: true, resumed: false });
+      window.__ptyCalls = window.__ptyCalls || [];
+      window.__ptyCalls.push({ call: 'spawn', id: opts && opts.id, resume: !!(opts && opts.resume) });
+      return Promise.resolve({ ok: true, resumed: !!(opts && opts.resume) });
     },
     listPtys: function () {
       return Promise.resolve(Object.keys(ptys).map(function (id) { return ptys[id]; }));
     },
-    killPty: function (id) { delete ptys[id]; return Promise.resolve(true); },
+    killPty: function (id) {
+      window.__ptyCalls = window.__ptyCalls || [];
+      window.__ptyCalls.push({ call: 'kill' }); delete ptys[id]; return Promise.resolve(true); },
   // The generic fallback answers [] , which is TRUTHY — GitTab then read a
   // status object off it and threw. A preview folder is not a repo.
   // Real scan of this machine, taken by scratchpad/snap-skills.mjs. The browser
@@ -245,6 +249,17 @@
       assignee: 'atlas', priority: 3, createdAt: new Date(Date.now() - 50 * 3600e3).toISOString()
     }
   ] }),
+  // Per-agent token cap: the real one writes config in main and returns the
+  // whole config back. The preview keeps it in memory so the menu's save path
+  // can actually be exercised.
+  setAgentTokenCap: async function (agentId, tokenCap) {
+    config.agentTokenCaps = config.agentTokenCaps || {};
+    if (tokenCap && tokenCap > 0) config.agentTokenCaps[agentId] = tokenCap;
+    else delete config.agentTokenCaps[agentId];
+    save();
+    return Object.assign({}, config);
+  },
+  resolveSessionCwd: async function (_id, cwd) { return cwd || '/Users/you/atlas-data'; },
   skillsDisabled: async () => (window.__skillsOff = window.__skillsOff || []),
   skillsSetEnabled: async (name, on) => {
     const cur = new Set(window.__skillsOff || []);

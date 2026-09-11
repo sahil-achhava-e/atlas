@@ -812,7 +812,11 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   <span style={{
                     flexShrink: 0, fontFamily: 'var(--cth-font-mono)', fontSize: 11,
                     color: 'var(--cth-ink-500)', fontVariantNumeric: 'tabular-nums'
-                  }}>{fmtTokens(used)}{rateVal > 0 ? ` · ${fmtTokens(rateVal)}/m` : ''}</span>
+                  }}>
+                    {fmtTokens(used)}
+                    {hasAgentCap ? ` / ${fmtTokens(agentCap!)}` : ''}
+                    {rateVal > 0 ? ` · ${fmtTokens(rateVal)}/m` : ''}
+                  </span>
                 </div>
               </div>
 
