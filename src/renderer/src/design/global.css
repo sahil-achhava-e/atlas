@@ -461,3 +461,55 @@ a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visib
 /* The segmented action group in the panel header: the hovered segment lifts out
    of the trough, the pressed one stays put. */
 .cth-brand-panel .cth-seg button:hover { background: var(--cth-cream-200) !important; color: var(--cth-ink-900) !important; }
+
+/* ─── Hover label, for icon-only controls only ─────────────────────────────
+   The app-wide tooltip was removed because labelled controls do not need one.
+   An icon-only tab does: the glyph is the whole label. Scoped to .cth-iconbar
+   so it cannot creep back across the rest of the UI.
+
+   Different from the old one on purpose: it sits BELOW with a small arrow,
+   appears after 260ms rather than 400, carries the panel's own shadow, and
+   fades up 3px so it reads as arriving rather than blinking on. */
+.cth-iconbar button { position: relative; }
+.cth-iconbar button::after,
+.cth-iconbar button::before {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 110ms ease-out 260ms, transform 110ms ease-out 260ms;
+}
+.cth-iconbar button::after {
+  content: attr(data-label);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, -3px);
+  white-space: nowrap;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-family: var(--cth-font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: #FFFFFF;
+  background: #16141F;
+  box-shadow: 0 6px 20px rgba(10, 6, 30, 0.35);
+  z-index: 120;
+}
+/* the arrow */
+.cth-iconbar button::before {
+  content: "";
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 50%;
+  transform: translate(-50%, -3px);
+  border: 5px solid transparent;
+  border-bottom-color: #16141F;
+  z-index: 121;
+}
+.cth-iconbar button:hover::after,
+.cth-iconbar button:hover::before,
+.cth-iconbar button:focus-visible::after,
+.cth-iconbar button:focus-visible::before {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

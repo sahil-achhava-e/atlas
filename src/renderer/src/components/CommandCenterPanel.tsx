@@ -333,94 +333,55 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
 
       {/* Row one: the four screens you open all day, in the accent when active.
           Row two: everything else, quieter and smaller, still one click. */}
-      <div className="cth-tabbar" style={{
-        display: 'flex', gap: 4,
-        flexWrap: fullscreen ? 'nowrap' : 'wrap',
-        overflowX: fullscreen ? 'auto' : 'visible',
-        padding: '12px 12px 4px', background: 'transparent', flexShrink: 0
+      {/* Icons only, one row. Ten labels needed two rows and still read as a
+          wall of words; ten glyphs in their own colours are scannable, and the
+          name arrives on hover for anyone who does not know the icon yet.
+          Hidden in focus mode, where every pane is already on screen. */}
+      {!fullscreen && (
+      <div className="cth-tabbar cth-iconbar" style={{
+        display: 'flex', gap: 2, flexWrap: 'wrap',
+        padding: '10px 12px', flexShrink: 0,
+        borderBottom: '1px solid var(--cth-ink-100)'
       }}>
-        {(fullscreen ? [] : primaryTabs).map((d) => {
+        {TABS.map((d) => {
           const on = d.key === tab;
           const badge = d.key === 'human' ? openAsks : 0;
           return (
             <button
               key={d.key}
               onClick={() => setTab(d.key)}
+              data-label={t(d.labelKey)}
+              aria-label={t(d.labelKey)}
+              aria-pressed={on}
               style={{
-                position: 'relative', whiteSpace: 'nowrap', flex: '1 0 auto',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                height: 32, padding: '0 14px', border: 'none', cursor: 'pointer',
+                position: 'relative',
+                width: 36, height: 36, flexShrink: 0,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                border: 'none', cursor: 'pointer',
                 borderRadius: 'var(--cth-radius-btn)',
-                // A pill, and only the active one is filled. The inactive tabs were
-                // filled too (cream-200 on cream-100), so five near-identical boxes
-                // competed and the selected one barely won.
-                // The brand colour, NOT the agent's accent. An accent is identity:
-                // this agent is the coral one. Filling the selected tab with it
-                // meant Pam's active tab rendered red, which every user reads as
-                // an error before they read it as a selection. Identity stays on
-                // the avatar; selection is always the same colour.
                 background: on ? 'var(--cth-lilac)' : 'transparent',
-                color: on ? '#FFFFFF' : 'var(--cth-ink-700)',
+                color: on ? 'var(--cth-on-accent)' : d.tone,
                 boxShadow: on ? 'var(--cth-shadow-sm)' : 'none',
-                fontFamily: 'var(--cth-font-ui)', fontSize: 13,
-                fontWeight: on ? 600 : 500,
                 transition: 'background 120ms ease, color 120ms ease'
               }}
             >
-              <span style={{ display: 'inline-flex', color: on ? 'inherit' : d.tone }}>
-                <Icon name={d.icon} />
-              </span>
-              {t(d.labelKey)}
+              <Icon name={d.icon} />
               {badge > 0 && (
                 <span style={{
-                  minWidth: 18, height: 18, padding: '0 6px',
+                  position: 'absolute', top: 2, insetInlineEnd: 2,
+                  minWidth: 15, height: 15, padding: '0 4px',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   borderRadius: 'var(--cth-radius-pill)',
                   background: 'var(--cth-coral)', color: '#FFFFFF',
-                  fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: 1
+                  fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 10, lineHeight: 1
                 }}>{badge}</span>
               )}
             </button>
           );
         })}
       </div>
+      )}
 
-      <div className="cth-tabbar" style={{
-        display: 'flex', gap: 2, alignItems: 'center',
-        flexWrap: fullscreen ? 'nowrap' : 'wrap',
-        overflowX: fullscreen ? 'auto' : 'visible',
-        padding: '0 12px 10px', background: 'transparent',
-        borderBottom: '1px solid var(--cth-ink-100)', flexShrink: 0
-      }}>
-        {secondaryTabs.map((d) => {
-          const on = d.key === tab;
-          return (
-            <button
-              key={d.key}
-              onClick={() => setTab(d.key)}
-              style={{
-                whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                height: 26, padding: '0 10px', background: on ? 'var(--cth-cream-200)' : 'transparent',
-                borderRadius: 'var(--cth-radius-btn)',
-                color: on ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
-                fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: on ? 600 : 400,
-                transition: 'background 120ms ease, color 120ms ease'
-              }}
-            >
-              <span style={{ display: 'inline-flex', color: on ? 'inherit' : d.tone }}>
-                <Icon name={d.icon} />
-              </span>
-              {t(d.labelKey)}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Body. Boundaried per tab: a crash in one screen must not take the
-          terminal, the queue and the rest of the window with it — which is
-          exactly what happened when the Triggers panel read a field that was
-          not there. `key={tab}` re-arms it when you switch away. */}
       {fullscreen ? (
         /* Focus mode: panes side by side, not stacked behind a tab bar. The
            terminal keeps the room it needs; the queue and the board sit beside
