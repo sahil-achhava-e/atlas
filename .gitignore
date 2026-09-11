@@ -38,3 +38,6 @@ docs/blog-preview-*/
 
 # Corporate TLS root used only to build the preview image on this network.
 .preview/zscaler.crt
+
+# Copied in only while building the MemPalace image; machine-local, never shipped.
+resources/mempalace/ca.pem

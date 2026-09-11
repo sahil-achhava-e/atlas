@@ -308,7 +308,8 @@ const hookServer = new HookServer(
 );
 const memory = new MemoryManager(
   () => readConfig().harnessHome,
-  () => { const c = readConfig(); return { enabled: c.semanticMemory !== false, model: c.embeddingModel ?? 'minilm' }; }
+  () => { const c = readConfig(); return { enabled: c.semanticMemory !== false, model: c.embeddingModel ?? 'minilm' }; },
+  () => mempalaceResourceDir()
 );
 // Enterprise Knowledge Graph — file-backed store + agent CLI (default OFF).
 const knowledge = new KnowledgeManager();
@@ -1426,6 +1427,13 @@ function slackReplyScriptPath(): string {
  *  `.claude/skills/` at spawn. Same packaged/dev resolution as the helpers above.
  *  Tolerated-missing until lp-manifest (Kevin) populates it (the hive copy is a
  *  no-op on an absent dir). */
+/** The shipped MemPalace Dockerfile. Same packaged/dev split as the skills dir. */
+function mempalaceResourceDir(): string {
+  return app.isPackaged
+    ? join(process.resourcesPath, 'mempalace')
+    : join(app.getAppPath(), 'resources', 'mempalace');
+}
+
 function skillsResourceDir(): string {
   return app.isPackaged
     ? join(process.resourcesPath, 'skills')

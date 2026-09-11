@@ -15,7 +15,9 @@
  */
 import { existsSync, statSync, readdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { homedir } from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
+import { dockerBin, dockerReady, imageExists, writeShim, buildImage } from './mempalaceDocker';
 import { ensureKilled } from './procKill';
 import { quarantineDirsToReap, quarantineStampMs, nextMineDelayMs } from './palaceReap';
 
@@ -60,6 +62,14 @@ export interface MemoryStatus {
   palacePath: string | null;
   model: EmbeddingModel;
   bin: string | null;
+  /** Building the container image (first run on this machine, ~2 min). The UI
+   *  says so rather than showing "off" while a build is under way. */
+  preparing: boolean;
+  /** Why the image could not be built, if it could not. */
+  prepareError: string | null;
+  /** True when the resolved CLI is the container shim rather than a native
+   *  install — worth saying, because it means Docker must stay running. */
+  containerized: boolean;
 }
 
 // Re-mine changed memories every 10 min, up from 3.
@@ -125,9 +135,16 @@ export class MemoryManager {
   /** agentId → memory.md mtimeMs at last successful mine (skip unchanged). */
   private lastMined = new Map<string, number>();
 
+  /** idle → building → ready | failed. Only ever leaves 'building' once, so a
+   *  status poll every few seconds cannot start a second docker build. */
+  private buildState: 'idle' | 'building' | 'ready' | 'failed' = 'idle';
+  private buildError: string | null = null;
+
   constructor(
     private getHome: () => string | null,
-    private getSettings: () => MemorySettings
+    private getSettings: () => MemorySettings,
+    /** Where the shipped Dockerfile lives. Absent in tests, which never build. */
+    private getResourceDir?: () => string
   ) {}
 
   palacePath(): string | null {
@@ -170,10 +187,39 @@ export class MemoryManager {
           ];
       for (const c of candidates) if (c && existsSync(c)) { found = c; break; }
     }
+    // 3) Nothing native. On a machine whose policy refuses MemPalace's C
+    //    extensions the container shim IS the install, so it is a normal
+    //    resolution step rather than a fallback — but it is last, so a real
+    //    local mempalace always wins and nobody pays container startup for
+    //    nothing. The image is built elsewhere (ensureContainer); this only
+    //    hands back a shim once there is something for it to run.
+    if (!found) found = this.containerShim();
     this.binCache = found;
     return found;
   }
-  /** Force re-resolution (e.g. after the user installs mempalace). */
+  /** Where the generated shim lives. Outside the app bundle, because it names
+   *  this machine's palace and hive root. */
+  private shimDir(): string {
+    return join(homedir(), '.claude-app', 'bin');
+  }
+
+  /** A shim, but only once docker is up AND the image is built. Returning one
+   *  before that would make `available()` true while every call failed. */
+  private containerShim(): string | null {
+    const docker = dockerBin();
+    if (!docker || !dockerReady(docker) || !imageExists(docker)) return null;
+    const palace = this.palacePath();
+    const home = this.getHome();
+    try {
+      return writeShim(this.shimDir(), docker, [palace ?? '', home ?? ''].filter(Boolean));
+    } catch (e) {
+      console.error('[memory] could not write the mempalace shim:', e);
+      return null;
+    }
+  }
+
+  /** Force re-resolution (e.g. after the user installs mempalace, or the image
+   *  finishes building). */
   resetBinCache(): void { this.binCache = undefined; }
 
   available(): boolean { return this.bin() !== null; }
@@ -183,10 +229,14 @@ export class MemoryManager {
 
   status(): MemoryStatus {
     const palace = this.palacePath();
+    const bin = this.bin();
     return {
       available: this.available(),
       enabled: this.enabled(),
       active: this.active(),
+      preparing: this.buildState === 'building',
+      prepareError: this.buildState === 'failed' ? this.buildError : null,
+      containerized: !!bin && bin.startsWith(this.shimDir()),
       initialized: !!palace && existsSync(palace),
       palacePath: palace,
       model: this.model(),
@@ -198,7 +248,16 @@ export class MemoryManager {
   env(): Record<string, string> {
     const palace = this.palacePath();
     if (!this.active() || !palace) return {};
+    // An agent runs `mempalace search` itself, through its own shell. When the
+    // CLI is our generated shim it lives somewhere no PATH mentions, so the
+    // agent would report "command not found" while the dashboard's own mine
+    // loop worked perfectly — the confusing half-working state. Prepend it.
+    const bin = this.bin();
+    const shimPath: Record<string, string> = bin && bin.startsWith(this.shimDir())
+      ? { PATH: `${this.shimDir()}:${process.env.PATH ?? ''}` }
+      : {};
     return {
+      ...shimPath,
       MEMPALACE_PALACE_PATH: palace,
       MEMPALACE_EMBEDDING_MODEL: this.model(),
       ...(MEMPALACE_DEVICE ? { MEMPALACE_EMBEDDING_DEVICE: MEMPALACE_DEVICE } : {})
@@ -257,8 +316,45 @@ export class MemoryManager {
    */
   refresh(): MemoryStatus {
     this.resetBinCache();
+    this.ensureContainer();
     this.start();
     return this.status();
+  }
+
+  /**
+   * Build the container image once, in the background, if that is the only way
+   * MemPalace can run here.
+   *
+   * Deliberately does nothing when a native mempalace exists (it is faster), or
+   * when memory is switched off (a ~2 minute build nobody asked for), or when
+   * Docker is not running (there is nothing to build with, and saying so is the
+   * status's job). Kicked from `refresh()`, which the settings poll already
+   * calls, so no new timer.
+   */
+  ensureContainer(): void {
+    if (this.buildState !== 'idle') return;
+    if (!this.enabled()) return;
+    const resourceDir = this.getResourceDir?.();
+    if (!resourceDir) return;
+    if (this.bin()) { this.buildState = 'ready'; return; } // native or already built
+    const docker = dockerBin();
+    if (!docker || !dockerReady(docker)) return;           // retry on the next poll
+    if (imageExists(docker)) { this.buildState = 'ready'; this.resetBinCache(); return; }
+    this.buildState = 'building';
+    console.log('[memory] building the mempalace image (first run on this machine)');
+    void buildImage(docker, resourceDir, (line) => {
+      if (/^(Step|#\d| ---> |ERROR)/.test(line)) console.log('[memory][build]', line.slice(0, 160));
+    }).then((r) => {
+      this.buildState = r.ok ? 'ready' : 'failed';
+      this.buildError = r.ok ? null : (r.error ?? 'docker build failed');
+      if (r.ok) {
+        console.log('[memory] mempalace image ready');
+        this.resetBinCache();
+        this.start();
+      } else {
+        console.error('[memory] mempalace image build failed:', this.buildError);
+      }
+    });
   }
 
   /** Self-scheduling rather than `setInterval`, so the gap can widen when the

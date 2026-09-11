@@ -341,6 +341,11 @@ export interface MemoryStatus {
   palacePath: string | null;
   model: 'minilm' | 'embeddinggemma';
   bin: string | null;
+  /** First run on this machine is building the container image (~2 min). */
+  preparing: boolean;
+  prepareError: string | null;
+  /** Running in a container, which means Docker has to stay running. */
+  containerized: boolean;
 }
 
 /** Enterprise Knowledge Graph — corpus status, one document, and a search hit. */

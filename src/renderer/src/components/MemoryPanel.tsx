@@ -7,6 +7,9 @@ import { useRtl } from '@/i18n/useDirection';
 
 interface MemoryStatus {
   available: boolean;
+  preparing?: boolean;
+  prepareError?: string | null;
+  containerized?: boolean;
   enabled: boolean;
   active: boolean;
   initialized: boolean;
@@ -75,7 +78,15 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
   const pill = active ? `${t('memoryPanel.pillActive')} · ${status?.model}` : t('memoryPanel.pill');
 
   // One clear state line: is memory working, off, or not set up?
-  const state: { dot: string; label: string } = !status?.available
+  // "Preparing" comes FIRST, before "not set up". A first run on a machine with
+  // no native mempalace spends ~2 minutes building the container image, and
+  // during that window `available` is false — so without this the panel tells
+  // you to go and install something that is already installing itself.
+  const state: { dot: string; label: string } = status?.preparing
+    ? { dot: 'var(--cth-lemon)', label: t('memoryPanel.preparing') }
+    : status?.prepareError
+      ? { dot: 'var(--cth-coral)', label: t('memoryPanel.prepareFailed') }
+    : !status?.available
     ? { dot: 'var(--cth-coral)', label: t('memoryPanel.notSetUp') }
     : !status.enabled
       ? { dot: 'var(--cth-ink-500)', label: t('common.off') }
@@ -133,7 +144,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
             </div>
 
             {/* Not installed: show full self-sufficient setup so any machine can follow it. */}
-            {!status?.available && (
+            {!status?.available && !status?.preparing && (
               <div style={{
                 fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: 1.6,
                 background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', padding: 10

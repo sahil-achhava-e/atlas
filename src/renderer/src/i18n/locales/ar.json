@@ -1130,7 +1130,9 @@
     "modelMultilingualDetail": "كل اللغات · ~300 م.ب",
     "searchPlaceholder": "ابحث بالمعنى…",
     "nothingMatched": "لا نتائج مطابقة بعد.",
-    "searchFailed": "تعذّر البحث"
+    "searchFailed": "تعذّر البحث",
+    "preparing": "يجري تحضير الذاكرة (أول تشغيل، نحو دقيقتين)…",
+    "prepareFailed": "تعذّر تحضير الذاكرة. هل Docker يعمل؟"
   },
   "threads": {
     "noSubject": "(بلا موضوع)",

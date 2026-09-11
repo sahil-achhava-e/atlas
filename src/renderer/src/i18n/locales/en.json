@@ -1201,7 +1201,9 @@
     "modelMultilingualDetail": "all languages · ~300 MB",
     "searchPlaceholder": "Search by meaning…",
     "nothingMatched": "Nothing matched yet.",
-    "searchFailed": "Couldn't search"
+    "searchFailed": "Couldn't search",
+    "preparing": "Preparing memory (first run, about two minutes)…",
+    "prepareFailed": "Could not prepare memory. Is Docker running?"
   },
   "threads": {
     "noSubject": "(no subject)",
