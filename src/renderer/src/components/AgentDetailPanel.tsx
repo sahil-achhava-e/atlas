@@ -167,7 +167,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
           }}>
             <PixelBadge status={agent.status} />
             <span style={{
-              fontSize: 12, color: 'var(--cth-ink-500)',
+              fontSize: 13, color: 'var(--cth-ink-500)',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
             }}>{agent.project}</span>
           </div>
@@ -223,7 +223,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
 
       {openTerminalError && (
         <div style={{
-          fontSize: 12, color: 'var(--cth-coral)',
+          fontSize: 13, color: 'var(--cth-coral)',
           padding: '2px 8px',
           background: 'var(--cth-coral-light)',
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
@@ -302,7 +302,7 @@ function EmptyTab({ title, children }: { title: string; children: React.ReactNod
       background: 'var(--cth-paper-200)'
     }}>
       <div style={{
-        fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
         color: 'var(--cth-ink-500)'
       }}>{title.toUpperCase()}</div>
       <p style={{

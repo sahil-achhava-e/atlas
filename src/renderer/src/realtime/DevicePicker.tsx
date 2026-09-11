@@ -45,15 +45,14 @@ async function listDevices(kind: 'audioinput' | 'audiooutput'): Promise<AudioDev
 }
 
 const labelStyle: React.CSSProperties = {
-  fontFamily: 'var(--cth-font-display)',
-  fontSize: 8,
+  fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+  fontSize: 11,
   lineHeight: '12px',
   color: 'var(--cth-ink-500)',
-  textTransform: 'uppercase'
 };
 const selectStyle: React.CSSProperties = {
   fontFamily: 'var(--cth-font-mono)',
-  fontSize: 12,
+  fontSize: 13,
   padding: '6px 8px',
   border: '2px solid var(--cth-ink-300)',
   background: 'var(--cth-paper-100)',
@@ -149,7 +148,7 @@ export function RealtimeDevicePicker(): React.ReactElement {
           <PixelButton variant="secondary" size="sm" onClick={() => { void askAccess(); }} disabled={asking}>
             {asking ? t('devicePicker.asking') : t('devicePicker.showNames')}
           </PixelButton>
-          <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+          <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
             {askError || t('devicePicker.namesHint')}
           </span>
         </div>

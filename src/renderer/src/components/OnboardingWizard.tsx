@@ -24,7 +24,7 @@ type Step = 'persona' | 'welcome' | 'home' | 'orchestrator' | 'repos' | 'permiss
 /** The setup's two nav buttons. The display face and a little tracking so a
  *  one-word label still reads as a control, not as a caption; the primary keeps
  *  a floor width so "Continue" and "Finish setup" do not resize the footer. */
-const NAV_LABEL = { fontFamily: 'var(--cth-font-display)', letterSpacing: 0.6 } as const;
+const NAV_LABEL = { fontFamily: 'var(--cth-font-ui)', fontWeight: 600, letterSpacing: 0.6 } as const;
 const NAV_PRIMARY = { ...NAV_LABEL, minWidth: 148 } as const;
 
 /** Every step the rail shows, in order. 'done' is the finish screen, not a step
@@ -323,11 +323,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           <span style={{
             width: 32, height: 32, display: 'grid', placeItems: 'center', flexShrink: 0,
             background: 'var(--cth-lilac)', color: 'var(--cth-on-accent)',
-            fontFamily: 'var(--cth-font-display)', fontSize: 13,
+            fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13,
             boxShadow: '0 0 0 1px var(--cth-ink-900), 0 0 18px -2px var(--cth-lilac)'
           }}>A</span>
           <span style={{
-            fontFamily: 'var(--cth-font-display)', fontSize: 14, letterSpacing: 2,
+            fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 14, letterSpacing: 2,
             color: 'var(--cth-ink-900)'
           }}>{t('onboarding.setup.name')}</span>
           <span style={{ flex: 1 }} />
@@ -366,7 +366,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             {/* The step's own name — the rail says where, this says what. */}
             <h2 style={{
               margin: 0, padding: '22px 28px 0',
-              fontFamily: 'var(--cth-font-display)', fontSize: 19, lineHeight: '26px', letterSpacing: 0.5,
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 19, lineHeight: '26px', letterSpacing: 0.5,
               color: 'var(--cth-ink-900)'
             }}>{stepTitle}</h2>
             <div style={{
@@ -386,7 +386,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     <SpritePortrait character="michael" scale={2} />
                   </div>
                   <div>
-                    <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 16, lineHeight: '23px' }}>
+                    <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 16, lineHeight: '23px' }}>
                       {t('onboarding.persona.headline')}
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: '21px' }}>
@@ -396,7 +396,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   </div>
                 </div>
 
-                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13, letterSpacing: 0.5, color: 'var(--cth-ink-700)' }}>
+                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, letterSpacing: 0.5, color: 'var(--cth-ink-700)' }}>
                   {t('onboarding.persona.ask')}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -431,7 +431,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   </div>
                   <div>
                     <div style={{
-                      fontFamily: 'var(--cth-font-display)',
+                      fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
                       fontSize: 16, lineHeight: '23px'
                     }}>{t('onboarding.welcome.headline')}</div>
                     <div style={{ fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: '20px' }}>
@@ -460,7 +460,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       </div>
                       <div style={{ minWidth: 0 }}>
                         <div style={{
-                          fontFamily: 'var(--cth-font-display)',
+                          fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
                           fontSize: 14, lineHeight: '19px', marginBottom: 4
                           // These labels are literal caps to match their siblings, so
                           // the orchestrator's name has to arrive upper-cased too.
@@ -503,14 +503,14 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     : ['onboarding.home.holdsState', 'onboarding.home.holdsMemory', 'onboarding.home.holdsLogs']
                   ).map((k) => (
                     <span key={k} style={{
-                      padding: '4px 10px', fontSize: 12, lineHeight: '17px',
+                      padding: '4px 10px', fontSize: 13, lineHeight: '17px',
                       color: 'var(--cth-ink-700)',
                       background: 'var(--cth-cream-200)',
                       boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
                     }}>{t(k)}</span>
                   ))}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
+                <div style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>
                   {plain ? t('onboarding.home.notePlain') : t('onboarding.home.note')}
                 </div>
 
@@ -547,7 +547,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
                 {/* Was a five-line explainer in a yellow box repeating what the
                     badges already say. One line is enough; the badges do the rest. */}
-                <div style={{ fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-500)' }}>
+                <div style={{ fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-500)' }}>
                   {plain ? t('onboarding.orchestrator.cliAgentPlain') : t('onboarding.orchestrator.cliAgent')}
                 </div>
 
@@ -591,7 +591,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         </span>
                         <span style={{ flex: 1, minWidth: 0 }}>
                           <span style={{
-                            display: 'block', fontFamily: 'var(--cth-font-display)',
+                            display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
                             fontSize: 13, lineHeight: '18px', letterSpacing: 0.5
                           }}>
                             {p.label.toUpperCase()}
@@ -602,7 +602,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                               The vendor alone read as a repeat of the label on
                               rows like "GROK · XAI". */}
                           <span style={{
-                            display: 'block', fontSize: 12, lineHeight: '17px',
+                            display: 'block', fontSize: 13, lineHeight: '17px',
                             color: 'var(--cth-ink-500)',
                             fontFamily: plain ? 'var(--cth-font-ui)' : 'var(--cth-font-mono)'
                           }}>
@@ -622,7 +622,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                               background: a.state === 'installed' ? 'var(--cth-mint-light)' : bad ? 'var(--cth-paper-100)' : 'var(--cth-cream-200)',
                               color: bad ? 'var(--cth-ink-500)' : 'var(--cth-ink-900)',
                               boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-                              fontFamily: 'var(--cth-font-display)', flexShrink: 0
+                              fontFamily: 'var(--cth-font-ui)', fontWeight: 600, flexShrink: 0
                             }}>{badge}</span>
                           );
                         })()}
@@ -631,7 +631,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                             fontSize: 11, padding: '2px 6px', lineHeight: '16px',
                             background: 'var(--cth-lemon)',
                             boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-                            fontFamily: 'var(--cth-font-display)', flexShrink: 0
+                            fontFamily: 'var(--cth-font-ui)', fontWeight: 600, flexShrink: 0
                           }}>{t('onboarding.orchestrator.recommended')}</span>
                         )}
                       </label>
@@ -657,10 +657,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         <ProviderLogo provider={p.id} size={18} />
                       </span>
                       <span style={{ flex: 1, minWidth: 0 }}>
-                        <span style={{ display: 'block', fontFamily: 'var(--cth-font-display)', fontSize: 11, color: 'var(--cth-ink-500)' }}>
+                        <span style={{ display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-ink-500)' }}>
                           {p.label.toUpperCase()}
                         </span>
-                        <span style={{ display: 'block', fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-500)' }}>
+                        <span style={{ display: 'block', fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-500)' }}>
                           {t('onboarding.orchestrator.workersOnlyHint', { godName })}
                         </span>
                       </span>
@@ -668,7 +668,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         fontSize: 11, padding: '2px 6px', lineHeight: '16px',
                         background: 'var(--cth-paper-100)', color: 'var(--cth-ink-500)',
                         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-                        fontFamily: 'var(--cth-font-display)', flexShrink: 0
+                        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, flexShrink: 0
                       }}>{t('onboarding.orchestrator.workersOnly')}</span>
                     </label>
                   ))}
@@ -677,7 +677,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   <div style={{
                     display: 'flex', flexDirection: 'column', gap: 8, padding: 10,
                     background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 2px var(--cth-ink-900)',
-                    fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-900)'
+                    fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-900)'
                   }}>
                     <span>{engineAvailabilityMessage(selectedEngine, providerPreset(godProvider).label, godName)}</span>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -703,7 +703,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       <option key={m.label} value={m.id ?? ''}>{m.label}</option>
                     ))}
                   </select>
-                  <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
+                  <div style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>
                     {t('onboarding.orchestrator.modelNote', { godName })}
                   </div>
                 </div>
@@ -719,7 +719,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
                   <FieldLabel>{t('onboarding.repos.fieldLabel')}</FieldLabel>
                   {repos.length > 0 && (
-                    <span style={{ fontSize: 12, color: 'var(--cth-ink-500)', marginBottom: -8 }}>
+                    <span style={{ fontSize: 13, color: 'var(--cth-ink-500)', marginBottom: -8 }}>
                       {t('onboarding.repos.count', { count: repos.length })}
                     </span>
                   )}
@@ -763,7 +763,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         </span>
                         <span style={{ flex: 1, minWidth: 0 }}>
                           <span style={{
-                            display: 'block', fontFamily: 'var(--cth-font-display)',
+                            display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
                             fontSize: 13, lineHeight: '18px', letterSpacing: 0.5,
                             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                           }}>{name}</span>
@@ -773,7 +773,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                           {parent !== '/' && (
                             <span style={{
                               display: 'block', fontFamily: 'var(--cth-font-mono)',
-                              fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-500)',
+                              fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-500)',
                               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                             }}>{parent}</span>
                           )}
@@ -804,7 +804,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     this wizard. Maps to each engine's flag: auto -> claude
                     bypassPermissions / codex -a never -s workspace-write (sandbox
                     kept); off -> each engine's ask-first default. */}
-                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13, letterSpacing: 0.5, color: 'var(--cth-ink-700)' }}>
+                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, letterSpacing: 0.5, color: 'var(--cth-ink-700)' }}>
                   {t('onboarding.permissions.autonomyHead')}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -823,17 +823,17 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     onClick={() => setAutoMode(true)}
                   />
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
+                <div style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>
                   {plain ? t('onboarding.permissions.autoNotePlain') : t('onboarding.permissions.autoNote')}
                 </div>
 
                 <div style={{ height: 1, background: 'var(--cth-ink-300)', margin: '2px 0' }} />
 
                 {/* RELIABILITY "— keeping work firing while you're away. */}
-                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13, letterSpacing: 0.5, color: 'var(--cth-ink-700)' }}>
+                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, letterSpacing: 0.5, color: 'var(--cth-ink-700)' }}>
                   {t('onboarding.permissions.reliabilityHead')}
                 </div>
-                <p style={{ margin: 0, lineHeight: '20px', fontSize: 12, color: 'var(--cth-ink-700)' }}>
+                <p style={{ margin: 0, lineHeight: '20px', fontSize: 13, color: 'var(--cth-ink-700)' }}>
                   {plain ? t('onboarding.permissions.reliabilityDescPlain') : t('onboarding.permissions.reliabilityDesc')}
                 </p>
 
@@ -882,7 +882,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   </span>
                   <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div>
-                      <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 13, lineHeight: '18px', marginBottom: 4 }}>
+                      <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '18px', marginBottom: 4 }}>
                         {t('onboarding.permissions.stayAwake')}
                       </div>
                       <div style={{ fontSize: 13, lineHeight: '18px', color: 'var(--cth-ink-700)' }}>
@@ -1001,7 +1001,7 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      fontFamily: 'var(--cth-font-display)', fontSize: 11, letterSpacing: 1,
+      fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 1,
       color: 'var(--cth-ink-500)', marginBottom: -8
     }}>{children}</div>
   );
@@ -1054,8 +1054,7 @@ function PersonaCard({ icon, title, desc, selected, onClick }: {
         }}>{selected ? '\u2713' : ''}</span>
       </span>
       <span style={{
-        fontFamily: 'var(--cth-font-display)', fontSize: 14, lineHeight: '19px',
-        letterSpacing: 0.5, color: 'var(--cth-ink-900)'
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 14, lineHeight: '19px', color: 'var(--cth-ink-900)'
       }}>
         {title}
       </span>
@@ -1096,7 +1095,7 @@ function ToggleRow({ icon, label, desc, on, tint, edge, onChange }: {
         <Icon name={icon} />
       </span>
       <span style={{ minWidth: 0 }}>
-        <span style={{ display: 'block', fontFamily: 'var(--cth-font-display)', fontSize: 13, lineHeight: '18px', marginBottom: 4 }}>
+        <span style={{ display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '18px', marginBottom: 4 }}>
           {label}
         </span>
         <span style={{ display: 'block', fontSize: 13, lineHeight: '18px', color: 'var(--cth-ink-700)' }}>
@@ -1135,7 +1134,7 @@ function RailStep({ n, label, state }: {
       <span style={{
         width: 24, height: 24, flexShrink: 0, display: 'grid', placeItems: 'center',
         position: 'relative',   // sits ON the spine, so it needs to paint over it
-        fontFamily: 'var(--cth-font-display)', fontSize: 11,
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11,
         // Done is filled and quiet, current is filled and lit, todo is an empty
         // outline. Three states, three different weights of ink.
         background: state === 'done' ? 'var(--cth-lilac-light)'
@@ -1147,7 +1146,7 @@ function RailStep({ n, label, state }: {
           : `inset 0 0 0 1px ${state === 'todo' ? 'var(--cth-ink-100)' : 'var(--cth-lilac)'}`
       }}>{state === 'done' ? '\u2713' : n}</span>
       <span style={{
-        fontFamily: 'var(--cth-font-display)', fontSize: 12, lineHeight: '16px',
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '16px',
         letterSpacing: current ? 1 : 0.5,
         color: current ? 'var(--cth-ink-900)' : state === 'done' ? 'var(--cth-ink-700)' : 'var(--cth-ink-500)'
       }}>{label}</span>

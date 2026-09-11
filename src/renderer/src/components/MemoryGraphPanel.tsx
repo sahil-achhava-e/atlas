@@ -349,7 +349,7 @@ export function MemoryGraphPanel({
         {messageEdgeCount === 0 && !showTopics && (
           <div style={{
             position: 'absolute', top: 10, left: 0, right: 0, textAlign: 'center',
-            fontSize: 12, color: 'var(--cth-ink-500)', pointerEvents: 'none'
+            fontSize: 13, color: 'var(--cth-ink-500)', pointerEvents: 'none'
           }}>No messages logged yet — the hive is quiet. Agents shown as roster.</div>
         )}
 
@@ -439,7 +439,7 @@ function Legend() {
       display: 'flex', flexWrap: 'wrap', gap: '2px 10px', maxWidth: 280, pointerEvents: 'none'
     }}>
       {items.map((it) => (
-        <span key={it.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--cth-ink-700)' }}>
+        <span key={it.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--cth-ink-700)' }}>
           <span style={{ width: 9, height: 3, background: it.c, display: 'inline-block' }} /> {it.label}
         </span>
       ))}
@@ -469,7 +469,7 @@ function Toggle({ on, onClick, label }: { on: boolean; onClick: () => void; labe
         display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 9px 2px', border: 'none', cursor: 'pointer',
         background: on ? 'var(--cth-lilac)' : 'var(--cth-cream-200)',
         boxShadow: on ? 'inset 0 0 0 1px var(--cth-ink-300)' : 'inset 0 0 0 1px var(--cth-ink-100)',
-        fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)'
+        fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)'
       }}
     >
       <Icon name={on ? 'check' : 'plus'} /> {label}
@@ -533,11 +533,11 @@ function memorySnippet(text: unknown, t: TFunction): string {
 const iconBtn: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 9px 2px', border: 'none', cursor: 'pointer',
   background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-  fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)'
+  fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)'
 };
 
 const tipTitle: React.CSSProperties = {
-  fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)', lineHeight: '16px'
+  fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)', lineHeight: '16px'
 };
 const tipBody: React.CSSProperties = {
   fontSize: 11, lineHeight: '15px', color: 'var(--cth-ink-700)'

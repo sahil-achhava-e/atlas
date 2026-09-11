@@ -195,7 +195,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
             <span style={{
-              fontFamily: 'var(--cth-font-display)', fontSize: 11, lineHeight: '15px',
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '15px',
               color: 'var(--cth-ink-900)',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
             }}>{agent.name.toUpperCase()}</span>
@@ -212,7 +212,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
             )}
           </div>
           <div style={{
-            fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)',
+            fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)',
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
           }}>{headerLine}</div>
         </div>
@@ -281,7 +281,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                   minWidth: 16, height: 15, padding: '0 4px',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   background: 'var(--cth-status-blocked)', color: 'var(--cth-on-accent)',
-                  fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: 1
+                  fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: 1
                 }}>{badge}</span>
               )}
             </button>
@@ -310,7 +310,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                 padding: '2px 7px 3px', background: 'transparent',
                 color: on ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
                 boxShadow: on ? `inset 0 -2px 0 0 var(--cth-${agent.accent})` : 'none',
-                fontFamily: 'var(--cth-font-ui)', fontSize: 12
+                fontFamily: 'var(--cth-font-ui)', fontSize: 13
               }}
             >
               {t(d.labelKey)}
@@ -677,7 +677,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
     <Scroll>
       <Section title={t('commandCenter.dispatchViaMichael', { godName: godName.toUpperCase() })}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-          <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 8, color: 'var(--cth-ink-500)', flexShrink: 0 }}>
+          <span style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>
             {t('commandCenter.suggestedOwner')}
           </span>
           <Select value={dispatchTo} onChange={setDispatchTo}>
@@ -699,7 +699,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
           <PixelButton variant="primary" size="sm" onClick={dispatch} disabled={!dispatchText.trim()}>
             {t('commandCenter.dispatch')}
           </PixelButton>
-          {dispatchMsg && <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>{dispatchMsg}</span>}
+          {dispatchMsg && <span style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>{dispatchMsg}</span>}
         </div>
       </Section>
 
@@ -750,11 +750,11 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                 onClick={() => select(a.id)}
                 style={{
                   border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-                  fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)'
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)'
                 }}
               >{a.name}{a.isGod ? t('commandCenter.godTag') : ''}</button>
               <PixelBadge status={armed ? 'looping' : a.status} />
-              {armed && <span title={breaker?.reason} style={{ color: 'var(--cth-coral)', fontSize: 12 }}>⚠</span>}
+              {armed && <span title={breaker?.reason} style={{ color: 'var(--cth-coral)', fontSize: 13 }}>⚠</span>}
               <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--cth-ink-500)' }}>
                 {t('commandCenter.toolCalls', { count: toolCounts[a.id] ?? 0 })}
               </span>
@@ -765,7 +765,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               {hasSpark ? (
                 <span style={{ flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 10, color: 'var(--cth-ink-500)', flexShrink: 0 }}>{rateLabel}</span>
+                  <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>{rateLabel}</span>
                   <Sparkline series={sparkSeries} />
                 </span>
               ) : (
@@ -773,11 +773,11 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
               )}
               {lastTool[a.id] && (
                 <span style={{
-                  fontSize: 10, lineHeight: '14px', padding: '0 5px', flexShrink: 0,
+                  fontSize: 11, lineHeight: '14px', padding: '0 5px', flexShrink: 0,
                   background: 'var(--cth-paper-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', color: 'var(--cth-ink-700)'
                 }}>{lastTool[a.id]}</span>
               )}
-              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 10, color: 'var(--cth-ink-300)', flexShrink: 0 }}>{t('commandCenter.budget')}</span>
+              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-300)', flexShrink: 0 }}>{t('commandCenter.budget')}</span>
               <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-900)', width: 56, textAlign: 'right' }}>{fmtTokens(tokens)}</span>
               <div
                 title={t('commandCenter.meterTitle', {
@@ -798,7 +798,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                 spend, this one is headroom before compaction. */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ flex: 1 }} />
-              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 10, color: 'var(--cth-ink-300)', flexShrink: 0 }}>{t('commandCenter.ctx')}</span>
+              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-300)', flexShrink: 0 }}>{t('commandCenter.ctx')}</span>
               {a.contextTokens !== undefined && a.contextLimit ? (() => {
                 const cpct = Math.min(100, Math.round((a.contextTokens! / a.contextLimit!) * 100));
                 const ccolor = cpct >= 88 ? 'var(--cth-coral)' : cpct >= 75 ? 'var(--cth-lemon)' : `var(--cth-${a.accent})`;
@@ -990,7 +990,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
         {repos.length === 0 && <Muted>{t('commandCenter.noRepos')}</Muted>}
         {repos.map((r) => (
           <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-            <span style={{ flex: 1, fontSize: 12, color: 'var(--cth-ink-700)', wordBreak: 'break-all' }}>{r}</span>
+            <span style={{ flex: 1, fontSize: 13, color: 'var(--cth-ink-700)', wordBreak: 'break-all' }}>{r}</span>
             <button
               onClick={() => window.cth.openTerminalAt(r)}
               title={t('commandCenter.openInTerminal')}
@@ -1016,7 +1016,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
             </div>
             {issuesError && (
               <div style={{
-                fontSize: 12, color: 'var(--cth-ink-700)', marginBottom: 6,
+                fontSize: 13, color: 'var(--cth-ink-700)', marginBottom: 6,
                 padding: 6, background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                 wordBreak: 'break-word'
               }}>{issuesError}</div>
@@ -1029,7 +1029,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                 background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                  <span style={{ fontSize: 12, color: 'var(--cth-ink-900)', flex: 1, wordBreak: 'break-word' }}>
+                  <span style={{ fontSize: 13, color: 'var(--cth-ink-900)', flex: 1, wordBreak: 'break-word' }}>
                     <strong>#{issue.number}</strong> {issue.title}
                   </span>
                   <PixelButton variant="secondary" size="sm" onClick={() => assignIssue(issue)}>
@@ -1040,7 +1040,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                     {issue.labels.map((label) => (
                       <span key={label} style={{
-                        fontSize: 10, lineHeight: '14px', padding: '0 5px',
+                        fontSize: 11, lineHeight: '14px', padding: '0 5px',
                         background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                         color: 'var(--cth-ink-700)'
                       }}>{label}</span>
@@ -1072,7 +1072,7 @@ function ArchivedSection() {
           display: 'inline-flex', alignItems: 'center', gap: 4,
           padding: '2px 8px 1px', border: 'none', cursor: 'pointer',
           background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-          fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)',
+          fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)',
           marginBottom: open ? 6 : 0
         }}
       >{open ? '▾' : '▸'} {open ? t('commandCenter.hideClosed') : t('commandCenter.showClosed')}</button>
@@ -1090,7 +1090,7 @@ function ArchivedSection() {
             <SpritePortrait character={a.character} scale={1} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-700)' }}>{a.name}</div>
+            <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-700)' }}>{a.name}</div>
             <div style={{ fontSize: 11, color: 'var(--cth-ink-500)', wordBreak: 'break-all' }}>{a.cwd}</div>
           </div>
           <button
@@ -1215,7 +1215,7 @@ function Sparkline({ series }: { series: number[] }) {
     ? series.map((v) => blocks[Math.min(blocks.length - 1, Math.round((v / max) * (blocks.length - 1)))]).join('')
     : '▁▁▁▁▁▁';
   return (
-    <span style={{ flex: 1, fontFamily: 'var(--cth-font-mono)', fontSize: 12, lineHeight: '12px', color: 'var(--cth-sky)', whiteSpace: 'nowrap', overflow: 'hidden', minWidth: 0 }}>
+    <span style={{ flex: 1, fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '12px', color: 'var(--cth-sky)', whiteSpace: 'nowrap', overflow: 'hidden', minWidth: 0 }}>
       {text}
     </span>
   );
@@ -1322,7 +1322,7 @@ function ActivityTab() {
       <Section title={t('commandCenter.activity')}>
         {log.length === 0 && <Muted>{t('commandCenter.nothingYet')}</Muted>}
         {[...log].reverse().map((e, i) => (
-          <div key={i} style={{ fontSize: 12, color: 'var(--cth-ink-700)', padding: '2px 0', display: 'flex', gap: 6 }}>
+          <div key={i} style={{ fontSize: 13, color: 'var(--cth-ink-700)', padding: '2px 0', display: 'flex', gap: 6 }}>
             <span style={{ color: 'var(--cth-ink-300)', flexShrink: 0 }}>{e.kind ?? '·'}</span>
             <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fmt(e)}</span>
           </div>
@@ -1349,7 +1349,7 @@ function Scroll({ children }: { children: React.ReactNode }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 14 }}>
-      <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '12px', color: 'var(--cth-ink-500)', marginBottom: 6 }}>{title}</div>
+      <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px', color: 'var(--cth-ink-500)', marginBottom: 6 }}>{title}</div>
       {children}
     </div>
   );
@@ -1364,7 +1364,7 @@ function Centered({ children }: { children: React.ReactNode }) {
 }
 
 function Muted({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>{children}</div>;
+  return <div style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>{children}</div>;
 }
 
 function Pre({ children }: { children: React.ReactNode }) {
@@ -1373,7 +1373,7 @@ function Pre({ children }: { children: React.ReactNode }) {
     <pre style={{
       margin: '6px 0 0', padding: 8, maxHeight: 200, overflow: 'auto',
       background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-      fontFamily: 'var(--cth-font-mono)', fontSize: 12, lineHeight: '16px',
+      fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '16px',
       color: 'var(--cth-ink-900)', whiteSpace: 'pre-wrap', wordBreak: 'break-word'
     }} dir={rtl ? 'auto' : undefined}>{children}</pre>
   );
@@ -1383,7 +1383,7 @@ const textareaStyle: React.CSSProperties = {
   flex: 1, width: '100%', resize: 'none', padding: '6px 8px',
   background: 'var(--cth-paper-100)', border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-  fontFamily: 'var(--cth-font-mono)', fontSize: 12, lineHeight: '17px',
+  fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '17px',
   color: 'var(--cth-ink-900)', outline: 'none', boxSizing: 'border-box'
 };
 
@@ -1398,7 +1398,7 @@ function Select({ value, onChange, disabled, children }: {
       style={{
         padding: '3px 6px', background: 'var(--cth-paper-100)',
         border: 'none', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-        fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)', cursor: 'pointer',
+        fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)', cursor: 'pointer',
         // Never let a long option name push the sidebar wider than it is.
         minWidth: 0, maxWidth: '100%'
       }}

@@ -33,7 +33,7 @@ function StatusChip({ tool }: { tool: ToolStatus }) {
   const ready = tool.found;
   return (
     <span style={{
-      fontFamily: 'var(--cth-font-display)', fontSize: 9, letterSpacing: 0.5,
+      fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 0.5,
       padding: '2px 6px', flexShrink: 0, whiteSpace: 'nowrap',
       background: ready ? 'var(--cth-mint-light)' : 'var(--cth-cream-200)',
       boxShadow: `inset 0 0 0 1px ${ready ? 'var(--cth-mint)' : 'var(--cth-ink-300)'}`,
@@ -60,16 +60,16 @@ function ToolRow({ tool }: { tool: ToolStatus }) {
       background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 11, flex: 1, minWidth: 0 }}>
+        <span style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, flex: 1, minWidth: 0 }}>
           {tool.label.toUpperCase()}
         </span>
         {tool.essential && !tool.found && (
-          <span style={{ fontSize: 10, color: 'var(--cth-ink-500)', flexShrink: 0 }}>{t('setupPanel.recommended')}</span>
+          <span style={{ fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>{t('setupPanel.recommended')}</span>
         )}
         <StatusChip tool={tool} />
       </div>
 
-      <div style={{ fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: 1.5 }}>{tool.why}</div>
+      <div style={{ fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: 1.5 }}>{tool.why}</div>
 
       {/* Found: show WHERE, so a "ready" claim is verifiable rather than trusted. */}
       {tool.found && tool.path && (
@@ -162,12 +162,12 @@ export function SetupPanel(
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 200 }}>
-          <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 12 }}>
+          <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13 }}>
             {only && !only.includes('prerequisite')
               ? t('setupPanel.titleEngines')
               : t('setupPanel.title')}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--cth-ink-500)', marginTop: 2 }}>
+          <div style={{ fontSize: 13, color: 'var(--cth-ink-500)', marginTop: 2 }}>
             {tools === null
               ? t('setupPanel.checking')
               : missingEssential.length
@@ -193,7 +193,7 @@ export function SetupPanel(
         background: missingEssential.length ? 'var(--cth-lemon-light)' : 'var(--cth-cream-100)',
         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
       }}>
-        <div style={{ flex: 1, minWidth: 220, fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: 1.5 }}>
+        <div style={{ flex: 1, minWidth: 220, fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: 1.5 }}>
           {t('setupPanel.askDesc', { count: missingEssential.length })}
         </div>
         <PixelButton
@@ -215,8 +215,8 @@ export function SetupPanel(
         return (
           <div key={section.kind} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{
-              fontFamily: 'var(--cth-font-display)', fontSize: 10, letterSpacing: 0.5,
-              color: 'var(--cth-ink-500)', textTransform: 'uppercase'
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 0.5,
+              color: 'var(--cth-ink-500)'
             }}>{t(section.titleKey)}</div>
             <div style={{ fontSize: 11, color: 'var(--cth-ink-500)', marginTop: -2 }}>{t(section.blurbKey)}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

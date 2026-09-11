@@ -23,7 +23,7 @@ export function ToolWaterfall({ agentId }: { agentId: string }) {
       <div style={{
         flexShrink: 0, padding: '8px 10px', background: 'var(--cth-cream-200)',
         boxShadow: 'inset 0 -2px 0 var(--cth-ink-900)',
-        fontFamily: 'var(--cth-font-mono)', fontSize: 12, color: 'var(--cth-ink-900)',
+        fontFamily: 'var(--cth-font-mono)', fontSize: 13, color: 'var(--cth-ink-900)',
         display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'baseline'
       }}>
         {sample ? (
@@ -46,7 +46,7 @@ export function ToolWaterfall({ agentId }: { agentId: string }) {
       {/* Waterfall */}
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 10 }}>
         {recent.length === 0 && (
-          <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
+          <div style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>
             {t('toolWaterfall.empty')}
           </div>
         )}

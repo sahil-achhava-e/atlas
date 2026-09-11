@@ -71,8 +71,8 @@ export function QuitWarningModal({ ptyCount, closing, onCancel, onConfirm, onClo
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{
-                      fontFamily: 'var(--cth-font-display)',
-                      fontSize: 12, lineHeight: '20px',
+                      fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+                      fontSize: 13, lineHeight: '20px',
                       color: 'var(--cth-ink-900)',
                       marginBottom: 4
                     }}>
@@ -100,9 +100,9 @@ export function QuitWarningModal({ ptyCount, closing, onCancel, onConfirm, onClo
                   padding: 8,
                   background: 'var(--cth-cream-200)',
                   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-                  fontSize: 12, lineHeight: '18px',
+                  fontSize: 13, lineHeight: '18px',
                   color: 'var(--cth-ink-700)',
-                  fontFamily: 'var(--cth-font-display)'
+                  fontFamily: 'var(--cth-font-ui)', fontWeight: 600
                 }}>
                   {closing!.total > 0
                     ? `${closing!.acked} / ${closing!.total} WORKERS CONFIRMED${closing!.acked >= closing!.total ? ' — WAITING FOR THE ORCHESTRATOR' : ''}`
@@ -143,8 +143,8 @@ export function QuitWarningModal({ ptyCount, closing, onCancel, onConfirm, onClo
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{
-                      fontFamily: 'var(--cth-font-display)',
-                      fontSize: 12, lineHeight: '20px',
+                      fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+                      fontSize: 13, lineHeight: '20px',
                       color: 'var(--cth-ink-900)',
                       marginBottom: 4
                     }}>
@@ -163,7 +163,7 @@ export function QuitWarningModal({ ptyCount, closing, onCancel, onConfirm, onClo
                   padding: 8,
                   background: 'var(--cth-cream-200)',
                   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-                  fontSize: 12, lineHeight: '18px',
+                  fontSize: 13, lineHeight: '18px',
                   color: 'var(--cth-ink-700)'
                 }}>
                   Tip: <strong>closing time</strong> is the safe way out — the orchestrator has
@@ -176,7 +176,7 @@ export function QuitWarningModal({ ptyCount, closing, onCancel, onConfirm, onClo
                     padding: 8,
                     background: 'var(--cth-coral-light)',
                     boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-                    fontSize: 12, lineHeight: '18px',
+                    fontSize: 13, lineHeight: '18px',
                     color: 'var(--cth-ink-900)'
                   }}>
                     {closing.error ?? 'Closing time could not start.'}

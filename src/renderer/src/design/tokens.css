@@ -97,14 +97,18 @@
 
   /* Type scale — v0.3.4: one step tighter (Inter reads larger than Pixelify
      at equal px, and the controls were oversized) */
-  --cth-text-display-lg: 22px;
+  /* Type scale — five sizes, four weights. There were sixteen inline sizes
+     between 7px and 19px, which is why nothing looked more important than
+     anything else. Weight carries hierarchy now; caps and tracking are gone. */
+  --cth-text-display-lg: 20px;
   --cth-text-display-md: 16px;
-  --cth-text-display-sm: 12px;
-  --cth-text-body-lg:    17px;
-  --cth-text-body-md:    15px;
-  --cth-text-body-sm:    14px;
-  --cth-text-mono-md:    14px;
-  --cth-text-mono-sm:    13px;
+  --cth-text-display-sm: 14px;
+  --cth-text-body-lg:    15px;
+  --cth-text-body-md:    13px;
+  --cth-text-body-sm:    13px;
+  --cth-text-meta:       11px;
+  --cth-text-mono-md:    13px;
+  --cth-text-mono-sm:    12px;
 
   /* Line heights — integer multiples */
   --cth-lh-display-lg: 30px;

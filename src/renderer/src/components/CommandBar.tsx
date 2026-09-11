@@ -98,8 +98,8 @@ export function CommandBar({ accent, busy, blocked, onSend }: CommandBarProps) {
           </PixelButton>
         </div>
       </PixelPanel>
-      {busy && <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>{t('commandBar.busyNote')}</span>}
-      {blocked && <span style={{ fontSize: 12, color: 'var(--cth-coral)' }}>{t('commandBar.blockedNote')}</span>}
+      {busy && <span style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>{t('commandBar.busyNote')}</span>}
+      {blocked && <span style={{ fontSize: 13, color: 'var(--cth-coral)' }}>{t('commandBar.blockedNote')}</span>}
     </div>
   );
 }

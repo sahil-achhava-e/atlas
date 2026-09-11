@@ -108,8 +108,8 @@ export function FileTree({ root, activeRel, onOpenFile, onCopyPath }: FileTreePr
       return (
         <div>
           {node.children?.map(c => renderNode(c, 0))}
-          {node.loading && <div style={{ padding: 8, fontSize: 12, color: 'var(--cth-ink-500)' }}>{t('fileTree.loading')}</div>}
-          {node.error && <div style={{ padding: 8, fontSize: 12, color: 'var(--cth-coral)' }}>{node.error}</div>}
+          {node.loading && <div style={{ padding: 8, fontSize: 13, color: 'var(--cth-ink-500)' }}>{t('fileTree.loading')}</div>}
+          {node.error && <div style={{ padding: 8, fontSize: 13, color: 'var(--cth-coral)' }}>{node.error}</div>}
         </div>
       );
     }
@@ -125,7 +125,7 @@ export function FileTree({ root, activeRel, onOpenFile, onCopyPath }: FileTreePr
             background: isActive ? 'var(--cth-lemon-light)' : 'transparent',
             cursor: 'pointer',
             fontFamily: 'var(--cth-font-ui)',
-            fontSize: 12,
+            fontSize: 13,
             color: 'var(--cth-ink-900)',
             userSelect: 'none'
           }}
@@ -149,7 +149,7 @@ export function FileTree({ root, activeRel, onOpenFile, onCopyPath }: FileTreePr
             title={t('fileTree.copyPathTitle')}
             style={{
               padding: '0 4px',
-              fontSize: 10,
+              fontSize: 11,
               fontFamily: 'var(--cth-font-ui)',
               color: 'var(--cth-ink-500)',
               background: 'transparent', border: 'none', cursor: 'pointer'
@@ -159,12 +159,12 @@ export function FileTree({ root, activeRel, onOpenFile, onCopyPath }: FileTreePr
         {node.isDir && node.expanded && (
           <div>
             {node.loading && (
-              <div style={{ padding: '2px 6px', paddingLeft: 24 + depth * 14, fontSize: 12, color: 'var(--cth-ink-500)' }}>
+              <div style={{ padding: '2px 6px', paddingLeft: 24 + depth * 14, fontSize: 13, color: 'var(--cth-ink-500)' }}>
                 {t('fileTree.loading')}
               </div>
             )}
             {node.error && (
-              <div style={{ padding: '2px 6px', paddingLeft: 24 + depth * 14, fontSize: 12, color: 'var(--cth-coral)' }}>
+              <div style={{ padding: '2px 6px', paddingLeft: 24 + depth * 14, fontSize: 13, color: 'var(--cth-coral)' }}>
                 {node.error}
               </div>
             )}

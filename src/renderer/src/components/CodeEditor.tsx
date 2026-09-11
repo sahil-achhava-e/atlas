@@ -158,8 +158,7 @@ export function CodeEditor({
           <Icon name="code" size={2} />
         </div>
         <div style={{
-          fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '14px',
-          textTransform: 'uppercase', letterSpacing: 1,
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px', letterSpacing: 1,
           color: 'var(--cth-ink-700)'
         }}>
           No file open
@@ -186,7 +185,7 @@ export function CodeEditor({
         padding: '4px 8px',
         background: 'var(--cth-cream-200)',
         borderBottom: '1px solid var(--cth-ink-700)',
-        fontFamily: 'var(--cth-font-ui)', fontSize: 12,
+        fontFamily: 'var(--cth-font-ui)', fontSize: 13,
         color: 'var(--cth-ink-700)'
       }}>
         <Icon name="code" />
@@ -248,7 +247,7 @@ export function CodeEditor({
 
 const editorBtn: React.CSSProperties = {
   padding: '0 6px', height: 22,
-  fontFamily: 'var(--cth-font-ui)', fontSize: 12,
+  fontFamily: 'var(--cth-font-ui)', fontSize: 13,
   color: 'var(--cth-ink-900)',
   background: 'var(--cth-cream-100)',
   border: 'none',

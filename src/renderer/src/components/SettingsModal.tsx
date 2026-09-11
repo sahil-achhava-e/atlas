@@ -68,11 +68,10 @@ const slackInputStyle: CSSProperties = {
 };
 
 const slackLabelStyle: CSSProperties = {
-  fontFamily: 'var(--cth-font-display)',
-  fontSize: 8,
+  fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+  fontSize: 11,
   lineHeight: '12px',
   color: 'var(--cth-ink-700)',
-  textTransform: 'uppercase'
 };
 
 /** The exact connect walkthrough shown behind the i icon. Steps 6 & 7 spell out
@@ -157,8 +156,8 @@ function clearLocalState(): void {
    seventeen times, in three slightly different forms, which is how a tab ends
    up looking subtly unlike its neighbours. */
 const sectionHead = {
-  fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '12px',
-  color: 'var(--cth-ink-500)', textTransform: 'uppercase', marginBottom: 10
+  fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
+  color: 'var(--cth-ink-500)', marginBottom: 10
 } as const;
 /** Same heading, tight under a section that supplies its own spacing. */
 const sectionHeadTight = { ...sectionHead, marginBottom: 2 } as const;
@@ -719,9 +718,9 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
           {changeHome ? (
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', flex: 1, minHeight: 0 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>{t('settings.changeHome.newHome')}</span>
+                <span style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>{t('settings.changeHome.newHome')}</span>
                 <code style={{
-                  fontFamily: 'var(--cth-font-mono, monospace)', fontSize: 12,
+                  fontFamily: 'var(--cth-font-mono, monospace)', fontSize: 13,
                   color: 'var(--cth-ink-900)', wordBreak: 'break-all'
                 }}>{changeHome}</code>
               </div>
@@ -752,14 +751,14 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                       }}>
                         {selected ? '◉ ' : '○ '}{title}
                       </span>
-                      <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>{desc}</span>
+                      <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>{desc}</span>
                     </button>
                   );
                 })}
               </div>
 
               {changeErr && (
-                <div style={{ fontSize: 12, lineHeight: '18px', color: '#6E1423' }}>{changeErr}</div>
+                <div style={{ fontSize: 13, lineHeight: '18px', color: '#6E1423' }}>{changeErr}</div>
               )}
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -827,11 +826,10 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           borderLeft: active ? '3px solid var(--cth-lemon)' : '3px solid transparent',
                           background: active ? 'var(--cth-ink-900)' : 'transparent',
                           color: active ? 'var(--cth-cream-50)' : 'var(--cth-ink-700)',
-                          fontFamily: 'var(--cth-font-display)',
-                          fontSize: 8,
+                          fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+                          fontSize: 11,
                           lineHeight: '12px',
                           cursor: 'pointer',
-                          letterSpacing: 0
                         }}
                       >
                         {t(NAV_SECTION_KEYS[section])}
@@ -883,7 +881,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                               <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>{t('settings.general.keepAwake')}</span>
-                              <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                              <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                                 {t('settings.general.keepAwakeDesc')}
                               </span>
                             </div>
@@ -894,7 +892,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                               <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>{t('settings.general.simpleMode')}</span>
-                              <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                              <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                                 {t('settings.general.simpleModeDesc')}
                               </span>
                             </div>
@@ -915,7 +913,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                             <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>{t('settings.general.language')}</span>
-                            <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                            <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                               {t('settings.general.languageDesc')}
                             </span>
                           </div>
@@ -944,7 +942,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
                               {t('settings.general.desktopNotifications')}
                             </span>
-                            <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                            <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                               {t('settings.general.desktopNotificationsDesc')}
                             </span>
                           </div>
@@ -970,7 +968,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
                               {t('settings.general.autoCompact')}
                             </span>
-                            <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                            <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                               {t('settings.general.autoCompactDesc')}
                             </span>
                           </div>
@@ -1012,7 +1010,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           {t('settings.agentsModels.defaultModel')}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                          <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                             {t('settings.agentsModels.defaultModelDesc', { godName })}
                           </span>
                           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -1022,7 +1020,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                                 onClick={() => { if (m.id) void saveDefaultModel(m.id); }}
                                 style={{
                                   padding: '3px 8px 1px', border: 'none', cursor: 'pointer',
-                                  fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)',
+                                  fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)',
                                   background: defaultModelSel === m.id ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
                                   boxShadow: defaultModelSel === m.id ? 'inset 0 0 0 1.5px var(--cth-ink-500)' : 'inset 0 0 0 1px var(--cth-ink-100)'
                                 }}
@@ -1052,7 +1050,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
                               {autoModeOn ? t('settings.autonomy.autoOn') : t('settings.autonomy.autoOff')}
                             </span>
-                            <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                            <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                               {t('settings.autonomy.autoDesc')}
                             </span>
                           </div>
@@ -1070,7 +1068,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
                               Who can add agents
                             </span>
-                            <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                            <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                               {orchSpawnOn
                                 ? `${godName} can hire on his own. Every agent he starts spends tokens you did not approve.`
                                 : `Only you. ${godName} can still ask, and his request waits in the queue instead of failing.`}
@@ -1120,7 +1118,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
                             {t('settings.voice.voiceChat', { godName })}
                           </span>
-                          <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                          <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                             {t('settings.voice.voiceChatDesc', { godName })}
                           </span>
                         </div>
@@ -1141,10 +1139,10 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           <span style={sectionHeadFlush}>
                             {t('settings.voice.openaiKey')}
                           </span>
-                          <span style={{ fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-700)' }}>
+                          <span style={{ fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-700)' }}>
                             {t('settings.voice.openaiKeyDesc1', { godName, model: REALTIME_MODEL })}
                           </span>
-                          <span style={{ fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-700)' }}>
+                          <span style={{ fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-700)' }}>
                             {t('settings.voice.openaiKeyDesc2')}
                           </span>
                           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -1167,7 +1165,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           </div>
                           <span style={{
                             display: 'inline-flex', alignItems: 'center', gap: 6,
-                            fontSize: 12, lineHeight: '16px',
+                            fontSize: 13, lineHeight: '16px',
                             color: hasOpenAiKey ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)'
                           }}>
                             <span aria-hidden style={{
@@ -1206,7 +1204,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             <option value="600000">{t('settings.voice.10m')}</option>
                             <option value="0">{t('settings.voice.never')}</option>
                           </select>
-                          <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                          <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                             {t('settings.voice.idleDisconnectDesc')}
                           </span>
                         </label>
@@ -1218,7 +1216,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                   {activeSection === 'General' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                       <div style={{
-                        fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
+                        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
                         color: '#6E1423'
                       }}>{t('settings.general.dangerZone')}</div>
                       <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-700)' }}>
@@ -1243,10 +1241,10 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                 background: 'var(--cth-cream-50)'
               }}>
                 {saveNote && (
-                  <span style={{ fontSize: 12, color: 'var(--cth-mint)' }}>{saveNote}</span>
+                  <span style={{ fontSize: 13, color: 'var(--cth-mint)' }}>{saveNote}</span>
                 )}
                 {dirty && !saveNote && (
-                  <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>{t('settings.unsavedChanges')}</span>
+                  <span style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>{t('settings.unsavedChanges')}</span>
                 )}
                 <PixelButton variant="secondary" size="md" onClick={requestClose}>{t('settings.close')}</PixelButton>
                 <PixelButton variant="primary" size="md" onClick={() => void saveAll()} disabled={saveBusy}>

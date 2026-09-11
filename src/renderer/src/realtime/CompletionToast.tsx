@@ -117,11 +117,10 @@ export function CompletionToast(): JSX.Element | null {
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              fontFamily: 'var(--cth-font-display)',
-              fontSize: 8,
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+              fontSize: 11,
               lineHeight: '12px',
               color: 'var(--cth-ink-900)',
-              textTransform: 'uppercase'
             }}
           >
             <Icon name="bell" /> {godName} · completed
@@ -134,8 +133,8 @@ export function CompletionToast(): JSX.Element | null {
                 border: 'none',
                 background: 'transparent',
                 cursor: 'pointer',
-                fontFamily: 'var(--cth-font-display)',
-                fontSize: 10,
+                fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+                fontSize: 11,
                 lineHeight: '10px',
                 color: 'var(--cth-ink-700)',
                 padding: 0
@@ -155,7 +154,7 @@ export function CompletionToast(): JSX.Element | null {
             {t.summary}
           </div>
           {t.objective && (
-            <div style={{ fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-700)' }}>
+            <div style={{ fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-700)' }}>
               {t.objective}
             </div>
           )}

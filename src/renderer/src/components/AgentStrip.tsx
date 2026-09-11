@@ -206,7 +206,7 @@ export function AgentStrip({ config }: AgentStripProps) {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{
-                      fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '12px',
+                      fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
                       color: 'var(--cth-ink-500)'
                     }}>{t('agentStrip.privateNote', { name: a.name.toUpperCase() })}</span>
                     <button
@@ -239,11 +239,11 @@ export function AgentStrip({ config }: AgentStripProps) {
                       border: 'none', outline: 'none', resize: 'none', boxSizing: 'border-box',
                       background: 'var(--cth-cream-100)',
                       boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-                      fontFamily: 'var(--cth-font-mono)', fontSize: 12,
+                      fontFamily: 'var(--cth-font-mono)', fontSize: 13,
                       lineHeight: '18px', color: 'var(--cth-ink-900)'
                     }}
                   />
-                  <span style={{ fontSize: 10, color: 'var(--cth-ink-500)' }}>
+                  <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>
                     {t('agentStrip.oneLineOneBullet')}
                   </span>
                 </div>
@@ -323,8 +323,8 @@ export function AgentStrip({ config }: AgentStripProps) {
             fontFamily: 'var(--cth-font-ui)'
           }}>
             <span style={{
-              fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '12px',
-              color: 'var(--cth-ink-500)', textTransform: 'uppercase'
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
+              color: 'var(--cth-ink-500)'
             }}>
               {t('agentStrip.previousSession')}
             </span>
@@ -338,7 +338,7 @@ export function AgentStrip({ config }: AgentStripProps) {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   height: 26, padding: '0 4px 0 8px',
-                  fontSize: 12, color: 'var(--cth-ink-900)',
+                  fontSize: 13, color: 'var(--cth-ink-900)',
                   background: 'var(--cth-paper-100)',
                   boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                 }}
@@ -356,7 +356,7 @@ export function AgentStrip({ config }: AgentStripProps) {
                   style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     width: 18, height: 18, padding: 0, lineHeight: 1,
-                    fontSize: 12, color: 'var(--cth-ink-500)',
+                    fontSize: 13, color: 'var(--cth-ink-500)',
                     background: 'transparent', border: 'none', cursor: 'pointer'
                   }}
                 >✕</button>
@@ -414,8 +414,8 @@ function AddAgentTile({ label, onClick }: { label: string; onClick: () => void }
         <Icon name="plus" />
       </span>
       <span style={{
-        fontFamily: 'var(--cth-font-display)',
-        fontSize: 10, lineHeight: '13px',
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+        fontSize: 11, lineHeight: '13px',
         color: hover ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)',
         width: '100%', textAlign: 'center'
       }}>{label.toUpperCase()}</span>

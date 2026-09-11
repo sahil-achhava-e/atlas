@@ -367,10 +367,9 @@ export function App() {
             you act on. Updates live in Settings, and auto mode is a switch in
             the agent's own header, where it can actually be flipped. */}
         <span style={{
-          fontFamily: 'var(--cth-font-display)',
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
           fontSize: 'var(--cth-text-display-sm)',
           lineHeight: 'var(--cth-lh-display-sm)',
-          letterSpacing: '0.14em',
           color: 'var(--cth-ink-700)',
           userSelect: 'none'
         }}>ATLAS</span>
@@ -509,7 +508,7 @@ export function App() {
               justifyContent: 'center', alignItems: 'center', gap: 12
             }}>
               <div style={{
-                fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
+                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
                 color: 'var(--cth-ink-500)'
               }}>WAKING THE FLOOR</div>
               <p style={{ margin: 0, fontSize: 13, textAlign: 'center', color: 'var(--cth-ink-700)' }}>
@@ -524,7 +523,7 @@ export function App() {
               justifyContent: 'center', alignItems: 'center', gap: 12
             }}>
               <div style={{
-                fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
+                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
                 color: 'var(--cth-ink-500)'
               }}>NO AGENT SELECTED</div>
               <p style={{ margin: 0, fontSize: 13, textAlign: 'center', color: 'var(--cth-ink-700)' }}>

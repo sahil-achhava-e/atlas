@@ -26,10 +26,9 @@ export function RecentText({ accent, text, seed }: RecentTextProps) {
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        fontFamily: 'var(--cth-font-display)',
-        fontSize: 8, lineHeight: '12px',
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+        fontSize: 11, lineHeight: '12px',
         color: 'var(--cth-ink-700)',
-        textTransform: 'uppercase'
       }}>
         <span>recent</span>
         <span style={{

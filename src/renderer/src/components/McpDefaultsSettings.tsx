@@ -21,11 +21,10 @@ const TIER_NOTE_KEY: Record<McpTier, string> = {
 };
 
 const labelStyle: React.CSSProperties = {
-  fontFamily: 'var(--cth-font-display)',
-  fontSize: 8,
+  fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+  fontSize: 11,
   lineHeight: '12px',
   color: 'var(--cth-ink-500)',
-  textTransform: 'uppercase'
 };
 
 export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
@@ -111,7 +110,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
     padding: '6px 8px 5px',
     background: 'var(--cth-cream-100)', border: 'none',
     boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-    fontFamily: 'var(--cth-font-mono)', fontSize: 12,
+    fontFamily: 'var(--cth-font-mono)', fontSize: 13,
     color: 'var(--cth-ink-900)', outline: 'none'
   } as const;
 
@@ -143,7 +142,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <div style={{ ...labelStyle, marginBottom: 6 }}>{t('mcpDefaults.title')}</div>
-        <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+        <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
           {t('mcpDefaults.desc')}
         </span>
       </div>
@@ -156,9 +155,8 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
           <div key={tier} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <span style={{
-                fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '12px',
+                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
                 color: isConsent ? '#6E1423' : 'var(--cth-ink-500)',
-                textTransform: 'uppercase'
               }}>
                 {t(TIER_LABEL_KEY[tier])}
               </span>
@@ -186,7 +184,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12
                   }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, minWidth: 0 }}>
-                      <span style={{ fontSize: 12, lineHeight: '18px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>
+                      <span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>
                         {entry.label}
                         <code style={{
                           marginLeft: 6,
@@ -196,7 +194,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                           fontWeight: 400
                         }}>{entry.id}</code>
                       </span>
-                      <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)', wordBreak: 'break-word' }}>
+                      <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)', wordBreak: 'break-word' }}>
                         {entry.description}
                       </span>
                     </div>
@@ -212,12 +210,11 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                         boxShadow: `inset 0 0 0 1px ${on ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)'}`,
             borderRadius: 'var(--cth-radius-input)',
                         border: 'none',
-                        fontFamily: 'var(--cth-font-display)',
-                        fontSize: 8,
+                        fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+                        fontSize: 11,
                         lineHeight: '14px',
                         color: 'var(--cth-ink-900)',
                         cursor: 'pointer',
-                        textTransform: 'uppercase'
                       }}
                     >
                       {on ? t('common.on') : t('common.off')}
@@ -289,7 +286,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                           flex: 1, minWidth: 0, padding: '6px 8px 5px',
                           background: 'var(--cth-cream-100)', border: 'none',
                           boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-                          fontFamily: 'var(--cth-font-mono)', fontSize: 12,
+                          fontFamily: 'var(--cth-font-mono)', fontSize: 13,
                           color: 'var(--cth-ink-900)', outline: 'none'
                         }}
                       />
@@ -312,7 +309,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
       })}
 
       {note && (
-        <span style={{ fontSize: 12, color: 'var(--cth-mint)' }}>{note}</span>
+        <span style={{ fontSize: 13, color: 'var(--cth-mint)' }}>{note}</span>
       )}
     </div>
   );

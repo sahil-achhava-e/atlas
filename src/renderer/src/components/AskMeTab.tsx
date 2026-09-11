@@ -168,7 +168,7 @@ export function AskMeTab() {
     // questions and answers. Display/badge bits keep their explicit faces.
     <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: 'var(--cth-paper-200)', padding: 10, display: 'flex', flexDirection: 'column', gap: 10, fontFamily: 'var(--cth-font-mono)' }}>
       {waiting.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--cth-ink-500)', fontSize: 12 }}>
+        <div style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--cth-ink-500)', fontSize: 13 }}>
           {translate('askMe.emptyTitle')}<br />
           <span style={{ fontSize: 11, color: 'var(--cth-ink-300)' }}>
             {translate('askMe.emptySub')}
@@ -260,7 +260,7 @@ export function AskMeTab() {
                     title={translate('askMe.viewAnswersHistory')}
                     style={{
                       border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-                      fontSize: 10, color: 'var(--cth-ink-700)', fontFamily: 'var(--cth-font-display)',
+                      fontSize: 11, color: 'var(--cth-ink-700)', fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
                       textDecoration: 'underline'
                     }}
                   >
@@ -277,7 +277,7 @@ export function AskMeTab() {
               {/* the cascade: what's stuck behind this answer */}
               {stuck.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                  <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 8, color: 'var(--cth-coral)' }}>
+                  <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-coral)' }}>
                     {stuck.length === 1
                       ? translate('askMe.blockingDownstream', { count: stuck.length })
                       : translate('askMe.blockingDownstreamPlural', { count: stuck.length })}
@@ -286,12 +286,12 @@ export function AskMeTab() {
                     <div key={d.id} style={{
                       display: 'flex', alignItems: 'center', gap: 6,
                       paddingLeft: 8 + Math.min(i, 3) * 8,
-                      fontSize: 12, color: 'var(--cth-ink-700)'
+                      fontSize: 13, color: 'var(--cth-ink-700)'
                     }}>
                       <span style={{ color: 'var(--cth-ink-300)' }}>└</span>
                       <span style={{ width: 7, height: 7, flexShrink: 0, background: d.status === 'blocked' ? 'var(--cth-coral)' : 'var(--cth-sky)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)' }} />
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.title}</span>
-                      {nameFor(d.assignee) && <span style={{ fontSize: 10, color: 'var(--cth-ink-500)' }}>({nameFor(d.assignee)})</span>}
+                      {nameFor(d.assignee) && <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>({nameFor(d.assignee)})</span>}
                     </div>
                   ))}
                   {stuck.length > 6 && (

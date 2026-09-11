@@ -124,7 +124,7 @@ export function AgentControlStrip({ agentId }: { agentId: string }) {
           style={{
             flex: 1, padding: '4px 6px', background: 'var(--cth-paper-100)', border: 'none',
             fontFamily: 'var(--cth-font-ui)',
-            fontSize: 12, color: 'var(--cth-ink-900)', outline: 'none'
+            fontSize: 13, color: 'var(--cth-ink-900)', outline: 'none'
           }}
         />
         <PixelButton variant="secondary" size="sm" onClick={sendSteer} disabled={!steer.trim()}>

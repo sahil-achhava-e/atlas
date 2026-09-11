@@ -37,7 +37,7 @@ export class ErrorBoundary extends Component<
         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
       }}>
         <div style={{
-          fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
           color: 'var(--cth-ink-700)'
         }}>
           {(this.props.label ?? 'this panel').toUpperCase()} STOPPED

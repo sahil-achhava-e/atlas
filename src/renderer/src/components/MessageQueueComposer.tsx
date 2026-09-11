@@ -194,15 +194,15 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
       }}>
       {dragOver && (
         <span style={{
-          fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '12px',
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
           color: 'var(--cth-ink-700)', textAlign: 'center'
         }}>{t('queueComposer.dropToAttach')}</span>
       )}
       {/* Header: label, count, status, clear-all */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{
-          fontFamily: 'var(--cth-font-display)',
-          fontSize: 9, lineHeight: '12px',
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+          fontSize: 11, lineHeight: '12px',
           color: 'var(--cth-ink-700)'
         }}>{t('queueComposer.queue')}</span>
         {queue.length > 0 && (
@@ -219,7 +219,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
               ? t('queueComposer.pausedTitle')
               : statusHint}
             style={{
-              fontSize: 12,
+              fontSize: 13,
               color: idle ? 'var(--cth-ink-700)' : 'var(--cth-ink-500)',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
             }}
@@ -244,7 +244,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
               : "Move the leftover text on this agent's prompt into this box so queued messages can be delivered"}
             style={{
               border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-              fontFamily: 'var(--cth-font-ui)', fontSize: 12,
+              fontFamily: 'var(--cth-font-ui)', fontSize: 13,
               color: 'var(--cth-ink-900)', textDecoration: 'underline'
             }}
           >{block === 'picker' ? t('queueComposer.closePicker') : t('queueComposer.recoverPrompt')}</button>
@@ -256,7 +256,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             style={{
               marginLeft: 'auto', flexShrink: 0, whiteSpace: 'nowrap',
               border: 'none', background: 'transparent', cursor: 'pointer',
-              fontFamily: 'var(--cth-font-ui)', fontSize: 12,
+              fontFamily: 'var(--cth-font-ui)', fontSize: 13,
               color: 'var(--cth-ink-500)'
             }}
           >{t('queueComposer.clearAll')}</button>
@@ -295,7 +295,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
                 padding: '2px 4px 2px 6px',
                 background: 'var(--cth-cream-200)',
                 boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-                fontFamily: 'var(--cth-font-mono)', fontSize: 12, lineHeight: '16px',
+                fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '16px',
                 color: 'var(--cth-ink-900)'
               }}
             >
@@ -482,7 +482,7 @@ function QueuedMessageRow(
       boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
     }}>
       <span style={{
-        fontFamily: 'var(--cth-font-mono)', fontSize: 12,
+        fontFamily: 'var(--cth-font-mono)', fontSize: 13,
         color: 'var(--cth-ink-500)', lineHeight: '18px', flexShrink: 0
       }}>{`${index + 1}.`}</span>
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -491,7 +491,7 @@ function QueuedMessageRow(
           dir={rtl ? 'auto' : undefined}
           title={expanded ? undefined : message.text}
           style={{
-            fontSize: 12, lineHeight: '18px',
+            fontSize: 13, lineHeight: '18px',
             color: 'var(--cth-ink-900)',
             whiteSpace: 'pre-wrap', wordBreak: 'break-word',
             ...(expanded
@@ -512,7 +512,7 @@ function QueuedMessageRow(
                 title={expanded ? t('queueComposer.collapse') : t('queueComposer.showFull')}
                 style={{
                   border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-                  fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '16px',
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '16px',
                   color: 'var(--cth-ink-500)', textDecoration: 'underline'
                 }}
               >{expanded ? t('queueComposer.seeLess') : t('queueComposer.seeMore')}</button>
@@ -523,13 +523,13 @@ function QueuedMessageRow(
                 title={t('queueComposer.sendNowTitle')}
                 style={{
                   border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-                  fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '16px',
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '16px',
                   color: 'var(--cth-ink-900)', textDecoration: 'underline'
                 }}
               >{t('queueComposer.sendNow')}</button>
             )}
             {paused && message.manual && (
-              <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+              <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                 {t('queueComposer.sendingWhenFree')}
               </span>
             )}

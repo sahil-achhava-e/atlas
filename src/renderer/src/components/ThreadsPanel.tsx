@@ -102,7 +102,7 @@ export function ThreadsPanel({ agentId }: ThreadsPanelProps) {
               style={{
                 display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left',
                 padding: '6px 10px', border: 'none', cursor: 'pointer', background: 'var(--cth-cream-200)',
-                fontFamily: 'var(--cth-font-display)', fontSize: 'var(--cth-text-display-sm)',
+                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 'var(--cth-text-display-sm)',
                 lineHeight: '14px', color: 'var(--cth-ink-900)', boxShadow: 'inset 0 -1px 0 var(--cth-ink-900)'
               }}
             >
@@ -110,7 +110,7 @@ export function ThreadsPanel({ agentId }: ThreadsPanelProps) {
               <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {thread.subject.toUpperCase()}
               </span>
-              <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>{thread.messages.length}</span>
+              <span style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>{thread.messages.length}</span>
             </button>
 
             {open && (
@@ -124,12 +124,12 @@ export function ThreadsPanel({ agentId }: ThreadsPanelProps) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                         <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 700, color: 'var(--cth-ink-900)' }}>{m.from}</span>
                         <span style={{
-                          fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '16px', padding: '0 6px',
+                          fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '16px', padding: '0 6px',
                           background: 'var(--cth-cream-100)', boxShadow: `inset 0 0 0 1px ${ACT_COLOR[m.act] ?? 'var(--cth-ink-300)'}`,
             borderRadius: 'var(--cth-radius-input)',
                           color: 'var(--cth-ink-900)'
                         }}>{m.act}</span>
-                        <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--cth-ink-500)' }}>
+                        <span style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--cth-ink-500)' }}>
                           {new Date(m.created_at).toLocaleString()}
                         </span>
                       </div>
@@ -138,7 +138,7 @@ export function ThreadsPanel({ agentId }: ThreadsPanelProps) {
                         {long && (
                           <button
                             onClick={() => setExpanded(s => ({ ...s, [m.id]: !isExp }))}
-                            style={{ marginLeft: 6, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--cth-sky)', fontFamily: 'var(--cth-font-ui)', fontSize: 12, padding: 0 }}
+                            style={{ marginLeft: 6, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--cth-sky)', fontFamily: 'var(--cth-font-ui)', fontSize: 13, padding: 0 }}
                           >{isExp ? t('threads.less') : t('threads.more')}</button>
                         )}
                       </div>

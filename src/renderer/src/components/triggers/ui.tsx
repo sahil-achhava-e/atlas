@@ -21,7 +21,7 @@ export const inputStyle: CSSProperties = {
   width: '100%', boxSizing: 'border-box', padding: '6px 8px',
   background: 'var(--cth-paper-100)', border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-  fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '17px',
+  fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '17px',
   color: 'var(--cth-ink-900)', outline: 'none'
 };
 
@@ -38,14 +38,14 @@ export const textareaStyle: CSSProperties = {
 export const selectStyle: CSSProperties = {
   padding: '3px 6px', background: 'var(--cth-paper-100)', border: 'none',
   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-  fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)',
+  fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)',
   cursor: 'pointer', minWidth: 0, maxWidth: '100%'
 };
 
 /* ───────────────────────────── text helpers ──────────────────────────────── */
 
 export function Muted({ children }: { children: ReactNode }) {
-  return <div style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>{children}</div>;
+  return <div style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>{children}</div>;
 }
 
 /** One line of explanation under a control. Smaller than Muted, never a tooltip —
@@ -60,7 +60,7 @@ export function Chip({ children, tone = 'plain' }: { children: ReactNode; tone?:
   return (
     <span style={{
       flexShrink: 0, padding: '2px 5px 1px',
-      fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '12px',
+      fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
       background: bg, boxShadow: `inset 0 0 0 1px ${line}`, borderRadius: 'var(--cth-radius-input)', color: 'var(--cth-ink-900)'
     }}>{children}</span>
   );
@@ -93,7 +93,7 @@ export function Toggle({ on, onClick, onLabel, offLabel }: {
         background: on ? 'var(--cth-lemon)' : 'var(--cth-cream-200)',
         boxShadow: `inset 0 0 0 1px ${on ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)'}`,
             borderRadius: 'var(--cth-radius-input)',
-        fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)'
+        fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)'
       }}
     >{on ? (onLabel ?? t('common.on')) : (offLabel ?? t('common.off'))}</button>
   );
@@ -136,7 +136,7 @@ export function Field({ label, children }: { label: string; children: ReactNode 
   return (
     <div style={{ marginTop: 8 }}>
       <div style={{
-        fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '12px',
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
         color: 'var(--cth-ink-500)', marginBottom: 4
       }}>{label}</div>
       {children}
@@ -183,10 +183,10 @@ export function TriggerCard({ title, blurb, summary, defaultOpen = false, childr
         </span>
         <span style={{ flex: 1, minWidth: 0 }}>
           <span style={{
-            display: 'block', fontFamily: 'var(--cth-font-display)', fontSize: 9, lineHeight: '13px',
+            display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '13px',
             color: 'var(--cth-ink-900)'
           }}>{title}</span>
-          <span style={{ display: 'block', fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)', marginTop: 2 }}>
+          <span style={{ display: 'block', fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)', marginTop: 2 }}>
             {blurb}
           </span>
         </span>
@@ -223,7 +223,7 @@ export function SubHeader({ open, onToggle, title, sub, right }: {
         <span style={{ flexShrink: 0, width: 8, fontSize: 11, color: 'var(--cth-ink-500)' }}>{open ? '▾' : '▸'}</span>
         <span style={{ flex: 1, minWidth: 0 }}>
           <span style={{
-            display: 'block', fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '16px',
+            display: 'block', fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '16px',
             color: 'var(--cth-ink-900)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
           }}>{title}</span>
           {sub !== undefined && (

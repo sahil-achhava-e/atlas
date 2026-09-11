@@ -87,7 +87,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             {/* CURRENT — the last-used home, the one-click default. */}
             {current && (
               <div>
-                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 11, letterSpacing: 1, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
+                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 1, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
                   CURRENT WORKSPACE
                 </div>
                 <div style={{
@@ -102,13 +102,12 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
-                      fontFamily: 'var(--cth-font-display)', fontSize: 14, lineHeight: '19px',
-                      letterSpacing: 0.5
+                      fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 14, lineHeight: '19px',
                     }}>
                       {folderName(current)}
                     </div>
                     <div style={{
-                      fontFamily: 'var(--cth-font-mono)', fontSize: 12, color: 'var(--cth-ink-500)',
+                      fontFamily: 'var(--cth-font-mono)', fontSize: 13, color: 'var(--cth-ink-500)',
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                       // NOT `direction: rtl`. That truncates a long path from the
                       // START, which is what you want, but it also REORDERS the
@@ -125,7 +124,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             {/* RECENTS — other homes this install has opened before. */}
             {recents.length > 0 && (
               <div>
-                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 11, letterSpacing: 1, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
+                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 1, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
                   RECENT WORKSPACES
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 220, overflowY: 'auto' }}>
@@ -144,11 +143,11 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                     >
                       <Icon name="folder" />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600, color: 'var(--cth-ink-900)' }}>
+                        <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600, color: 'var(--cth-ink-900)' }}>
                           {folderName(h)}
                         </div>
                         <div style={{
-                          fontFamily: 'var(--cth-font-mono)', fontSize: 12, color: 'var(--cth-ink-500)',
+                          fontFamily: 'var(--cth-font-mono)', fontSize: 13, color: 'var(--cth-ink-500)',
                           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                         }}>{parentPath(h)}</div>
                       </div>
@@ -164,12 +163,12 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             {error && (
               <div style={{
                 padding: '6px 10px', background: 'var(--cth-coral-light)',
-                boxShadow: 'inset 0 0 0 1px var(--cth-coral)', borderRadius: 'var(--cth-radius-input)', fontSize: 12, color: 'var(--cth-ink-900)'
+                boxShadow: 'inset 0 0 0 1px var(--cth-coral)', borderRadius: 'var(--cth-radius-input)', fontSize: 13, color: 'var(--cth-ink-900)'
               }}>{error}</div>
             )}
 
             {busy && (
-              <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
+              <div style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>
                 Opening {folderName(busy)}. The app will reload.
               </div>
             )}

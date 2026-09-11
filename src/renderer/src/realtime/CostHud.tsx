@@ -30,20 +30,19 @@ const wrap: React.CSSProperties = {
   flexDirection: 'column',
   gap: 6,
   fontFamily: 'var(--cth-font-mono)',
-  fontSize: 12,
+  fontSize: 13,
   color: 'var(--cth-ink-900)'
 };
 const labelStyle: React.CSSProperties = {
-  fontFamily: 'var(--cth-font-display)',
-  fontSize: 8,
+  fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+  fontSize: 11,
   lineHeight: '12px',
   color: 'var(--cth-ink-500)',
-  textTransform: 'uppercase'
 };
 const capInputStyle: React.CSSProperties = {
   width: 92,
   fontFamily: 'var(--cth-font-mono)',
-  fontSize: 12,
+  fontSize: 13,
   padding: '4px 6px',
   border: '2px solid var(--cth-ink-300)',
   background: 'var(--cth-paper-100)',
@@ -92,7 +91,7 @@ export function CostHud({ compact = false }: CostHudProps): React.ReactElement |
         title={t('costHud.compactTitle', { count: totalTok })}
         style={{
           fontFamily: 'var(--cth-font-mono)',
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 600,
           color: 'var(--cth-ink-900)',
           flexShrink: 0,

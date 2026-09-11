@@ -27,10 +27,10 @@ function statusColor(code: string): string {
 
 const rowStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 6, padding: '2px 12px',
-  cursor: 'pointer', fontSize: 12, color: 'var(--cth-ink-900)'
+  cursor: 'pointer', fontSize: 13, color: 'var(--cth-ink-900)'
 };
 const noteStyle: React.CSSProperties = {
-  padding: '6px 12px', fontSize: 12, color: 'var(--cth-ink-500)'
+  padding: '6px 12px', fontSize: 13, color: 'var(--cth-ink-500)'
 };
 const smallBtn: React.CSSProperties = {
   padding: '0 6px', height: 20, fontFamily: 'var(--cth-font-ui)', fontSize: 11,
@@ -120,7 +120,7 @@ export function HistoryPane({ gitRoot, onOpenRevDiff }: {
         }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px 3px',
-            fontSize: 12, color: 'var(--cth-ink-700)'
+            fontSize: 13, color: 'var(--cth-ink-700)'
           }}>
             <span style={{ fontFamily: 'var(--cth-font-mono)', color: 'var(--cth-ink-900)' }}>{selected.shortSha}</span>
             <span style={{

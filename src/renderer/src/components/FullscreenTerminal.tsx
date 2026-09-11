@@ -306,7 +306,7 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
         }}
       >
         <span style={{
-          fontFamily: 'var(--cth-font-display)', fontSize: 12, lineHeight: '20px',
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '20px',
           color: 'var(--cth-ink-900)'
         }}>ATLAS · FOCUS MODE</span>
         {/* Same top-right controls as the main title bar — fullscreen covers
@@ -458,7 +458,7 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     padding: '0 10px 6px',
-                    fontFamily: 'var(--cth-font-display)',
+                    fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
                     fontSize: scale.group, lineHeight: 1.5,
                     color: 'var(--cth-ink-500)'
                   }}
@@ -645,7 +645,7 @@ function ContextBar({ tokens, limit, accent }: { tokens?: number; limit?: number
       }}>
         <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: color }} />
       </span>
-      <span style={{ flexShrink: 0, fontSize: 9, color: 'var(--cth-ink-500)' }}>{pct}%</span>
+      <span style={{ flexShrink: 0, fontSize: 11, color: 'var(--cth-ink-500)' }}>{pct}%</span>
     </div>
   );
 }
@@ -761,7 +761,7 @@ function SidebarRow({
             <span style={{
               flex: 1, minWidth: 0,
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-              fontFamily: 'var(--cth-font-display)',
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
               fontSize: scale.name, lineHeight: 1.5
             }}>{agent.name.toUpperCase()}</span>
             {/* Your unsent text outranks the agent's own state here: an idle
@@ -782,7 +782,7 @@ function SidebarRow({
               style={{
                 flexShrink: 0, width: 20, height: 20,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 12, lineHeight: 1, color: 'var(--cth-ink-500)',
+                fontSize: 13, lineHeight: 1, color: 'var(--cth-ink-500)',
                 background: notePosition ? 'var(--cth-cream-200)' : 'var(--cth-paper-100)',
                 boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                 cursor: 'pointer'
@@ -869,7 +869,7 @@ function SidebarRow({
         >
           <div style={{
             marginBottom: 6,
-            fontFamily: 'var(--cth-font-display)',
+            fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
             fontSize: noteLabelSize,
             lineHeight: `${Math.round(noteLabelSize * 1.5)}px`,
             color: 'var(--cth-ink-700)'
@@ -908,7 +908,7 @@ function SidebarRow({
             }}
           />
           <div style={{
-            marginTop: 5, fontSize: 10, color: 'var(--cth-ink-500)'
+            marginTop: 5, fontSize: 11, color: 'var(--cth-ink-500)'
           }}>one line = one bullet · esc to close</div>
         </div>
         </>,
@@ -959,7 +959,7 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
       boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
     }}>
       <span style={{
-        fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '16px',
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '16px',
         color: 'var(--cth-ink-900)'
       }}>{agent.name.toUpperCase()}</span>
       {/* Edit belongs with the NAME, not with the action cluster on the right:
@@ -980,12 +980,12 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
         </PixelButton>
       )}
       <span style={{
-        fontSize: 12, color: 'var(--cth-ink-500)',
+        fontSize: 13, color: 'var(--cth-ink-500)',
         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         maxWidth: 300
       }}>{agent.cwd}</span>
       <span style={{
-        fontSize: 12, color: 'var(--cth-ink-700)',
+        fontSize: 13, color: 'var(--cth-ink-700)',
         fontStyle: 'italic'
       }}>“{agent.description}”</span>
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>

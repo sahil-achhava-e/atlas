@@ -64,8 +64,8 @@ const PROVIDER_LABEL: Record<LocalSkill['provider'], string> = {
 function Chip({ text, tone = 'quiet' }: { text: string; tone?: 'quiet' | 'accent' }) {
   return (
     <span style={{
-      fontSize: 10, fontFamily: 'var(--cth-font-display)', letterSpacing: 0.4,
-      padding: '2px 6px', flexShrink: 0, textTransform: 'uppercase',
+      fontSize: 11, fontFamily: 'var(--cth-font-ui)', fontWeight: 600, letterSpacing: 0.4,
+      padding: '2px 6px', flexShrink: 0,
       color: 'var(--cth-ink-900)',
       background: tone === 'accent' ? 'var(--cth-mint-light)' : 'var(--cth-cream-200)',
       boxShadow: `inset 0 0 0 1px ${tone === 'accent' ? 'var(--cth-mint)' : 'var(--cth-ink-300)'}`,
@@ -184,8 +184,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
               onClick={() => setPane(k)}
               style={{
                 padding: '4px 10px 3px', border: 'none', cursor: 'pointer',
-                fontFamily: 'var(--cth-font-display)', fontSize: 9,
-                textTransform: 'uppercase', letterSpacing: '.4px',
+                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: '.4px',
                 color: pane === k ? 'var(--cth-ink-900)' : 'var(--cth-ink-600)',
                 background: pane === k ? 'var(--cth-cream-100)' : 'transparent',
                 boxShadow: pane === k ? 'inset 0 -2px 0 var(--cth-mint)' : 'none'
@@ -204,7 +203,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
             flex: 1, minWidth: 140, padding: '4px 8px',
             background: 'var(--cth-paper-100)', color: 'var(--cth-ink-900)',
             border: 'none', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-            fontFamily: 'var(--cth-font-ui)', fontSize: 12
+            fontFamily: 'var(--cth-font-ui)', fontSize: 13
           }}
         />
         <PixelButton variant="ghost" size="sm" onClick={() => void loadLocal()} disabled={busy}>
@@ -219,7 +218,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
 
       {addNote && (
         <div style={{
-          flexShrink: 0, padding: '6px 10px', fontSize: 12,
+          flexShrink: 0, padding: '6px 10px', fontSize: 13,
           color: 'var(--cth-ink-700)', background: 'var(--cth-cream-100)',
           borderBottom: '1px solid var(--cth-ink-300)'
         }}>{addNote}</div>
@@ -242,7 +241,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
                   style={disabled.includes(s.name) ? { ...rowStyle, opacity: 0.55 } : rowStyle}
                 >
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 11, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, flex: 1, minWidth: 0 }}>
                       {s.name.toUpperCase()}
                     </span>
                     <Chip text={PROVIDER_LABEL[s.provider]} />
@@ -256,12 +255,12 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
                     />
                   </div>
                   {s.description && (
-                    <div style={{ fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: 1.45 }}>
+                    <div style={{ fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: 1.45 }}>
                       {s.description.length > 220 ? `${s.description.slice(0, 220)}…` : s.description}
                     </div>
                   )}
                   <div style={{
-                    fontFamily: 'var(--cth-font-mono)', fontSize: 10.5,
+                    fontFamily: 'var(--cth-font-mono)', fontSize: 11,
                     color: 'var(--cth-ink-500)', wordBreak: 'break-all'
                   }}>{s.path}</div>
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -309,5 +308,5 @@ const rowStyle: React.CSSProperties = {
 };
 
 function Muted({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontSize: 12, color: 'var(--cth-ink-500)', padding: 6 }}>{children}</div>;
+  return <div style={{ fontSize: 13, color: 'var(--cth-ink-500)', padding: 6 }}>{children}</div>;
 }

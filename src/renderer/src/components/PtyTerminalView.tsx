@@ -32,7 +32,7 @@ const zoomBtnStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   fontFamily: 'var(--cth-font-ui)',
-  fontSize: 12,
+  fontSize: 13,
   lineHeight: 1,
   color: 'var(--cth-ink-700)',
   background: 'var(--cth-paper-100)',
@@ -374,7 +374,7 @@ export function PtyTerminalView({ ptyId, label, onStreamData, onUserPrompt, onTo
         style={{
         display: 'flex', alignItems: 'center', gap: 6,
         fontFamily: 'var(--cth-font-ui)',
-        fontSize: 12,
+        fontSize: 13,
         color: 'var(--cth-ink-500)',
         // A hairline, not a dashed rule: dashes read as "unfinished" on the one
         // surface that is always on screen.

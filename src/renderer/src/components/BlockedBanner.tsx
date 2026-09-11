@@ -21,10 +21,9 @@ export function BlockedBanner({ reason, onAction }: BlockedBannerProps) {
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
-        fontFamily: 'var(--cth-font-display)',
-        fontSize: 8, lineHeight: '12px',
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+        fontSize: 11, lineHeight: '12px',
         color: 'var(--cth-ink-900)',
-        textTransform: 'uppercase'
       }}>
         <Icon name="bell" /> {t('blockedBanner.needsYou')}
       </div>

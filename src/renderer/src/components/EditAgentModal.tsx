@@ -166,7 +166,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                           <SpritePortrait character={c.id} scale={1.5} />
                         </div>
                         <span style={{
-                          fontSize: 10, color: 'var(--cth-ink-700)',
+                          fontSize: 11, color: 'var(--cth-ink-700)',
                           maxWidth: 46, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                         }}>{c.name}</span>
                       </button>
@@ -210,7 +210,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                         ? `0 0 0 2px var(--cth-cream-50), 0 0 0 4px ${accent}`
                         : 'inset 0 0 0 1px var(--cth-ink-300)',
                       color: accent.startsWith('#') ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)',
-                      fontFamily: 'var(--cth-font-display)', fontSize: 12
+                      fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13
                     }}
                   >
                     {accent.startsWith('#') ? '\u2713' : '+'}
@@ -245,7 +245,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                   <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)' }}>
                     {providerPreset(provider).label}
                   </span>
-                  <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
+                  <span style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>
                     this workspace's engine
                   </span>
                 </div>
@@ -285,7 +285,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                 </Row>
               )}
 
-              <span style={{ fontSize: 12, color: 'var(--cth-ink-500)', lineHeight: '16px' }}>
+              <span style={{ fontSize: 13, color: 'var(--cth-ink-500)', lineHeight: '16px' }}>
                 Engine changes are saved for the next restart. Use Command Center → Floor to restart a live session onto a new provider/model now.
               </span>
             </Section>
@@ -321,7 +321,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'flex-end',
               marginTop: 6, paddingTop: 14, borderTop: '1px solid var(--cth-ink-100)'
             }}>
-              <span style={{ flex: 1, fontSize: 12, color: 'var(--cth-ink-500)' }}>
+              <span style={{ flex: 1, fontSize: 13, color: 'var(--cth-ink-500)' }}>
                 Name, face and colour apply at once. Engine changes wait for the next restart.
               </span>
               <PixelButton variant="ghost" size="md" onClick={onClose}>cancel</PixelButton>
@@ -361,10 +361,9 @@ function Section({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span style={{
-          fontFamily: 'var(--cth-font-display)',
-          fontSize: 9, lineHeight: '12px',
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+          fontSize: 11, lineHeight: '12px',
           color: 'var(--cth-ink-900)',
-          textTransform: 'uppercase'
         }}>{label}</span>
         <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>{hint}</span>
       </div>
@@ -377,10 +376,9 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <span style={{
-        fontFamily: 'var(--cth-font-display)',
-        fontSize: 9, lineHeight: '13px', letterSpacing: '.04em',
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+        fontSize: 11, lineHeight: '13px', letterSpacing: '.04em',
         color: 'var(--cth-ink-700)',
-        textTransform: 'uppercase'
       }}>{label}</span>
       {children}
     </label>

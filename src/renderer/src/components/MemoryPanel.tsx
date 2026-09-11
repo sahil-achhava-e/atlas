@@ -124,7 +124,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
             background: active ? 'var(--cth-lemon-light)' : 'var(--cth-cream-200)',
             boxShadow: 'inset 0 0 0 1.5px var(--cth-ink-500)',
             fontFamily: 'var(--cth-font-ui)',
-            fontSize: 12,
+            fontSize: 13,
             color: 'var(--cth-ink-900)',
             cursor: 'pointer',
             border: 'none'
@@ -137,13 +137,13 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 14 }}>
 
             {/* What this is — one plain line. */}
-            <div style={{ fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: 1.5 }}>
+            <div style={{ fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: 1.5 }}>
               {t('memoryPanel.intro')}
             </div>
 
             {/* Status + on/off — the two things the user controls at a glance. */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'var(--cth-ink-900)', fontFamily: 'var(--cth-font-ui)' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--cth-ink-900)', fontFamily: 'var(--cth-font-ui)' }}>
                 <span style={{ width: 9, height: 9, background: state.dot, boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)' }} />
                 {state.label}
               </span>
@@ -167,7 +167,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
             {/* Not installed: show full self-sufficient setup so any machine can follow it. */}
             {!status?.available && !status?.preparing && (
               <div style={{
-                fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: 1.6,
+                fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: 1.6,
                 background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', padding: 10
               }}>
                 {t('memoryPanel.needsDocker')}
@@ -187,7 +187,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
             {/* Model: a benefit-framed choice, not a codename dump. */}
             {status?.available && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span style={{ fontSize: 11, color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-display)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                <span style={{ fontSize: 11, color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-ui)', fontWeight: 600, letterSpacing: 0.5 }}>
                   {t('memoryPanel.searchLanguage')}
                 </span>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -205,7 +205,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
                           fontFamily: 'var(--cth-font-ui)'
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--cth-ink-900)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'var(--cth-ink-900)' }}>
                           <span style={{
                             width: 8, height: 8, flexShrink: 0,
                             background: sel ? 'var(--cth-ink-900)' : 'transparent',
@@ -249,7 +249,7 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
                     margin: 0, maxHeight: '40vh', overflow: 'auto',
                     background: 'var(--cth-cream-100)',
                     boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-                    padding: 8, fontFamily: 'var(--cth-font-mono)', fontSize: 12,
+                    padding: 8, fontFamily: 'var(--cth-font-mono)', fontSize: 13,
                     whiteSpace: 'pre-wrap', color: 'var(--cth-ink-900)'
                   }} dir={rtl ? 'auto' : undefined}>{result}</pre>
                 )}

@@ -115,7 +115,7 @@ export function GitTab({ cwd }: GitTabProps) {
         borderBottom: '1px solid var(--cth-ink-700)'
       }}>
         <span style={{
-          fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
           padding: '2px 6px',
           background: 'var(--cth-sky-light)',
           boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
@@ -124,7 +124,7 @@ export function GitTab({ cwd }: GitTabProps) {
           {detached ? t('gitTab.detachedHead') : (branch ?? '—')}
         </span>
         {upstream && (
-          <span style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
+          <span style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>
             ↑ {ahead} ↓ {behind} · {upstream}
           </span>
         )}
@@ -140,7 +140,7 @@ export function GitTab({ cwd }: GitTabProps) {
           padding: '4px 10px',
           background: 'var(--cth-coral-light)',
           color: 'var(--cth-ink-900)',
-          fontSize: 12,
+          fontSize: 13,
           borderBottom: '1px solid var(--cth-coral)'
         }}>{error}</div>
       )}
@@ -169,7 +169,7 @@ export function GitTab({ cwd }: GitTabProps) {
             <div style={{ padding: '0 8px 8px', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
               {branches.local.map(b => (
                 <span key={`l-${b}`} style={{
-                  padding: '0 6px', fontSize: 12,
+                  padding: '0 6px', fontSize: 13,
                   background: b === branch ? 'var(--cth-lemon)' : 'var(--cth-cream-100)',
                   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                   color: 'var(--cth-ink-900)'
@@ -177,7 +177,7 @@ export function GitTab({ cwd }: GitTabProps) {
               ))}
               {branches.remote.map(b => (
                 <span key={`r-${b}`} style={{
-                  padding: '0 6px', fontSize: 12,
+                  padding: '0 6px', fontSize: 13,
                   background: 'var(--cth-cream-100)',
                   boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                   color: 'var(--cth-ink-500)',
@@ -194,7 +194,7 @@ export function GitTab({ cwd }: GitTabProps) {
         {/* Graph */}
         <Section title={t('gitTab.sectionLog')}>
           {log.length > 0 ? <CommitGraph commits={log} currentBranch={branch} /> : (
-            <div style={{ padding: 12, color: 'var(--cth-ink-500)', fontSize: 12 }}>{t('gitTab.noCommits')}</div>
+            <div style={{ padding: 12, color: 'var(--cth-ink-500)', fontSize: 13 }}>{t('gitTab.noCommits')}</div>
           )}
         </Section>
       </div>
@@ -206,8 +206,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <div style={{ marginBottom: 4 }}>
       <div style={{
-        fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '12px',
-        textTransform: 'uppercase',
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
         color: 'var(--cth-ink-700)',
         padding: '8px 10px 4px',
         background: 'var(--cth-cream-50)',
@@ -227,14 +226,13 @@ function StatusGroup({ label, entries }: {
   return (
     <div style={{ padding: '4px 0' }}>
       <div style={{
-        padding: '0 12px', fontSize: 11, color: 'var(--cth-ink-500)',
-        textTransform: 'uppercase', letterSpacing: 0
+        padding: '0 12px', fontSize: 11, color: 'var(--cth-ink-500)', letterSpacing: 0
       }}>{label}</div>
       {entries.map(e => (
         <div key={`${label}-${e.path}-${e.code}`} style={{
           display: 'flex', alignItems: 'center', gap: 6,
           padding: '2px 12px',
-          fontSize: 12, color: 'var(--cth-ink-900)'
+          fontSize: 13, color: 'var(--cth-ink-900)'
         }}>
           <span style={{
             display: 'inline-block', width: 14, textAlign: 'center',

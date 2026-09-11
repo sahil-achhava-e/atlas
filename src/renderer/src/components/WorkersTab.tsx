@@ -44,8 +44,7 @@ const metaRow: React.CSSProperties = {
   fontSize: 11, color: 'var(--cth-ink-700)'
 };
 const sectionHead: React.CSSProperties = {
-  fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
-  letterSpacing: 0.5, color: 'var(--cth-ink-900)', margin: '2px 0'
+  fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 700, color: 'var(--cth-ink-900)', margin: '2px 0'
 };
 
 function StatusBadge({ w }: { w: WorkerSnapshot }) {
@@ -53,8 +52,7 @@ function StatusBadge({ w }: { w: WorkerSnapshot }) {
   const releasing = w.status === 'releasing';
   return (
     <span style={{
-      fontFamily: 'var(--cth-font-mono)', fontSize: 10, padding: '1px 6px',
-      textTransform: 'uppercase', letterSpacing: 0.5,
+      fontFamily: 'var(--cth-font-mono)', fontSize: 11, padding: '1px 6px', letterSpacing: 0.5,
       color: releasing ? 'var(--cth-paper-100)' : 'var(--cth-ink-900)',
       background: releasing ? 'var(--cth-ink-700)' : 'var(--cth-green, #2f8f4e)',
       boxShadow: releasing ? 'none' : 'inset 0 0 0 1px var(--cth-ink-100)'
@@ -105,7 +103,7 @@ export function WorkersTab() {
         </p>
 
         {live.length === 0 ? (
-          <div style={{ ...card, color: 'var(--cth-ink-700)', fontFamily: 'var(--cth-font-ui)', fontSize: 12 }}>
+          <div style={{ ...card, color: 'var(--cth-ink-700)', fontFamily: 'var(--cth-font-ui)', fontSize: 13 }}>
             {t('workersTab.noneRunning')}
           </div>
         ) : (
@@ -116,12 +114,12 @@ export function WorkersTab() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                     <StatusBadge w={w} />
                     <span style={{
-                      fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600, color: 'var(--cth-ink-900)',
+                      fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600, color: 'var(--cth-ink-900)',
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                     }}>{w.name}</span>
                     {w.hasSlack && (
                       <span title={t('workersTab.repliesToSlack')} style={{
-                        fontFamily: 'var(--cth-font-mono)', fontSize: 10, color: 'var(--cth-ink-700)',
+                        fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-700)',
                         boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)', padding: '0 5px'
                       }}>slack</span>
                     )}
@@ -159,7 +157,7 @@ export function WorkersTab() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {preserved.map((p) => (
               <div key={p.wtPath} style={card}>
-                <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600, color: 'var(--cth-ink-900)' }}>
+                <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600, color: 'var(--cth-ink-900)' }}>
                   {p.workerId}
                 </div>
                 <div style={metaRow}>

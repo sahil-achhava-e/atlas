@@ -142,18 +142,17 @@ export function UpdateBadge() {
           width: 340, padding: '10px 12px',
           background: 'var(--cth-paper-100)', color: INK,
           border: `2px solid ${INK}`, boxShadow: `4px 4px 0 ${INK}`,
-          fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: 1.5, textAlign: 'left'
+          fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: 1.5, textAlign: 'left'
         }}
       >
-        <div style={{ fontFamily: 'var(--cth-font-mono, monospace)', fontWeight: 700, fontSize: 12.5 }}>
+        <div style={{ fontFamily: 'var(--cth-font-mono, monospace)', fontWeight: 700, fontSize: 13 }}>
           Click to download v{pending}
         </div>
         <div style={{ marginTop: 4, color: 'var(--cth-ink-700)' }}>
           Download the latest version and replace the app you have. Prefer the app to update itself? Settings &rarr; Updates.
         </div>
         <div style={{
-          marginTop: 8, fontFamily: 'var(--cth-font-mono, monospace)', fontSize: 9,
-          letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--cth-ink-500)'
+          marginTop: 8, fontFamily: 'var(--cth-font-mono, monospace)', fontSize: 11, color: 'var(--cth-ink-500)'
         }}>On {steps.os}</div>
         <ol style={{ margin: '4px 0 0', paddingLeft: 18, color: 'var(--cth-ink-700)' }}>
           {steps.steps.map((t) => <li key={t}>{t}</li>)}
@@ -172,7 +171,7 @@ export function UpdateBadge() {
           width: 380, padding: '12px 14px',
           background: 'var(--cth-paper-100)', color: INK,
           border: `2px solid ${INK}`, boxShadow: `4px 4px 0 ${INK}`,
-          fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, lineHeight: 1.5, textAlign: 'left'
+          fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: 1.5, textAlign: 'left'
         }}
       >
         <div style={{ fontFamily: 'var(--cth-font-mono, monospace)', fontWeight: 700, fontSize: 13 }}>
@@ -203,14 +202,14 @@ export function UpdateBadge() {
           width: 300, padding: '10px 12px',
           background: 'var(--cth-paper-100)', color: INK,
           border: `2px solid ${INK}`, boxShadow: `4px 4px 0 ${INK}`,
-          fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, lineHeight: 1.5, textAlign: 'left'
+          fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: 1.5, textAlign: 'left'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--cth-font-mono, monospace)', fontWeight: 700, fontSize: 13 }}>
           <span aria-hidden style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             width: 18, height: 18, borderRadius: 999,
-            background: 'var(--cth-mint-light, #d0f0e0)', color: 'var(--cth-ink-900)', fontSize: 12
+            background: 'var(--cth-mint-light, #d0f0e0)', color: 'var(--cth-ink-900)', fontSize: 13
           }}>&#10003;</span>
           You are on the latest version.
         </div>

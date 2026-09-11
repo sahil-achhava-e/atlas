@@ -167,7 +167,7 @@ export function CommitGraph({ commits, currentBranch, onCommitClick }: CommitGra
               paddingRight: 8,
               minWidth: 0,
               cursor: onCommitClick ? 'pointer' : 'default',
-              fontSize: 12,
+              fontSize: 13,
               lineHeight: `${ROW_H}px`,
               whiteSpace: 'nowrap'
             }}
