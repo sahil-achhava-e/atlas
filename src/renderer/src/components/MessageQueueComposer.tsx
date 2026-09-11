@@ -254,10 +254,14 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             onClick={() => clearQueue(agent.id)}
             style={{
               marginLeft: 'auto', flexShrink: 0, whiteSpace: 'nowrap',
-              border: 'none', background: 'transparent', cursor: 'pointer',
-              fontFamily: 'var(--cth-font-ui)', fontSize: 13,
-              color: 'var(--cth-ink-500)'
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              height: 26, padding: '0 10px',
+              border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
+              background: 'transparent', color: 'var(--cth-ink-500)',
+              fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600,
+              transition: 'background 120ms ease, color 120ms ease'
             }}
+            className="cth-quiet-danger"
           >{t('queueComposer.clearAll')}</button>
         )}
       </div>
@@ -266,7 +270,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
       {queue.length > 0 && (
         <div style={{
           display: 'flex', flexDirection: 'column', gap: 4,
-          maxHeight: 280, overflowY: 'auto'
+          maxHeight: 132, overflowY: 'auto'
         }}>
           {queue.map((m, i) => (
             <QueuedMessageRow
@@ -490,7 +494,8 @@ function QueuedMessageRow(
     if (!el) return;
     const measure = () => {
       if (expanded) return;
-      setClipped(el.scrollHeight > el.clientHeight + 1);
+      // One line now, so the overflow that matters is horizontal.
+      setClipped(el.scrollWidth > el.clientWidth + 1);
     };
     measure();
     // The panel is resizable — re-measure on width changes, not just text ones.
@@ -502,9 +507,9 @@ function QueuedMessageRow(
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 8,
-      padding: '4px 10px',
+      padding: '6px 10px',
       background: 'var(--cth-paper-100)',
-      boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
+      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-btn)'
     }}>
       <span style={{
         fontFamily: 'var(--cth-font-mono)', fontSize: 13,
@@ -517,15 +522,10 @@ function QueuedMessageRow(
           style={{
             fontSize: 13, lineHeight: '18px',
             color: 'var(--cth-ink-900)',
-            whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+            wordBreak: 'break-word',
             ...(expanded
-              // Cap the expanded body so one long message can't push the rest of
-              // the queue out of the list's own 280px scroll area.
-              ? { maxHeight: 220, overflowY: 'auto' as const }
-              : {
-                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden'
-                })
+              ? { maxHeight: 200, overflowY: 'auto' as const }
+              : { whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' })
           }}
         >{message.text}</div>
         {(clipped || expanded || paused) && (
@@ -535,8 +535,8 @@ function QueuedMessageRow(
                 onClick={() => setExpanded((e) => !e)}
                 style={{
                   border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-                  fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '16px',
-                  color: 'var(--cth-ink-500)', textDecoration: 'underline'
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '16px',
+                  fontWeight: 600, color: 'var(--cth-lilac)'
                 }}
               >{expanded ? t('queueComposer.seeLess') : t('queueComposer.seeMore')}</button>
             )}
@@ -560,14 +560,21 @@ function QueuedMessageRow(
       </div>
       <button
         onClick={onRemove}
+        className="cth-iconbar cth-quiet-danger"
+        data-label={t('queueComposer.removeOne')}
+        aria-label={t('queueComposer.removeOne')}
         style={{
           flexShrink: 0, border: 'none', background: 'transparent',
-          cursor: 'pointer',
-          color: 'var(--cth-ink-500)', padding: 0,
-          display: 'inline-flex', alignItems: 'center'
+          cursor: 'pointer', color: 'var(--cth-ink-300)',
+          width: 24, height: 24, padding: 0,
+          borderRadius: 'var(--cth-radius-btn)',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'background 120ms ease, color 120ms ease'
         }}
       >
-        <Icon name="x" />
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        </svg>
       </button>
     </div>
   );

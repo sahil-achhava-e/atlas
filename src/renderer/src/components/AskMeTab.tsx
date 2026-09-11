@@ -6,6 +6,7 @@ import { useStore } from '@/store/store';
 import { MarkdownPreview } from '@/markdown/MarkdownPreview';
 import { type HiveTask, type HumanQA, openQuestion, waitsOnHuman } from './TasksKanban';
 import { compareByNewestAsk } from './askMeOrder';
+import { StatusGlyph } from './StatusGlyph';
 import { isComposingKey } from '@shared/imeGuard';
 import { useRtl } from '@/i18n/useDirection';
 
@@ -166,13 +167,28 @@ export function AskMeTab() {
     // Body text is set in the mono face (VT323) — the same readable font the
     // memory viewer uses. Pixelify Sans (font-ui) is too chunky for prose like
     // questions and answers. Display/badge bits keep their explicit faces.
-    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: 'var(--cth-paper-200)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12, fontFamily: 'var(--cth-font-mono)' }}>
+    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: 'var(--cth-paper-100)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12, fontFamily: 'var(--cth-font-ui)' }}>
       {waiting.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--cth-ink-500)', fontSize: 13 }}>
-          {translate('askMe.emptyTitle')}<br />
-          <span style={{ fontSize: 11, color: 'var(--cth-ink-300)' }}>
-            {translate('askMe.emptySub')}
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          textAlign: 'center', padding: '40px 16px', gap: 10
+        }}>
+          {/* A quiet mark rather than an emoji: the empty state is the normal
+              state, so it should look composed, not cheerful. */}
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 46, height: 46, borderRadius: 'var(--cth-radius-pill)',
+            background: 'color-mix(in srgb, var(--cth-status-success) 12%, transparent)',
+            color: 'var(--cth-status-success)'
+          }}>
+            <StatusGlyph status="success" size={22} />
           </span>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--cth-ink-900)' }}>
+            {translate('askMe.emptyTitle')}
+          </div>
+          <div style={{ fontSize: 13, lineHeight: '19px', color: 'var(--cth-ink-500)', maxWidth: 300 }}>
+            {translate('askMe.emptySub')}
+          </div>
         </div>
       )}
       {waiting.map((t) => {

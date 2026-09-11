@@ -193,6 +193,32 @@
       input.click();
     });
   },
+  // Three asks, one of each shape the board can hold: a decision, a to-do only
+  // a person can do, and one that is blocking other work. Without these the
+  // Needs you tab could only ever be seen empty in a browser.
+  hiveTasks: async () => ({ tasks: [
+    {
+      id: 'vms-1284', title: 'Booking migration: which branch?', status: 'blocked',
+      agentId: 'atlas', agentName: 'Pam', updatedAt: Date.now() - 4 * 60_000,
+      humanQA: [{
+        q: 'The migration touches bookings and tickets. Do I branch off develop, or off the release branch that already has the pricing fix?'
+      }]
+    },
+    {
+      id: 'vms-1290', title: 'ADO pipeline needs a secret', status: 'blocked',
+      agentId: 'atlas', agentName: 'Dwight', updatedAt: Date.now() - 22 * 60_000,
+      dependsOn: [], humanQA: [{ askedAt: new Date().toISOString(), q: 'I cannot add EPICXP_SMTP_PASSWORD myself. Please add it in the ADO library and tell me when it is there.'
+      }]
+    },
+    {
+      id: 'vms-1301', title: 'Delete the legacy voucher endpoint?', status: 'blocked',
+      agentId: 'atlas', agentName: 'Jim', updatedAt: Date.now() - 90 * 60_000,
+      humanQA: [
+        { askedAt: new Date().toISOString(), q: 'Nothing in the repo calls /api/v1/vouchers/redeem any more, but it is public. Remove it, or keep it and mark deprecated?' },
+        { askedAt: new Date(Date.now() - 3 * 3600e3).toISOString(), q: 'Should the old vouchers keep working?', a: 'Yes, until March.', answeredAt: new Date().toISOString() }
+      ]
+    }
+  ] }),
   skillsDisabled: async () => (window.__skillsOff = window.__skillsOff || []),
   skillsSetEnabled: async (name, on) => {
     const cur = new Set(window.__skillsOff || []);
