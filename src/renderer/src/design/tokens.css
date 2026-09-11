@@ -1,36 +1,36 @@
 /* Design tokens — mirrors tokens.ts. Update both together. */
 :root {
   /* Base */
-  --cth-cream-50: #F0EDFB;
-  --cth-cream-100: #E4DFF6;
-  --cth-cream-200: #D3CBEF;
-  --cth-cream-300: #B9AEE4;
-  --cth-paper-100: #F4F1FD;
-  --cth-paper-200: #DDD6F2;
+  --cth-cream-50: #F5F5F5;
+  --cth-cream-100: #EEEEEE;
+  --cth-cream-200: #E0E0E0;
+  --cth-cream-300: #BDBDBD;
+  --cth-paper-100: #FFFFFF;
+  --cth-paper-200: #FAFAFA;
 
   /* App ground (global.css) — the wash behind everything, plus the bloom that
      marks where the content sits. */
-  --cth-ground-centre: #EEEAFA;
-  --cth-ground-edge: #D8D0F1;
-  --cth-ground-bloom: rgba(122, 90, 240, 0.13);
+  --cth-ground-centre: #FAFAFA;
+  --cth-ground-edge: #ECECEF;
+  --cth-ground-bloom: rgba(107, 0, 255, 0.07);
 
   /* Ink */
-  --cth-ink-900: #170F2E;
-  --cth-ink-700: #332658;
-  --cth-ink-500: #5E5088;
-  --cth-ink-300: #9A8CC0;
-  --cth-ink-100: #C4B9DF;
+  --cth-ink-900: #212121;
+  --cth-ink-700: #424242;
+  --cth-ink-500: #757575;
+  --cth-ink-300: #BDBDBD;
+  --cth-ink-100: #E0E0E0;
 
   /* Accents — v0.3.4 recalibration: same hues, professional saturation.
      The originals (#FFD93D, #FF6B6B, …) were full-saturation arcade tones that
      read as noise at UI density; these sit in the calmer band that products
      like Linear/Radix use — recognizable color, no glare. */
-  --cth-coral: #F2685C;       --cth-coral-light: #FFD9D4;
-  --cth-mint:  #35B876;       --cth-mint-light:  #CFF0DF;
-  --cth-sky:   #22A6C4;       --cth-sky-light:   #CBEBF3;
-  --cth-lemon: #EFB223;       --cth-lemon-light: #FFEDC2;
-  --cth-lilac: #8B6FE8;       --cth-lilac-light: #E2DAFB;
-  --cth-lilac-hover: #7C68C6;   /* brand accent, one step down: primary button hover */
+  --cth-coral: #F44336;       --cth-coral-light: #FFEBEE;
+  --cth-mint: #4CAF50;       --cth-mint-light: #E8F5E8;
+  --cth-sky: #29B6F6;       --cth-sky-light: #E1F5FE;
+  --cth-lemon: #FFA726;       --cth-lemon-light: #FFF3E0;
+  --cth-lilac: #6B00FF;       --cth-lilac-light: #F3E5FF;
+  --cth-lilac-hover: #5600CC;   /* brand accent, one step down: primary button hover */
   --cth-peach: #F2914D;       --cth-peach-light: #FFE2C9;
   /* Six more so a floor of a dozen agents can all look different. Same
      saturation band as the originals, filling the hues they skipped:
@@ -48,16 +48,33 @@
      act), GREEN available (it just finished and is free), pale grey idle.
      Ten states share four colours on purpose — the colour answers "can I give
      it work", the label beside it answers "what exactly is it doing". */
-  --cth-status-idle:     #B8B2C0;   /* idle    — free, nothing in hand */
-  --cth-status-thinking: #D64550;   /* busy */
-  --cth-status-working:  #D64550;   /* busy */
-  --cth-status-compacting: #D64550; /* busy    — boxing up its own context */
-  --cth-status-waiting:  #E0A32E;   /* away    — stalled on another agent */
-  --cth-status-blocked:  #E0A32E;   /* away    — stalled on YOU */
-  --cth-status-typing:   #E0A32E;   /* away    — your unsent text holds its queue */
-  --cth-status-looping:  #E0A32E;   /* away    — circuit breaker armed */
-  --cth-status-success:  #4CA362;   /* available — just finished */
-  --cth-status-ghost:    #D9D3DE;   /* offline */
+  --cth-status-idle: #BDBDBD;   /* idle    — free, nothing in hand */
+  --cth-status-thinking: #F44336;   /* busy */
+  --cth-status-working: #F44336;   /* busy */
+  --cth-status-compacting: #F44336; /* busy    — boxing up its own context */
+  --cth-status-waiting: #FFA726;   /* away    — stalled on another agent */
+  --cth-status-blocked: #FFA726;   /* away    — stalled on YOU */
+  --cth-status-typing: #FFA726;   /* away    — your unsent text holds its queue */
+  --cth-status-looping: #FFA726;   /* away    — circuit breaker armed */
+  --cth-status-success: #4CAF50;   /* available — just finished */
+  --cth-status-ghost: #E0E0E0;   /* offline */
+
+
+  /* Shape and depth — the EpicXP Visits system (admin-frontend/src/theme/adminTheme.ts).
+     Atlas had neither: every surface was a 1px inset outline with square corners, 207
+     of them written by hand. These are the two tokens that change how the app feels. */
+  --cth-radius-sm: 8px;
+  --cth-radius-btn: 10px;
+  --cth-radius-input: 12px;
+  --cth-radius-card: 16px;
+  --cth-radius-pill: 999px;
+
+  --cth-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --cth-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --cth-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+  /* A primary button carries its own colour into its shadow. */
+  --cth-shadow-btn: 0 4px 12px rgba(107, 0, 255, 0.30);
+  --cth-shadow-btn-hover: 0 6px 16px rgba(107, 0, 255, 0.40);
 
   /* Spacing */
   --cth-space-0: 0px;
@@ -145,33 +162,33 @@
 :root[data-cth-theme='dark'] {
   /* Base surfaces — a graded elevation ramp, darkest where light mode was
      lightest. Neutral with a whisper of the brand's violet warmth. */
-  --cth-cream-50: #0E0B1A;   /*   app ground — dark, deliberately NOT black */
-  --cth-cream-100: #140F26;
-  --cth-cream-200: #1C1634;
-  --cth-cream-300: #282046;
-  --cth-paper-100: #110D20;   /*   cards, inputs, terminals */
-  --cth-paper-200: #19122E;
+  --cth-cream-50: #121016;   /*   app ground — dark, deliberately NOT black */
+  --cth-cream-100: #1B1822;
+  --cth-cream-200: #2B2636;
+  --cth-cream-300: #3A3348;
+  --cth-paper-100: #1B1822;   /*   cards, inputs, terminals */
+  --cth-paper-200: #211D2B;
 
   /* Ground: the wash lifts the centre so the floor has depth instead of
      reading as one flat slab. */
-  --cth-ground-centre: #211838;
-  --cth-ground-edge: #09070F;
-  --cth-ground-bloom: rgba(122, 90, 240, 0.20);
+  --cth-ground-centre: #1B1822;
+  --cth-ground-edge: #0C0A10;
+  --cth-ground-bloom: rgba(154, 77, 255, 0.16);
 
   /* Ink → off-white text ramp (never #FFF — glare) */
-  --cth-ink-900: #DEDBD6;   /* 10.9-13.0:1 — primary text, warm off-white */
-  --cth-ink-700: #B3B0AC;   /*  7.0-8.3:1  — secondary text */
-  --cth-ink-500: #96919F;   /*  4.9-5.8:1  — tertiary / hints */
-  --cth-ink-300: #787684;   /*  3.4-4.0:1  — BORDERS. must stay >= 3.0 */
-  --cth-ink-100: #3E3D46;   /*  1.4-1.7:1  — dividers, meant to recede */
+  --cth-ink-900: #F2EFF7;   /* 10.9-13.0:1 — primary text, warm off-white */
+  --cth-ink-700: #C9C2D6;   /*  7.0-8.3:1  — secondary text */
+  --cth-ink-500: #9A92AB;   /*  4.9-5.8:1  — tertiary / hints */
+  --cth-ink-300: #6E667F;   /*  3.4-4.0:1  — BORDERS. must stay >= 3.0 */
+  --cth-ink-100: #3A3348;   /*  1.4-1.7:1  — dividers, meant to recede */
 
   /* Accents — one step lighter/softer than the light set so they read on dark
      without fluorescing */
-  --cth-coral: #FF8A7E;       --cth-mint:  #5FD79A;
-  --cth-sky:   #5AC9E0;       --cth-lemon: #FFD066;
-  --cth-lilac: #A992FF;       --cth-peach: #FFB076;
+  --cth-coral: #EF5350;       --cth-mint:  #5FD79A;
+  --cth-sky: #4FC3F7;       --cth-lemon: #FFD066;
+  --cth-lilac: #AA4CFF;       --cth-peach: #FFB076;
   /* Brand accent, one step along for hover. On dark that step goes UP. */
-  --cth-lilac-hover: #BCACEC;
+  --cth-lilac-hover: #CD95FF;
 
   /* Accent "-light" fills double as chip/selection backgrounds — deep muted
      versions so light text (ink-900) stays readable on top. */
@@ -179,7 +196,7 @@
   --cth-mint-light:  #1D3428;
   --cth-sky-light:   #16303A;
   --cth-lemon-light: #3A2F17;
-  --cth-lilac-light: #2A2247;
+  --cth-lilac-light: #2A1D44;
   --cth-peach-light: #3C2A1C;
   --cth-rose: #FF87B4;    --cth-rose-light: #3B2431;
   --cth-plum: #D77FEC;    --cth-plum-light: #341F3B;
@@ -189,19 +206,27 @@
   --cth-slate: #9BA6B3;   --cth-slate-light: #262B31;
 
   /* Status — dark-tuned counterparts (same hue language) */
-  --cth-status-idle:     #7A7684;
-  --cth-status-thinking: #E0666F;
-  --cth-status-working:  #E0666F;
-  --cth-status-waiting:  #E8B44C;
-  --cth-status-blocked:  #E8B44C;
-  --cth-status-success:  #68BE7E;
+  --cth-status-idle: #6E667F;
+  --cth-status-thinking: #EF5350;
+  --cth-status-working: #EF5350;
+  --cth-status-waiting: #FFB74D;
+  --cth-status-blocked: #FFB74D;
+  --cth-status-success: #66BB6A;
   /* The quietest status, but still a MARK the user must be able to find — at
      the old #3D3C44 it measured 1.54:1 on the new ground and simply vanished. */
-  --cth-status-ghost:    #6C6A76;
-  --cth-status-compacting: #E0666F;
-  --cth-status-looping:    #E8B44C;
-  --cth-status-typing:     #E8B44C;
+  --cth-status-ghost: #3A3348;
+  --cth-status-compacting: #EF5350;
+  --cth-status-looping: #FFB74D;
+  --cth-status-typing: #FFB74D;
 
   /* Hard shadow reads as depth, not void */
   --cth-shadow-hard: 4px 4px 0 rgba(0, 0, 0, 0.45);
+
+  /* Depth on dark: a soft light shadow is invisible, so it goes deeper and a
+     hairline border does the work a shadow does in light mode. */
+  --cth-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.40);
+  --cth-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.45);
+  --cth-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.60);
+  --cth-shadow-btn: 0 4px 12px rgba(154, 77, 255, 0.35);
+  --cth-shadow-btn-hover: 0 6px 16px rgba(154, 77, 255, 0.45);
 }

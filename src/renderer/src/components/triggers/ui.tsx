@@ -20,7 +20,7 @@ import {
 export const inputStyle: CSSProperties = {
   width: '100%', boxSizing: 'border-box', padding: '6px 8px',
   background: 'var(--cth-paper-100)', border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '17px',
   color: 'var(--cth-ink-900)', outline: 'none'
 };
@@ -37,7 +37,7 @@ export const textareaStyle: CSSProperties = {
 
 export const selectStyle: CSSProperties = {
   padding: '3px 6px', background: 'var(--cth-paper-100)', border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)',
   cursor: 'pointer', minWidth: 0, maxWidth: '100%'
 };
@@ -61,7 +61,7 @@ export function Chip({ children, tone = 'plain' }: { children: ReactNode; tone?:
     <span style={{
       flexShrink: 0, padding: '2px 5px 1px',
       fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '12px',
-      background: bg, boxShadow: `inset 0 0 0 1px ${line}`, color: 'var(--cth-ink-900)'
+      background: bg, boxShadow: `inset 0 0 0 1px ${line}`, borderRadius: 'var(--cth-radius-input)', color: 'var(--cth-ink-900)'
     }}>{children}</span>
   );
 }
@@ -73,7 +73,8 @@ export function Callout({ children, tone = 'warn' }: { children: ReactNode; tone
       marginTop: 6, padding: '6px 8px',
       fontSize: 11, lineHeight: '15px', color: 'var(--cth-ink-900)',
       background: warn ? 'var(--cth-coral-light)' : 'var(--cth-cream-200)',
-      boxShadow: `inset 0 0 0 1px ${warn ? 'var(--cth-coral)' : 'var(--cth-ink-100)'}`
+      boxShadow: `inset 0 0 0 1px ${warn ? 'var(--cth-coral)' : 'var(--cth-ink-100)'}`,
+            borderRadius: 'var(--cth-radius-input)'
     }}>{children}</div>
   );
 }
@@ -91,6 +92,7 @@ export function Toggle({ on, onClick, onLabel, offLabel }: {
         padding: '2px 8px 1px', border: 'none', cursor: 'pointer', flexShrink: 0,
         background: on ? 'var(--cth-lemon)' : 'var(--cth-cream-200)',
         boxShadow: `inset 0 0 0 1px ${on ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)'}`,
+            borderRadius: 'var(--cth-radius-input)',
         fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)'
       }}
     >{on ? (onLabel ?? t('common.on')) : (offLabel ?? t('common.off'))}</button>
@@ -108,7 +110,7 @@ export function MiniButton({ children, onClick, tone = 'plain', disabled }: {
         flexShrink: 0, padding: '2px 7px 1px', border: 'none',
         cursor: disabled ? 'default' : 'pointer',
         background: tone === 'good' ? 'var(--cth-mint)' : 'var(--cth-cream-200)',
-        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
         fontFamily: 'var(--cth-font-ui)', fontSize: 11,
         color: disabled ? 'var(--cth-ink-300)' : tone === 'danger' ? 'var(--cth-coral)' : 'var(--cth-ink-900)'
       }}
@@ -167,13 +169,13 @@ export function TriggerCard({ title, blurb, summary, defaultOpen = false, childr
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div style={{ marginBottom: 8, background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)' }}>
+    <div style={{ marginBottom: 8, background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)' }}>
       <button
         onClick={() => setOpen((o) => !o)}
         style={{
           width: '100%', display: 'flex', alignItems: 'flex-start', gap: 6, textAlign: 'left',
           padding: '8px 10px', border: 'none', cursor: 'pointer',
-          background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+          background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
         }}
       >
         <span style={{ flexShrink: 0, width: 8, fontSize: 11, lineHeight: '13px', color: 'var(--cth-ink-500)' }}>
@@ -200,7 +202,7 @@ export function SubCard({ children }: { children: ReactNode }) {
   return (
     <div style={{
       marginBottom: 6, padding: '8px 10px 10px',
-      background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+      background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
     }}>{children}</div>
   );
 }
@@ -355,7 +357,7 @@ export function PctField({ value, onChange }: { value: number; onChange: (pct: n
       <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>%</span>
       <div style={{
         flex: 1, minWidth: 40, height: 8,
-        background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+        background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
       }}>
         <div style={{ width: `${pct}%`, height: '100%', background: pct === 0 ? 'var(--cth-ink-300)' : 'var(--cth-lemon)' }} />
       </div>

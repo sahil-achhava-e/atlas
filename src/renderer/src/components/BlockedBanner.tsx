@@ -51,7 +51,7 @@ export function BlockedBanner({ reason, onAction }: BlockedBannerProps) {
           color: 'var(--cth-ink-900)',
           background: 'var(--cth-paper-100)',
           padding: '4px 8px',
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis'

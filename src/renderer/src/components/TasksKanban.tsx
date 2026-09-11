@@ -187,7 +187,7 @@ export function TasksKanban() {
           return (
             <div key={col.key} style={{
               flex: '1 1 0', minWidth: 170, display: 'flex', flexDirection: 'column',
-              background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+              background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
             }}>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '5px 8px 4px',
@@ -244,7 +244,7 @@ function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
           display: 'flex', alignItems: 'stretch', gap: 0, padding: 0,
           border: 'none', cursor: 'pointer', textAlign: 'left',
           background: 'var(--cth-paper-100)',
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
         }}
       >
         <span style={{ width: 4, flexShrink: 0, background: accent, boxShadow: 'inset -1px 0 0 var(--cth-ink-700)' }} />
@@ -275,7 +275,7 @@ function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
             alignSelf: 'center', marginRight: 18, flexShrink: 0,
             fontFamily: 'var(--cth-font-display)', fontSize: 10, padding: '2px 5px 1px',
             background: 'var(--cth-lilac)', color: 'var(--cth-ink-900)',
-            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
           }}>?</span>
         )}
       </button>
@@ -352,7 +352,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
               }}>{task.id}</span>
               <span style={{
                 fontFamily: 'var(--cth-font-display)', fontSize: 8, padding: '2px 6px 1px',
-                background: col.accent, color: 'var(--cth-ink-900)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                background: col.accent, color: 'var(--cth-ink-900)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
               }}>{t(col.labelKey)}</span>
               {assigneeName
                 ? <PixelBadge status="working" label={assigneeName} />
@@ -366,7 +366,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
             {/* The contract — preserved line by line */}
             <div style={{
               padding: 10, background: 'var(--cth-paper-100)',
-              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
               fontFamily: 'var(--cth-font-mono)', fontSize: 12, lineHeight: '18px',
               color: 'var(--cth-ink-900)', whiteSpace: 'pre-wrap', wordBreak: 'break-word'
             }} dir={rtl ? 'auto' : undefined}>
@@ -386,7 +386,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
                     <div style={{
                       display: 'flex', gap: 6, padding: '5px 7px',
                       background: 'var(--cth-lilac-light, #ece2f5)',
-                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                       fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-900)'
                     }}>
                       <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 8, flexShrink: 0, marginTop: 2 }}>Q</span>
@@ -398,7 +398,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
                       <div style={{
                         display: 'flex', gap: 6, padding: '5px 7px',
                         background: 'var(--cth-mint-light, #d9eed9)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                         fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-900)'
                       }}>
                         <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 8, flexShrink: 0, marginTop: 2 }}>A</span>
@@ -427,10 +427,10 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
                   return (
                     <div key={d.id} style={{
                       display: 'flex', alignItems: 'center', gap: 6, padding: '3px 6px',
-                      background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                      background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                       fontSize: 12, color: 'var(--cth-ink-700)'
                     }}>
-                      <span style={{ width: 8, height: 8, background: dc.accent, boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', flexShrink: 0 }} />
+                      <span style={{ width: 8, height: 8, background: dc.accent, boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', flexShrink: 0 }} />
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.title}</span>
                     </div>
                   );
@@ -445,7 +445,7 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
                 onChange={(e) => onMove(e.target.value as Status)}
                 style={{
                   flex: 1, padding: '4px 6px', background: 'var(--cth-paper-100)', border: 'none',
-                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', fontFamily: 'var(--cth-font-ui)',
+                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', fontFamily: 'var(--cth-font-ui)',
                   fontSize: 12, color: 'var(--cth-ink-900)', cursor: 'pointer'
                 }}
               >
@@ -475,7 +475,7 @@ function PriorityDots({ level }: { level: number }) {
         <span key={i} style={{
           width: 4, height: 8,
           background: i <= level ? color : 'var(--cth-cream-200)',
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
         }} />
       ))}
     </span>
@@ -484,13 +484,13 @@ function PriorityDots({ level }: { level: number }) {
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '6px 8px', background: 'var(--cth-paper-100)', border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', fontFamily: 'var(--cth-font-ui)',
+  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)', fontFamily: 'var(--cth-font-ui)',
   fontSize: 12, lineHeight: '17px', color: 'var(--cth-ink-900)', outline: 'none', boxSizing: 'border-box'
 };
 
 const selectStyle: React.CSSProperties = {
   padding: '3px 6px', background: 'var(--cth-paper-100)', border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', fontFamily: 'var(--cth-font-ui)',
+  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)', fontFamily: 'var(--cth-font-ui)',
   fontSize: 12, color: 'var(--cth-ink-900)', cursor: 'pointer'
 };
 

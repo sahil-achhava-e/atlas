@@ -200,7 +200,7 @@ export function AgentStrip({ config }: AgentStripProps) {
                     position: 'fixed', left, bottom, width, zIndex: 350,
                     padding: 10, boxSizing: 'border-box',
                     background: 'var(--cth-paper-100)',
-                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 3px 3px 0 rgba(26,19,32,0.14)',
+                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 3px 3px 0 rgba(26,19,32,0.14)', borderRadius: 'var(--cth-radius-input)',
                     display: 'flex', flexDirection: 'column', gap: 6
                   }}
                 >
@@ -238,7 +238,7 @@ export function AgentStrip({ config }: AgentStripProps) {
                       width: '100%', padding: '6px 8px',
                       border: 'none', outline: 'none', resize: 'none', boxSizing: 'border-box',
                       background: 'var(--cth-cream-100)',
-                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                       fontFamily: 'var(--cth-font-mono)', fontSize: 12,
                       lineHeight: '18px', color: 'var(--cth-ink-900)'
                     }}
@@ -340,7 +340,7 @@ export function AgentStrip({ config }: AgentStripProps) {
                   height: 26, padding: '0 4px 0 8px',
                   fontSize: 12, color: 'var(--cth-ink-900)',
                   background: 'var(--cth-paper-100)',
-                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                 }}
               >
                 <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -408,7 +408,7 @@ function AddAgentTile({ label, onClick }: { label: string; onClick: () => void }
         width: 24, height: 24, flexShrink: 0,
         display: 'grid', placeItems: 'center',
         background: hover ? 'var(--cth-lilac)' : 'var(--cth-paper-100)',
-        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
         color: hover ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)'
       }}>
         <Icon name="plus" />

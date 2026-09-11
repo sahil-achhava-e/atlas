@@ -60,7 +60,7 @@ const slackInputStyle: CSSProperties = {
   padding: '6px 8px 4px',
   background: 'var(--cth-paper-100)',
   border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-ui)',
   fontSize: 13,
   color: 'var(--cth-ink-900)',
@@ -1136,7 +1136,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           display: 'flex', flexDirection: 'column', gap: 8,
                           padding: 10,
                           background: 'var(--cth-paper-100)',
-                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                         }}>
                           <span style={sectionHeadFlush}>
                             {t('settings.voice.openaiKey')}
@@ -1173,7 +1173,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             <span aria-hidden style={{
                               width: 8, height: 8, flexShrink: 0,
                               background: hasOpenAiKey ? 'var(--cth-mint)' : 'var(--cth-ink-300)',
-                              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                             }} />
                             {openAiVoiceNote || (hasOpenAiKey
                               ? t('settings.voice.keySaved', { godName })

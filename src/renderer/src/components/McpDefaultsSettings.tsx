@@ -110,7 +110,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
   const fieldStyle = {
     padding: '6px 8px 5px',
     background: 'var(--cth-cream-100)', border: 'none',
-    boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+    boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
     fontFamily: 'var(--cth-font-mono)', fontSize: 12,
     color: 'var(--cth-ink-900)', outline: 'none'
   } as const;
@@ -178,7 +178,8 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                       display: 'flex', flexDirection: 'column', gap: 8,
                       padding: '7px 10px',
                       background: 'var(--cth-paper-100)',
-                      boxShadow: `inset 0 0 0 1px ${isConsent && on ? '#6E1423' : 'var(--cth-ink-300)'}`
+                      boxShadow: `inset 0 0 0 1px ${isConsent && on ? '#6E1423' : 'var(--cth-ink-300)'}`,
+            borderRadius: 'var(--cth-radius-input)'
                     }}
                   >
                   <div style={{
@@ -209,6 +210,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                           ? (isConsent ? 'var(--cth-coral-light, #f6d3c4)' : 'var(--cth-lemon)')
                           : 'var(--cth-cream-200)',
                         boxShadow: `inset 0 0 0 1px ${on ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)'}`,
+            borderRadius: 'var(--cth-radius-input)',
                         border: 'none',
                         fontFamily: 'var(--cth-font-display)',
                         fontSize: 8,
@@ -286,7 +288,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                         style={{
                           flex: 1, minWidth: 0, padding: '6px 8px 5px',
                           background: 'var(--cth-cream-100)', border: 'none',
-                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                           fontFamily: 'var(--cth-font-mono)', fontSize: 12,
                           color: 'var(--cth-ink-900)', outline: 'none'
                         }}

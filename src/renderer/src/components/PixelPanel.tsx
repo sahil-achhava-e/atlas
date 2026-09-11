@@ -40,7 +40,11 @@ export function PixelPanel({
 }: PixelPanelProps) {
   const baseStyle: CSSProperties = {
     background: fillByVariant[variant],
-    boxShadow: borderByVariant[variant],
+    // A card is a lifted surface now, not an outlined box. The hairline stays
+    // underneath it: on dark a soft shadow is nearly invisible, and the outline
+    // is what keeps the card's edge findable there.
+    boxShadow: `${borderByVariant[variant]}, var(--cth-shadow-card)`,
+    borderRadius: 'var(--cth-radius-card)',
     padding: noPadding ? 0 : 'var(--cth-space-3)',
     position: 'relative',
     ...style
@@ -51,7 +55,8 @@ export function PixelPanel({
     baseStyle.boxShadow = `
       inset 0 0 0 1px var(--cth-ink-100),
       inset 0 0 0 3px var(--cth-${accent}),
-      inset 0 0 0 5px var(--cth-ink-900)`;
+      inset 0 0 0 5px var(--cth-ink-900),
+      var(--cth-shadow-card)`;
   }
 
   return (

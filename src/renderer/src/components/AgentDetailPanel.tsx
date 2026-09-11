@@ -146,7 +146,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
         <div style={{
           width: 32, height: 32,
           background: `var(--cth-${agent.accent}-light)`,
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
           display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden',
           flexShrink: 0
         }}>

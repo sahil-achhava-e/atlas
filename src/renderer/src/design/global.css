@@ -326,12 +326,12 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
 .cth-md-preview a { color: var(--cth-sky); }
 .cth-md-preview code {
   font-family: var(--cth-font-mono); font-size: 12.5px;
-  background: var(--cth-cream-200); padding: 1px 5px; border-radius: 2px;
+  background: var(--cth-cream-200); padding: 1px 5px; border-radius: var(--cth-radius-sm);
 }
 .cth-md-preview pre {
   background: var(--cth-cream-200);
   box-shadow: inset 0 0 0 1px var(--cth-ink-100);
-  padding: 10px 12px; overflow-x: auto; border-radius: 2px;
+  padding: 10px 12px; overflow-x: auto; border-radius: var(--cth-radius-sm);
 }
 .cth-md-preview pre code { background: transparent; padding: 0; }
 /* Code is LTR no matter what language the prose around it is in: an inline
@@ -365,12 +365,12 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
 .cth-md-preview .cth-md-image {
   display: block; max-width: 100%; height: auto; margin: 0.6em 0;
   box-shadow: inset 0 0 0 1px var(--cth-ink-100);
-  border-radius: 2px;
+  border-radius: var(--cth-radius-sm);
 }
 .cth-md-preview .cth-md-img {
   display: inline-block; padding: 2px 8px; font-size: 12px;
   background: var(--cth-cream-200); box-shadow: inset 0 0 0 1px var(--cth-ink-100);
-  color: var(--cth-ink-500); border-radius: 2px;
+  color: var(--cth-ink-500); border-radius: var(--cth-radius-sm);
 }
 
 /* ─── Markdown inside a card (v0.4.6) ────────────────────────────────────────

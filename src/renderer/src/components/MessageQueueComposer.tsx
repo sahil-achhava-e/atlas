@@ -209,7 +209,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
           <span style={{
             fontSize: 11, padding: '1px 6px 0',
             background: 'var(--cth-cream-200)',
-            boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+            boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
             fontFamily: 'var(--cth-font-ui)', color: 'var(--cth-ink-900)'
           }}>{queue.length}</span>
         )}
@@ -294,7 +294,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
                 maxWidth: '100%',
                 padding: '2px 4px 2px 6px',
                 background: 'var(--cth-cream-200)',
-                boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+                boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                 fontFamily: 'var(--cth-font-mono)', fontSize: 12, lineHeight: '16px',
                 color: 'var(--cth-ink-900)'
               }}
@@ -479,7 +479,7 @@ function QueuedMessageRow(
       display: 'flex', alignItems: 'flex-start', gap: 6,
       padding: '4px 6px',
       background: 'var(--cth-paper-100)',
-      boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+      boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
     }}>
       <span style={{
         fontFamily: 'var(--cth-font-mono)', fontSize: 12,

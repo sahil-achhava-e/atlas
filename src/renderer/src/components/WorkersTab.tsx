@@ -36,7 +36,7 @@ function fmtTokens(n: number): string {
 }
 
 const card: React.CSSProperties = {
-  background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+  background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
   padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6
 };
 const metaRow: React.CSSProperties = {
@@ -122,7 +122,7 @@ export function WorkersTab() {
                     {w.hasSlack && (
                       <span title={t('workersTab.repliesToSlack')} style={{
                         fontFamily: 'var(--cth-font-mono)', fontSize: 10, color: 'var(--cth-ink-700)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', padding: '0 5px'
+                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)', padding: '0 5px'
                       }}>slack</span>
                     )}
                   </div>

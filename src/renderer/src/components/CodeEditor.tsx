@@ -252,7 +252,7 @@ const editorBtn: React.CSSProperties = {
   color: 'var(--cth-ink-900)',
   background: 'var(--cth-cream-100)',
   border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
   cursor: 'pointer',
   display: 'inline-flex', alignItems: 'center', gap: 4
 };

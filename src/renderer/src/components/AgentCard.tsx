@@ -120,7 +120,7 @@ export function AgentCard({
         // working. Mixed toward the app's own surface so it reads as "this card
         // is different" rather than as an alert.
         background: `color-mix(in srgb, var(--cth-${accent}-light) 55%, var(--cth-cream-100))`,
-        boxShadow: `inset 0 0 0 1px var(--cth-${accent})`
+        boxShadow: `inset 0 0 0 1px var(--cth-${accent})`, borderRadius: 'var(--cth-radius-input)'
       }
     : {};
   const dropShadow = isGod
@@ -179,7 +179,7 @@ export function AgentCard({
             position: 'absolute', right: -4, bottom: -5, zIndex: 2,
             width: 20, height: 18,
             background: 'var(--cth-sky)',
-            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 1px 2px 0 rgba(26,19,32,0.18)',
+            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 1px 2px 0 rgba(26,19,32,0.18)', borderRadius: 'var(--cth-radius-input)',
             transform: 'rotate(4deg)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontFamily: 'var(--cth-font-display)', fontSize: 8, color: 'var(--cth-ink-900)',
@@ -214,6 +214,7 @@ export function AgentCard({
             // vanish into its own background. Paper reads as an inset frame.
             background: isGod ? 'var(--cth-paper-100)' : `var(--cth-${accent}-light)`,
             boxShadow: `inset 0 0 0 1px var(--cth-ink-${isGod ? '300' : '100'})`,
+            borderRadius: 'var(--cth-radius-input)',
             display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflow: 'hidden'
           }}>
             <SpritePortrait character={character} scale={2} />

@@ -93,6 +93,7 @@ export function AgentNameEditor({
           border: 'none', outline: 'none',
           background: 'var(--cth-paper-100)',
           boxShadow: `inset 0 0 0 1px var(--cth-${error ? 'coral' : 'ink-300'})`,
+            borderRadius: 'var(--cth-radius-input)',
           fontFamily: 'var(--cth-font-display)', fontSize,
           color: 'var(--cth-ink-900)', textTransform: uppercase ? 'uppercase' : undefined
         }}

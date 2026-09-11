@@ -423,7 +423,7 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
                 width: '100%', height: 32,
                 background: 'var(--cth-cream-100)',
                 border: 'none',
-                boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+                boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                 fontFamily: 'var(--cth-font-ui)',
                 fontSize: 'clamp(14px, 0.7vw, 15px)',
                 color: 'var(--cth-ink-900)',
@@ -505,7 +505,7 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
                   fontFamily: 'var(--cth-font-ui)', fontSize: 11,
                   color: 'var(--cth-ink-900)',
                   background: 'var(--cth-status-working)',
-                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                 }}>
                   <Icon name="play" /> restoring your team…
                 </div>
@@ -535,7 +535,7 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
                         height: 20, padding: '0 2px 0 6px',
                         fontFamily: 'var(--cth-font-ui)', fontSize: 11,
                         color: 'var(--cth-ink-700)', background: 'var(--cth-paper-100)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                       }}
                     >
                       {a.name}
@@ -746,7 +746,7 @@ function SidebarRow({
         <div style={{
           width: scale.portrait, height: Math.round(scale.portrait * 1.3), flexShrink: 0,
           background: `var(--cth-${agent.accent}-light)`,
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
           // Anchor the sprite's TOP: the portrait is taller than this tile, and
           // bottom-anchoring cropped the head — crop feet, not face (v0.3.4).
           display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
@@ -784,7 +784,7 @@ function SidebarRow({
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 12, lineHeight: 1, color: 'var(--cth-ink-500)',
                 background: notePosition ? 'var(--cth-cream-200)' : 'var(--cth-paper-100)',
-                boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                 cursor: 'pointer'
               }}
             >✎</span>
@@ -900,7 +900,7 @@ function SidebarRow({
               resize: 'vertical',
               boxSizing: 'border-box',
               background: 'var(--cth-cream-100)',
-              boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+              boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
               fontFamily: 'var(--cth-font-mono)',
               fontSize: noteFontSize,
               lineHeight: `${Math.round(noteFontSize * 1.6)}px`,
@@ -956,7 +956,7 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
       display: 'flex', alignItems: 'center', gap: 12,
       padding: '6px 10px',
       background: 'var(--cth-cream-50)',
-      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
     }}>
       <span style={{
         fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '16px',

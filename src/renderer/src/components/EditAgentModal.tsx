@@ -239,7 +239,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                   display: 'inline-flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
                   padding: '8px 12px',
                   background: 'var(--cth-cream-100)',
-                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
                 }}>
                   <ProviderLogo provider={provider} size={16} />
                   <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)' }}>
@@ -339,7 +339,7 @@ const inputStyle: CSSProperties = {
   padding: '9px 11px 8px',
   background: 'var(--cth-paper-100)',
   border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-ui)',
   fontSize: 14,
   lineHeight: '20px',

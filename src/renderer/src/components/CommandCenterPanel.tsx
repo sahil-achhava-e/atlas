@@ -183,7 +183,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
       }}>
         <div style={{
           width: 32, height: 32, background: `var(--cth-${agent.accent}-light)`,
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
           display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden', flexShrink: 0
         }}>
           <SpritePortrait character={agent.character} scale={1} />
@@ -736,12 +736,12 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
           <div key={a.id} style={{
             display: 'flex', flexDirection: 'column', gap: 4,
             padding: 6, marginBottom: 6,
-            background: armed ? 'var(--cth-coral-light)' : 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+            background: armed ? 'var(--cth-coral-light)' : 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{
                 width: 24, height: 24, background: `var(--cth-${a.accent}-light)`,
-                boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                 display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden', flexShrink: 0
               }}>
                 <SpritePortrait character={a.character} scale={1} />
@@ -774,7 +774,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
               {lastTool[a.id] && (
                 <span style={{
                   fontSize: 10, lineHeight: '14px', padding: '0 5px', flexShrink: 0,
-                  background: 'var(--cth-paper-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', color: 'var(--cth-ink-700)'
+                  background: 'var(--cth-paper-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', color: 'var(--cth-ink-700)'
                 }}>{lastTool[a.id]}</span>
               )}
               <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 10, color: 'var(--cth-ink-300)', flexShrink: 0 }}>{t('commandCenter.budget')}</span>
@@ -785,7 +785,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   limit: denom.toLocaleString(),
                   note: hasAgentCap ? t('commandCenter.agentLimit') : t('commandCenter.floorBudget')
                 })}
-                style={{ width: 96, height: 8, background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', flexShrink: 0 }}
+                style={{ width: 96, height: 8, background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', flexShrink: 0 }}
               >
                 <div style={{ width: `${pct}%`, height: '100%', background: meterColor }} />
               </div>
@@ -813,7 +813,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                         limit: a.contextLimit!.toLocaleString(),
                         pct: cpct
                       })}
-                      style={{ width: 96, height: 8, background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', flexShrink: 0 }}
+                      style={{ width: 96, height: 8, background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', flexShrink: 0 }}
                     >
                       <div style={{ width: `${cpct}%`, height: '100%', background: ccolor }} />
                     </div>
@@ -968,7 +968,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
         {/* Fleet summary band */}
         <div style={{
           display: 'flex', gap: 14, marginTop: 2, padding: '6px 8px',
-          background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+          background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
           fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-900)', flexWrap: 'wrap'
         }}>
           <span>Σ <strong>{fmtTokens(sumTokens)}</strong> {t('costHud.tok')}</span>
@@ -1017,7 +1017,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
             {issuesError && (
               <div style={{
                 fontSize: 12, color: 'var(--cth-ink-700)', marginBottom: 6,
-                padding: 6, background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                padding: 6, background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                 wordBreak: 'break-word'
               }}>{issuesError}</div>
             )}
@@ -1026,7 +1026,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
               <div key={issue.number} style={{
                 display: 'flex', flexDirection: 'column', gap: 4,
                 padding: 6, marginBottom: 6,
-                background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
                   <span style={{ fontSize: 12, color: 'var(--cth-ink-900)', flex: 1, wordBreak: 'break-word' }}>
@@ -1041,7 +1041,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                     {issue.labels.map((label) => (
                       <span key={label} style={{
                         fontSize: 10, lineHeight: '14px', padding: '0 5px',
-                        background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                        background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                         color: 'var(--cth-ink-700)'
                       }}>{label}</span>
                     ))}
@@ -1071,7 +1071,7 @@ function ArchivedSection() {
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 4,
           padding: '2px 8px 1px', border: 'none', cursor: 'pointer',
-          background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+          background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
           fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)',
           marginBottom: open ? 6 : 0
         }}
@@ -1080,11 +1080,11 @@ function ArchivedSection() {
         <div key={a.id} style={{
           display: 'flex', alignItems: 'center', gap: 8,
           padding: 6, marginBottom: 6, opacity: 0.7,
-          background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+          background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
         }}>
           <div style={{
             width: 24, height: 24, background: `var(--cth-${a.accent}-light)`,
-            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
             display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden', flexShrink: 0
           }}>
             <SpritePortrait character={a.character} scale={1} />
@@ -1252,6 +1252,7 @@ function TokenLimitEditor({ value, onSet }: { value?: number; onSet: (tokens: nu
           flexShrink: 0, padding: '1px 6px', border: 'none', cursor: 'pointer',
           background: value && value > 0 ? 'var(--cth-lemon)' : 'var(--cth-cream-200)',
           boxShadow: `inset 0 0 0 1px ${value && value > 0 ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)'}`,
+            borderRadius: 'var(--cth-radius-input)',
           fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-900)'
         }}
       >{value && value > 0
@@ -1273,13 +1274,13 @@ function TokenLimitEditor({ value, onSet }: { value?: number; onSet: (tokens: nu
         placeholder={t('common.tokens')}
         style={{
           width: 84, padding: '2px 4px', background: 'var(--cth-paper-100)', border: 'none',
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', fontFamily: 'var(--cth-font-mono)',
+          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)', fontFamily: 'var(--cth-font-mono)',
           fontSize: 11, color: 'var(--cth-ink-900)', outline: 'none'
         }}
       />
       <button
         onMouseDown={(e) => e.preventDefault()} onClick={commit} title={t('commandCenter.saveLimit')}
-        style={{ flexShrink: 0, padding: '1px 5px', border: 'none', cursor: 'pointer', background: 'var(--cth-mint)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', fontSize: 11, color: 'var(--cth-ink-900)' }}
+        style={{ flexShrink: 0, padding: '1px 5px', border: 'none', cursor: 'pointer', background: 'var(--cth-mint)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', fontSize: 11, color: 'var(--cth-ink-900)' }}
       >✓</button>
     </span>
   );
@@ -1371,7 +1372,7 @@ function Pre({ children }: { children: React.ReactNode }) {
   return (
     <pre style={{
       margin: '6px 0 0', padding: 8, maxHeight: 200, overflow: 'auto',
-      background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+      background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
       fontFamily: 'var(--cth-font-mono)', fontSize: 12, lineHeight: '16px',
       color: 'var(--cth-ink-900)', whiteSpace: 'pre-wrap', wordBreak: 'break-word'
     }} dir={rtl ? 'auto' : undefined}>{children}</pre>
@@ -1381,7 +1382,7 @@ function Pre({ children }: { children: React.ReactNode }) {
 const textareaStyle: React.CSSProperties = {
   flex: 1, width: '100%', resize: 'none', padding: '6px 8px',
   background: 'var(--cth-paper-100)', border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-mono)', fontSize: 12, lineHeight: '17px',
   color: 'var(--cth-ink-900)', outline: 'none', boxSizing: 'border-box'
 };
@@ -1396,7 +1397,7 @@ function Select({ value, onChange, disabled, children }: {
       onChange={(e) => onChange(e.target.value)}
       style={{
         padding: '3px 6px', background: 'var(--cth-paper-100)',
-        border: 'none', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+        border: 'none', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
         fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)', cursor: 'pointer',
         // Never let a long option name push the sidebar wider than it is.
         minWidth: 0, maxWidth: '100%'

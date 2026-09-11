@@ -387,7 +387,7 @@ export function PtyTerminalView({ ptyId, label, onStreamData, onUserPrompt, onTo
       }}>
         <span style={{
           width: 8, height: 8, background: 'var(--cth-mint)',
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
           animation: 'cth-pulse 1200ms steps(2, end) infinite'
         }} />
         <span style={{

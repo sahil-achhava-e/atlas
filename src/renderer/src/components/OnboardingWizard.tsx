@@ -310,7 +310,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         // for the height. The old 6px hard offset read as a sticker.
         boxShadow: `inset 0 0 0 1px var(--cth-ink-300),
                     0 2px 6px rgba(0, 0, 0, 0.22),
-                    0 28px 64px -12px rgba(0, 0, 0, 0.55)`
+                    0 28px 64px -12px rgba(0, 0, 0, 0.55)`, borderRadius: 'var(--cth-radius-input)'
       }}>
 
         {/* ── Brand bar: who is asking, and how far in you are ─────────────── */}
@@ -380,7 +380,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   <div style={{
                     width: 56, height: 56, flexShrink: 0,
                     background: 'var(--cth-cream-200)',
-                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                     display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden'
                   }}>
                     <SpritePortrait character="michael" scale={2} />
@@ -424,7 +424,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   <div style={{
                     width: 56, height: 56, flexShrink: 0,
                     background: 'var(--cth-cream-200)',
-                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                     display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden'
                   }}>
                     <SpritePortrait character="michael" scale={2} />
@@ -454,7 +454,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         width: 28, height: 28, flexShrink: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         background: 'var(--cth-paper-100)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                       }}>
                         <Icon name={f.icon} />
                       </div>
@@ -506,7 +506,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       padding: '4px 10px', fontSize: 12, lineHeight: '17px',
                       color: 'var(--cth-ink-700)',
                       background: 'var(--cth-cream-200)',
-                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
                     }}>{t(k)}</span>
                   ))}
                 </div>
@@ -621,7 +621,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                               fontSize: 11, padding: '2px 6px', lineHeight: '16px',
                               background: a.state === 'installed' ? 'var(--cth-mint-light)' : bad ? 'var(--cth-paper-100)' : 'var(--cth-cream-200)',
                               color: bad ? 'var(--cth-ink-500)' : 'var(--cth-ink-900)',
-                              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                               fontFamily: 'var(--cth-font-display)', flexShrink: 0
                             }}>{badge}</span>
                           );
@@ -630,7 +630,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                           <span style={{
                             fontSize: 11, padding: '2px 6px', lineHeight: '16px',
                             background: 'var(--cth-lemon)',
-                            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                             fontFamily: 'var(--cth-font-display)', flexShrink: 0
                           }}>{t('onboarding.orchestrator.recommended')}</span>
                         )}
@@ -645,7 +645,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       display: 'flex', alignItems: 'center', gap: 10,
                       padding: '8px 10px',
                       background: 'var(--cth-paper-100)',
-                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                       cursor: 'not-allowed', opacity: 0.75
                     }}>
                       <input type="radio" name="godProvider" value={p.id} checked={false} disabled
@@ -667,7 +667,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       <span style={{
                         fontSize: 11, padding: '2px 6px', lineHeight: '16px',
                         background: 'var(--cth-paper-100)', color: 'var(--cth-ink-500)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                         fontFamily: 'var(--cth-font-display)', flexShrink: 0
                       }}>{t('onboarding.orchestrator.workersOnly')}</span>
                     </label>
@@ -752,12 +752,12 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         display: 'flex', alignItems: 'center', gap: 12,
                         padding: '10px 12px',
                         background: 'var(--cth-paper-100)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
                       }}>
                         <span style={{
                           width: 30, height: 30, flexShrink: 0, display: 'grid', placeItems: 'center',
                           background: 'var(--cth-cream-200)', color: 'var(--cth-ink-700)',
-                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                         }}>
                           <Icon name="folder" />
                         </span>
@@ -871,12 +871,12 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <div style={{
                   display: 'flex', gap: 10, alignItems: 'flex-start', padding: 10,
                   background: 'var(--cth-lemon-light)',
-                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                 }}>
                   <span style={{
                     width: 28, height: 28, flexShrink: 0, display: 'flex',
                     alignItems: 'center', justifyContent: 'center',
-                    background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                    background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                   }}>
                     <Icon name="gear" />
                   </span>
@@ -906,7 +906,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               <div style={{
                 padding: '6px 10px',
                 background: 'var(--cth-coral-light)',
-                boxShadow: 'inset 0 0 0 1px var(--cth-coral)',
+                boxShadow: 'inset 0 0 0 1px var(--cth-coral)', borderRadius: 'var(--cth-radius-input)',
                 fontSize: 13,
                 color: 'var(--cth-ink-900)',
                 overflowWrap: 'anywhere'
@@ -1036,7 +1036,8 @@ function PersonaCard({ icon, title, desc, selected, onClick }: {
           width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: selected ? 'var(--cth-sky)' : 'var(--cth-cream-200)',
           color: selected ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)',
-          boxShadow: `inset 0 0 0 1px ${selected ? 'var(--cth-sky)' : 'var(--cth-ink-300)'}`
+          boxShadow: `inset 0 0 0 1px ${selected ? 'var(--cth-sky)' : 'var(--cth-ink-300)'}`,
+            borderRadius: 'var(--cth-radius-input)'
         }}>
           <Icon name={icon} />
         </span>
@@ -1090,7 +1091,7 @@ function ToggleRow({ icon, label, desc, on, tint, edge, onChange }: {
       <span style={{
         width: 28, height: 28, flexShrink: 0, display: 'flex',
         alignItems: 'center', justifyContent: 'center',
-        background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+        background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
       }}>
         <Icon name={icon} />
       </span>
@@ -1169,7 +1170,7 @@ const inputStyle: React.CSSProperties = {
   padding: '0 12px',
   background: 'var(--cth-paper-100)',
   border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-mono)',
   fontSize: 14,
   color: 'var(--cth-ink-900)',

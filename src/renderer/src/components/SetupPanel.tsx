@@ -37,6 +37,7 @@ function StatusChip({ tool }: { tool: ToolStatus }) {
       padding: '2px 6px', flexShrink: 0, whiteSpace: 'nowrap',
       background: ready ? 'var(--cth-mint-light)' : 'var(--cth-cream-200)',
       boxShadow: `inset 0 0 0 1px ${ready ? 'var(--cth-mint)' : 'var(--cth-ink-300)'}`,
+            borderRadius: 'var(--cth-radius-input)',
       color: 'var(--cth-ink-900)'
     }}>
       {ready ? t('setupPanel.statusReady') : tool.essential ? t('setupPanel.statusMissing') : t('setupPanel.statusNotSetUp')}
@@ -56,7 +57,7 @@ function ToolRow({ tool }: { tool: ToolStatus }) {
   return (
     <div style={{
       padding: 10, display: 'flex', flexDirection: 'column', gap: 6,
-      background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+      background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 11, flex: 1, minWidth: 0 }}>
@@ -86,14 +87,14 @@ function ToolRow({ tool }: { tool: ToolStatus }) {
           <code style={{
             flex: 1, minWidth: 0, fontFamily: 'var(--cth-font-mono)', fontSize: 11,
             padding: '4px 6px', background: 'var(--cth-cream-100)',
-            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
             color: 'var(--cth-ink-900)', overflowX: 'auto', whiteSpace: 'pre'
           }}>{tool.installCommand}</code>
           <button
             onClick={copy}
             style={{
               flexShrink: 0, fontFamily: 'var(--cth-font-ui)', fontSize: 11, padding: '0 8px',
-              background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+              background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
               border: 'none', cursor: 'pointer', color: 'var(--cth-ink-900)'
             }}
           >{copied ? t('common.copy') + ' ✓' : t('common.copy')}</button>
@@ -190,7 +191,7 @@ export function SetupPanel(
       <div style={{
         padding: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap',
         background: missingEssential.length ? 'var(--cth-lemon-light)' : 'var(--cth-cream-100)',
-        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
       }}>
         <div style={{ flex: 1, minWidth: 220, fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: 1.5 }}>
           {t('setupPanel.askDesc', { count: missingEssential.length })}

@@ -126,6 +126,7 @@ export function ThreadsPanel({ agentId }: ThreadsPanelProps) {
                         <span style={{
                           fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '16px', padding: '0 6px',
                           background: 'var(--cth-cream-100)', boxShadow: `inset 0 0 0 1px ${ACT_COLOR[m.act] ?? 'var(--cth-ink-300)'}`,
+            borderRadius: 'var(--cth-radius-input)',
                           color: 'var(--cth-ink-900)'
                         }}>{m.act}</span>
                         <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--cth-ink-500)' }}>

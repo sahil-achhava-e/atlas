@@ -83,7 +83,7 @@ export function CommandBar({ accent, busy, blocked, onSend }: CommandBarProps) {
               padding: '4px 6px 2px',
               background: 'var(--cth-paper-100)',
               border: 'none',
-              boxShadow: `inset 0 0 0 1px ${inputBorder}`,
+              boxShadow: `inset 0 0 0 1px ${inputBorder}`, borderRadius: 'var(--cth-radius-input)',
               fontFamily: 'var(--cth-font-mono)',
               fontSize: 18,
               lineHeight: '20px',

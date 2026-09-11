@@ -215,7 +215,7 @@ export function RealtimeMichaelToggle({ compact = false }: RealtimeMichaelToggle
                 height: 6,
                 flexShrink: 0,
                 background: view.dot,
-                boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                 animation: view.anim
               }}
             />

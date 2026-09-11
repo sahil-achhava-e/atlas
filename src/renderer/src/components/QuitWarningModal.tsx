@@ -99,7 +99,7 @@ export function QuitWarningModal({ ptyCount, closing, onCancel, onConfirm, onClo
                 <div style={{
                   padding: 8,
                   background: 'var(--cth-cream-200)',
-                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                   fontSize: 12, lineHeight: '18px',
                   color: 'var(--cth-ink-700)',
                   fontFamily: 'var(--cth-font-display)'
@@ -162,7 +162,7 @@ export function QuitWarningModal({ ptyCount, closing, onCancel, onConfirm, onClo
                 <div style={{
                   padding: 8,
                   background: 'var(--cth-cream-200)',
-                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                   fontSize: 12, lineHeight: '18px',
                   color: 'var(--cth-ink-700)'
                 }}>
@@ -175,7 +175,7 @@ export function QuitWarningModal({ ptyCount, closing, onCancel, onConfirm, onClo
                   <div style={{
                     padding: 8,
                     background: 'var(--cth-coral-light)',
-                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                     fontSize: 12, lineHeight: '18px',
                     color: 'var(--cth-ink-900)'
                   }}>

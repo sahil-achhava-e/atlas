@@ -96,7 +96,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                 }}>
                   <span style={{
                     width: 32, height: 32, flexShrink: 0, display: 'grid', placeItems: 'center',
-                    background: 'var(--cth-cream-50)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                    background: 'var(--cth-cream-50)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                   }}>
                     <Icon name="folder" />
                   </span>
@@ -137,7 +137,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                       title={`Switch to ${h} (reloads the app)`}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-                        background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                        background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                         border: 'none', cursor: busy ? 'default' : 'pointer', textAlign: 'left',
                         opacity: busy && busy !== h ? 0.5 : 1
                       }}
@@ -164,7 +164,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             {error && (
               <div style={{
                 padding: '6px 10px', background: 'var(--cth-coral-light)',
-                boxShadow: 'inset 0 0 0 1px var(--cth-coral)', fontSize: 12, color: 'var(--cth-ink-900)'
+                boxShadow: 'inset 0 0 0 1px var(--cth-coral)', borderRadius: 'var(--cth-radius-input)', fontSize: 12, color: 'var(--cth-ink-900)'
               }}>{error}</div>
             )}
 

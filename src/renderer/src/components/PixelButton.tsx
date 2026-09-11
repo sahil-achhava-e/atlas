@@ -122,11 +122,17 @@ export function PixelButton({
         background: palette.fill,
         color: palette.text,
         border: 'none',
-        // v0.3.4: 1px hairline + 1px lift — the 2px chrome read as heavy boxes
+        borderRadius: 'var(--cth-radius-btn)',
+        // A primary button carries its own colour into its shadow, which is what
+        // makes it read as the one thing to press. Secondary keeps the hairline:
+        // an outline is the right weight for a control that is not the answer.
         boxShadow: pressed && !disabled
           ? `inset 0 0 0 1px ${palette.border}`
-          : `inset 0 0 0 1px ${palette.border}, 0 1px 0 ${palette.shadow}`,
+          : variant === 'primary'
+            ? 'var(--cth-shadow-btn)'
+            : `inset 0 0 0 1px ${palette.border}, var(--cth-shadow-sm)`,
         transform: pressed && !disabled ? 'translateY(1px)' : 'none',
+        transition: 'box-shadow 140ms ease, transform 90ms ease',
         fontFamily: 'var(--cth-font-ui)',
         fontSize: size === 'lg' ? 'var(--cth-text-body-md)' : 'var(--cth-text-body-sm)',
         cursor: disabled ? 'not-allowed' : 'pointer',

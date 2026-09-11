@@ -498,7 +498,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               <div style={{
                 padding: '6px 10px',
                 background: 'var(--cth-lemon-light, #fdf3cf)',
-                boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+                boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
                 fontSize: 12,
                 color: 'var(--cth-ink-900)',
                 display: 'flex', flexDirection: 'column', gap: 2
@@ -520,7 +520,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           fontSize: 12,
                           padding: '0 4px',
                           background: 'var(--cth-paprika-light, #f6d3c4)',
-                          boxShadow: 'inset 0 0 0 1px var(--cth-paprika-700, #b3502e)',
+                          boxShadow: 'inset 0 0 0 1px var(--cth-paprika-700, #b3502e)', borderRadius: 'var(--cth-radius-input)',
                           color: 'var(--cth-ink-900)'
                         }}
                       >
@@ -540,7 +540,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           fontSize: 12,
                           padding: '0 4px',
                           background: 'var(--cth-mint-light, #d0f0e0)',
-                          boxShadow: 'inset 0 0 0 1px var(--cth-mint-700, #1f7a4d)',
+                          boxShadow: 'inset 0 0 0 1px var(--cth-mint-700, #1f7a4d)', borderRadius: 'var(--cth-radius-input)',
                           color: 'var(--cth-ink-900)'
                         }}
                       >
@@ -565,7 +565,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                             <code key={id} style={{
                               fontFamily: 'var(--cth-font-mono)', fontSize: 12, padding: '0 4px',
                               background: 'var(--cth-sky-light, #d0e8f8)',
-                              boxShadow: 'inset 0 0 0 1px var(--cth-sky-700, #1f5a8a)',
+                              boxShadow: 'inset 0 0 0 1px var(--cth-sky-700, #1f5a8a)', borderRadius: 'var(--cth-radius-input)',
                               color: 'var(--cth-ink-900)'
                             }}>{id}</code>
                           ))}
@@ -578,7 +578,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                             <code key={id} style={{
                               fontFamily: 'var(--cth-font-mono)', fontSize: 12, padding: '0 4px',
                               background: 'var(--cth-paprika-light, #f6d3c4)',
-                              boxShadow: 'inset 0 0 0 1px var(--cth-paprika-700, #b3502e)',
+                              boxShadow: 'inset 0 0 0 1px var(--cth-paprika-700, #b3502e)', borderRadius: 'var(--cth-radius-input)',
                               color: 'var(--cth-ink-900)'
                             }}>{id}</code>
                           ))}
@@ -800,7 +800,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                                 <span style={{
                                   width: 30, height: 30, flexShrink: 0, display: 'grid', placeItems: 'center',
                                   background: 'var(--cth-cream-200)', color: 'var(--cth-ink-700)',
-                                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
                                 }}>
                                   <Icon name="folder" />
                                 </span>
@@ -869,7 +869,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                         display: 'inline-flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
                         padding: '8px 12px',
                         background: 'var(--cth-cream-100)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
+                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
                       }}>
                         <ProviderLogo provider={provider} size={16} />
                         <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)' }}>
@@ -1063,7 +1063,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               <div style={{
                 padding: '6px 10px',
                 background: 'var(--cth-coral-light)',
-                boxShadow: 'inset 0 0 0 1px var(--cth-coral)',
+                boxShadow: 'inset 0 0 0 1px var(--cth-coral)', borderRadius: 'var(--cth-radius-input)',
                 fontSize: 13,
                 color: 'var(--cth-ink-900)'
               }}>
@@ -1114,7 +1114,7 @@ const inputStyle: React.CSSProperties = {
   padding: '6px 8px 4px',
   background: 'var(--cth-paper-100)',
   border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-ui)',
   fontSize: 16,
   color: 'var(--cth-ink-900)',

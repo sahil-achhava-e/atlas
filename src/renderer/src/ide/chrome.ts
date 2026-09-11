@@ -32,6 +32,6 @@ export const ideIconBtn: CSSProperties = {
 export const ideTextBtn: CSSProperties = {
   padding: '0 6px', height: 20, fontFamily: 'var(--cth-font-ui)', fontSize: 12,
   color: 'var(--cth-ink-900)', background: 'var(--cth-cream-100)', border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', cursor: 'pointer',
+  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)', cursor: 'pointer',
   display: 'inline-flex', alignItems: 'center', gap: 4
 };

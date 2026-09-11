@@ -34,7 +34,7 @@ export class ErrorBoundary extends Component<
         padding: 16, display: 'flex', flexDirection: 'column', gap: 10,
         alignItems: 'flex-start', fontFamily: 'var(--cth-font-ui)',
         color: 'var(--cth-ink-900)', background: 'var(--cth-cream-100)',
-        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
       }}>
         <div style={{
           fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
@@ -48,7 +48,7 @@ export class ErrorBoundary extends Component<
         <pre style={{
           margin: 0, maxWidth: '100%', maxHeight: 160, overflow: 'auto',
           padding: 8, fontFamily: 'var(--cth-font-mono)', fontSize: 11,
-          background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+          background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
           whiteSpace: 'pre-wrap'
         }}>{error.message || String(error)}</pre>
         <button
