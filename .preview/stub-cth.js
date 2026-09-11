@@ -145,6 +145,9 @@
   // The generic fallback answers [] , which is TRUTHY — GitTab then read a
   // status object off it and threw. A preview folder is not a repo.
   gitIsRepo: async () => false,
+  // A memory file is TEXT. The generic [] answer reached `.trim()` in the
+  // memory graph and took the panel down.
+  hiveMemory: async () => '',
 
   // Credentials for a keyed MCP server. The preview keeps them in localStorage
   // so the field's set/clear states can be exercised; the real bridge stores

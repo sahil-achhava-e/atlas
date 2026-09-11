@@ -49,7 +49,10 @@ export function MemoryGraphPanel({
   const fetchMemory = useCallback(async (id: string) => {
     try {
       const text = await window.cth.hiveMemory(id);
-      setMemories((m) => ({ ...m, [id]: text ?? '' }));
+      // Coerced, not just defaulted: a bridge that answers with anything other
+      // than a string (an empty list, say) used to reach `text.trim()` and take
+      // the whole graph down.
+      setMemories((m) => ({ ...m, [id]: typeof text === 'string' ? text : '' }));
     } catch { setMemories((m) => ({ ...m, [id]: '' })); }
   }, []);
 
@@ -59,7 +62,7 @@ export function MemoryGraphPanel({
     if (missing.length === 0) return;
     setLoadingTopics(true);
     Promise.all(missing.map((id) => window.cth.hiveMemory(id).then(
-      (t) => [id, t ?? ''] as const,
+      (t) => [id, typeof t === 'string' ? t : ''] as const,
       () => [id, ''] as const
     ))).then((pairs) => {
       setMemories((m) => ({ ...m, ...Object.fromEntries(pairs) }));
@@ -518,8 +521,8 @@ function truncate(s: string, n: number): string {
 }
 
 /** First meaningful line(s) of a memory file, for the hover preview. */
-function memorySnippet(text: string, t: TFunction): string {
-  if (!text.trim()) return t('memoryGraph.noMemory');
+function memorySnippet(text: unknown, t: TFunction): string {
+  if (typeof text !== 'string' || !text.trim()) return t('memoryGraph.noMemory');
   const lines = text
     .split('\n')
     .map((l) => l.replace(/^[#>\-*\s]+/, '').trim())
