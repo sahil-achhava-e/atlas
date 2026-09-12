@@ -379,52 +379,6 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
     return String(n);
   };
 
-  // --- Slack integration ---
-  const [slackEnabled, setSlackEnabled] = useState(config.slackEnabled ?? false);
-  const [slackSecret, setSlackSecret] = useState(config.slackSigningSecret ?? '');
-  const [slackBotToken, setSlackBotToken] = useState(config.slackBotToken ?? '');
-  const [slackChannel, setSlackChannel] = useState(config.slackChannelId ?? '');
-  const [slackPort, setSlackPort] = useState(String(config.slackPort ?? 3847));
-  // App/voice-initiated proactive posting (the "queued" ack). Default OFF —
-  // the Slack-origin done-reply round-trip is unaffected by this toggle.
-  const [slackProactivePosting, setSlackProactivePosting] = useState(config.slackProactivePosting ?? false);
-  const [tunnelUrl, setTunnelUrl] = useState('');
-  const [slackBusy, setSlackBusy] = useState(false);
-  const [slackNote, setSlackNote] = useState('');
-  // Whether the webhook server is currently live. Hydrated from main on open so
-  // reopening Settings shows the true connection state + the persisted Request URL.
-  const [running, setRunning] = useState(false);
-  // Whether the connect-steps help panel is expanded.
-  const [showSlackHelp, setShowSlackHelp] = useState(false);
-
-  // --- Webhook triggers (a LIST; src/shared/triggers.ts owns the type) ---------
-  // The list itself lives in the store, not in local state: the Triggers tab
-  // edits the same webhooks, and one of the two surfaces holding a private copy
-  // is exactly the drift this feature exists to prevent.
-  const webhookTriggers = useStore((s) => s.webhookTriggers);
-  const setWebhookTriggersStore = useStore((s) => s.setWebhookTriggers);
-  /** Public base URL of the shared tunnel; each webhook's endpoint is `<base>/<id>`. */
-  const [webhookUrl, setWebhookUrl] = useState('');
-  const [webhookRunning, setWebhookRunning] = useState(false);
-  const [webhookBusy, setWebhookBusy] = useState(false);
-  const [webhookNote, setWebhookNote] = useState('');
-  /** Which secrets the user has unmasked, by webhook id. Reset on every reopen. */
-  const [shownSecrets, setShownSecrets] = useState<Record<string, boolean>>({});
-  /** Webhook awaiting a second delete click — deleting one revokes a live caller. */
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
-  const [showWebhookHelp, setShowWebhookHelp] = useState(false);
-
-  // --- Organisation trigger (peer messaging; configuration only for now) ------
-  const orgTrigger = useStore((s) => s.orgTrigger);
-  const setOrgTriggerStore = useStore((s) => s.setOrgTrigger);
-  const [showOrgKey, setShowOrgKey] = useState(false);
-  const [orgBusy, setOrgBusy] = useState(false);
-  const [orgNote, setOrgNote] = useState('');
-
-
-  // ─── Scheduled auto-compact — the compact-maintenance mission's enabled flag.
-  // The mission itself stays the single source of truth (the Triggers tab edits
-  // the same field); this is just a General-section shortcut. Default OFF (v0.3.4).
   const [autoCompactOn, setAutoCompactOn] = useState<boolean>(
     (config.missions ?? []).some((m) => m.id === 'compact-maintenance' && m.enabled)
   );
@@ -467,7 +421,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
 
   // Re-seed every editable field from the on-disk config when the modal opens.
   // App's `config` prop is loaded once and never refreshed after a save, so
-  // without this the saved budget / velocity / slack values show blank on reopen.
+  // without this the saved budget and velocity show blank on reopen.
   useEffect(() => {
     let alive = true;
     window.cth.getConfig().then((c) => {
@@ -476,21 +430,8 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
       setNotifications(cc.notifications === true);
       setAgentBudget(cc.costCapTokens != null ? String(cc.costCapTokens) : '');
       setVelocityCeiling(cc.circuitBreaker?.tokenVelocityPerMin != null ? String(cc.circuitBreaker.tokenVelocityPerMin) : '');
-      setSlackEnabled(cc.slackEnabled ?? false);
-      setSlackSecret(cc.slackSigningSecret ?? '');
-      setSlackBotToken(cc.slackBotToken ?? '');
-      setSlackChannel(cc.slackChannelId ?? '');
-      setSlackPort(String(cc.slackPort ?? 3847));
-      setSlackProactivePosting(cc.slackProactivePosting ?? false);
       setIdleDisconnectMs((c as HarnessConfig).realtimeIdleDisconnectMs ?? 60_000);
     }).catch(() => { /* keep prop-seeded values */ });
-    // Hydrate live connection state + the persisted Request URL: the
-    // tunnel URL lives in main, so reopening Settings while connected re-shows it.
-    window.cth.slackStatus().then((s) => {
-      if (!alive) return;
-      setRunning(s.running);
-      if (s.url) setTunnelUrl(s.url);
-    }).catch(() => { /* status unavailable - assume not running */ });
     // Triggers: re-read main and push the result into the shared mirror. App
     // already seeded it at launch; this catches anything the Triggers tab (or
     // another window) changed since, and is the ONLY place Settings reads them —
@@ -504,165 +445,11 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
         const org = await triggersApi().getOrgTrigger();
         if (alive && org) useStore.getState().setOrgTrigger(org);
       } catch { /* ditto */ }
-      try {
-        const s = await triggersApi().webhooksStatus();
-        if (!alive) return;
-        setWebhookRunning(s.running);
-        if (s.url) setWebhookUrl(s.url);
-      } catch { /* status unavailable - assume not listening */ }
     })();
     return () => { alive = false; };
   }, []);
 
-  /** Persist the current Slack inputs. Returns the resolved config patch. */
-  const slackPatch = (enabled: boolean) => ({
-    signingSecret: slackSecret,
-    botToken: slackBotToken,
-    channelId: slackChannel,
-    port: Number(slackPort) || 3847,
-    enabled,
-    proactivePosting: slackProactivePosting
-  });
-
-  const saveSlack = async () => {
-    setSlackBusy(true); setSlackNote('');
-    try {
-      await window.cth.slackSetConfig(slackPatch(slackEnabled));
-      setSlackNote('saved');
-    } catch (e) {
-      setSlackNote(e instanceof Error ? e.message : String(e));
-    } finally { setSlackBusy(false); }
-  };
-
-  const startSlack = async () => {
-    setSlackBusy(true); setSlackNote('');
-    try {
-      // Persist first so the server starts with the latest secret/port/channel.
-      await window.cth.slackSetConfig(slackPatch(true));
-      setSlackEnabled(true);
-      const res = await window.cth.slackStart();
-      if (res.ok) {
-        setRunning(true);
-        // Keep the last URL if this start returned none (tunnel hiccup) - don't blank it.
-        if (res.url) setTunnelUrl(res.url);
-        setSlackNote(res.url ? 'listening' : (res.error ?? 'started, but tunnel unavailable'));
-      } else {
-        setSlackNote(res.error ?? 'failed to start');
-      }
-    } catch (e) {
-      setSlackNote(e instanceof Error ? e.message : String(e));
-    } finally { setSlackBusy(false); }
-  };
-
-  const stopSlack = async () => {
-    setSlackBusy(true); setSlackNote('');
-    // Keep the last Request URL visible (greyed) after Stop.
-    // Mirror startSlack: main persists slackEnabled:false, this keeps the pill
-    // honest without waiting for a Settings reopen.
-    try { await window.cth.slackStop(); setRunning(false); setSlackEnabled(false); setSlackNote('stopped'); }
-    catch (e) { setSlackNote(e instanceof Error ? e.message : String(e)); }
-    finally { setSlackBusy(false); }
-  };
-
-  // --- Webhook trigger handlers ---
-  /** The one write path. Updates the shared mirror FIRST so the Triggers tab
-   *  repaints immediately, then persists. Pass `persist: false` for keystroke
-   *  edits (a rename) — the blur commits them. */
-  const applyWebhooks = async (list: WebhookTrigger[], persist = true) => {
-    setWebhookTriggersStore(list);
-    if (!persist) return;
-    setWebhookBusy(true); setWebhookNote('');
-    try {
-      const res = await triggersApi().saveWebhooks(list);
-      if (res && res.ok === false) { setWebhookNote(res.error ?? 'could not save'); return; }
-      setWebhookNote('saved');
-      setTimeout(() => setWebhookNote(''), 1500);
-    } catch (e) {
-      setWebhookNote(e instanceof Error ? e.message : String(e));
-    } finally { setWebhookBusy(false); }
-  };
-
-  /** Replace one entry by id (the shape every per-row control uses). */
-  const patchWebhook = (id: string, patch: Partial<WebhookTrigger>, persist = true) =>
-    applyWebhooks(webhookTriggers.map((w) => (w.id === id ? { ...w, ...patch } : w)), persist);
-
-  /** New endpoint: main mints the secret (256-bit), and it ships DISABLED —
-   *  turning on a public surface is always an explicit second click. */
-  const addWebhook = async () => {
-    setWebhookBusy(true); setWebhookNote('');
-    let secret = '';
-    try {
-      const res = await triggersApi().generateWebhookSecret();
-      secret = res.ok && res.secret ? res.secret : '';
-    } catch (e) {
-      setWebhookNote(e instanceof Error ? e.message : String(e));
-    } finally { setWebhookBusy(false); }
-    if (!secret) { setWebhookNote('could not generate a secret'); return; }
-    const entry: WebhookTrigger = {
-      id: newWebhookId(),
-      name: `Webhook ${webhookTriggers.length + 1}`,
-      secret,
-      enabled: false,
-      mode: DEFAULT_TRIGGER_MODE,
-      schema: DEFAULT_WEBHOOK_SCHEMA,
-      createdAt: Date.now()
-    };
-    setShownSecrets((s) => ({ ...s, [entry.id]: true })); // show it once, to copy
-    await applyWebhooks([...webhookTriggers, entry]);
-  };
-
-  /** Mint a fresh secret for ONE endpoint. The old one stops working at once —
-   *  that is the point, and it never disturbs the other webhooks. */
-  const rotateWebhookSecret = async (id: string) => {
-    setWebhookBusy(true); setWebhookNote('');
-    let secret = '';
-    try {
-      const res = await triggersApi().generateWebhookSecret();
-      secret = res.ok && res.secret ? res.secret : '';
-    } catch (e) {
-      setWebhookNote(e instanceof Error ? e.message : String(e));
-    } finally { setWebhookBusy(false); }
-    if (!secret) { setWebhookNote('could not generate a secret'); return; }
-    setShownSecrets((s) => ({ ...s, [id]: true }));
-    await patchWebhook(id, { secret });
-    setWebhookNote('new secret — copy it now');
-  };
-
-  const removeWebhook = async (id: string) => {
-    setPendingDelete(null);
-    setWebhookBusy(true); setWebhookNote('');
-    try {
-      await triggersApi().deleteWebhook(id);
-      setWebhookNote('deleted');
-      setTimeout(() => setWebhookNote(''), 1500);
-    } catch (e) {
-      setWebhookNote(e instanceof Error ? e.message : String(e));
-    } finally { setWebhookBusy(false); }
-    // Mirror the removal either way: if main rejected it, the next open re-reads.
-    setWebhookTriggersStore(webhookTriggers.filter((w) => w.id !== id));
-  };
-
-  /** Endpoint URL for one webhook: every entry shares the tunnel, the id picks it. */
-  const webhookEndpoint = (id: string) => (webhookUrl ? `${webhookUrl.replace(/\/$/, '')}/${id}` : '');
-  const copyTunnel = () => { void window.cth.copyToClipboard(tunnelUrl); };
-
-  // --- Organisation trigger handlers ---
-  /** Same contract as webhooks: mirror first (so the Triggers tab is live), then
-   *  persist. Keystroke edits pass `persist: false` and commit on blur. */
-  const applyOrg = async (next: OrgTriggerConfig, persist = true) => {
-    setOrgTriggerStore(next);
-    if (!persist) return;
-    setOrgBusy(true); setOrgNote('');
-    try {
-      const res = await triggersApi().setOrgTrigger(next);
-      if (res && res.ok === false) { setOrgNote(res.error ?? 'could not save'); return; }
-      setOrgNote('saved');
-      setTimeout(() => setOrgNote(''), 1500);
-    } catch (e) {
-      setOrgNote(e instanceof Error ? e.message : String(e));
-    } finally { setOrgBusy(false); }
-  };
-
+  /** Wipe everything and relaunch into setup. */
   const reset = async () => {
     setBusy(true);
     setResetErr('');
