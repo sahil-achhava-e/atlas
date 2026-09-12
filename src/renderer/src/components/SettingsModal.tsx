@@ -513,7 +513,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
               </div>
 
               {changeErr && (
-                <div style={{ fontSize: 13, lineHeight: '18px', color: '#6E1423' }}>{changeErr}</div>
+                <div style={{ fontSize: 13, lineHeight: '18px', color: 'var(--cth-coral)' }}>{changeErr}</div>
               )}
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -969,7 +969,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                       <div style={{
                         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
-                        color: '#6E1423'
+                        color: 'var(--cth-coral)'
                       }}>{t('settings.general.dangerZone')}</div>
                       <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-700)' }}>
                         {t('settings.general.dangerDesc', { godName })}

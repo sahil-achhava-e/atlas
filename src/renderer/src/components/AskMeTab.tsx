@@ -181,7 +181,7 @@ export function AskMeTab() {
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <span style={{
             position: 'absolute', insetInlineStart: 12, top: '50%', transform: 'translateY(-50%)',
-            display: 'inline-flex', color: 'var(--cth-ink-300)', pointerEvents: 'none'
+            display: 'inline-flex', color: 'var(--cth-ink-400)', pointerEvents: 'none'
           }}>
             <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <circle cx="9" cy="9" r="5.6" stroke="currentColor" strokeWidth="1.7" />
@@ -211,7 +211,7 @@ export function AskMeTab() {
                 width: 22, height: 22, border: 'none', background: 'transparent',
                 borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--cth-ink-300)'
+                color: 'var(--cth-ink-400)'
               }}
             >
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -294,7 +294,7 @@ export function AskMeTab() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   border: 'none', cursor: sending === t.id ? 'default' : 'pointer',
                   borderRadius: 'var(--cth-radius-btn)',
-                  background: 'transparent', color: 'var(--cth-ink-300)',
+                  background: 'transparent', color: 'var(--cth-ink-400)',
                   transition: 'background 120ms ease, color 120ms ease'
                 }}
               >
@@ -401,7 +401,7 @@ export function AskMeTab() {
                         cursor: ready ? 'pointer' : 'not-allowed',
                         background: ready ? 'var(--cth-lilac)' : 'transparent',
                         boxShadow: ready ? 'var(--cth-shadow-btn)' : 'inset 0 0 0 1px var(--cth-ink-100)',
-                        color: ready ? '#FFFFFF' : 'var(--cth-ink-300)',
+                        color: ready ? '#FFFFFF' : 'var(--cth-ink-500)',
                         fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
                         transition: 'background 120ms ease, box-shadow 120ms ease, color 120ms ease'
                       }}
@@ -443,14 +443,14 @@ export function AskMeTab() {
                       paddingLeft: 8 + Math.min(i, 3) * 8,
                       fontSize: 13, color: 'var(--cth-ink-700)'
                     }}>
-                      <span style={{ color: 'var(--cth-ink-300)' }}>└</span>
+                      <span style={{ color: 'var(--cth-ink-400)' }}>└</span>
                       <span style={{ width: 7, height: 7, flexShrink: 0, background: d.status === 'blocked' ? 'var(--cth-coral)' : 'var(--cth-sky)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)' }} />
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.title}</span>
                       {nameFor(d.assignee) && <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>({nameFor(d.assignee)})</span>}
                     </div>
                   ))}
                   {stuck.length > 6 && (
-                    <div style={{ paddingLeft: 14, fontSize: 11, color: 'var(--cth-ink-300)' }}>{translate('askMe.more', { count: stuck.length - 6 })}</div>
+                    <div style={{ paddingLeft: 14, fontSize: 11, color: 'var(--cth-ink-400)' }}>{translate('askMe.more', { count: stuck.length - 6 })}</div>
                   )}
                 </div>
               )}

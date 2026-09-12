@@ -625,7 +625,7 @@ div:hover > .cth-iconbar[data-label] { opacity: 1 !important; }
 
 /* Closing the IDE is the one destructive-looking control in its bar, so it
    fills in on hover rather than just darkening a glyph. */
-.cth-ide-close:hover { background: var(--cth-coral) !important; color: #FFFFFF !important; }
+.cth-ide-close:hover { background: var(--cth-coral) !important; color: var(--cth-on-danger) !important; }
 
 /* A panel scrolls with a bar that appears when the pointer is inside it. A
    permanent 10px rail beside a list of six events is furniture; the gutter is

@@ -80,7 +80,9 @@ export function PixelButton({
         // the least legible pair in the palette and the one that matters most.
         return {
           fill:    disabled ? 'transparent' : (hover ? 'color-mix(in srgb, var(--cth-coral) 86%, #000)' : 'var(--cth-coral)'),
-          text:    disabled ? disabledText : '#FFFFFF',
+          // Not a literal white: dark mode's coral is a LIGHT red, where white
+          // measures 2.77:1. The token flips with the theme.
+          text:    disabled ? disabledText : 'var(--cth-on-danger)',
           border:  disabled ? 'var(--cth-ink-100)' : 'var(--cth-coral)',
           shadow:  'var(--cth-ink-300)'
         };

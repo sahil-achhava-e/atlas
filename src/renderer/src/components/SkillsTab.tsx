@@ -255,7 +255,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
         <div style={{ position: 'relative' }}>
           <span style={{
             position: 'absolute', insetInlineStart: 12, top: '50%', transform: 'translateY(-50%)',
-            display: 'inline-flex', color: 'var(--cth-ink-300)', pointerEvents: 'none'
+            display: 'inline-flex', color: 'var(--cth-ink-400)', pointerEvents: 'none'
           }}>
             <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <circle cx="9" cy="9" r="5.6" stroke="currentColor" strokeWidth="1.7" />
@@ -284,7 +284,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
                 width: 22, height: 22, border: 'none', background: 'transparent',
                 borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--cth-ink-300)'
+                color: 'var(--cth-ink-400)'
               }}
             >
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -363,7 +363,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
                       <>
                         <button
                           onClick={() => void uninstall(s)}
-                          style={{ ...actionBtn('danger'), color: '#fff', background: 'var(--cth-coral)' }}
+                          style={{ ...actionBtn('danger'), color: 'var(--cth-on-danger)', background: 'var(--cth-coral)' }}
                         >{t('skillsTab.deleteConfirm', { name: s.name })}</button>
                         <button onClick={() => setConfirming(null)} style={actionBtn('quiet')}>{t('common.cancel')}</button>
                       </>

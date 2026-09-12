@@ -232,7 +232,7 @@ export function TriggerCard({ title, blurb, summary, defaultOpen = false, childr
         }}
       >
         <span style={{
-          flexShrink: 0, marginTop: 2, display: 'inline-flex', color: 'var(--cth-ink-300)',
+          flexShrink: 0, marginTop: 2, display: 'inline-flex', color: 'var(--cth-ink-400)',
           transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 140ms ease'
         }}>
           <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">

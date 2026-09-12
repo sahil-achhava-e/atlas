@@ -284,7 +284,7 @@ export function TasksKanban() {
                   {cards.length === 0 ? (
                     <div style={{
                       padding: '18px 8px', textAlign: 'center',
-                      fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-300)'
+                      fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-400)'
                     }}>{t('kanban.emptyColumn')}</div>
                   ) : cards.map((x) => (
                     <TaskCard
@@ -362,7 +362,7 @@ export function TasksKanban() {
             <span style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               width: 46, height: 46, borderRadius: 'var(--cth-radius-pill)',
-              background: 'var(--cth-cream-100)', color: 'var(--cth-ink-300)'
+              background: 'var(--cth-cream-100)', color: 'var(--cth-ink-400)'
             }}>
               <TasksIcon size={22} />
             </span>
@@ -464,7 +464,7 @@ function TaskCard({ task, accent, assigneeName, assigneeCharacter, onOpen, onDis
             </>
           ) : (
             <span style={{
-              fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-300)'
+              fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-400)'
             }}>{t('kanban.unassignedShort')}</span>
           )}
         </span>
@@ -480,7 +480,7 @@ function TaskCard({ task, accent, assigneeName, assigneeCharacter, onOpen, onDis
           width: 24, height: 24, border: 'none', background: 'transparent',
           borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--cth-ink-300)', opacity: 0
+          color: 'var(--cth-ink-400)', opacity: 0
         }}
       >
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -546,7 +546,7 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
               letterSpacing: '-0.2px', color: 'var(--cth-ink-900)'
             }}>
               {t('kanban.taskTitle')}
-              <span style={{ color: 'var(--cth-ink-300)', fontWeight: 400 }}>·</span>
+              <span style={{ color: 'var(--cth-ink-400)', fontWeight: 400 }}>·</span>
               <span style={{
                 fontFamily: 'var(--cth-font-mono)', fontSize: 12.5, fontWeight: 500,
                 color: 'var(--cth-ink-700)'
@@ -573,7 +573,7 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
                 width: 28, height: 28, flexShrink: 0, border: 'none', background: 'transparent',
                 borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--cth-ink-300)'
+                color: 'var(--cth-ink-400)'
               }}
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -636,7 +636,7 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
               fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '20px',
               color: 'var(--cth-ink-700)', whiteSpace: 'pre-wrap', wordBreak: 'break-word'
             }} dir={rtl ? 'auto' : undefined}>
-              {task.description?.trim() || <span style={{ color: 'var(--cth-ink-300)', fontStyle: 'italic' }}>{t('kanban.noDescription')}</span>}
+              {task.description?.trim() || <span style={{ color: 'var(--cth-ink-400)', fontStyle: 'italic' }}>{t('kanban.noDescription')}</span>}
             </div>
 
             {/* The human Q&A trail — every decision documented on the card.
@@ -828,7 +828,7 @@ function PriorityDots({ level }: { level: number }) {
         ? { key: 'normal', tone: 'var(--cth-ink-500)' }
         : level === 2
           ? { key: 'low', tone: 'var(--cth-sky)' }
-          : { key: 'lowest', tone: 'var(--cth-ink-300)' };
+          : { key: 'lowest', tone: 'var(--cth-ink-500)' };
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,

@@ -30,7 +30,15 @@ const path = require('node:path');
 
 const root = path.join(__dirname, '..');
 const version = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version;
-const releaseMd = fs.readFileSync(path.join(root, 'RELEASE.md'), 'utf8');
+// RELEASE.md went with the upstream website in bb519aa. Until this fork
+// publishes its own, there is nothing to check — say so and pass, rather than
+// throwing ENOENT and failing every run of the gate.
+const releasePath = path.join(root, 'RELEASE.md');
+if (!fs.existsSync(releasePath)) {
+  console.log('no RELEASE.md in this repo — nothing advertised, nothing to check');
+  process.exit(0);
+}
+const releaseMd = fs.readFileSync(releasePath, 'utf8');
 
 const problems = [];
 

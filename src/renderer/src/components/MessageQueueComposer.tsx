@@ -408,7 +408,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
               borderRadius: 'var(--cth-radius-btn)',
               cursor: canSend ? 'pointer' : 'not-allowed',
               background: canSend ? 'var(--cth-lilac)' : 'transparent',
-              color: canSend ? '#FFFFFF' : 'var(--cth-ink-300)',
+              color: canSend ? '#FFFFFF' : 'var(--cth-ink-500)',
               boxShadow: canSend ? 'var(--cth-shadow-btn)' : 'none',
               fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
               transition: 'background 120ms ease, box-shadow 120ms ease, color 120ms ease'
@@ -565,7 +565,7 @@ function QueuedMessageRow(
         aria-label={t('queueComposer.removeOne')}
         style={{
           flexShrink: 0, border: 'none', background: 'transparent',
-          cursor: 'pointer', color: 'var(--cth-ink-300)',
+          cursor: 'pointer', color: 'var(--cth-ink-400)',
           width: 24, height: 24, padding: 0,
           borderRadius: 'var(--cth-radius-btn)',
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',

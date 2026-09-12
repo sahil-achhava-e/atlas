@@ -659,7 +659,7 @@ export function IdePanel() {
                   <span style={{
                     width: 56, height: 56, borderRadius: 'var(--cth-radius-card)',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'var(--cth-cream-100)', color: 'var(--cth-ink-300)'
+                    background: 'var(--cth-cream-100)', color: 'var(--cth-ink-400)'
                   }}>
                     <Icon name="code" size={2} />
                   </span>
@@ -910,7 +910,7 @@ function ShortcutHint() {
   return (
     <div style={{
       marginTop: 10, display: 'grid', gap: 2, justifyItems: 'center',
-      fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-300)'
+      fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-400)'
     }}>
       {EDITOR_SHORTCUTS.map(([keys, label]) => (
         <div key={label} style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>

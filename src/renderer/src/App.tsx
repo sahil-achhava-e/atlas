@@ -490,7 +490,7 @@ export function App() {
                 <StatusGlyph status="working" size={15} />
               </span>
               {fleet.working === 1 ? '1 agent working' : `${fleet.working} agents working`}
-              <span style={{ color: 'var(--cth-ink-300)' }}>·</span>
+              <span style={{ color: 'var(--cth-ink-400)' }}>·</span>
               nothing needs you
             </>
           ) : fleet.idle > 0 ? (
@@ -502,7 +502,7 @@ export function App() {
             </>
           ) : (
             <>
-              <span style={{ display: 'inline-flex', color: 'var(--cth-ink-300)' }}>
+              <span style={{ display: 'inline-flex', color: 'var(--cth-ink-400)' }}>
                 <StatusGlyph status="ghost" size={15} />
               </span>
               Nobody on the floor yet. Add an agent to start.

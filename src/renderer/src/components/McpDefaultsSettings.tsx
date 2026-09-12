@@ -176,7 +176,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span style={{
                 fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
-                color: isConsent ? '#6E1423' : 'var(--cth-ink-500)',
+                color: isConsent ? 'var(--cth-coral)' : 'var(--cth-ink-500)',
               }}>
                 {t(TIER_LABEL_KEY[tier])}
               </span>

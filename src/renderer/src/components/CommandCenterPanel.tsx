@@ -369,13 +369,18 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                 border: 'none', cursor: 'pointer',
                 borderRadius: 'var(--cth-radius-btn)',
                 background: on ? 'var(--cth-lilac)' : 'transparent',
-                color: on ? 'var(--cth-on-accent)' : d.tone,
+                // The GLYPH keeps the tab's colour; the WORD does not. A 12.5px
+                // label in status green measured 2.1:1 on white — the hue is a
+                // marker, and a marker used as body text stops being readable.
+                color: on ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)',
                 boxShadow: on ? 'var(--cth-shadow-sm)' : 'none',
                 fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12.5,
                 transition: 'background 120ms ease, color 120ms ease'
               }}
             >
-              <d.Glyph />
+              <span style={{ display: 'inline-flex', color: on ? 'inherit' : d.tone }}>
+                <d.Glyph />
+              </span>
               {fullscreen && (
                 <span style={{
                   minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
@@ -723,7 +728,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                 cursor: dispatchText.trim() ? 'pointer' : 'not-allowed',
                 background: dispatchText.trim() ? 'var(--cth-lilac)' : 'transparent',
                 boxShadow: dispatchText.trim() ? 'var(--cth-shadow-btn)' : 'inset 0 0 0 1px var(--cth-ink-100)',
-                color: dispatchText.trim() ? '#FFFFFF' : 'var(--cth-ink-300)',
+                color: dispatchText.trim() ? '#FFFFFF' : 'var(--cth-ink-500)',
                 fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
                 transition: 'background 120ms ease, box-shadow 120ms ease, color 120ms ease'
               }}
@@ -858,13 +863,14 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                     height: 30, padding: '0 10px', border: 'none',
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                     borderRadius: 'var(--cth-radius-btn)',
-                    background: 'var(--cth-mint-light)', color: 'var(--cth-mint)',
+                    background: 'var(--cth-mint-light)', color: 'var(--cth-ink-800)',
                     fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
                     cursor: restarting === a.id ? 'default' : 'pointer',
                     opacity: restarting === a.id ? 0.6 : 1
                   }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true"
+                    style={{ color: 'var(--cth-mint)' }}>
                     <path d="M16 10a6 6 0 1 1-1.8-4.3M16 3.4V7h-3.6"
                       stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -879,12 +885,13 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                     height: 30, padding: '0 10px', border: 'none',
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                     borderRadius: 'var(--cth-radius-btn)',
-                    background: 'var(--cth-lemon-light)', color: 'var(--cth-lemon)',
+                    background: 'var(--cth-lemon-light)', color: 'var(--cth-ink-800)',
                     fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
                     cursor: 'pointer'
                   }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true"
+                    style={{ color: 'var(--cth-lemon)' }}>
                     <path d="M13.4 3.6a1.9 1.9 0 0 1 2.7 2.7L7.5 14.9l-3.5.9.9-3.5 8.5-8.7Z"
                       stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
                   </svg>
@@ -1252,7 +1259,7 @@ function Select({ value, onChange, disabled, children }: {
       <span style={{
         display: 'inline-flex', alignItems: 'center', height: 34, padding: '0 12px',
         borderRadius: 'var(--cth-radius-btn)', background: 'var(--cth-cream-50)',
-        fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-300)',
+        fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-400)',
         minWidth: 0, maxWidth: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
       }}>{current?.label ?? value}</span>
     );

@@ -18,9 +18,14 @@
   --cth-ink-900: #111418;
   --cth-ink-800: #303845;   /* strong secondary: a label that still leads */
   --cth-ink-700: #596273;
-  --cth-ink-600: #6B7484;   /* field labels, quiet button text */
-  --cth-ink-500: #8A93A3;
-  --cth-ink-400: #9CA5B4;   /* paths, timestamps: present but never read first */
+  /* The quiet end of the ramp, measured rather than picked by eye. Every hint,
+     path, timestamp and secondary line uses one of these, and the old values
+     (#8A93A3 at 3.1:1, #9CA5B4 at 2.5:1) were under the floor for 11-13px text
+     on both white and cream. Kept strictly monotonic: 900 darkest → 100
+     lightest, or a "quieter" step stops being quieter. */
+  --cth-ink-600: #5F6879;   /* 5.6:1 white — field labels, quiet button text */
+  --cth-ink-500: #6B7484;   /* 4.7:1 white — hints, secondary lines */
+  --cth-ink-400: #78818F;   /* 3.9:1 white — paths, timestamps: never read first */
   --cth-ink-300: #C3CAD5;
   --cth-ink-100: #E2E6EC;
 
@@ -138,6 +143,11 @@
      accents are saturated fills in BOTH themes, so this is white in both —
      ink-900 would invert with the theme and go near-black on lilac. */
   --cth-on-accent: #FFFFFF;
+  /* Text that sits ON a coral fill. Coral is DARK in light mode (#DC2626) and
+     LIGHT in dark mode (#F87171) — it has to be, to read against its own
+     ground — so a single foreground cannot serve both: white measures 4.83:1
+     on the first and 2.77:1 on the second. This flips with the theme. */
+  --cth-on-danger: #FFFFFF;
 
   --cth-panel-border-inset:    inset 0 0 0 1px var(--cth-ink-100);
   --cth-panel-border-terminal: inset 0 0 0 1px var(--cth-ink-300);
@@ -192,13 +202,17 @@
   --cth-ink-700: #A8B0BE;   /*  7.0-8.3:1  — secondary text */
   --cth-ink-600: #8E96A5;   /*  5.8-6.9:1  — field labels, quiet button text */
   --cth-ink-500: #737C8B;   /*  4.9-5.8:1  — tertiary / hints */
-  --cth-ink-400: #5E6675;   /*  4.1-4.8:1  — paths, timestamps */
+  --cth-ink-400: #7A8390;   /*  4.5-5.0:1  — paths, timestamps, disabled text.
+                              Measured on a CARD (#171A20), not the page: quiet
+                              text sits on cards, and the old #5E6675 was 3.02
+                              there — a label you could not read. */
   --cth-ink-300: #4A515E;   /*  3.4-4.0:1  — BORDERS. must stay >= 3.0 */
   --cth-ink-100: #262B34;   /*  1.4-1.7:1  — dividers, meant to recede */
 
   /* Accents — one step lighter/softer than the light set so they read on dark
      without fluorescing */
   --cth-coral: #F87171;       --cth-mint: #4ADE80;
+  --cth-on-danger: #111418;   /* 6.7:1 on the light coral dark mode uses */
   --cth-sky: #38BDF8;       --cth-lemon: #FBBF24;
   --cth-lilac: #8B72FF;       --cth-peach: #FFB076;
   /* Brand accent, one step along for hover. On dark that step goes UP. */
