@@ -137,7 +137,8 @@
     spawnPty: function (opts) {
       if (opts && opts.id) ptys[opts.id] = { id: opts.id, cwd: opts.cwd || '' };
       window.__ptyCalls = window.__ptyCalls || [];
-      window.__ptyCalls.push({ call: 'spawn', id: opts && opts.id, resume: !!(opts && opts.resume) });
+      window.__ptyCalls.push({ call: 'spawn', id: opts && opts.id, resume: !!(opts && opts.resume),
+        command: opts && opts.command, args: (opts && opts.args) || [] });
       return Promise.resolve({ ok: true, resumed: !!(opts && opts.resume) });
     },
     listPtys: function () {

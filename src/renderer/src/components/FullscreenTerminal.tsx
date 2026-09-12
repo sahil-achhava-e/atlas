@@ -59,6 +59,11 @@ function basename(path: string): string {
   // Split on BOTH separators: `git:mainRepo` hands back whatever the platform
   // uses, and a Windows `C:\work\repo` contains no '/' at all — so a '/'-only
   // split returned the whole absolute path as the group's "name".
+  //
+  // An agent restored from a half-written state file can arrive with no cwd at
+  // all, and this runs inside a useMemo during render: one such agent threw
+  // `path.split is not a function` and took the whole terminal down with it.
+  if (typeof path !== 'string') return '';
   return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
 }
 

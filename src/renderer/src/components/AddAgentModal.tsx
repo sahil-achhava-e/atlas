@@ -204,6 +204,13 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   const [command, setCommand] = useState(
     pendingHire ? hireCommand(pendingHire) : buildSpawnCommand(config, initialModel, initialProvider)
   );
+  /** Auto mode per agent, starting from the workspace's answer. The command is
+   *  built from it, so the flag never has to be typed. */
+  const [auto, setAuto] = useState<boolean>(config.autoMode !== false);
+  const setAutoMode = (next: boolean) => {
+    setAuto(next);
+    setCommand(buildSpawnCommand({ ...config, autoMode: next }, model, provider));
+  };
   const [description, setDescription] = useState(pendingHire?.description ?? '');
   const [hireMeta, setHireMeta] = useState<HireManifest | null>(pendingHire);
 
@@ -211,7 +218,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // power users (it's the source of truth for the actual spawn).
   const pickModel = (id?: string) => {
     setModel(id);
-    setCommand(buildSpawnCommand(config, id, provider));
+    setCommand(buildSpawnCommand({ ...config, autoMode: auto }, id, provider));
   };
   // Switching provider resets the model to that CLI's default and rebuilds the
   // command from the provider's preset binary (so Antigravity spawns `agy` and
@@ -1003,22 +1010,53 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                       </div>
                     )}
 
-                    <Row label={config.autoMode && preset.autoFlag ? tr('addAgent.commandAuto') : tr('addAgent.command')}>
+                    {/* The spawn command used to be a text field here, which
+                        asked a first-time user to know what
+                        `--permission-mode bypassPermissions` means. The one
+                        decision inside it is this checkbox; the rest is built. */}
+                    <label style={{
+                      display: 'flex', gap: 12, alignItems: 'flex-start', padding: 14,
+                      cursor: preset.autoFlag ? 'pointer' : 'not-allowed',
+                      opacity: preset.autoFlag ? 1 : 0.55,
+                      borderRadius: 'var(--cth-radius-card)',
+                      background: auto && preset.autoFlag ? 'var(--cth-mint-light)' : 'var(--cth-cream-100)',
+                      boxShadow: auto && preset.autoFlag ? 'inset 0 0 0 2px var(--cth-mint)' : 'none',
+                      transition: 'background 120ms ease, box-shadow 120ms ease'
+                    }}>
                       <input
-                        value={command}
-                        onChange={(e) => setCommand(e.target.value)}
-                        placeholder={
-                          provider === 'antigravity'
-                            ? 'agy'
-                            : provider === 'codex'
-                              ? 'codex'
-                              : provider === 'custom'
-                                ? 'your-agent-cli'
-                                : 'claude'
-                        }
-                        style={{ ...inputStyle, fontFamily: 'var(--cth-font-mono)' }}
+                        type="checkbox"
+                        checked={preset.autoFlag ? auto : false}
+                        disabled={!preset.autoFlag}
+                        onChange={(e) => setAutoMode(e.target.checked)}
+                        style={{
+                          width: 17, height: 17, marginTop: 2, flexShrink: 0,
+                          accentColor: 'var(--cth-mint)',
+                          cursor: preset.autoFlag ? 'pointer' : 'not-allowed'
+                        }}
                       />
-                    </Row>
+                      <span style={{ minWidth: 0 }}>
+                        <span style={{
+                          display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+                          fontSize: 13.5, lineHeight: '19px', marginBottom: 4
+                        }}>{tr('addAgent.autoTitle')}</span>
+                        <span style={{
+                          display: 'block', fontSize: 13, lineHeight: '19px', color: 'var(--cth-ink-700)'
+                        }}>{tr(preset.autoFlag ? 'addAgent.autoDesc' : 'addAgent.autoNotSupported')}</span>
+                      </span>
+                    </label>
+
+                    {/* Still typed in the two cases where the app cannot build
+                        it: your own CLI, and an import carrying its own flags. */}
+                    {(provider === 'custom' || pendingHire) && (
+                      <Row label={tr(pendingHire ? 'addAgent.commandHire' : 'addAgent.commandShown')}>
+                        <input
+                          value={command}
+                          onChange={(e) => setCommand(e.target.value)}
+                          placeholder={provider === 'custom' ? 'your-agent-cli' : 'claude'}
+                          style={{ ...inputStyle, fontFamily: 'var(--cth-font-mono)' }}
+                        />
+                      </Row>
+                    )}
                   </>
                 )}
 

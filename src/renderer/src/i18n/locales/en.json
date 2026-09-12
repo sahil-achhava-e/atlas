@@ -504,7 +504,7 @@
       },
       "engine": {
         "label": "Engine",
-        "hint": "Model and command"
+        "hint": "Model and permissions"
       },
       "briefing": {
         "label": "Briefing",
@@ -611,7 +611,12 @@
     "jobHint": "The work it repeats, not one task. Added to every prompt it ever gets.",
     "jobPlaceholder": "Example: Own backend work in this repo: API endpoints, services, jobs and the queries they need. Read neighbouring code first and match its conventions. Reproduce a bug before fixing it. Run the project checks and quote what they said.",
     "doneLabel": "When is it finished?",
-    "doneHint": "What it hands you before it stops. Leave this unless you have a reason."
+    "doneHint": "What it hands you before it stops. Leave this unless you have a reason.",
+    "autoTitle": "Work without asking",
+    "autoDesc": "This agent does the work and only stops for the things you told it to ask about. Off: it asks before it changes a file or runs a command.",
+    "autoNotSupported": "This engine has no skip-permissions flag, so it always asks.",
+    "commandShown": "Command",
+    "commandHire": "Command from the import — check it before you hire."
   },
   "onboarding": {
     "titles": {
