@@ -213,25 +213,12 @@ test('code fences, comments and quoted callouts are handled', () => {
   for (const line of digest) assert.doesNotMatch(line, /npm install/);
 });
 
-test("the project's own RELEASE.md digests to something a toast can hold", () => {
-  // The body electron-updater actually hands us is this file (see
-  // .github/workflows/release.yml → `body_path: RELEASE.md`), so it is the one
-  // fixture guaranteed to stay realistic.
-  const body = fs.readFileSync(path.resolve(__dirname, '..', 'RELEASE.md'), 'utf8');
-  const digest = summarizeReleaseNotes(body);
-
-  assert.ok(digest.length > 0, 'the shipped release notes must produce a digest');
-  assert.ok(digest.length <= RELEASE_NOTES_MAX_BULLETS);
-  assert.ok(total(digest) <= RELEASE_NOTES_MAX_CHARS, `${total(digest)} chars over budget`);
-  for (const line of digest) {
-    assert.doesNotMatch(line, /https?:\/\//, 'a raw URL reached the toast');
-    assert.doesNotMatch(line, /\]\(/, 'an unparsed markdown link reached the toast');
-    assert.doesNotMatch(line, /^\s*[-*#|]/, 'a markdown marker reached the toast');
-  }
-  // The tagline and the download table live above/below the news; neither is
-  // what "What's new" should say.
-  assert.ok(!digest.some((l) => /Downloads|Requirements|Build from source/i.test(l)));
-});
+// The realism check against this fork's own RELEASE.md is gone with the file:
+// bb519aa dropped the upstream docs, and the Updates UI went with it because the
+// updater reads the upstream project's releases. The fixtures above still cover
+// the digest itself, which UpdateToast uses. NOTE: .github/workflows/release.yml
+// still points body_path at RELEASE.md, so a release run would fail on the
+// missing file — that is the fork owner's call, not a test's.
 
 test('options are honoured so a roomier surface can ask for more', () => {
   const body = `## Changes\n${Array.from({ length: 10 }, (_, i) => `- Change ${i}`).join('\n')}`;

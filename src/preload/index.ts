@@ -8,8 +8,6 @@ import type { UpdateStatus } from '../shared/updateState';
 export type { UpdateStatus } from '../shared/updateState';
 import type { ToolStatus } from '../shared/toolCatalog';
 export type { ToolStatus } from '../shared/toolCatalog';
-import type { HeroPayload } from '../shared/heroPayload';
-export type { HeroPayload } from '../shared/heroPayload';
 import type { ModelCatalog } from '../shared/modelCatalogPayload';
 export type { ModelCatalog, CatalogModel } from '../shared/modelCatalogPayload';
 import type { HookEvent } from '../shared/hookEvents';
@@ -796,8 +794,6 @@ const api = {
    *  present on this machine, with a platform-resolved install command each. */
   toolsStatus: (): Promise<ToolStatus[]> => ipcRenderer.invoke('tools:status'),
   /** Settings hero payload — plan + sponsor, fetched from the repo and cached. */
-  heroPayload: (force?: boolean): Promise<{ hero: HeroPayload; fetchedAt: number; stale: boolean }> =>
-    ipcRenderer.invoke('hero:payload', force),
   /** The remote model catalog — the agent model presets, fetched from the repo
    *  and cached, so a new model needs a JSON edit rather than a release. A null
    *  catalog means the renderer keeps the list compiled into the build. */

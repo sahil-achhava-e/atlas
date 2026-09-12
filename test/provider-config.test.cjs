@@ -2,6 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { readFileSync } = require('node:fs');
 const loadTs = require('./load-ts.cjs');
 
 const {
@@ -123,20 +124,31 @@ test('Command Center model choices round-trip provider and model', () => {
   assert.equal(decodeProviderModel('unknown:model'), null);
 });
 
-test('onboarding lists every engine — orchestrator-capable first, workers-only after, custom never', () => {
-  // Issue #355: hiding Copilot from the onboarding engine step read as "not
-  // supported at all". The step now SHOWS inbox-less engines as disabled
-  // workers-only rows instead of omitting them, so the split must be exact:
-  // selectable = the god-eligible set, workersOnly = everything a worker can
-  // run but Michael cannot (custom stays hidden — it is not a preset engine).
+test('onboarding offers the engines it can install, and hides none of the rest', () => {
+  // Issue #355 asked that inbox-less engines be SHOWN as disabled rather than
+  // omitted, so "not offered" never reads as "not supported". That still holds.
+  // What changed in d81e0c4: the selectable set is no longer every god-eligible
+  // engine. Setup offers the ones a first run can actually get working —
+  // grok, antigravity and qwen carry no installCommand and no docsUrl, so
+  // picking one lands on "not installed" with nothing to click. Every engine is
+  // still available per agent afterwards.
   const { eligible, workersOnly } = onboardingEngineChoices();
-  assert.deepEqual(
-    eligible.map((preset) => preset.id),
-    modelProvidersForAgent(true).map((preset) => preset.id),
-    'selectable rows are exactly the god-eligible engines, same order'
-  );
-  assert.deepEqual(workersOnly.map((preset) => preset.id), ['kimi', 'copilot']);
+  assert.deepEqual(eligible.map((preset) => preset.id), ['claude', 'codex', 'gemini']);
+  for (const preset of eligible) {
+    assert.ok(preset.installCommand || preset.nativeInstallCommand || preset.docsUrl,
+      `${preset.id} is offered at setup with no way to install it`);
+  }
+  // workersOnly is empty because all three offered engines can orchestrate.
+  // #355's point — that omitting an engine reads as "not supported" — is now
+  // carried by the step's own copy instead of by disabled rows: it says every
+  // other agent can run a different engine. If that sentence ever goes, the
+  // disabled rows have to come back.
+  assert.deepEqual(workersOnly.map((preset) => preset.id), []);
   assert.ok(!eligible.concat(workersOnly).some((preset) => preset.id === 'custom'));
+
+  const en = JSON.parse(readFileSync('src/renderer/src/i18n/locales/en.json', 'utf8'));
+  assert.match(en.onboarding.orchestrator.desc ?? '', /every other agent|different one/i,
+    'the engine step no longer says other engines are available per agent');
 });
 
 test('God only sees providers that can drain hive inbox messages', () => {

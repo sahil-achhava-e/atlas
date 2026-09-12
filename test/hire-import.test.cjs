@@ -73,13 +73,20 @@ test('closing a hire review clears the remaining batch', () => {
 test('review UI exposes progress and an explicit skip without auto-spawn', () => {
   const modal = readFileSync('src/renderer/src/components/AddAgentModal.tsx', 'utf8');
   assert.match(modal, /hireQueueProgress\(hireQueue\)/);
-  assert.match(modal, />\{tr\('addAgent\.skipHire'\)\}<\/PixelButton>/);
+  assert.match(modal, /addAgent\.skipHire/, 'the review has no explicit skip');
   assert.match(modal, /finishPendingHire\(\)/);
-  const start = modal.indexOf('const importHire = async');
-  const end = modal.indexOf('const submit = async', start);
-  const importFlow = modal.slice(start, end);
-  assert.match(importFlow, /enqueuePendingHires\(res\.manifests\)/);
-  assert.doesNotMatch(importFlow, /spawnPty/);
+
+  // The import itself moved out of the modal: a manifest now arrives by deep
+  // link or file and is queued in App, which opens the modal for review. The
+  // property that matters is unchanged — arriving is never spawning.
+  const app = readFileSync('src/renderer/src/App.tsx', 'utf8');
+  const start = app.indexOf('const unsub = window.cth.onHireImport');
+  const end = app.indexOf('}, [enqueuePendingHires, setAddAgentOpen]);', start);
+  assert.ok(start >= 0 && end > start, 'the hire intake effect is gone');
+  const intake = app.slice(start, end);
+  assert.match(intake, /enqueuePendingHires\(/, 'an arriving hire is not queued for review');
+  assert.match(intake, /setAddAgentOpen\(true\)/, 'an arriving hire does not open the review');
+  assert.doesNotMatch(intake, /spawnPty/, 'an arriving hire spawns without review');
 });
 
 test('batch token caps persist atomically before review advances', () => {
@@ -98,13 +105,17 @@ test('batch token caps persist atomically before review advances', () => {
     'renderer must never replace the cap map from a stale config snapshot');
 });
 
-test('Command Center sets and clears one cap through the atomic IPC', () => {
+test('a cap is written through the atomic IPC, never by rewriting the map', () => {
+  // The Command Center no longer OFFERS a per-agent cap — that control was
+  // removed from the agent row — but it still reads one to draw the meter, and
+  // an imported hire can still carry one. Whoever writes it must use the
+  // per-agent IPC: updateConfig({ agentTokenCaps }) would rewrite the whole map
+  // and drop every other agent's cap.
   const panel = readFileSync('src/renderer/src/components/CommandCenterPanel.tsx', 'utf8');
-  const start = panel.indexOf('const setAgentCap =');
-  const end = panel.indexOf('\n\n  // The token meter', start);
-  const capFlow = panel.slice(start, end);
+  assert.match(panel, /agentTokenCaps\[a\.id\]/, 'the meter no longer reads a cap');
+  assert.doesNotMatch(panel, /window\.cth\.setAgentTokenCap\(/, 'the Command Center is setting caps again');
 
-  assert.ok(start >= 0 && end > start, 'Command Center cap handler is present');
-  assert.match(capFlow, /window\.cth\.setAgentTokenCap\(id, tokens\)/);
-  assert.doesNotMatch(capFlow, /updateConfig\(\{\s*agentTokenCaps/);
+  const addAgent = readFileSync('src/renderer/src/components/AddAgentModal.tsx', 'utf8');
+  assert.match(addAgent, /window\.cth\.setAgentTokenCap\(/, 'a hire can no longer carry a cap');
+  assert.doesNotMatch(addAgent, /updateConfig\(\{\s*agentTokenCaps/, 'a hire rewrites the whole cap map');
 });

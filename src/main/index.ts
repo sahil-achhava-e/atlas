@@ -85,7 +85,6 @@ import { buildMissingCliScript, chooseInstallRung } from './cliInstall';
 import { detectNodeVersion, nodeIsUsable, resolveNodeInstaller } from './nodeInstall';
 import { toolCatalog, type ToolStatus } from '../shared/toolCatalog';
 import { listLocalSkills, loadCatalog, installSkill, uninstallSkill, type LocalSkill , addLocalSkill } from './skills';
-import { loadHero } from './hero';
 import { loadModelCatalog } from './modelCatalog';
 import {
   CODEX_REMOTE_SOCKET_RELATIVE,
@@ -3637,11 +3636,6 @@ ipcMain.handle('hive:patchAgentRole', (_evt, id: unknown, role: unknown) => {
   return hive.patchAgentRole(id, role);
 });
 
-// ─── IPC: Settings hero payload (remote data, cached) ───────────────────────
-/** Plan copy and sponsor, fetched from the repo so they can change without a
- *  release. Validated in shared/heroPayload before it reaches the renderer. */
-ipcMain.handle('hero:payload', async (_evt, force: unknown) =>
-  loadHero(join(app.getPath('userData'), 'hero.json'), { force: force === true }));
 
 // ─── IPC: model catalog (remote data, cached) ───────────────────────────────
 /** The agent model presets, fetched from docs/model-catalog.json on main so a
