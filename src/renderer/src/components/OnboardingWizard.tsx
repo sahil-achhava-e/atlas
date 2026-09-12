@@ -8,7 +8,7 @@ import { AtlasMark } from './AtlasMark';
 import { Dropdown } from './Dropdown';
 import { ProviderLogo } from './ProviderLogo';
 import { modelsForProvider, onboardingEngineChoices, type AgentProvider, type HarnessConfig } from '@/store/config';
-import { providerPreset } from '@shared/agentProvider';
+import { AGENT_PROVIDER_PRESETS, providerPreset } from '@shared/agentProvider';
 import {
   classifyEngineAvailability, engineAvailabilityBadge, engineAvailabilityMessage, engineBlocksOnboarding
 } from '@shared/engineAvailability';
@@ -54,6 +54,15 @@ interface Feature {
   tint: string;          // tile background token
   edge: string;          // tile border token
 }
+/** How many engines Atlas actually supports, counted from the presets rather
+ *  than written into a sentence. The card said "Eleven engines" while the list
+ *  had grown to twelve; a number in copy that nothing computes always drifts.
+ *  `custom` is not an engine — it is "type your own command". */
+const ENGINE_COUNTS = (() => {
+  const count = AGENT_PROVIDER_PRESETS.filter((p) => p.id !== 'custom').length;
+  return { count, rest: count - 4 };   // four are named in the sentence
+})();
+
 const FEATURES: Feature[] = [
   {
     icon: 'mcp',
@@ -377,9 +386,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               <>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                   <div style={{
-                    width: 56, height: 56, flexShrink: 0,
-                    background: 'var(--cth-cream-200)',
-                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
+                    width: 52, height: 52, flexShrink: 0,
+                    background: 'var(--cth-cream-100)',
+                    borderRadius: 'var(--cth-radius-card)',
                     display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden'
                   }}>
                     <SpritePortrait character="michael" scale={2} />
@@ -401,6 +410,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <PersonaCard
                     icon="code"
+                    tone="var(--cth-sky)"
+                    tint="var(--cth-sky-light)"
                     title={t('onboarding.persona.technicalTitle')}
                     desc={t('onboarding.persona.technicalDesc')}
                     selected={audience === 'technical'}
@@ -408,6 +419,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   />
                   <PersonaCard
                     icon="sparkle"
+                    tone="var(--cth-peach)"
+                    tint="var(--cth-peach-light)"
                     title={t('onboarding.persona.nonTechnicalTitle')}
                     desc={t('onboarding.persona.nonTechnicalDesc')}
                     selected={audience === 'non-technical'}
@@ -421,9 +434,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               <>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                   <div style={{
-                    width: 56, height: 56, flexShrink: 0,
-                    background: 'var(--cth-cream-200)',
-                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
+                    width: 52, height: 52, flexShrink: 0,
+                    background: 'var(--cth-cream-100)',
+                    borderRadius: 'var(--cth-radius-card)',
                     display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden'
                   }}>
                     <SpritePortrait character="michael" scale={2} />
@@ -441,31 +454,35 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   {FEATURES.map((f) => (
                     <div key={f.labelKey} style={{
                       display: 'flex', gap: 12, alignItems: 'flex-start',
-                      padding: 16,
-                      background: f.tint,
-                      boxShadow: `inset 0 0 0 2px ${f.edge}`
+                      padding: 14,
+                      borderRadius: 'var(--cth-radius-card)',
+                      background: 'var(--cth-paper-100)',
+                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)'
                     }}>
+                      {/* Six pastel fills each in a 2px saturated border was a
+                          paint chart. The colour lives in the icon now, and the
+                          cards are one calm grid. */}
                       <div style={{
-                        width: 28, height: 28, flexShrink: 0,
+                        width: 30, height: 30, flexShrink: 0, borderRadius: '50%',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: 'var(--cth-paper-100)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
+                        background: f.tint, color: f.edge
                       }}>
                         <Icon name={f.icon} />
                       </div>
                       <div style={{ minWidth: 0 }}>
                         <div style={{
                           fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-                          fontSize: 14, lineHeight: '19px', marginBottom: 4
-                          // These labels are literal caps to match their siblings, so
-                          // the orchestrator's name has to arrive upper-cased too.
-                        }}>{t(f.labelKey, { godName: godName.toUpperCase() })}</div>
-                        <div style={{ fontSize: 13, lineHeight: '18px', color: 'var(--cth-ink-700)' }}>
-                          {plain ? t(f.descPlainKey, { godName }) : t(f.descKey, { godName })}
+                          fontSize: 13.5, lineHeight: '19px', marginBottom: 3,
+                          color: 'var(--cth-ink-900)'
+                        }}>{t(f.labelKey, { godName, ...ENGINE_COUNTS })}</div>
+                        <div style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
+                          {plain
+                            ? t(f.descPlainKey, { godName, ...ENGINE_COUNTS })
+                            : t(f.descKey, { godName, ...ENGINE_COUNTS })}
                         </div>
                       </div>
                     </div>
@@ -810,6 +827,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <PersonaCard
                     icon="pause"
+                    tone="var(--cth-lemon)"
+                    tint="var(--cth-lemon-light)"
                     title={t('onboarding.permissions.askTitle')}
                     desc={plain ? t('onboarding.permissions.askDescPlain') : t('onboarding.permissions.askDesc')}
                     selected={!autoMode}
@@ -817,6 +836,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   />
                   <PersonaCard
                     icon="sparkle"
+                    tone="var(--cth-mint)"
+                    tint="var(--cth-mint-light)"
                     title={t('onboarding.permissions.autoTitle')}
                     desc={plain ? t('onboarding.permissions.autoDescPlain') : t('onboarding.permissions.autoDesc')}
                     selected={autoMode}
@@ -1007,11 +1028,14 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PersonaCard({ icon, title, desc, selected, onClick }: {
+function PersonaCard({ icon, title, desc, selected, tone, tint, onClick }: {
   icon: IconName;
   title: string;
   desc: string;
   selected: boolean;
+  /** The card's own colour: it keeps it whether or not it is chosen. */
+  tone: string;
+  tint: string;
   onClick: () => void;
 }) {
   return (
@@ -1033,9 +1057,8 @@ function PersonaCard({ icon, title, desc, selected, onClick }: {
       <span style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
         <span style={{
           width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          borderRadius: 'var(--cth-radius-btn)',
-          background: selected ? 'var(--cth-lilac)' : 'var(--cth-cream-100)',
-          color: selected ? '#FFFFFF' : 'var(--cth-ink-500)'
+          borderRadius: '50%',
+          background: tint, color: tone
         }}>
           <Icon name={icon} />
         </span>

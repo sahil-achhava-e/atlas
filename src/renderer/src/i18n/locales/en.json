@@ -631,7 +631,7 @@
       "homePlain": "Last thing: a home for Atlas",
       "orchestrator": "Pick the engine",
       "orchestratorPlain": "Pick the engine",
-      "repos": "Your repos",
+      "repos": "Your projects",
       "reposPlain": "Your projects",
       "permissions": "Permissions & reliability",
       "done": "All set"
@@ -652,12 +652,12 @@
       "desc": "{{godName}} runs a crew of coding agents on this machine, working while you are not.",
       "features": {
         "engines": {
-          "label": "Eleven engines",
-          "desc": "Claude Code, Codex, Cursor and eight more.",
-          "descPlain": "Eleven AI assistants. You pick who does what."
+          "label": "{{count}} engines",
+          "desc": "Claude Code, Codex, Cursor, Gemini and {{rest}} more.",
+          "descPlain": "{{count}} AI assistants. You pick who does what."
         },
         "clone": {
-          "label": "{{godName}} RUNS IT",
+          "label": "{{godName}} runs it",
           "desc": "Hand it the job. It splits the work and delegates.",
           "descPlain": "Tell it what you want. It handles the rest."
         },
@@ -672,9 +672,9 @@
           "descPlain": "One screen for everything they are doing."
         },
         "guardrails": {
-          "label": "Limits that hold",
-          "desc": "Budgets, a circuit breaker, and your approval.",
-          "descPlain": "Spending caps, safety stops, and it asks first."
+          "label": "It asks first",
+          "desc": "With auto mode off, an agent stops for your approval before it changes a file or runs a command.",
+          "descPlain": "Agents check with you before they change anything, unless you say otherwise."
         },
         "hires": {
           "label": "Hire in one click",
@@ -693,7 +693,7 @@
     },
     "home": {
       "descPlain": "Pick an empty folder for Atlas to keep its notes and settings in. It is created if it does not exist.",
-      "desc": "Pick a folder for Atlas to keep its own files: agent memory, logs, and any repos you start from here. It is created if it does not exist.",
+      "desc": "Pick a folder for Atlas to keep its own files: agent memory, logs, and any projects you start from here. It is created if it does not exist.",
       "placeholder": "~/Atlas-data",
       "createPick": "Choose folder",
       "pick": "Choose folder",
@@ -730,9 +730,9 @@
       "descPlain": "Add the folders your agents will work in. Code, documents, notes, anything with files.",
       "desc": "Add the folders your agents will work in. Each one becomes a project, and several agents can share it.",
       "emptyPlain": "Nothing added yet. You can skip this and add folders later.",
-      "empty": "Nothing added yet. You can skip this and add repos later.",
+      "empty": "Nothing added yet. You can skip this and add projects later.",
       "addProject": "Add a project",
-      "addRepo": "Add a repo",
+      "addRepo": "Add a project",
       "fieldLabel": "Projects",
       "count": "{{count}} added",
       "remove": "Remove"
