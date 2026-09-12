@@ -76,6 +76,17 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
 
   const preset = providerPreset(provider);
 
+  /** True once the picker holds a different model from the one this agent is
+   *  actually running. That is the only case where restarting buys anything. */
+  const modelChanged = (model ?? '') !== (agent.model ?? '');
+  const canRestart = modelChanged && !!agent.ptyId;
+
+  const saveAndRestart = (): void => {
+    save();
+    // The store now holds the new model; the panel reads it from there.
+    window.dispatchEvent(new CustomEvent('cth:restart-agent', { detail: { id: agent.id } }));
+  };
+
   const save = () => {
     const trimmedName = name.trim() || agent.name;
     const trimmedDescription = description.trim() || 'a fresh harness';
@@ -376,7 +387,9 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               )}
 
               <span style={{ fontSize: 12.5, color: 'var(--cth-ink-500)', lineHeight: 1.45 }}>
-                {t('editAgent.engineNote', { action: t('commandCenter.restartContinue') })}
+                {canRestart
+                  ? t('editAgent.engineNoteRestart')
+                  : t('editAgent.engineNote', { action: t('commandCenter.restartContinue') })}
                 {' '}
                 {/* Directions to a tab that shows only an icon are not
                     directions. The note opens it. */}
@@ -408,7 +421,19 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                   : 'Name, face and colour apply at once. Engine changes wait for the next restart.'}
               </span>
               <PixelButton variant="secondary" size="md" onClick={onClose}>Cancel</PixelButton>
-              <PixelButton variant="primary" size="md" onClick={save}>Save changes</PixelButton>
+              <PixelButton
+                variant={canRestart ? 'secondary' : 'primary'}
+                size="md"
+                onClick={save}
+              >{t('editAgent.save')}</PixelButton>
+              {canRestart && (
+                // A model change is the one edit that does nothing until the
+                // agent restarts. Offering it here beats sending someone to
+                // another tab to finish the thing they just did.
+                <PixelButton variant="primary" size="md" onClick={saveAndRestart}>
+                  {t('editAgent.saveAndRestart')}
+                </PixelButton>
+              )}
             </div>
           </div>
         </PixelPanel>

@@ -486,7 +486,8 @@
     "roleWorker": "no role set yet",
     "agentActions": "{{name}} actions",
     "editAgent": "Edit agent",
-    "restarting": "restarting…"
+    "restarting": "restarting…",
+    "restartNoProcess": "No live process to restart. Start this agent first."
   },
   "addAgent": {
     "title": "Add agent",
@@ -1559,6 +1560,9 @@
   },
   "editAgent": {
     "engineNote": "A model change applies the next time this agent starts. To use it now, choose \"{{action}}\" on the agent’s row.",
-    "openTeam": "Open {{tab}}"
+    "openTeam": "Open {{tab}}",
+    "save": "Save changes",
+    "saveAndRestart": "Save and restart",
+    "engineNoteRestart": "Restarting keeps the session: the agent picks up where it left off, on the new model."
   }
 }

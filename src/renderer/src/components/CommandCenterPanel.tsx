@@ -469,6 +469,28 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
   // hatch for a corrupted/garbled terminal (e.g. xterm reflow after dragging the
   // window between displays of different sizes). With `resume` unset it's the
   // old behavior: a model change that starts a fresh session.
+  /** Restart requested from somewhere that cannot reach restartWithModel —
+   *  Edit agent, after a model change. It asks by id; the model comes from the
+   *  store, which the save has already updated. */
+  useEffect(() => {
+    const onRestart = (e: Event): void => {
+      const id = (e as CustomEvent<{ id?: string }>).detail?.id;
+      const target = useStore.getState().agents.find((a) => a.id === id);
+      // Silence is the wrong answer to a button press: an agent with no live
+      // process cannot be restarted, and the row has to say so.
+      if (!target) return;
+      if (!target.ptyId) {
+        setRestartErrors((errors) => ({ ...errors, [target.id]: t('commandCenter.restartNoProcess') }));
+        return;
+      }
+      // resumeOptional: the user asked for a model change, so an agent with no
+      // recorded session still has to get one rather than refusing.
+      void restartWithModel(target, target.model, { resume: true, resumeOptional: true });
+    };
+    window.addEventListener('cth:restart-agent', onRestart);
+    return () => window.removeEventListener('cth:restart-agent', onRestart);
+  }, []);
+
   const restartWithModel = async (
     a: Agent,
     model: string | undefined,
