@@ -1481,12 +1481,12 @@
     "expandGit": "Expand the git panel",
     "collapseGit": "Collapse the git panel: more room for the file tree",
     "rail": {
-      "changes": "changes",
-      "history": "history",
-      "compare": "compare"
+      "changes": "Changes",
+      "history": "History",
+      "compare": "Compare"
     },
     "refresh": "Refresh",
-    "files": "files",
+    "files": "Explorer",
     "rev": "REV",
     "img": "IMG",
     "diff": "Diff",
@@ -1505,7 +1505,12 @@
     "copyPath": "copy path",
     "saveTitle": "Save (Cmd/Ctrl+S)",
     "saved": "saved",
-    "save": "save"
+    "save": "save",
+    "title": "Atlas · IDE",
+    "boss": "boss",
+    "emptyTitle": "Nothing open",
+    "emptyBody": "Pick a file from the tree to edit, or a changed file to diff.",
+    "statusTabs": "{{count}} open"
   },
   "gitPanes": {
     "jumpConfirm": "Jump the repo to {{sha}} (\"{{subject}}\")?\n\nThis detaches HEAD. Blocked automatically if the tree is dirty or an agent is mid-run.",

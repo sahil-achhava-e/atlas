@@ -364,18 +364,18 @@ export function IdePanel() {
         className="cth-titlebar-drag"
         style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: 36,
-          background: 'linear-gradient(180deg, var(--cth-cream-100) 0%, var(--cth-cream-200) 100%)',
-          borderBottom: '1px solid var(--cth-ink-300)',
+          background: 'var(--cth-cream-100)',
+          borderBottom: '1px solid var(--cth-ink-100)',
           display: 'flex', alignItems: 'center',
-          paddingLeft: 96, paddingRight: 8, gap: 12,
+          paddingLeft: 96, paddingRight: 8, gap: 10,
           userSelect: 'none'
         }}
       >
         <span style={{
-          fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)'
-        }}>
-          ATLAS · IDE
-        </span>
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 13, lineHeight: '20px',
+          color: 'var(--cth-ink-900)', flexShrink: 0
+        }}>{t('idePanel.title')}</span>
+        <span aria-hidden style={{ width: 1, height: 14, background: 'var(--cth-ink-100)', flexShrink: 0 }} />
         {/* WHOSE workspace this is. The folder name alone was ambiguous the
             moment two agents shared a repo (worktrees named for the branch, not
             the agent) or an agent worked in a generically-named directory —
@@ -393,9 +393,10 @@ export function IdePanel() {
             >{target.agent.name}</span>
             {target.agent.isGod && (
               <span style={{
-                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, padding: '1px 3px',
-                background: 'var(--cth-lilac-light)', color: 'var(--cth-ink-900)'
-              }}>god</span>
+                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11,
+                padding: '2px 8px', borderRadius: 999,
+                background: 'var(--cth-lilac-light)', color: 'var(--cth-lilac)'
+              }}>{t('idePanel.boss')}</span>
             )}
             {target.inferred && (
               // Never assert a name we had to guess at. One quiet word is enough
@@ -424,14 +425,42 @@ export function IdePanel() {
             marginLeft: 'auto',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             width: 28, height: 28, padding: 0,
-            background: 'var(--cth-paper-100)',
-            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
-            border: 'none', borderRadius: 2, cursor: 'pointer', color: 'var(--cth-ink-900)'
+            background: 'transparent', boxShadow: 'none',
+            border: 'none', borderRadius: 'var(--cth-radius-btn)',
+            cursor: 'pointer', color: 'var(--cth-ink-500)'
           }}
         >
           <Icon name="x" size={1} style={{ width: 16, height: 16 }} />
         </button>
       </div>
+
+      {/* Status bar — the bottom line VS Code has and this did not: which
+          agent's directory you are in, what is open, and whether it is saved. */}
+      {root && (
+        <div style={{
+          order: 2, flexShrink: 0, height: 24,
+          display: 'flex', alignItems: 'center', gap: 12, padding: '0 12px',
+          background: 'var(--cth-lilac)', color: '#FFFFFF',
+          fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 500
+        }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+            <Icon name="folder" />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {basename(root)}
+            </span>
+          </span>
+          {activeTab && (
+            <span style={{
+              fontFamily: 'var(--cth-font-mono)', opacity: 0.85,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0
+            }}>{activeTab.rel}</span>
+          )}
+          <span style={{ flex: 1 }} />
+          <span style={{ opacity: 0.85 }}>
+            {t('idePanel.statusTabs', { count: tabs.length })}
+          </span>
+        </div>
+      )}
 
       {/* Body */}
       {!root ? (
@@ -447,7 +476,7 @@ export function IdePanel() {
           <div style={{
             width: treeWidth, flexShrink: 0, minHeight: 0,
             display: 'flex', flexDirection: 'column',
-            borderRight: '1px solid var(--cth-ink-700)', background: 'var(--cth-cream-50)'
+            borderRight: '1px solid var(--cth-ink-100)', background: 'var(--cth-cream-100)'
           }}>
             {/* Git rail: CHANGES · HISTORY · COMPARE (v0.3.4). History/compare
                 run at the repo's MAIN root so worktree branches all appear. */}
@@ -560,7 +589,8 @@ export function IdePanel() {
             {/* Tab bar */}
             <div style={{
               display: 'flex', alignItems: 'stretch', overflowX: 'auto', flexShrink: 0,
-              background: 'var(--cth-cream-200)', borderBottom: '1px solid var(--cth-ink-700)', minHeight: 30
+              background: 'var(--cth-cream-100)',
+              borderBottom: '1px solid var(--cth-ink-100)', minHeight: 36
             }}>
               {tabs.map((tab) => {
                 const active = tab.key === activeKey;
@@ -571,21 +601,29 @@ export function IdePanel() {
                     key={tab.key}
                     onClick={() => setActiveKey(tab.key)}
                     style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 8, padding: '0 8px', height: 30,
+                      display: 'inline-flex', alignItems: 'center', gap: 8, padding: '0 10px', height: 36,
                       cursor: 'pointer', flexShrink: 0, maxWidth: 240,
+                      // The open tab IS the editor surface, joined to it; the
+                      // rest sit back on the strip. That seam is what makes a
+                      // tab bar read as tabs rather than as buttons in a row.
                       background: active ? 'var(--cth-paper-100)' : 'transparent',
-                      boxShadow: active ? 'inset 0 -2px 0 var(--cth-sky)' : 'none',
+                      boxShadow: active ? 'inset 0 2px 0 var(--cth-lilac)' : 'none',
                       borderRight: '1px solid var(--cth-ink-100)',
-                      fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)'
+                      fontFamily: 'var(--cth-font-ui)', fontSize: 12.5,
+                      fontWeight: active ? 600 : 400,
+                      color: active ? 'var(--cth-ink-900)' : 'var(--cth-ink-600)'
                     }}
                   >
                     {tab.mode !== 'edit' && (
                       <span style={{
-                        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, padding: '1px 3px',
+                        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 10,
+                        padding: '2px 6px', borderRadius: 999, letterSpacing: '.02em',
                         background: tab.mode === 'revdiff' ? 'var(--cth-lilac-light)'
                           : tab.mode === 'image' ? 'var(--cth-peach-light)'
                           : 'var(--cth-sky-light)',
-                        color: 'var(--cth-ink-900)'
+                        color: tab.mode === 'revdiff' ? 'var(--cth-lilac)'
+                          : tab.mode === 'image' ? 'var(--cth-peach)'
+                          : 'var(--cth-sky)'
                       }}>{tab.mode === 'revdiff' ? (tab.revLabel ?? t('idePanel.rev')) : tab.mode === 'image' ? t('idePanel.img') : t('idePanel.diff')}</span>
                     )}
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -609,12 +647,19 @@ export function IdePanel() {
                   height: '100%', display: 'flex', flexDirection: 'column',
                   alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--cth-ink-500)'
                 }}>
-                  <Icon name="code" size={2} />
+                  <span style={{
+                    width: 56, height: 56, borderRadius: 'var(--cth-radius-card)',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'var(--cth-cream-100)', color: 'var(--cth-ink-300)'
+                  }}>
+                    <Icon name="code" size={2} />
+                  </span>
                   <div style={{
-                    fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-ink-700)'
-                  }}>nothing open</div>
-                  <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13 }}>
-                    Pick a file from the tree to edit, or a changed file to diff.
+                    fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 15,
+                    color: 'var(--cth-ink-900)'
+                  }}>{t('idePanel.emptyTitle')}</div>
+                  <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-500)' }}>
+                    {t('idePanel.emptyBody')}
                   </div>
                   <ShortcutHint />
                 </div>
@@ -746,9 +791,10 @@ export function IdePanel() {
 function SectionHeader({ title, right }: { title: string; right?: React.ReactNode }) {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px 4px',
-      fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
-      color: 'var(--cth-ink-700)', background: 'var(--cth-cream-50)', borderBottom: '1px solid var(--cth-ink-100)'
+      display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px 8px',
+      fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 11,
+      letterSpacing: '.06em', textTransform: 'uppercase', lineHeight: '14px',
+      color: 'var(--cth-ink-500)', background: 'var(--cth-cream-100)'
     }}>
       <span style={{ flex: 1 }}>{title}</span>
       {right}
