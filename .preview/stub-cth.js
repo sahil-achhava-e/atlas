@@ -477,6 +477,18 @@
   // *Sync calls are read at module load and must return a value, not a promise.
   var isSync = function (n) { return /Sync$/.test(n); };
 
+  // Reset, for real, in the terms the preview has: the browser's own state IS
+  // the whole app here. Without this the catch-all below answered resetAll with
+  // a resolved promise, so the dialog reported (correctly) that nothing had
+  // been erased and there was no way back to setup.
+  OVERRIDES.resetAll = function () {
+    try { localStorage.clear(); } catch (e) { /* private window */ }
+    setTimeout(function () { location.href = '/setup'; }, 0);
+    // Never resolves: the real one exits the process, and the caller treats a
+    // resolve as "the reset did not happen".
+    return new Promise(function () {});
+  };
+
   window.cth = new Proxy({}, {
     get: function (_t, name) {
       if (typeof name !== 'string') return undefined;
