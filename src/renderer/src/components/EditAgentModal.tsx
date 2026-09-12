@@ -376,10 +376,22 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               )}
 
               <span style={{ fontSize: 12.5, color: 'var(--cth-ink-500)', lineHeight: 1.45 }}>
-                {t('editAgent.engineNote', {
-                  tab: t('commandCenter.tabs.floor'),
-                  action: t('commandCenter.restartContinue')
-                })}
+                {t('editAgent.engineNote', { action: t('commandCenter.restartContinue') })}
+                {' '}
+                {/* Directions to a tab that shows only an icon are not
+                    directions. The note opens it. */}
+                <button
+                  onClick={() => {
+                    useStore.getState().requestCommandCenterTab('floor');
+                    onClose();
+                  }}
+                  style={{
+                    border: 'none', background: 'none', padding: 0, cursor: 'pointer',
+                    fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, fontWeight: 600,
+                    color: 'var(--cth-lilac)', textDecoration: 'underline',
+                    textUnderlineOffset: 2
+                  }}
+                >{t('editAgent.openTeam', { tab: t('commandCenter.tabs.floor') })}</button>
               </span>
             </Section>
 

@@ -1558,6 +1558,7 @@
     "noAgentLine": "Pick an agent above, or add one. The terminal and its composer land here."
   },
   "editAgent": {
-    "engineNote": "A model change applies the next time this agent starts. To use it now, open the {{tab}} tab and choose \"{{action}}\" on the agent’s row."
+    "engineNote": "A model change applies the next time this agent starts. To use it now, choose \"{{action}}\" on the agent’s row.",
+    "openTeam": "Open {{tab}}"
   }
 }
