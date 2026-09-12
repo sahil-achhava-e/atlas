@@ -81,8 +81,6 @@ const fmtK = (n: number): string => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed
  *  itself and a first-time reader should not have to click all eleven to learn
  *  the app. */
 const PRIMARY: CCTab[] = ['terminal', 'human', 'tasks', 'floor'];
-/** Which panes focus mode had open last time. */
-const FOCUS_COLS_KEY = 'cth.focus.cols';
 
 const TABS: {
   key: CCTab; labelKey: string; hintKey: string;
@@ -111,26 +109,6 @@ const TABS: {
 export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent; fullscreen?: boolean }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<CCTab>('terminal');
-  /** Focus mode's columns. The tab bar up top toggles them, so every pane the
-   *  app has can be put side by side, not just the four that used to be
-   *  hardcoded here. */
-  const [cols, setCols] = useState<CCTab[]>(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(FOCUS_COLS_KEY) ?? 'null');
-      if (Array.isArray(saved) && saved.length) return saved as CCTab[];
-    } catch { /* private window, or someone edited it by hand */ }
-    return [...PRIMARY];
-  });
-  const toggleCol = (key: CCTab): void => {
-    setCols((prev) => {
-      // Never end up with an empty focus mode: the last column stays.
-      const next = prev.includes(key)
-        ? (prev.length > 1 ? prev.filter((k) => k !== key) : prev)
-        : [...prev, key];
-      try { localStorage.setItem(FOCUS_COLS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
-      return next;
-    });
-  };
   // Atlas had no way to be edited: AgentDetailPanel hands god straight to this
   // panel and never reaches the Edit button every other agent gets, so his
   // name, one-liner and standing goal were unreachable from the app.
@@ -338,26 +316,25 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
       <div className="cth-tabbar cth-iconbar" style={{
         display: 'flex', gap: 2,
         padding: '10px 10px', flexShrink: 0,
-        flexWrap: fullscreen ? 'wrap' : 'nowrap',
         borderBottom: '1px solid var(--cth-ink-100)'
       }}>
         {TABS.map((d) => {
-          // Docked: one tab at a time. Focus: each tab is a column you add or
-          // remove, so the bar shows what is on screen rather than where you are.
-          const on = fullscreen ? cols.includes(d.key) : d.key === tab;
+          const on = d.key === tab;
           const badge = d.key === 'human' ? openAsks : 0;
           return (
             <button
               key={d.key}
-              onClick={() => (fullscreen ? toggleCol(d.key) : setTab(d.key))}
+              onClick={() => setTab(d.key)}
               data-label={fullscreen ? undefined : t(d.labelKey)}
               aria-label={t(d.labelKey)}
               aria-pressed={on}
               style={{
+                // Every tab the same share of the bar, so the row reads as one
+                // control spanning the screen rather than a ragged cluster.
                 position: 'relative',
-                flex: fullscreen ? '0 0 auto' : '1 1 0',
+                flex: '1 1 0',
                 minWidth: 0, height: 36,
-                padding: fullscreen ? '0 12px' : 0,
+                padding: fullscreen ? '0 10px' : 0,
                 gap: fullscreen ? 7 : 0,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 border: 'none', cursor: 'pointer',
@@ -370,7 +347,11 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
               }}
             >
               <d.Glyph />
-              {fullscreen && <span>{t(d.labelKey)}</span>}
+              {fullscreen && (
+                <span style={{
+                  minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                }}>{t(d.labelKey)}</span>
+              )}
               {badge > 0 && (
                 <span style={{
                   position: 'absolute', top: 2, insetInlineEnd: 2,
@@ -386,60 +367,11 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         })}
       </div>
 
-      {fullscreen ? (
-        /* Focus mode: panes side by side, not stacked behind a tab bar. The
-           terminal keeps the room it needs; the queue and the board sit beside
-           it because they are what you glance at while it runs. The secondary
-           row still switches the last column, so nothing became unreachable. */
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 1, background: 'var(--cth-ink-100)' }}>
-          {cols.map((key) => ({
-            key,
-            // The terminal is the thing you read; everything else is a glance.
-            grow: key === 'terminal' ? 2 : 1,
-            basis: key === 'terminal' ? 520 : 340,
-            min: key === 'terminal' ? 420 : 260
-          })).map((col, i) => (
-            <div
-              key={`${col.key}-${i}`}
-              style={{
-                flex: `${col.grow} 1 ${col.basis}px`,
-                minWidth: col.min, minHeight: 0,
-                display: 'flex', flexDirection: 'column',
-                background: 'var(--cth-paper-100)'
-              }}
-            >
-              {/* The column says what it is, in its tab's own colour, so the
-                  header and the bar above agree at a glance. */}
-              <div style={{
-                flexShrink: 0, padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 7,
-                fontSize: 12, fontWeight: 600, color: 'var(--cth-ink-700)',
-                borderBottom: '1px solid var(--cth-ink-100)'
-              }}>
-                {(() => {
-                  const d = TABS.find((x) => x.key === col.key);
-                  if (!d) return null;
-                  return <>
-                    <span style={{ display: 'inline-flex', color: d.tone }}><d.Glyph /></span>
-                    {t(d.labelKey)}
-                  </>;
-                })()}
-              </div>
-              <ErrorBoundary key={col.key} label={col.key}>
-                <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-                  {paneFor(col.key)}
-                </div>
-              </ErrorBoundary>
-            </div>
-          ))}
-        </div>
-      ) : (
       <ErrorBoundary key={tab} label={tab}>
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         {paneFor(tab)}
       </div>
       </ErrorBoundary>
-      )}
 
       {editOpen && <EditAgentModal agent={agent} onClose={() => setEditOpen(false)} />}
     </PixelPanel>
