@@ -608,6 +608,21 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 .cth-task-card:hover { box-shadow: 0 0 0 1px var(--cth-ink-300), var(--cth-shadow-card) !important; }
 div:hover > .cth-iconbar[data-label] { opacity: 1 !important; }
 
+/* The splitter between the panel and the floor. Invisible until you go near
+   it, then it says "grab me": the grip lengthens and takes the brand, and the
+   seam follows. Keyboard focus gets the same treatment, since the handle is
+   reachable by Tab and moved with the arrow keys. */
+.cth-splitter:hover .cth-splitter-grip,
+.cth-splitter:focus-visible .cth-splitter-grip {
+  background: var(--cth-lilac) !important;
+  transform: scaleY(1.6);
+}
+.cth-splitter:hover .cth-splitter-line,
+.cth-splitter:focus-visible .cth-splitter-line {
+  background: color-mix(in srgb, var(--cth-lilac) 45%, transparent) !important;
+}
+.cth-splitter:focus-visible { outline: none; }
+
 /* Closing the IDE is the one destructive-looking control in its bar, so it
    fills in on hover rather than just darkening a glyph. */
 .cth-ide-close:hover { background: var(--cth-coral) !important; color: #FFFFFF !important; }

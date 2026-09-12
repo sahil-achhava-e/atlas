@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
 export interface SidebarSplitterProps {
+  /** What a screen reader calls this handle. */
+  ariaLabel?: string;
   /** Current sidebar width in px. */
   width: number;
   /** Called with the new width (already clamped externally). */
@@ -16,7 +18,8 @@ export interface SidebarSplitterProps {
  * (right). Drag left → wider sidebar. Cursor + pixel-stripe affordance.
  */
 export function SidebarSplitter({
-  width, onChange, viewportWidth, min = 320, max = 1200
+  width, onChange, viewportWidth, min = 320, max = 1200,
+  ariaLabel = 'Resize the panel'
 }: SidebarSplitterProps) {
   const startRef = useRef<{ clientX: number; width: number } | null>(null);
   const [active, setActive] = useState(false);
@@ -39,7 +42,7 @@ export function SidebarSplitter({
     if (active) {
       window.addEventListener('mousemove', onMove);
       window.addEventListener('mouseup', onUp);
-      document.body.style.cursor = 'ew-resize';
+      document.body.style.cursor = 'col-resize';
     }
     return () => {
       window.removeEventListener('mousemove', onMove);
@@ -49,6 +52,22 @@ export function SidebarSplitter({
 
   return (
     <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={ariaLabel}
+      aria-valuenow={Math.round(width)}
+      aria-valuemin={min}
+      aria-valuemax={max}
+      tabIndex={0}
+      className="cth-splitter"
+      data-active={active ? '1' : undefined}
+      // Arrow keys move it too: a drag handle that only answers the mouse is
+      // unreachable for anyone who does not use one.
+      onKeyDown={(e) => {
+        const step = e.shiftKey ? 48 : 16;
+        if (e.key === 'ArrowLeft') { onChange(Math.max(min, width - step)); e.preventDefault(); }
+        if (e.key === 'ArrowRight') { onChange(Math.min(max, width + step)); e.preventDefault(); }
+      }}
       onMouseDown={(e) => {
         startRef.current = { clientX: e.clientX, width };
         setActive(true);
@@ -56,30 +75,32 @@ export function SidebarSplitter({
       }}
       onDoubleClick={() => onChange(420)}
       style={{
-        width: 10,
-        cursor: 'ew-resize',
+        // A 10px sliver was a hard target. 14 to grab, with the line drawn at
+        // 1px in the middle so the seam still looks like a seam.
+        width: 14,
+        cursor: 'col-resize',
         flexShrink: 0,
         position: 'relative',
-        background: active ? 'var(--cth-cream-300)' : 'transparent'
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'transparent'
       }}
     >
-      {/* The visible 2px stripe with hash marks in the middle */}
-      <div style={{
-        position: 'absolute',
-        top: 0, bottom: 0, left: 4,
-        width: 2,
-        background: active ? 'var(--cth-ink-900)' : 'var(--cth-ink-300)'
+      {/* The seam itself. */}
+      <span className="cth-splitter-line" style={{
+        position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1,
+        transform: 'translateX(-0.5px)',
+        background: active ? 'var(--cth-lilac)' : 'var(--cth-ink-100)',
+        transition: 'background 120ms ease'
       }} />
-      <div style={{
-        position: 'absolute',
-        top: '50%', left: 2, transform: 'translateY(-50%)',
-        width: 6, height: 24,
-        display: 'flex', flexDirection: 'column', justifyContent: 'space-between'
-      }}>
-        <span style={{ height: 2, background: 'var(--cth-ink-900)' }} />
-        <span style={{ height: 2, background: 'var(--cth-ink-900)' }} />
-        <span style={{ height: 2, background: 'var(--cth-ink-900)' }} />
-      </div>
+      {/* The grip: a pill you can see and aim at, brand-coloured while dragging
+          so the whole column reads as being moved by you. */}
+      <span className="cth-splitter-grip" style={{
+        position: 'relative',
+        width: 4, height: 34, borderRadius: 999,
+        background: active ? 'var(--cth-lilac)' : 'var(--cth-ink-300)',
+        transition: 'background 120ms ease, transform 120ms ease',
+        transform: active ? 'scaleY(1.25)' : 'none'
+      }} />
     </div>
   );
 }
