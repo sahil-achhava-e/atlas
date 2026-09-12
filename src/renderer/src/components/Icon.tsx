@@ -7,12 +7,13 @@ export type IconName =
   | 'gear' | 'plus' | 'x' | 'check' | 'arrow-right' | 'pause' | 'play'
   | 'bell' | 'folder' | 'terminal' | 'code' | 'web' | 'mcp' | 'sparkle'
   | 'expand' | 'minimize' | 'clock' | 'mic' | 'ledger' | 'info' | 'sidebar'
-  | 'image' | 'edit' | 'git';
+  | 'image' | 'edit' | 'git' | 'send';
 
 interface IconDef {
   ink: string;     // primary color path d
   accent?: string; // optional accent color path d
   accentColor: string; // CSS var name
+  smooth?: boolean; // opt out of crispEdges — for the one glyph with diagonals
 }
 
 const paths: Record<IconName, IconDef> = {
@@ -145,6 +146,18 @@ const paths: Record<IconName, IconDef> = {
   sidebar: {
     accentColor: 'var(--cth-ink-300)',
     ink:   'M1 3h14v10H1z M2 4h12v8H2z M2 4h4v8H2z'
+  },
+  // Paper plane, for Send. Four points: the two tail corners, the nose, and the
+  // fold apex between them — the notch is what separates a plane from a plain
+  // triangle, and a triangle at this size reads as Play.
+  //
+  // The only glyph in this set built from diagonals rather than square steps,
+  // which is why it sets `smooth`. Under the crispEdges every other icon wants,
+  // those two long edges staircase badly at 13px.
+  send: {
+    accentColor: 'var(--cth-sky)',
+    smooth: true,
+    ink:   'M1.5 2.2L14.5 8L1.5 13.8L5.2 8z'
   }
 };
 
@@ -162,7 +175,7 @@ export function Icon({ name, size = 1, style }: IconProps) {
       viewBox="0 0 16 16"
       width={dim}
       height={dim}
-      shapeRendering="crispEdges"
+      shapeRendering={def.smooth ? 'geometricPrecision' : 'crispEdges'}
       style={{ display: 'inline-block', ...style }}
       aria-hidden
     >

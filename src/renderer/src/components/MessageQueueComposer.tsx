@@ -414,7 +414,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
               transition: 'background 120ms ease, box-shadow 120ms ease, color 120ms ease'
             }}
           >
-            {t('commandBar.send')} <Icon name="arrow-right" />
+            {t('commandBar.send')} <Icon name="send" />
           </button>
         </div>
         {attachError && (

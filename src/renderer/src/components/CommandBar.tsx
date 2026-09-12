@@ -93,7 +93,7 @@ export function CommandBar({ accent, busy, blocked, onSend }: CommandBarProps) {
           />
           <PixelButton variant="primary" size="md" onClick={send}>
             <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-              {t('commandBar.send')} <Icon name="arrow-right" />
+              {t('commandBar.send')} <Icon name="send" />
             </span>
           </PixelButton>
         </div>
