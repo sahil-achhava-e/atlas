@@ -320,7 +320,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           center while it fits and collapse to a normal scroll once it doesn't. */}
       <div style={{
         width: 880, maxWidth: '94vw', margin: 'auto',
-        display: 'flex', flexDirection: 'column', maxHeight: '92vh',
+        display: 'flex', flexDirection: 'column',
+        height: 'min(86vh, 620px)',
         background: 'var(--cth-cream-50)',
         // A lift off the floor, not a stamped-on slab: a hairline to hold the
         // edge, then two shadows — a tight one for the seam and a wide soft one
@@ -373,7 +374,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           </nav>
 
           <div style={{
-            flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column',
+            flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column',
             boxShadow: 'inset 1px 0 0 var(--cth-ink-100)'
           }}>
             {/* The step's own name — the rail says where, this says what. */}
@@ -383,9 +384,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               lineHeight: '26px', letterSpacing: '-0.3px',
               color: 'var(--cth-ink-900)'
             }}>{stepTitle}</h2>
-            <div style={{
+            <div className="cth-scrollpane" style={{
               padding: '16px 28px 24px', display: 'flex', flexDirection: 'column', gap: 18,
-              overflowY: 'auto', flex: 1
+              overflowY: 'auto', flex: 1, minHeight: 0
             }}>
 
             {step === 'persona' && (
@@ -721,7 +722,17 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   <FieldLabel>{t('onboarding.orchestrator.modelLabel')}</FieldLabel>
                   <Dropdown
                     value={godModel ?? ''}
-                    options={modelsForProvider(godProvider).map((m) => ({ value: m.id ?? '', label: m.label }))}
+                    options={modelsForProvider(godProvider).map((m) => {
+                      // Every engine has a model it is meant to run Atlas on.
+                      // Marking it in the list beats a note under it that
+                      // names a model you then have to go and find.
+                      const best = providerPreset(godProvider).recommendedOrchestratorModel;
+                      const isBest = !!m.id && m.id === best;
+                      return {
+                        value: m.id ?? '',
+                        label: isBest ? `${m.label} · ${t('onboarding.orchestrator.recommended')}` : m.label
+                      };
+                    })}
                     onChange={(v) => setGodModel(v || undefined)}
                     ariaLabel={t('onboarding.orchestrator.modelLabel')}
                     width="100%"

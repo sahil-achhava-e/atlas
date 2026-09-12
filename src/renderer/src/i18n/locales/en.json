@@ -727,8 +727,8 @@
       "modelLabel": "Model"
     },
     "repos": {
-      "descPlain": "Add the folders your agents will work in. Code, documents, notes, anything with files.",
-      "desc": "Add the folders your agents will work in. Each one becomes a project, and several agents can share it.",
+      "descPlain": "Add the folders your agents will work in. Code, documents, notes, anything with files. If they all sit under one folder, add that folder instead of each one.",
+      "desc": "Add the folders your agents will work in. Each one becomes a project, and several agents can share it. If several projects live under one folder, add that folder: an agent can see everything inside the one you pick, and nothing outside it.",
       "emptyPlain": "Nothing added yet. You can skip this and add folders later.",
       "empty": "Nothing added yet. You can skip this and add projects later.",
       "addProject": "Add a project",
