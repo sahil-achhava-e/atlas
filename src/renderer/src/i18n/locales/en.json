@@ -928,7 +928,9 @@
     "dbScopeLabel": "Which project this database belongs to",
     "addDatabase": "Add database",
     "dbUnset": "No connection string yet",
-    "dbSet": "Set"
+    "dbSet": "Set",
+    "dbUrlShape": "A connection string looks like this",
+    "dbUrlHint": "Host is localhost for a database on this machine, 5432 is the usual Postgres port, and database is the one you want queried. Use a read-only user unless you mean otherwise."
   },
   "devicePicker": {
     "microphone": "Microphone",

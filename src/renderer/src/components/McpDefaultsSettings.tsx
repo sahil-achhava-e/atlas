@@ -133,11 +133,18 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
     DATABASE_URL: 'postgresql://user:password@localhost:5432/epicxp_visits'
   };
 
-  const enabledFor = (id: string): boolean =>
-    config.mcpDefaults?.[id]?.enabled ?? MCP_CATALOG.find((e) => e.id === id)?.defaultEnabled ?? false;
+  /** Seeded from config, then owned here: the prop does not change while the
+   *  modal is open. */
+  const [enabled, setEnabled] = useState<Record<string, boolean>>(() => {
+    const out: Record<string, boolean> = {};
+    for (const e of MCP_CATALOG) out[e.id] = config.mcpDefaults?.[e.id]?.enabled ?? e.defaultEnabled ?? false;
+    return out;
+  });
+  const enabledFor = (id: string): boolean => enabled[id] ?? false;
 
   const toggle = async (id: string) => {
     const next = !enabledFor(id);
+    setEnabled((e) => ({ ...e, [id]: next }));   // the switch has to move now
     try {
       await window.cth.updateConfig({
         mcpDefaults: { ...(config.mcpDefaults ?? {}), [id]: { enabled: next } }
@@ -145,6 +152,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
       setNote(t('mcpDefaults.toggleNote', { id, state: next ? t('common.on') : t('common.off') }));
       setTimeout(() => setNote(''), 1800);
     } catch {
+      setEnabled((e) => ({ ...e, [id]: !next }));  // the write failed; put it back
       setNote(t('mcpDefaults.couldNotSave'));
       setTimeout(() => setNote(''), 2000);
     }
@@ -224,8 +232,29 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                       optionally tied to a project so an agent only ever sees its
                       own. URLs are write-only — they go to the encrypted store
                       and are never read back, so a row says "set", not the value. */}
-                  {entry.id === 'db' && (
+                  {entry.id === 'db' && on && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {/* What a connection string looks like, before you are
+                          asked to paste one. The parts are named rather than
+                          filled in with a plausible-looking fake, so nothing
+                          here can be pasted by mistake. */}
+                      <div style={{
+                        padding: 12, borderRadius: 'var(--cth-radius-card)',
+                        background: 'var(--cth-cream-100)',
+                        display: 'flex', flexDirection: 'column', gap: 6
+                      }}>
+                        <span style={{
+                          fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
+                          color: 'var(--cth-ink-600)'
+                        }}>{t('mcpDefaults.dbUrlShape')}</span>
+                        <code style={{
+                          fontFamily: 'var(--cth-font-mono)', fontSize: 12.5, lineHeight: '20px',
+                          color: 'var(--cth-ink-900)', overflowX: 'auto', whiteSpace: 'pre'
+                        }}>postgresql://<span style={{ color: 'var(--cth-lilac)' }}>user</span>:<span style={{ color: 'var(--cth-lilac)' }}>password</span>@<span style={{ color: 'var(--cth-sky)' }}>host</span>:<span style={{ color: 'var(--cth-sky)' }}>5432</span>/<span style={{ color: 'var(--cth-mint)' }}>database</span></code>
+                        <span style={{
+                          fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)'
+                        }}>{t('mcpDefaults.dbUrlHint')}</span>
+                      </div>
                       {conns.map((c) => (
                         <div key={c.id} style={{
                           display: 'flex', flexDirection: 'column', gap: 8,
