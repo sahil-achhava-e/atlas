@@ -149,8 +149,6 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
       await window.cth.updateConfig({
         mcpDefaults: { ...(config.mcpDefaults ?? {}), [id]: { enabled: next } }
       });
-      setNote(t('mcpDefaults.toggleNote', { id, state: next ? t('common.on') : t('common.off') }));
-      setTimeout(() => setNote(''), 1800);
     } catch {
       setEnabled((e) => ({ ...e, [id]: !next }));  // the write failed; put it back
       setNote(t('mcpDefaults.couldNotSave'));
