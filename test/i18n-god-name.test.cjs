@@ -17,7 +17,8 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 const locale = (l) => JSON.parse(read(`src/renderer/src/i18n/locales/${l}.json`));
-const LOCALES = ['en', 'zh-CN'];
+// zh-CN was removed in 3ff81c2; the app ships English and Arabic.
+const LOCALES = ['en', 'ar'];
 
 function flatten(obj, pre = '', out = {}) {
   for (const [k, v] of Object.entries(obj)) {
@@ -73,20 +74,20 @@ test('every per-agent string has a call site that actually passes a name', () =>
   }
 });
 
-test('en and zh-CN carry exactly the same keys', () => {
+test('en and ar carry exactly the same keys', () => {
   const en = Object.keys(flatten(locale('en'))).sort();
-  const zh = Object.keys(flatten(locale('zh-CN'))).sort();
-  assert.deepEqual(zh, en);
+  const ar = Object.keys(flatten(locale('ar'))).sort();
+  assert.deepEqual(ar, en);
 });
 
-test('every {{placeholder}} in en has the same placeholders in zh-CN', () => {
+test('every {{placeholder}} in en has the same placeholders in ar', () => {
   // A translation that drops an interpolation renders a literal gap.
   const en = flatten(locale('en'));
-  const zh = flatten(locale('zh-CN'));
+  const ar = flatten(locale('ar'));
   const vars = (v) => [...new Set((text(v).match(/\{\{(\w+)\}\}/g) || []))].sort();
   const drift = Object.keys(en)
-    .filter((k) => JSON.stringify(vars(en[k])) !== JSON.stringify(vars(zh[k])))
-    .map((k) => `${k}: en=${vars(en[k])} zh=${vars(zh[k])}`);
+    .filter((k) => JSON.stringify(vars(en[k])) !== JSON.stringify(vars(ar[k])))
+    .map((k) => `${k}: en=${vars(en[k])} ar=${vars(ar[k])}`);
   assert.deepEqual(drift, [], `placeholder drift:\n  ${drift.join('\n  ')}`);
 });
 

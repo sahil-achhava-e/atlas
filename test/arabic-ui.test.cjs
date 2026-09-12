@@ -38,7 +38,7 @@ const strip = (src) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm,
 
 const en = locale('en');
 const ar = locale('ar');
-const zh = locale('zh-CN');
+// zh-CN was removed in 3ff81c2; only en and ar ship.
 
 // --- the gate: inert for everyone who did not pick Arabic ------------------
 
@@ -121,7 +121,6 @@ test('content direction in components is gated, never content-sniffed', () => {
     'components/MemoryPanel', 'components/MessageQueueComposer',
     'components/TasksKanban', 'components/ThreadsPanel',
     'components/triggers/ContextSection', 'components/triggers/SchedulesSection',
-    'components/triggers/TriggerHistoryTab'
   ];
   let gated = 0;
   for (const f of files) {
@@ -187,12 +186,11 @@ test('ar is registered everywhere a language has to be registered', () => {
 });
 
 test('every locale has exactly the same key tree', () => {
-  const e = pathsOf(en), a = pathsOf(ar), z = pathsOf(zh);
+  const e = pathsOf(en), a = pathsOf(ar);
   const missing = [...e.keys()].filter((k) => !a.has(k));
   const extra = [...a.keys()].filter((k) => !e.has(k));
   assert.deepEqual(missing, [], 'ar is missing keys — they would silently fall back');
   assert.deepEqual(extra, [], 'ar has keys en does not — dead strings');
-  assert.equal(z.size, e.size, 'zh-CN drifted from en');
   assert.ok(e.size > 1000, `sanity: only ${e.size} keys found`);
 });
 
@@ -228,12 +226,11 @@ test('no Arabic string is left as its English source', () => {
 test('every interpolation variable survives translation', () => {
   // `{{godName}}` mistyped is a literal "{{godname}}" on screen, and i18next
   // will not warn. This is the highest-frequency way a locale file breaks.
-  const e = pathsOf(en), a = pathsOf(ar), z = pathsOf(zh);
+  const e = pathsOf(en), a = pathsOf(ar);
   const vars = (s) => [...String(s).matchAll(/\{\{\s*([\w.]+)\s*\}\}/g)].map((m) => m[1]).sort().join(',');
   const bad = [];
   for (const [k, v] of e) {
     if (vars(v) !== vars(a.get(k))) bad.push(`ar ${k}: [${vars(v)}] -> [${vars(a.get(k))}]`);
-    if (vars(v) !== vars(z.get(k))) bad.push(`zh ${k}: [${vars(v)}] -> [${vars(z.get(k))}]`);
   }
   assert.deepEqual(bad, []);
   // Positive control: the comparison above can actually fail.
@@ -258,7 +255,7 @@ test('the terminal setting still explains its performance cost, in every locale'
   // The founder's amendment moved this setting's default onto the language but
   // explicitly kept the control, because ON swaps the renderer and costs speed.
   // Losing that explanation would be a real regression.
-  for (const [code, l] of [['en', en], ['zh-CN', zh], ['ar', ar]]) {
+  for (const [code, l] of [['en', en], ['ar', ar]]) {
     const g = l.settings.general;
     assert.ok(g.arabicTerminalDesc, `${code} lost arabicTerminalDesc`);
     assert.ok(g.arabicTerminalDesc.length > 80,
