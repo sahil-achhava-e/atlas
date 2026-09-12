@@ -49,7 +49,8 @@ test('the repro: grok, antigravity and qwen are offered by the wizard but cannot
     const a = classifyEngineAvailability(s, id);
     assert.equal(a.state, 'not-installable', id);
     assert.equal(engineBlocksOnboarding(a), true, id);
-    assert.equal(engineAvailabilityBadge(a), 'NOT INSTALLED');
+    // The badge is sentence case now, like every other label in the app.
+    assert.equal(engineAvailabilityBadge(a), 'Not installed');
     const msg = engineAvailabilityMessage(a, 'Grok');
     assert.match(msg, /not installed/);
     assert.match(msg, /check again/);

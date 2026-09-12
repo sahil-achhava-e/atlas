@@ -40,6 +40,22 @@ export interface ScheduledMission {
   quietThresholdMs?: number;
 }
 
+/** The maintenance compact schedule, as main seeds it (COMPACT_MAINTENANCE_MISSION
+ *  in src/main/config.ts). It is NOT in main's DEFAULTS.missions, so a config
+ *  that has never had it needs it created rather than edited — which is what
+ *  Settings' auto-compact switch does. Keep the two in step: same id, same 2h
+ *  cadence as DEFAULT_CONTEXT_TRIGGER.compact.everyMs. */
+export const COMPACT_MAINTENANCE_MISSION: ScheduledMission = {
+  id: 'compact-maintenance',
+  label: 'Auto-compact (maintenance)',
+  intervalMs: 7_200_000,
+  to: '',
+  body: '',
+  enabled: false,
+  autoCompact: true,
+  kind: 'compact'
+};
+
 /** Circuit-breaker thresholds (mirrors src/main/config.ts CircuitBreakerConfig). */
 export interface CircuitBreakerConfig {
   enabled?: boolean;

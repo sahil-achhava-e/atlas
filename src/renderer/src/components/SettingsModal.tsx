@@ -1,6 +1,6 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { agentModels, type HarnessConfig } from '@/store/config';
+import { COMPACT_MAINTENANCE_MISSION, agentModels, type HarnessConfig } from '@/store/config';
 import { useStore } from '@/store/store';
 import {
   CLONE_NODE_BLURB,
@@ -343,9 +343,15 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
         // Read-modify-write against disk, not against a stale copy: another
         // window (or main) may have edited a different mission meanwhile.
         const cfg = await window.cth.getConfig();
-        patch.missions = (cfg.missions ?? []).map((m) =>
-          m.id === 'compact-maintenance' ? { ...m, enabled: autoCompactPending } : m
-        );
+        const missions = cfg.missions ?? [];
+        // The mission is not in main's DEFAULTS.missions, so on most configs
+        // there is nothing here to flip: mapping alone turned the switch on and
+        // scheduled nothing. Create it when it is missing.
+        patch.missions = missions.some((m) => m.id === COMPACT_MAINTENANCE_MISSION.id)
+          ? missions.map((m) => (
+              m.id === COMPACT_MAINTENANCE_MISSION.id ? { ...m, enabled: autoCompactPending } : m
+            ))
+          : [...missions, { ...COMPACT_MAINTENANCE_MISSION, enabled: autoCompactPending }];
       }
       await window.cth.updateConfig(patch);
       setPending({});
