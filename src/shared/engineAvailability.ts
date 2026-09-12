@@ -61,9 +61,9 @@ export function engineBlocksOnboarding(a: EngineAvailability): boolean {
 /** One short line for the badge on each engine row. */
 export function engineAvailabilityBadge(a: EngineAvailability): string | null {
   switch (a.state) {
-    case 'installed': return 'INSTALLED';
-    case 'installs-on-first-run': return 'INSTALLS ON FIRST RUN';
-    case 'not-installable': return 'NOT INSTALLED';
+    case 'installed': return 'Installed';
+    case 'installs-on-first-run': return 'Installs on first run';
+    case 'not-installable': return 'Not installed';
     default: return null;
   }
 }

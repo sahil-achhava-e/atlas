@@ -623,10 +623,10 @@
   },
   "onboarding": {
     "titles": {
-      "persona": "Welcome to atlas",
+      "persona": "Welcome to Atlas",
       "welcome": "Meet your office",
-      "home": "Last thing: a home for atlas",
-      "homePlain": "Last thing: a home for atlas",
+      "home": "Last thing: a home for Atlas",
+      "homePlain": "Last thing: a home for Atlas",
       "orchestrator": "Pick the engine",
       "orchestratorPlain": "Pick the engine",
       "repos": "Your repos",
@@ -638,7 +638,7 @@
       "headline": "Agents that don't clock out",
       "body": "Atlas runs the CLI agent you already use, several of them at once, long-lived and side by side. It holds everything around them: context, memory, tasks, triggers, files, and integrations. You set the work; they keep going while you're away.",
       "bodyLocal": " Nothing leaves this machine.",
-      "ask": "First: how should atlas talk to you?",
+      "ask": "First: how should Atlas talk to you?",
       "technicalTitle": "I'm technical",
       "technicalDesc": "Terminal, flags, model ids. Skip the explanations.",
       "nonTechnicalTitle": "I'm non-technical",
@@ -692,7 +692,7 @@
     "home": {
       "descPlain": "Pick an empty folder for Atlas to keep its notes and settings in. It is created if it does not exist.",
       "desc": "Pick a folder for Atlas to keep its own files: agent memory, logs, and any repos you start from here. It is created if it does not exist.",
-      "placeholder": "~/atlas-data",
+      "placeholder": "~/Atlas-data",
       "createPick": "Choose folder",
       "pick": "Choose folder",
       "notePlain": "Nothing you need to open. It is how Atlas remembers after you close the app.",
@@ -714,8 +714,8 @@
     "orchestrator": {
       "descPlain": "Pick the AI that powers {{godName}}. Give it the best one you have: it is the one deciding what everyone else does.",
       "desc": "{{godName}} reads everything and decides what the crew does, so give it your strongest engine. Every other agent can run a different one.",
-      "cliAgentPlain": "INSTALLED means you already have it. The others show what they need first.",
-      "cliAgent": "INSTALLED means it is already here. The others show what they need first.",
+      "cliAgentPlain": "Installed means you already have it. The others show what they need first.",
+      "cliAgent": "Installed means it is already here. The others show what they need first.",
       "recommended": "Recommended",
       "workersOnly": "Workers only",
       "workersOnlyHint": "Cannot run {{godName}}, but can run a worker.",
@@ -768,7 +768,7 @@
     "errEngineNotInstalled": "{{label}} is not installed. Install it and press \"check again\", or pick another engine.",
     "setup": {
       "name": "Atlas setup",
-      "counter": "STEP {{n}} OF {{total}}",
+      "counter": "Step {{n}} of {{total}}",
       "rail": {
         "persona": "Start",
         "welcome": "Office",

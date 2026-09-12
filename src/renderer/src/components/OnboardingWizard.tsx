@@ -4,6 +4,8 @@ import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { Icon, type IconName } from './Icon';
 import { SpritePortrait } from './SpritePortrait';
+import { AtlasMark } from './AtlasMark';
+import { Dropdown } from './Dropdown';
 import { ProviderLogo } from './ProviderLogo';
 import { modelsForProvider, onboardingEngineChoices, type AgentProvider, type HarnessConfig } from '@/store/config';
 import { providerPreset } from '@shared/agentProvider';
@@ -24,7 +26,7 @@ type Step = 'persona' | 'welcome' | 'home' | 'orchestrator' | 'repos' | 'permiss
 /** The setup's two nav buttons. The display face and a little tracking so a
  *  one-word label still reads as a control, not as a caption; the primary keeps
  *  a floor width so "Continue" and "Finish setup" do not resize the footer. */
-const NAV_LABEL = { fontFamily: 'var(--cth-font-ui)', fontWeight: 600, letterSpacing: 0.6 } as const;
+const NAV_LABEL = { fontFamily: 'var(--cth-font-ui)', fontWeight: 600 } as const;
 const NAV_PRIMARY = { ...NAV_LABEL, minWidth: 148 } as const;
 
 /** Every step the rail shows, in order. 'done' is the finish screen, not a step
@@ -308,9 +310,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         // A lift off the floor, not a stamped-on slab: a hairline to hold the
         // edge, then two shadows — a tight one for the seam and a wide soft one
         // for the height. The old 6px hard offset read as a sticker.
-        boxShadow: `inset 0 0 0 1px var(--cth-ink-300),
-                    0 2px 6px rgba(0, 0, 0, 0.22),
-                    0 28px 64px -12px rgba(0, 0, 0, 0.55)`, borderRadius: 'var(--cth-radius-input)'
+        boxShadow: `inset 0 0 0 1px var(--cth-ink-100),
+                    0 1px 2px rgba(17, 20, 24, 0.06),
+                    0 24px 60px -12px rgba(17, 20, 24, 0.28)`,
+        borderRadius: 'var(--cth-radius-card)'
       }}>
 
         {/* ── Brand bar: who is asking, and how far in you are ─────────────── */}
@@ -320,20 +323,15 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           background: 'var(--cth-cream-100)',
           boxShadow: 'inset 0 -1px 0 var(--cth-ink-100)'
         }}>
+          <AtlasMark size={30} />
           <span style={{
-            width: 32, height: 32, display: 'grid', placeItems: 'center', flexShrink: 0,
-            background: 'var(--cth-lilac)', color: 'var(--cth-on-accent)',
-            fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13,
-            boxShadow: '0 0 0 1px var(--cth-ink-900), 0 0 18px -2px var(--cth-lilac)'
-          }}>A</span>
-          <span style={{
-            fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 14, letterSpacing: 2,
-            color: 'var(--cth-ink-900)'
+            fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 15,
+            letterSpacing: '-0.2px', color: 'var(--cth-ink-900)'
           }}>{t('onboarding.setup.name')}</span>
           <span style={{ flex: 1 }} />
           <span style={{
-            fontFamily: 'var(--cth-font-mono)', fontSize: 11, letterSpacing: 0.5,
-            color: 'var(--cth-ink-500)'
+            fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600,
+            fontVariantNumeric: 'tabular-nums', color: 'var(--cth-ink-500)'
           }}>{t('onboarding.setup.counter', { n: stepIndex + 1, total: STEP_ORDER.length })}</span>
         </div>
 
@@ -366,7 +364,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             {/* The step's own name — the rail says where, this says what. */}
             <h2 style={{
               margin: 0, padding: '22px 28px 0',
-              fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 19, lineHeight: '26px', letterSpacing: 0.5,
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 19,
+              lineHeight: '26px', letterSpacing: '-0.3px',
               color: 'var(--cth-ink-900)'
             }}>{stepTitle}</h2>
             <div style={{
@@ -396,7 +395,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   </div>
                 </div>
 
-                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, letterSpacing: 0.5, color: 'var(--cth-ink-700)' }}>
+                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, color: 'var(--cth-ink-900)' }}>
                   {t('onboarding.persona.ask')}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -563,12 +562,14 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     return (
                       <label key={p.id} className="cth-choice" style={{
                         display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '16px 12px',
-                        background: sel ? 'var(--cth-sky-light)' : 'var(--cth-paper-100)',
+                        padding: '12px 14px',
+                        borderRadius: 'var(--cth-radius-card)',
+                        background: sel ? 'var(--cth-lilac-light)' : 'var(--cth-paper-100)',
                         boxShadow: sel
-                          ? 'inset 0 0 0 2px var(--cth-sky)'
-                          : 'inset 0 0 0 1px var(--cth-ink-300)',
-                        cursor: 'pointer'
+                          ? 'inset 0 0 0 2px var(--cth-lilac)'
+                          : 'inset 0 0 0 1px var(--cth-ink-100)',
+                        cursor: 'pointer',
+                        transition: 'background 120ms ease, box-shadow 120ms ease'
                       }}>
                         <input
                           type="radio"
@@ -581,7 +582,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                             // dropdown below always shows a valid model for the chosen engine.
                             setGodModel(p.recommendedOrchestratorModel);
                           }}
-                          style={{ width: 16, height: 16, flexShrink: 0 }}
+                          style={{ width: 16, height: 16, flexShrink: 0, accentColor: 'var(--cth-lilac)' }}
                         />
                         <span style={{
                           width: 22, height: 22, flexShrink: 0, display: 'flex',
@@ -592,9 +593,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         <span style={{ flex: 1, minWidth: 0 }}>
                           <span style={{
                             display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-                            fontSize: 13, lineHeight: '18px', letterSpacing: 0.5
+                            fontSize: 13.5, lineHeight: '18px',
+                            color: sel ? 'var(--cth-lilac)' : 'var(--cth-ink-900)'
                           }}>
-                            {p.label.toUpperCase()}
+                            {p.label}
                           </span>
                           {/* Two registers want two different facts here. A
                               technical user wants the command that will actually
@@ -618,19 +620,19 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                           const bad = a.state === 'not-installable';
                           return (
                             <span style={{
-                              fontSize: 11, padding: '2px 10px', lineHeight: '16px',
-                              background: a.state === 'installed' ? 'var(--cth-mint-light)' : bad ? 'var(--cth-paper-100)' : 'var(--cth-cream-200)',
-                              color: bad ? 'var(--cth-ink-500)' : 'var(--cth-ink-900)',
-                              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
+                              fontSize: 11, padding: '3px 10px', lineHeight: '16px',
+                              borderRadius: 999,
+                              background: a.state === 'installed' ? 'var(--cth-mint-light)' : 'var(--cth-cream-100)',
+                              color: a.state === 'installed' ? 'var(--cth-mint)' : 'var(--cth-ink-500)',
                               fontFamily: 'var(--cth-font-ui)', fontWeight: 600, flexShrink: 0
                             }}>{badge}</span>
                           );
                         })()}
                         {p.id === 'claude' && (
                           <span style={{
-                            fontSize: 11, padding: '2px 10px', lineHeight: '16px',
-                            background: 'var(--cth-lemon)',
-                            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
+                            fontSize: 11, padding: '3px 10px', lineHeight: '16px',
+                            borderRadius: 999,
+                            background: 'var(--cth-lilac-light)', color: 'var(--cth-lilac)',
                             fontFamily: 'var(--cth-font-ui)', fontWeight: 600, flexShrink: 0
                           }}>{t('onboarding.orchestrator.recommended')}</span>
                         )}
@@ -694,15 +696,13 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <FieldLabel>{t('onboarding.orchestrator.modelLabel')}</FieldLabel>
-                  <select
+                  <Dropdown
                     value={godModel ?? ''}
-                    onChange={(e) => setGodModel(e.target.value || undefined)}
-                    style={inputStyle}
-                  >
-                    {modelsForProvider(godProvider).map((m) => (
-                      <option key={m.label} value={m.id ?? ''}>{m.label}</option>
-                    ))}
-                  </select>
+                    options={modelsForProvider(godProvider).map((m) => ({ value: m.id ?? '', label: m.label }))}
+                    onChange={(v) => setGodModel(v || undefined)}
+                    ariaLabel={t('onboarding.orchestrator.modelLabel')}
+                    width="100%"
+                  />
                   <div style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>
                     {t('onboarding.orchestrator.modelNote', { godName })}
                   </div>
@@ -804,7 +804,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     this wizard. Maps to each engine's flag: auto -> claude
                     bypassPermissions / codex -a never -s workspace-write (sandbox
                     kept); off -> each engine's ask-first default. */}
-                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, letterSpacing: 0.5, color: 'var(--cth-ink-700)' }}>
+                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, color: 'var(--cth-ink-900)' }}>
                   {t('onboarding.permissions.autonomyHead')}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -830,7 +830,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <div style={{ height: 1, background: 'var(--cth-ink-300)', margin: '2px 0' }} />
 
                 {/* RELIABILITY "— keeping work firing while you're away. */}
-                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, letterSpacing: 0.5, color: 'var(--cth-ink-700)' }}>
+                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, color: 'var(--cth-ink-900)' }}>
                   {t('onboarding.permissions.reliabilityHead')}
                 </div>
                 <p style={{ margin: 0, lineHeight: '20px', fontSize: 13, color: 'var(--cth-ink-700)' }}>
@@ -940,7 +940,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 {/* Two branches used to say this, one of them spelling out the
                     step it goes back to. prevStep already knows. */}
                 {stepIndex > 0 && (
-                  <PixelButton variant="ghost" size="lg" style={NAV_LABEL} onClick={() => setStep(prevStep(step))} disabled={busy}>
+                  <PixelButton variant="secondary" size="lg" style={NAV_LABEL} onClick={() => setStep(prevStep(step))} disabled={busy}>
                     {t('common.back')}
                   </PixelButton>
                 )}
@@ -1001,7 +1001,7 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 1,
+      fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
       color: 'var(--cth-ink-500)', marginBottom: -8
     }}>{children}</div>
   );
@@ -1021,23 +1021,21 @@ function PersonaCard({ icon, title, desc, selected, onClick }: {
       aria-pressed={selected}
       style={{
         textAlign: 'left', cursor: 'pointer', border: 'none',
-        padding: '16px 16px', display: 'flex', flexDirection: 'column', gap: 8,
-        // Selection is cyan on purpose. Mint read as "success"; the brand
-        // violet disappeared into an app painted violet everywhere else. The
-        // one colour that is NOT the brand is the one that reads as "chosen".
-        background: selected ? 'var(--cth-sky-light)' : 'var(--cth-paper-100)',
+        padding: 16, display: 'flex', flexDirection: 'column', gap: 8,
+        borderRadius: 'var(--cth-radius-card)',
+        background: selected ? 'var(--cth-lilac-light)' : 'var(--cth-paper-100)',
         boxShadow: selected
-          ? 'inset 0 0 0 2px var(--cth-sky), 0 0 22px -6px var(--cth-sky)'
-          : 'inset 0 0 0 1px var(--cth-ink-300)'
+          ? 'inset 0 0 0 2px var(--cth-lilac)'
+          : 'inset 0 0 0 1px var(--cth-ink-100)',
+        transition: 'background 120ms ease, box-shadow 120ms ease'
       }}
     >
       <span style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
         <span style={{
           width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: selected ? 'var(--cth-sky)' : 'var(--cth-cream-200)',
-          color: selected ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)',
-          boxShadow: `inset 0 0 0 1px ${selected ? 'var(--cth-sky)' : 'var(--cth-ink-300)'}`,
-            borderRadius: 'var(--cth-radius-input)'
+          borderRadius: 'var(--cth-radius-btn)',
+          background: selected ? 'var(--cth-lilac)' : 'var(--cth-cream-100)',
+          color: selected ? '#FFFFFF' : 'var(--cth-ink-500)'
         }}>
           <Icon name={icon} />
         </span>
@@ -1048,17 +1046,18 @@ function PersonaCard({ icon, title, desc, selected, onClick }: {
           width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
           display: 'grid', placeItems: 'center',
           fontSize: 11, lineHeight: 1,
-          background: selected ? 'var(--cth-sky)' : 'transparent',
-          color: 'var(--cth-on-accent)',
+          background: selected ? 'var(--cth-lilac)' : 'transparent',
+          color: '#FFFFFF',
           boxShadow: `inset 0 0 0 ${selected ? 0 : 1}px var(--cth-ink-300)`
         }}>{selected ? '\u2713' : ''}</span>
       </span>
       <span style={{
-        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 14, lineHeight: '19px', color: 'var(--cth-ink-900)'
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 14, lineHeight: '19px',
+        color: selected ? 'var(--cth-lilac)' : 'var(--cth-ink-900)'
       }}>
         {title}
       </span>
-      <span style={{ fontSize: 13, lineHeight: '19px', color: 'var(--cth-ink-700)' }}>
+      <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
         {desc}
       </span>
     </button>
@@ -1117,38 +1116,35 @@ function RailStep({ n, label, state }: {
   const current = state === 'current';
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px',
-      position: 'relative',
-      background: current ? 'var(--cth-cream-200)' : 'transparent',
-      boxShadow: current ? 'inset 3px 0 0 var(--cth-lilac)' : 'none'
+      display: 'flex', alignItems: 'center', gap: 12,
+      margin: '0 12px', padding: '9px 12px',
+      position: 'relative', borderRadius: 'var(--cth-radius-btn)',
+      background: current ? 'var(--cth-lilac-light)' : 'transparent',
+      boxShadow: current ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none'
     }}>
       {/* The spine, drawn per row as the segment ABOVE this number — so it
           threads the six chips together and stops at the last one, instead of
           dangling past it the way one absolute line did. */}
       {n > 1 && (
         <span aria-hidden style={{
-          position: 'absolute', left: 28, top: 0, height: 9, width: 1,
-          background: state === 'todo' ? 'var(--cth-ink-100)' : 'var(--cth-ink-300)'
+          position: 'absolute', left: 34, top: -6, height: 12, width: 1,
+          background: state === 'todo' ? 'var(--cth-ink-100)' : 'var(--cth-lilac)'
         }} />
       )}
       <span style={{
-        width: 24, height: 24, flexShrink: 0, display: 'grid', placeItems: 'center',
+        width: 22, height: 22, flexShrink: 0, display: 'grid', placeItems: 'center',
         position: 'relative',   // sits ON the spine, so it needs to paint over it
-        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11,
-        // Done is filled and quiet, current is filled and lit, todo is an empty
-        // outline. Three states, three different weights of ink.
+        borderRadius: '50%',
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 11,
+        // Done is filled quietly, current wears the brand, todo is an outline.
         background: state === 'done' ? 'var(--cth-lilac-light)'
-          : current ? 'var(--cth-lilac)' : 'var(--cth-cream-200)',
-        color: current ? 'var(--cth-on-accent)'
-          : state === 'done' ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
-        boxShadow: current
-          ? '0 0 0 1px var(--cth-lilac), 0 0 16px -2px var(--cth-lilac)'
-          : `inset 0 0 0 1px ${state === 'todo' ? 'var(--cth-ink-100)' : 'var(--cth-lilac)'}`
+          : current ? 'var(--cth-lilac)' : 'var(--cth-cream-100)',
+        color: current ? '#FFFFFF'
+          : state === 'done' ? 'var(--cth-lilac)' : 'var(--cth-ink-500)'
       }}>{state === 'done' ? '\u2713' : n}</span>
       <span style={{
         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '16px',
-        letterSpacing: current ? 1 : 0.5,
-        color: current ? 'var(--cth-ink-900)' : state === 'done' ? 'var(--cth-ink-700)' : 'var(--cth-ink-500)'
+        color: current ? 'var(--cth-lilac)' : state === 'done' ? 'var(--cth-ink-700)' : 'var(--cth-ink-500)'
       }}>{label}</span>
     </div>
   );
