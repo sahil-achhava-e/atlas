@@ -40,6 +40,10 @@ const FACES: { id: string; name: string }[] = [
 ];
 
 export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
+  /** The orchestrator keeps its name and its face. Every other agent is a hire
+   *  you named; this one IS the app on the floor — the mark, the header, the
+   *  routes and every string that says "Atlas" follow it. */
+  const fixedIdentity = !!agent.isGod;
   const updateAgent = useStore((s) => s.updateAgent);
   const [config, setConfig] = useState<HarnessConfig | null>(null);
 
@@ -79,8 +83,11 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
       : agent.command;
 
     updateAgent(agent.id, {
-      name: trimmedName,
-      character,
+      // Belt and braces: the fields are not rendered for the orchestrator, so
+      // these can only hold what it already had — but a save must never be the
+      // thing that renames Atlas.
+      name: fixedIdentity ? agent.name : trimmedName,
+      character: fixedIdentity ? agent.character : character,
       accent,
       provider,
       model,
@@ -95,20 +102,33 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
     <div
       onClick={onClose}
       style={{
-        position: 'fixed', inset: 0,
+        // Below the title bar, not over it: a dialog taller than the window was
+        // running under the header with its own top edge unreachable.
+        position: 'fixed', top: 'var(--cth-titlebar-h)', left: 0, right: 0, bottom: 0,
         background: 'rgba(17, 20, 26, 0.5)', backdropFilter: 'blur(3px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 20, overflowY: 'auto',
         zIndex: 500
       }}
     >
       {/* Same box as Add Agent (940 / 95vw / 86vh). They are the two halves of
           one job — describe an agent — and a tall narrow dialog next to a wide
           one reads as two unrelated screens. */}
-      <div onClick={(e) => e.stopPropagation()} style={{ width: 940, maxWidth: '95vw' }}>
-        <PixelPanel variant="dialog" title="Edit agent" onClose={onClose} closeLabel="Close" style={{ padding: 16 }} noPadding>
-          <div style={{
+      <div onClick={(e) => e.stopPropagation()} style={{
+        width: 940, maxWidth: '100%', margin: 'auto',
+        display: 'flex', flexDirection: 'column', maxHeight: '100%', minHeight: 0
+      }}>
+        <PixelPanel
+          variant="dialog"
+          title="Edit agent"
+          onClose={onClose}
+          closeLabel="Close"
+          noPadding
+          style={{ display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: '100%' }}
+        >
+          <div className="cth-scrollpane" style={{
             display: 'flex', flexDirection: 'column', gap: 16,
-            padding: 16, maxHeight: '86vh', overflowY: 'auto'
+            padding: 16, overflowY: 'auto', minHeight: 0
           }}>
             {/* Two columns so the extra width is used rather than padded.
                 Identity and Engine are short field lists; Briefing is free
@@ -121,16 +141,45 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
             <Section label="Identity" hint="Name and face">
               <Row label="Name">
-                <input
-                  className="cth-input"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Stanley"
-                  style={inputStyle}
-                  autoFocus
-                />
+                {fixedIdentity ? (
+                  <div style={{
+                    ...inputStyle, display: 'flex', alignItems: 'center', gap: 10,
+                    background: 'var(--cth-cream-100)', boxShadow: 'none', color: 'var(--cth-ink-600)'
+                  }}>
+                    <span style={{ fontWeight: 600, color: 'var(--cth-ink-900)' }}>{agent.name}</span>
+                    <span style={{ fontSize: 12 }}>{fixedNote}</span>
+                  </div>
+                ) : (
+                  <input
+                    className="cth-input"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Stanley"
+                    style={inputStyle}
+                    autoFocus
+                  />
+                )}
               </Row>
 
+              {fixedIdentity ? (
+                <Row label="Character">
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: 10,
+                    borderRadius: 'var(--cth-radius-card)', background: 'var(--cth-cream-100)'
+                  }}>
+                    <span style={{
+                      width: 44, height: 52, display: 'flex', alignItems: 'flex-end',
+                      justifyContent: 'center', overflow: 'hidden',
+                      borderRadius: 'var(--cth-radius-btn)', background: 'var(--cth-paper-100)'
+                    }}>
+                      <SpritePortrait character={agent.character} scale={1.5} />
+                    </span>
+                    <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
+                      {fixedNote}
+                    </span>
+                  </div>
+                </Row>
+              ) : (
               <Row label="Character">
                 {/* The faces live in their own trough: a bare scrolling list cut
                     a row in half against the dialog's white and read as clipped. */}
@@ -181,6 +230,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                   })}
                 </div>
               </Row>
+              )}
 
               <Row label="Color">
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -235,6 +285,35 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               </Row>
             </Section>
 
+              </div>
+              <div style={{ minWidth: 0 }}>
+            <Section label="Briefing" hint="What it does">
+              <Row label="Description">
+                <input
+                  className="cth-input"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="what is this agent for"
+                  style={inputStyle}
+                />
+              </Row>
+
+              <Row label="Goal (optional)">
+                <textarea
+                  className="cth-input"
+                  value={goal}
+                  onChange={(e) => setGoal(e.target.value)}
+                  placeholder="long-running directive injected on every prompt"
+                  rows={4}
+                  style={{ ...inputStyle, fontFamily: 'var(--cth-font-ui)', resize: 'vertical', minHeight: 200 }}
+                />
+              </Row>
+            </Section>
+              </div>
+            </div>
+
+            {/* Engine spans the dialog: nine model pills in a half-width column
+                wrapped into four ragged rows. */}
             <Section label="Engine" hint="Model, on next restart">
               {/* One engine per workspace: the row states which, it does not
                   offer a choice. Re-pointing a single agent at a CLI this
@@ -299,32 +378,6 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               </span>
             </Section>
 
-              </div>
-              <div style={{ minWidth: 0 }}>
-            <Section label="Briefing" hint="What it does">
-              <Row label="Description">
-                <input
-                  className="cth-input"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="what is this agent for"
-                  style={inputStyle}
-                />
-              </Row>
-
-              <Row label="Goal (optional)">
-                <textarea
-                  className="cth-input"
-                  value={goal}
-                  onChange={(e) => setGoal(e.target.value)}
-                  placeholder="long-running directive injected on every prompt"
-                  rows={4}
-                  style={{ ...inputStyle, fontFamily: 'var(--cth-font-ui)', resize: 'vertical', minHeight: 200 }}
-                />
-              </Row>
-            </Section>
-              </div>
-            </div>
 
             {/* The footer is a floor, not another row: a rule above it and its
                 own padding, so Save never floats against the last field. */}
@@ -333,7 +386,9 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               marginTop: 6, paddingTop: 14, borderTop: '1px solid var(--cth-ink-100)'
             }}>
               <span style={{ flex: 1, fontSize: 12.5, color: 'var(--cth-ink-500)', lineHeight: 1.45 }}>
-                Name, face and colour apply at once. Engine changes wait for the next restart.
+                {fixedIdentity
+                  ? 'Colour and briefing apply at once. Engine changes wait for the next restart.'
+                  : 'Name, face and colour apply at once. Engine changes wait for the next restart.'}
               </span>
               <PixelButton variant="secondary" size="md" onClick={onClose}>Cancel</PixelButton>
               <PixelButton variant="primary" size="md" onClick={save}>Save changes</PixelButton>
@@ -344,6 +399,9 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
     </div>
   );
 }
+
+/** Why the orchestrator's name and face are not fields. */
+const fixedNote = 'Atlas keeps its name and face.';
 
 const inputStyle: CSSProperties = {
   width: '100%',
