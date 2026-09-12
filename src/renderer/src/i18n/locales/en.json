@@ -1510,7 +1510,8 @@
     "boss": "boss",
     "emptyTitle": "Nothing open",
     "emptyBody": "Pick a file from the tree to edit, or a changed file to diff.",
-    "statusTabs": "{{count}} open"
+    "statusTabs": "{{count}} open",
+    "close": "Close"
   },
   "gitPanes": {
     "jumpConfirm": "Jump the repo to {{sha}} (\"{{subject}}\")?\n\nThis detaches HEAD. Blocked automatically if the tree is dirty or an agent is mid-run.",

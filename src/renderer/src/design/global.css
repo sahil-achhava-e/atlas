@@ -608,6 +608,10 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 .cth-task-card:hover { box-shadow: 0 0 0 1px var(--cth-ink-300), var(--cth-shadow-card) !important; }
 div:hover > .cth-iconbar[data-label] { opacity: 1 !important; }
 
+/* Closing the IDE is the one destructive-looking control in its bar, so it
+   fills in on hover rather than just darkening a glyph. */
+.cth-ide-close:hover { background: var(--cth-coral) !important; color: #FFFFFF !important; }
+
 /* A panel scrolls with a bar that appears when the pointer is inside it. A
    permanent 10px rail beside a list of six events is furniture; the gutter is
    reserved either way so content never shifts when the bar arrives. */

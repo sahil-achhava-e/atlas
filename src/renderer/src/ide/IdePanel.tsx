@@ -9,7 +9,7 @@ import { ImagePreview } from './ImagePreview';
 import { MarkdownPreview } from '@/markdown/MarkdownPreview';
 import { HistoryPane, ComparePane } from './GitPanes';
 import { isImagePath, isSvgPath } from '@shared/imageTypes';
-import { ideBarStyle, ideIconBtn as iconBtn, ideTextBtn as textBtn } from './chrome';
+import { IDE_TONES, ideBarStyle, ideIconBtn as iconBtn, ideTextBtn as textBtn } from './chrome';
 
 // v0.3.4 markdown preview: per-md-tab view mode, defaulted from the last choice.
 type MdView = 'code' | 'split' | 'preview';
@@ -382,55 +382,55 @@ export function IdePanel() {
             "src" tells you nothing about which of eight agents you are editing
             under. Name first, directory second: the name is the identity, the
             path is the detail. */}
-        {target.agent ? (
-          <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
-            <span
-              style={{
-                fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
-                color: 'var(--cth-ink-900)',
-                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '22vw'
-              }}
-            >{target.agent.name}</span>
-            {target.agent.isGod && (
-              <span style={{
-                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11,
-                padding: '2px 8px', borderRadius: 999,
-                background: 'var(--cth-lilac-light)', color: 'var(--cth-lilac)'
-              }}>{t('idePanel.boss')}</span>
-            )}
-            {target.inferred && (
-              // Never assert a name we had to guess at. One quiet word is enough
-              // to stop someone trusting the wrong agent's directory.
-              <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-500)' }}>
-                ({t('idePanel.assumed')})
-              </span>
-            )}
-          </span>
-        ) : (
+        {/* Only what this bar is for: whose workspace, and which folder. The
+            orchestrator's name IS the app name in the title beside it, so
+            repeating it — with a role pill after it — was the same word three
+            times. A worker's name is not obvious, so that one is shown. */}
+        {target.agent && !target.agent.isGod && (
+          <span style={{
+            fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
+            color: 'var(--cth-ink-900)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '22vw'
+          }}>{target.agent.name}</span>
+        )}
+        {!target.agent && (
           <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-500)' }}>
             {t('idePanel.noAgent')}
           </span>
         )}
         <span style={{
-          fontFamily: 'var(--cth-font-mono)', fontSize: 13, color: 'var(--cth-ink-500)',
+          fontFamily: 'var(--cth-font-mono)', fontSize: 12.5, color: 'var(--cth-ink-500)',
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '30vw'
         }}>
           {root ? basename(root) : t('idePanel.noWorkspace')}
         </span>
+        {target.inferred && (
+          // Never assert a directory we had to guess at: one quiet word is what
+          // stops someone editing under the wrong agent.
+          <span style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-400)' }}>
+            ({t('idePanel.assumed')})
+          </span>
+        )}
         <button
-          className="cth-titlebar-nodrag"
+          className="cth-titlebar-nodrag cth-ide-close"
           onClick={() => setIdeOpen(false)}
           aria-label={t('idePanel.closeIde')}
+          title={t('idePanel.closeIde')}
           style={{
             marginLeft: 'auto',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 28, height: 28, padding: 0,
-            background: 'transparent', boxShadow: 'none',
+            gap: 6, height: 26, padding: '0 10px', flexShrink: 0,
+            background: 'var(--cth-coral-light)', boxShadow: 'none',
             border: 'none', borderRadius: 'var(--cth-radius-btn)',
-            cursor: 'pointer', color: 'var(--cth-ink-500)'
+            cursor: 'pointer', color: 'var(--cth-coral)',
+            fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
+            transition: 'background 120ms ease, color 120ms ease'
           }}
         >
-          <Icon name="x" size={1} style={{ width: 16, height: 16 }} />
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+          </svg>
+          {t('idePanel.close')}
         </button>
       </div>
 
@@ -497,9 +497,9 @@ export function IdePanel() {
                   // the tab labels are the only other clue), the caret says it
                   // folds, and together they are a bigger hit target than the
                   // caret alone was.
-                  display: 'flex', alignItems: 'center', gap: 4, width: 'auto', padding: '0 3px',
+                  display: 'flex', alignItems: 'center', gap: 4, width: 'auto', padding: '0 6px',
                   fontFamily: 'var(--cth-font-mono)', fontSize: 11, lineHeight: '14px',
-                  color: 'var(--cth-ink-700)'
+                  color: IDE_TONES.git
                 }}
               >
                 <Icon name="git" />
@@ -512,16 +512,23 @@ export function IdePanel() {
                   // is the only reading of that click that isn't a dead end.
                   onClick={() => { setRailTab(k); if (gitCollapsed) toggleGitRail(); }}
                   style={{
-                    padding: '1px 12px', border: 'none', cursor: 'pointer',
-                    fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px', color: 'var(--cth-ink-700)',
-                    background: railTab === k && !gitCollapsed ? 'var(--cth-sky-light)' : 'transparent',
-                    boxShadow: railTab === k && !gitCollapsed ? 'inset 0 0 0 1px var(--cth-ink-300)' : 'none'
+                    height: 22, padding: '0 10px', border: 'none', cursor: 'pointer',
+                    borderRadius: 'var(--cth-radius-btn)',
+                    fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11.5, lineHeight: '14px',
+                    color: railTab === k && !gitCollapsed ? 'var(--cth-lilac)' : 'var(--cth-ink-500)',
+                    background: railTab === k && !gitCollapsed ? 'var(--cth-lilac-light)' : 'transparent',
+                    transition: 'background 120ms ease, color 120ms ease'
                   }}
                 >{t(`idePanel.rail.${k}`)}</button>
               ))}
               <span style={{ flex: 1 }} />
               {railTab === 'changes' && !gitCollapsed && (
-                <button onClick={() => refreshStatus()} style={iconBtn}>
+                <button
+                  onClick={() => refreshStatus()}
+                  aria-label={t('idePanel.refresh')}
+                  className="cth-ghost-btn"
+                  style={{ ...iconBtn, color: IDE_TONES.refresh }}
+                >
                   <Icon name="web" />
                 </button>
               )}
@@ -549,7 +556,8 @@ export function IdePanel() {
                       style={{
                         display: 'flex', alignItems: 'center', gap: 8, padding: '2px 12px',
                         cursor: 'pointer', fontSize: 13, color: 'var(--cth-ink-900)',
-                        background: active ? 'var(--cth-lemon-light)' : 'transparent'
+                        borderRadius: 'var(--cth-radius-btn)',
+                        background: active ? 'var(--cth-lilac-light)' : 'transparent'
                       }}
                     >
                       <span style={{
@@ -631,7 +639,8 @@ export function IdePanel() {
                     </span>
                     <button
                       onClick={(e) => { e.stopPropagation(); closeTab(tab.key); }}
-                      style={{ ...iconBtn, width: 16, height: 16 }}
+                      aria-label={t('idePanel.closeTab')}
+                      style={{ ...iconBtn, width: 18, height: 18, color: 'var(--cth-ink-400)' }}
                     >
                       <Icon name="x" />
                     </button>
@@ -759,18 +768,27 @@ export function IdePanel() {
                 return (
                   <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <div style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '3px 12px',
-                      background: 'var(--cth-cream-200)', borderBottom: '1px solid var(--cth-ink-700)',
-                      fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-700)'
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px',
+                      background: 'var(--cth-cream-100)', borderBottom: '1px solid var(--cth-ink-100)',
+                      fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, color: 'var(--cth-ink-600)'
                     }}>
-                      <span style={{ color: 'var(--cth-ink-500)' }}>HEAD</span>
+                      <span style={{
+                        fontFamily: 'var(--cth-font-mono)', fontSize: 11, fontWeight: 600,
+                        padding: '2px 8px', borderRadius: 999,
+                        background: 'var(--cth-lemon-light)', color: 'var(--cth-lemon)'
+                      }}>HEAD</span>
                       <Icon name="arrow-right" />
                       <span>{t('idePanel.workingTree')}</span>
                       <span style={{
                         flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         fontFamily: 'var(--cth-font-mono)', textAlign: 'right'
                       }}>{activeTab.rel}</span>
-                      <button onClick={() => ensureDiff(activeTab.rel, true)} style={iconBtn}>
+                      <button
+                        onClick={() => ensureDiff(activeTab.rel, true)}
+                        aria-label={t('idePanel.refreshDiff')}
+                        className="cth-ghost-btn"
+                        style={{ ...iconBtn, color: IDE_TONES.refresh }}
+                      >
                         <Icon name="web" />
                       </button>
                     </div>
@@ -812,7 +830,9 @@ function EditorBar({ rel, dirty, saveState, onSave, onCopy, mdView, onMdView, on
   const { t } = useTranslation();
   return (
     <div style={ideBarStyle}>
-      <Icon name="code" />
+      <span style={{ display: 'inline-flex', color: IDE_TONES.copy, flexShrink: 0 }}>
+        <Icon name="code" />
+      </span>
       <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--cth-font-mono)' }}>
         {rel}{dirty ? ' •' : ''}
       </span>
@@ -824,8 +844,9 @@ function EditorBar({ rel, dirty, saveState, onSave, onCopy, mdView, onMdView, on
               onClick={() => onMdView(v)}
               style={{
                 ...textBtn,
-                background: mdView === v ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
-                boxShadow: mdView === v ? 'inset 0 0 0 1px var(--cth-ink-500)' : 'inset 0 0 0 1px var(--cth-ink-100)'
+                color: mdView === v ? 'var(--cth-lilac)' : 'var(--cth-ink-500)',
+                background: mdView === v ? 'var(--cth-lilac-light)' : 'var(--cth-paper-100)',
+                boxShadow: mdView === v ? 'inset 0 0 0 1px var(--cth-lilac)' : 'inset 0 0 0 1px var(--cth-ink-100)'
               }}
             >{v === 'code' ? t('idePanel.code') : v === 'split' ? t('idePanel.split') : t('idePanel.preview')}</button>
           ))}
@@ -836,7 +857,15 @@ function EditorBar({ rel, dirty, saveState, onSave, onCopy, mdView, onMdView, on
       )}
       <button onClick={onCopy} style={textBtn}>{t('idePanel.copyPath')}</button>
       <button onClick={onSave} disabled={!dirty || saveState === 'saving'}
-        style={{ ...textBtn, opacity: dirty ? 1 : 0.5 }}>
+        style={{
+          ...textBtn,
+          // Saving is the action this bar exists for: it wears the colour when
+          // there is something to save, and goes quiet when there is not.
+          color: dirty ? '#FFFFFF' : 'var(--cth-ink-500)',
+          background: dirty ? IDE_TONES.save : 'var(--cth-paper-100)',
+          boxShadow: dirty ? 'none' : 'inset 0 0 0 1px var(--cth-ink-100)',
+          cursor: dirty ? 'pointer' : 'not-allowed'
+        }}>
         {saveState === 'saving' ? '...' : saveState === 'saved' ? t('idePanel.saved') : saveState === 'error' ? t('agentDetail.err') : t('idePanel.save')}
       </button>
     </div>
