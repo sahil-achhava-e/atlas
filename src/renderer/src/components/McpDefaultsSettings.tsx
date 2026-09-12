@@ -29,6 +29,15 @@ const labelStyle: React.CSSProperties = {
   color: 'var(--cth-ink-500)',
 };
 
+/** The database name out of a Postgres URL: the path segment, minus any query
+ *  string. Returns undefined for anything that does not parse, in which case the
+ *  row keeps the name it had. Never returns the host, the user or the password. */
+function dbNameFromUrl(url: string): string | undefined {
+  const path = url.split('?')[0].split('#')[0];
+  const name = path.slice(path.lastIndexOf('/') + 1).trim();
+  return name && !name.includes('@') && !name.includes(':') ? name : undefined;
+}
+
 export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
   const { t } = useTranslation();
   const [note, setNote] = useState('');
@@ -84,10 +93,8 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
   };
   const addConn = () => persist([
     ...conns,
-    { id: `db${Date.now().toString(36)}`, label: `database ${conns.length + 1}` }
+    { id: `db${Date.now().toString(36)}`, label: '' }
   ]);
-  const renameConn = (id: string, label: string) =>
-    persist(conns.map((c) => (c.id === id ? { ...c, label } : c)));
   const scopeConn = (id: string, cwd?: string) =>
     persist(conns.map((c) => (c.id === id ? { ...c, cwd } : c)));
   const removeConn = async (id: string) => {
@@ -102,6 +109,11 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
     if (res?.ok) {
       setHasSecret((h) => ({ ...h, [id]: true }));
       setDraft((d) => ({ ...d, [id]: '' }));
+      // The URL itself is write-only: it goes to the encrypted store and is
+      // never read back. The database NAME out of it is what the row is called,
+      // so it is kept in the (non-secret) list. Nothing else from the URL is.
+      const name = dbNameFromUrl(url);
+      if (name) void persist(conns.map((c) => (c.id === id ? { ...c, label: name } : c)));
       setNote('saved — agents spawned from now on can query it');
     } else {
       setNote(res?.error ?? 'could not save');
@@ -220,14 +232,19 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                           padding: 12, borderRadius: 'var(--cth-radius-card)',
                           background: 'var(--cth-cream-100)'
                         }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          <input
-                            className="cth-input"
-                            value={c.label}
-                            onChange={(e) => renameConn(c.id, e.target.value)}
-                            placeholder="label, e.g. visits"
-                            style={{ ...fieldStyle, width: 120, fontFamily: 'var(--cth-font-ui)' }}
-                          />
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                          <span style={{
+                            fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13,
+                            color: hasSecret[c.id] ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)'
+                          }}>{hasSecret[c.id] ? c.label : t('mcpDefaults.dbUnset')}</span>
+                          {hasSecret[c.id] && (
+                            <span style={{
+                              fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999,
+                              background: 'var(--cth-mint-light)', color: 'var(--cth-mint)'
+                            }}>{t('mcpDefaults.dbSet')}</span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <Dropdown
                             value={c.cwd ?? ''}
                             options={[
@@ -238,7 +255,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                             ]}
                             onChange={(v) => scopeConn(c.id, v || undefined)}
                             ariaLabel={t('mcpDefaults.dbScopeLabel')}
-                            width={180}
+                            width={190}
                           />
                           <input
                             className="cth-input"

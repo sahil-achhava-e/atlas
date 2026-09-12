@@ -926,7 +926,9 @@
     },
     "everyProject": "Every project",
     "dbScopeLabel": "Which project this database belongs to",
-    "addDatabase": "Add database"
+    "addDatabase": "Add database",
+    "dbUnset": "No connection string yet",
+    "dbSet": "Set"
   },
   "devicePicker": {
     "microphone": "Microphone",
