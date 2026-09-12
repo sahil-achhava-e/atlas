@@ -205,8 +205,8 @@
     "apply": "applying...",
     "moveAndRestart": "move & restart",
     "switchAndRestart": "switch & restart",
-    "resetting": "resetting...",
-    "eraseEverything": "erase everything & restart",
+    "resetting": "Erasing…",
+    "eraseEverything": "Erase everything",
     "nav": {
       "general": "General",
       "prerequisites": "Prerequisites",
@@ -224,7 +224,9 @@
       "freshDesc": "Point the harness at the new (empty) folder. Your existing data stays in the old folder, simply unused."
     },
     "resetConfirm": {
-      "body": "This permanently erases all of {{godName}}'s memories and the entire hive, and cannot be undone. Any running sessions will be terminated and the app will relaunch into onboarding. Are you sure?"
+      "body": "Everything {{godName}} remembers, every agent, the task board and all settings are erased. Running sessions stop, and the app reopens on setup.",
+      "lead": "This cannot be undone.",
+      "didNotRun": "Nothing was erased: the app did not restart. Close Atlas and reopen it, then try again."
     },
     "general": {
       "homeFolder": "Home folder",

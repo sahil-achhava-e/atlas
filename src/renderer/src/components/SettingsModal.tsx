@@ -193,6 +193,8 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
   const godName = useStore((s) => s.agents.find((a) => a.isGod)?.name) ?? 'the orchestrator';
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  /** Why a reset did not happen. Empty until one fails. */
+  const [resetErr, setResetErr] = useState('');
   const [activeSection, setActiveSection] = useState<Section>(initialSection ?? 'General');
 
   // Change-home flow: null until the user picks a new folder, then the sub-modal
@@ -657,10 +659,18 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
 
   const reset = async () => {
     setBusy(true);
+    setResetErr('');
     clearLocalState();
-    // Wipes hive + palace, resets config, and relaunches into onboarding.
-    // The app exits, so this never resolves - no need to clear `busy`.
-    await window.cth.resetAll();
+    try {
+      // Wipes hive + palace, resets config, and relaunches into onboarding.
+      // On success the process exits and this never resolves — so anything we
+      // get back here, value or throw, means the reset did NOT happen.
+      await window.cth.resetAll();
+      setResetErr(t('settings.resetConfirm.didNotRun'));
+    } catch (e) {
+      setResetErr(e instanceof Error ? e.message : String(e));
+    }
+    setBusy(false);
   };
 
   // --- Change home folder ---
@@ -715,7 +725,8 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
           // tab was open, so switching from General to Voice made the whole
           // dialog jump and the nav on the left shuffle under the cursor. One
           // size for every tab; the content pane scrolls inside it.
-          width: 840, maxWidth: '92vw', height: 'min(80vh, 760px)',
+          width: confirming ? 560 : 840, maxWidth: '92vw',
+          height: confirming ? 'auto' : 'min(80vh, 760px)',
           display: 'flex', flexDirection: 'column',
           filter: 'drop-shadow(0 18px 40px rgba(17, 20, 24, 0.28))'
         }}
@@ -787,23 +798,48 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
 
           /* === Reset confirmation screen === */
           ) : confirming ? (
-            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                <div style={{
-                  width: 32, height: 32,
-                  background: 'var(--cth-coral-light)',
-                  boxShadow: 'inset 0 0 0 1.5px var(--cth-ink-500)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '20px 20px 22px' }}>
+                {/* A warning triangle in the colour of the thing it warns about.
+                    It was a bell in a square: the wrong shape and the wrong
+                    idea - a bell is a notification, this is a demolition. */}
+                <span style={{
+                  width: 36, height: 36, flexShrink: 0, borderRadius: '50%',
+                  background: 'var(--cth-coral-light)', color: 'var(--cth-coral)',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center'
                 }}>
-                  <Icon name="bell" />
-                </div>
-                <div style={{ flex: 1, fontSize: 15, lineHeight: '22px', color: 'var(--cth-ink-700)' }}>
-                  {t('settings.resetConfirm.body', { godName })}
+                  <svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path d="M10 2.9 18.1 17H1.9L10 2.9Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                    <path d="M10 8v3.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    <circle cx="10" cy="14.3" r="1" fill="currentColor" />
+                  </svg>
+                </span>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{
+                    fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 14,
+                    lineHeight: '20px', color: 'var(--cth-ink-900)'
+                  }}>{t('settings.resetConfirm.lead', { defaultValue: 'This cannot be undone.' })}</span>
+                  <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-600)' }}>
+                    {t('settings.resetConfirm.body', { godName })}
+                  </span>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              {resetErr && (
+                <div style={{
+                  margin: '0 20px 16px', padding: '10px 12px',
+                  borderRadius: 'var(--cth-radius-card)',
+                  background: 'var(--cth-coral-light)',
+                  boxShadow: 'inset 0 0 0 1px var(--cth-coral)',
+                  fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-900)'
+                }}>{resetErr}</div>
+              )}
+
+              {/* Its own floor, like every other dialog in the app. */}
+              <div style={{
+                display: 'flex', justifyContent: 'flex-end', gap: 10,
+                padding: '14px 20px', borderTop: '1px solid var(--cth-ink-100)'
+              }}>
                 <PixelButton variant="secondary" size="md" onClick={() => setConfirming(false)} disabled={busy}>
                   {t('common.cancel')}
                 </PixelButton>
