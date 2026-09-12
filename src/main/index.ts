@@ -1,13 +1,14 @@
 import { mcpSecretRef, mcpSecretEnvKeys, dbSecretRef } from '../shared/mcpCatalog';
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, net, powerMonitor, powerSaveBlocker, protocol, screen, shell, Notification } from 'electron';
 import { spawn } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import {
   rmSync, existsSync, readFileSync, readdirSync, statSync, cpSync, writeFileSync,
   unlinkSync, mkdirSync, renameSync, createWriteStream, copyFileSync, lstatSync,
   readlinkSync, symlinkSync
 } from 'node:fs';
 import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
-import { join, resolve, sep, basename, dirname, isAbsolute } from 'node:path';
+import { join, resolve, sep, basename, dirname, isAbsolute, normalize, extname } from 'node:path';
 import { homedir } from 'node:os';
 import { request as httpsRequest } from 'node:https';
 import { PtyManager, type SpawnOptions } from './pty';
@@ -95,6 +96,41 @@ import {
 } from '../shared/codexRemote';
 
 const isDev = !!process.env.ELECTRON_RENDERER_URL;
+
+/** The packaged app's own origin. A standard, secure scheme so the renderer's
+ *  `default-src 'self'` CSP covers it and history.pushState is allowed. */
+const APP_SCHEME = 'atlas';
+if (!isDev) {
+  protocol.registerSchemesAsPrivileged([{
+    scheme: APP_SCHEME,
+    privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, codeCache: true }
+  }]);
+}
+
+/** Serve the built renderer from APP_SCHEME.
+ *
+ *  A request for a real file (`/assets/index-abc.js`, `/fonts/inter.woff2`)
+ *  gets that file. Anything else is an in-app route, and gets index.html — the
+ *  same fallback a dev server does, and the reason a reload on
+ *  `atlas://app/agent/pam/tasks` lands back on that agent's Tasks rather than
+ *  on nothing. */
+function serveRenderer(): void {
+  const rendererRoot = join(__dirname, '../renderer');
+  protocol.handle(APP_SCHEME, async (request) => {
+    const { pathname } = new URL(request.url);
+    // Never let a crafted path climb out of the renderer directory.
+    const rel = normalize(decodeURIComponent(pathname)).replace(/^(\.\.[/\\])+/, '');
+    const onDisk = join(rendererRoot, rel);
+    const wanted = onDisk.startsWith(rendererRoot) && extname(onDisk) !== ''
+      ? onDisk
+      : join(rendererRoot, 'index.html');
+    try {
+      return await net.fetch(pathToFileURL(wanted).toString());
+    } catch {
+      return await net.fetch(pathToFileURL(join(rendererRoot, 'index.html')).toString());
+    }
+  });
+}
 
 // Keep the main process alive on an unexpected throw/rejection. The harness is a
 // multi-agent supervisor — a single stray throw (e.g. node-pty's ConPTY console
@@ -2437,7 +2473,11 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
   if (isDev && process.env.ELECTRON_RENDERER_URL) {
     win.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
-    win.loadFile(join(__dirname, '../renderer/index.html'));
+    // Not loadFile: the renderer routes on real paths, and a reload on
+    // file:///…/agent/pam/tasks asks the disk for a file that does not exist.
+    // APP_SCHEME answers every in-app path with the same index.html, which is
+    // what a dev server does and what makes reload land where you were.
+    win.loadURL(`${APP_SCHEME}://app/floor`);
   }
 
   win.on('closed', () => {
@@ -5368,6 +5408,7 @@ function onSystemResume(reason: string): void {
 }
 
 app.whenReady().then(() => {
+  if (!isDev) serveRenderer();
   // Realtime Michael mic-gate hygiene (rt-8 / Pam rt-10 nit): the voice session
   // opens the mic permission gate by persisting realtimeVoiceEnabled=true and
   // closes it on disconnect — but a hard crash/reload mid-session skips that

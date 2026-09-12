@@ -71,6 +71,10 @@ export default defineConfig({
   renderer: {
     define,
     root: resolve(__dirname, 'src/renderer'),
+    // Absolute asset paths, not electron-vite's './'. The app is served from a
+    // custom scheme at a real path (/agent/pam/tasks), so a relative
+    // './assets/x.js' would resolve against THAT path and 404 on every reload.
+    base: '/',
     build: {
       rollupOptions: {
         input: { index: resolve(__dirname, 'src/renderer/index.html') }

@@ -244,6 +244,10 @@ interface State {
   reorderAgents: (fromId: string, toId: string) => void; // move agent fromId into toId's slot (AgentStrip drag-reorder) and persist the new order
   /** One-shot request to open a Command-Center tab (e.g. clicking the office
    *  task board → 'tasks'). `seq` makes repeated identical requests distinct. */
+  /** Which Command Center tab is open. In the store rather than the panel so
+   *  the address bar can name it and a reload can restore it. */
+  ccTab: string;
+  setCcTab: (tab: string) => void;
   ccTabRequest: { tab: string; seq: number } | null;
   requestCommandCenterTab: (tab: string) => void;
   /** The task whose detail overlay is open (rendered app-wide over the office
@@ -682,6 +686,13 @@ export const useStore = create<State>((set, get) => ({
   selectedId: initialSelectedId,
   feeds: {},
   addAgentOpen: false,
+  ccTab: (() => {
+    try { return localStorage.getItem('cth.ccTab') || 'terminal'; } catch { return 'terminal'; }
+  })(),
+  setCcTab: (tab) => {
+    try { localStorage.setItem('cth.ccTab', tab); } catch { /* private window */ }
+    set({ ccTab: tab });
+  },
   ccTabRequest: null,
   requestCommandCenterTab: (tab) =>
     set((s) => ({ ccTabRequest: { tab, seq: (s.ccTabRequest?.seq ?? 0) + 1 } })),

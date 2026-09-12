@@ -108,7 +108,10 @@ const TABS: {
  *  cols/rows and corrupt the display. */
 export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent; fullscreen?: boolean }) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<CCTab>('terminal');
+  // The open tab lives in the store: the address bar names it, and a reload
+  // has to land on the same one.
+  const tab = useStore((st) => st.ccTab) as CCTab;
+  const setTab = (next: CCTab): void => useStore.getState().setCcTab(next);
   // Atlas had no way to be edited: AgentDetailPanel hands god straight to this
   // panel and never reaches the Edit button every other agent gets, so his
   // name, one-liner and standing goal were unreachable from the app.

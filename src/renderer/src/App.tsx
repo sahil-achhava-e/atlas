@@ -31,7 +31,7 @@ import { StatusGlyph } from '@/components/StatusGlyph';
 import { MoonIcon, SunIcon, GearIcon, ExpandIcon, CollapseIcon } from '@/components/ChromeIcons';
 import { TaskDetailOverlay } from '@/components/TaskDetailOverlay';
 import { IdePanel } from '@/ide/IdePanel';
-import { go, parseRoute, type Route } from '@/routes';
+import { agentSlug, go, parseRoute, tabFromSlug, tabSlug, type Route, type TabKey } from '@/routes';
 
 // Injected at build time from package.json (see electron.vite.config.ts).
 declare const __APP_VERSION__: string;
@@ -61,6 +61,7 @@ export function App() {
   const ideAgentId = useStore(s => s.ideAgentId);
   const selectedId = useStore(s => s.selectedId);
   const sidebarTab = useStore(s => s.sidebarTab);
+  const ccTab = useStore(s => s.ccTab);
 
   const [config, setConfig] = useState<HarnessConfig | null>(null);
   /** Live floor counts for the title bar. Derived rather than stored: the
@@ -87,8 +88,8 @@ export function App() {
       }
     } catch { /* localStorage unavailable — show the picker */ }
     // Arriving on a link to a screen INSIDE a hive is a request to open it.
-    return parseRoute()?.screen === 'office' || parseRoute()?.screen === 'focus'
-      || parseRoute()?.screen === 'ide';
+    const screen = parseRoute()?.screen;
+    return screen === 'floor' || screen === 'agent' || screen === 'focus' || screen === 'ide';
   });
   // A mirror the route code can read synchronously. React state is one render
   // behind inside an effect that just set it, and the address bar is written
@@ -270,12 +271,18 @@ export function App() {
 
   const syncBar = (correcting = false): void => {
     const st = useStore.getState();
+    const tab = tabFromSlug(tabSlug(st.ccTab as TabKey)) ?? 'terminal';
+    /** The bar names an agent by what it is called. */
+    const slugOf = (id: string | null | undefined): string => {
+      const a = st.agents.find((x) => x.id === id);
+      return a ? agentSlug(a.name, a.id) : (id ?? '');
+    };
     go(
       !hiveOpenedRef.current ? { screen: 'workspaces' }
-        : st.fullscreenAgentId ? { screen: 'focus', agentId: st.fullscreenAgentId }
-        : st.ideOpen ? { screen: 'ide', agentId: st.ideAgentId ?? undefined }
-        : st.selectedId ? { screen: 'office', agentId: st.selectedId, tab: st.sidebarTab }
-        : { screen: 'office' },
+        : st.fullscreenAgentId ? { screen: 'focus', agentId: slugOf(st.fullscreenAgentId), tab }
+        : st.ideOpen ? { screen: 'ide', agentId: st.ideAgentId ? slugOf(st.ideAgentId) : undefined }
+        : st.selectedId ? { screen: 'agent', agentId: slugOf(st.selectedId), tab }
+        : { screen: 'floor' },
       // Correcting a hash nothing answers is not a place you navigated to, so
       // it must not become one you can go back to.
       { replace: correcting }
@@ -292,7 +299,13 @@ export function App() {
       if (r.screen === 'workspaces') { setHiveOpened(false); return; }
       setHiveOpened(true);
       const st = useStore.getState();
-      if (r.agentId && !st.agents.some((a) => a.id === r.agentId)) {
+      const slug = 'agentId' in r ? r.agentId : undefined;
+      const routedAgent = slug
+        ? (st.agents.find((a) => agentSlug(a.name, a.id) === slug)?.id
+            ?? st.agents.find((a) => a.id === slug)?.id
+            ?? slug)
+        : undefined;
+      if (routedAgent && !st.agents.some((a) => a.id === routedAgent)) {
         // Roster still loading: hold the link and retry when it lands. If the
         // roster HAS loaded and that agent is simply gone, drop the link and let
         // the correction below name the screen we are really on.
@@ -306,26 +319,35 @@ export function App() {
         if (st.fullscreenAgentId !== focus) st.setFullscreen(focus);
         const ide = r.screen === 'ide';
         if (st.ideOpen !== ide) st.setIdeOpen(ide, ide ? (r.agentId ?? null) : null);
-        if (r.agentId && st.selectedId !== r.agentId) st.select(r.agentId);
-        if (r.screen === 'office' && r.tab && st.sidebarTab !== r.tab) st.setSidebarTab(r.tab);
+        if (routedAgent && st.selectedId !== routedAgent) st.select(routedAgent);
+        // The tab is part of the address too, so a link opens the pane it names.
+        if ((r.screen === 'agent' || r.screen === 'focus') && r.tab && st.ccTab !== r.tab) {
+          st.setCcTab(r.tab);
+        }
       }
       syncBar(true);
     };
     apply();
-    window.addEventListener('hashchange', apply);
-    return () => window.removeEventListener('hashchange', apply);
+    // Back/forward fire popstate; our own go() fires cth:route, because
+    // pushState does not notify anyone by design.
+    window.addEventListener('popstate', apply);
+    window.addEventListener('cth:route', apply);
+    return () => {
+      window.removeEventListener('popstate', apply);
+      window.removeEventListener('cth:route', apply);
+    };
   }, [config?.onboardingComplete]);
 
   // A held link, retried as the roster arrives.
   useEffect(() => {
-    if (deepLink.current && agents.length) window.dispatchEvent(new Event('hashchange'));
+    if (deepLink.current && agents.length) window.dispatchEvent(new Event('cth:route'));
   }, [agents]);
 
   // Moving around the app writes the bar.
   useEffect(() => {
     if (!config?.onboardingComplete || deepLink.current) return;
     syncBar();
-  }, [config?.onboardingComplete, hiveOpened, fullscreenAgentId, ideOpen, ideAgentId, selectedId, sidebarTab]);
+  }, [config?.onboardingComplete, hiveOpened, fullscreenAgentId, ideOpen, ideAgentId, selectedId, ccTab]);
 
   // Track viewport width for splitter clamping
   useEffect(() => {
