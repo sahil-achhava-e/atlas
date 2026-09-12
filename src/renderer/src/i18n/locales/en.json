@@ -633,8 +633,9 @@
       "orchestratorPlain": "Pick the engine",
       "repos": "Your projects",
       "reposPlain": "Your projects",
-      "permissions": "Permissions & reliability",
-      "done": "All set"
+      "permissions": "How much can agents do?",
+      "done": "All set",
+      "away": "Keep working while you're away"
     },
     "persona": {
       "headline": "Agents that don't clock out",
@@ -724,34 +725,37 @@
       "model": "Model",
       "modelNote": "Only {{godName}}. Other agents pick their own later.",
       "fieldLabel": "Engine",
-      "modelLabel": "Model"
+      "modelLabel": "Model",
+      "checkAgain": "Check again",
+      "installHelp": "Install instructions"
     },
     "repos": {
-      "descPlain": "Add the folders your agents will work in. Code, documents, notes, anything with files. If they all sit under one folder, add that folder instead of each one.",
-      "desc": "Add the folders your agents will work in. Each one becomes a project, and several agents can share it. If several projects live under one folder, add that folder: an agent can see everything inside the one you pick, and nothing outside it.",
+      "descPlain": "Add the folders your agents will work in. Code, documents, notes, anything with files.",
+      "desc": "Add the folders your agents will work in. Each one becomes a project, and several agents can share it.",
       "emptyPlain": "Nothing added yet. You can skip this and add folders later.",
       "empty": "Nothing added yet. You can skip this and add projects later.",
       "addProject": "Add a project",
       "addRepo": "Add a project",
       "fieldLabel": "Projects",
       "count": "{{count}} added",
-      "remove": "Remove"
+      "remove": "Remove",
+      "nested": "If several projects live under one folder, add that folder. An agent sees everything inside the one you pick, and nothing outside it."
     },
     "permissions": {
       "autonomyHead": "How much can agents do on their own?",
       "autoNotePlain": "Either way, an agent that goes wrong gets stopped for you. You can change this later.",
       "autoNote": "Either way, an agent that goes wrong gets nudged, then limited, then stopped. You can change this for one agent later.",
       "reliabilityHead": "Keep things running while you're away",
-      "reliabilityDescPlain": "Agents keep working after you walk away. If the computer sleeps, they carry on when you come back.",
-      "reliabilityDesc": "Agents keep working after you walk away. If the Mac goes to sleep they pause, then carry on when you wake it.",
-      "keepAwake": "Keep working while away",
-      "keepAwakeDesc": "Stops the Mac sleeping while an agent is running, so timed work happens on time. Uses more battery, so keep it plugged in.",
+      "reliabilityDescPlain": "Three switches for when you are away from the computer.",
+      "reliabilityDesc": "Three switches for what happens when you are not at the machine.",
+      "keepAwake": "Stop the Mac sleeping",
+      "keepAwakeDesc": "Timed work fires on time. Costs battery, so best on power.",
       "notifications": "Desktop notifications",
-      "notificationsDesc": "Tells you when an agent needs you. Your Mac will ask permission the first time.",
+      "notificationsDesc": "A toast when an agent finishes or needs you.",
       "openAtLogin": "Open at login",
-      "openAtLoginDesc": "Starts Atlas again after a restart, so scheduled work carries on.",
-      "stayAwake": "Stay awake on power (you set this one)",
-      "stayAwakeDescMac": "macOS will not let an app change this one. Open Battery, then Options, and turn on \"Prevent automatic sleeping when the display is off\" while on the power adapter. Without it the Mac really sleeps, and work catches up when you wake it.",
+      "openAtLoginDesc": "Atlas comes back after a restart, so schedules carry on.",
+      "stayAwake": "One more, in System Settings",
+      "stayAwakeDescMac": "macOS will not let an app change this. Open Battery, then Options, and turn on \"Prevent automatic sleeping on power adapter\".",
       "stayAwakeDescWindows": "Windows will not let an app change this one. Open Settings, System, Power & battery, then \"Screen, blank & sleep\", and set the sleep options to Never. Without it the PC really sleeps, and work catches up when you wake it.",
       "stayAwakeDescLinux": "Your desktop will not let an app change this one. Open your Power settings (GNOME Settings, Power, or KDE System Settings, Power Management) and turn off automatic sleep while on power. Without it the machine really sleeps, and work catches up when you wake it.",
       "openBatteryMac": "Open Battery settings",
@@ -777,7 +781,8 @@
         "home": "Home",
         "orchestrator": "Engine",
         "repos": "Projects",
-        "permissions": "Permissions"
+        "permissions": "Permissions",
+        "away": "Away"
       }
     }
   },

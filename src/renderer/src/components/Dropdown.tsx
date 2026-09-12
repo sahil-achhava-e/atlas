@@ -18,6 +18,10 @@ export interface DropdownOption {
   label: string;
   /** Optional colour for the leading dot: state, accent, whatever the caller means. */
   tone?: string;
+  /** A short note about this option — "Recommended", "not installed". Drawn as
+   *  its own quiet pill rather than glued onto the label, so the option still
+   *  reads as its own name. */
+  hint?: string;
 }
 
 export function Dropdown({
@@ -142,6 +146,13 @@ export function Dropdown({
                   }} />
                 )}
                 <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.label}</span>
+                {o.hint && (
+                  <span style={{
+                    flexShrink: 0, padding: '2px 8px', borderRadius: 999,
+                    fontSize: 11, fontWeight: 600,
+                    background: 'var(--cth-lilac-light)', color: 'var(--cth-lilac)'
+                  }}>{o.hint}</span>
+                )}
                 {selected && (
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ color: 'var(--cth-lilac)' }}>
                     <path d="M3.4 8.4l3 3 6.2-6.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />

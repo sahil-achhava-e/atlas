@@ -6,6 +6,7 @@ import { Icon, type IconName } from './Icon';
 import { SpritePortrait } from './SpritePortrait';
 import { AtlasMark } from './AtlasMark';
 import { Dropdown } from './Dropdown';
+import { Switch } from './Switch';
 import { ProviderLogo } from './ProviderLogo';
 import { modelsForProvider, onboardingEngineChoices, type AgentProvider, type HarnessConfig } from '@/store/config';
 import { providerPreset } from '@shared/agentProvider';
@@ -21,7 +22,7 @@ export interface OnboardingWizardProps {
 }
 
 type Audience = 'technical' | 'non-technical';
-type Step = 'persona' | 'welcome' | 'home' | 'orchestrator' | 'repos' | 'permissions' | 'done';
+type Step = 'persona' | 'welcome' | 'home' | 'orchestrator' | 'repos' | 'permissions' | 'away' | 'done';
 
 /** The setup's two nav buttons. The display face and a little tracking so a
  *  one-word label still reads as a control, not as a caption; the primary keeps
@@ -40,7 +41,10 @@ const NAV_PRIMARY = { ...NAV_LABEL, minWidth: 148 } as const;
  *
  *  Home sits last on purpose: the folder is the one answer that is easier to
  *  give once you know what is going into it. */
-const STEP_ORDER: Step[] = ['persona', 'welcome', 'orchestrator', 'repos', 'permissions', 'home'];
+// 'away' is its own step. What an agent may do on its own and what keeps the
+// machine awake are two different decisions; stacked on one screen, the second
+// half was never read.
+const STEP_ORDER: Step[] = ['persona', 'welcome', 'orchestrator', 'repos', 'permissions', 'away', 'home'];
 const LAST_STEP: Step = STEP_ORDER[STEP_ORDER.length - 1];
 
 // First-run showcase "— the highest-value features a brand-new user should grasp
@@ -299,6 +303,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     : step === 'orchestrator' ? (plain ? t('onboarding.titles.orchestratorPlain') : t('onboarding.titles.orchestrator'))
     : step === 'repos' ? (plain ? t('onboarding.titles.reposPlain') : t('onboarding.titles.repos'))
     : step === 'permissions' ? t('onboarding.titles.permissions')
+    : step === 'away' ? t('onboarding.titles.away')
     : t('onboarding.titles.done');
   const stepIndex = Math.max(0, STEP_ORDER.indexOf(step));
 
@@ -575,11 +580,12 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 </div>
 
                 <FieldLabel>{t('onboarding.orchestrator.fieldLabel')}</FieldLabel>
-                {/* The list scrolls inside itself. Twelve rows above the model
-                    picker meant scrolling past every engine to reach it. */}
+                {/* No inner scroll: setup offers three engines and the step's
+                    own pane scrolls. A nested scroller sized for the old
+                    twelve-row list clipped the third row, and the note below it
+                    painted straight over what was left. */}
                 <div style={{
-                  display: 'flex', flexDirection: 'column', gap: 8,
-                  maxHeight: 268, overflowY: 'auto', paddingRight: 4
+                  display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0
                 }}>
                   {onboardingEngineChoices().eligible.map((p) => {
                     const sel = godProvider === p.id;
@@ -669,10 +675,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   {onboardingEngineChoices().workersOnly.map((p) => (
                     <label key={p.id} aria-disabled style={{
                       display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 16px',
+                      padding: '12px 14px',
                       background: 'var(--cth-paper-100)',
-                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-                      cursor: 'not-allowed', opacity: 0.75
+                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+                      borderRadius: 'var(--cth-radius-card)',
+                      cursor: 'not-allowed', opacity: 0.7
                     }}>
                       <input type="radio" name="godProvider" value={p.id} checked={false} disabled
                         style={{ width: 16, height: 16, flexShrink: 0 }} />
@@ -683,17 +690,16 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         <ProviderLogo provider={p.id} size={18} />
                       </span>
                       <span style={{ flex: 1, minWidth: 0 }}>
-                        <span style={{ display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-ink-500)' }}>
-                          {p.label.toUpperCase()}
+                        <span style={{ display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, color: 'var(--cth-ink-700)' }}>
+                          {p.label}
                         </span>
                         <span style={{ display: 'block', fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-500)' }}>
                           {t('onboarding.orchestrator.workersOnlyHint', { godName })}
                         </span>
                       </span>
                       <span style={{
-                        fontSize: 11, padding: '2px 10px', lineHeight: '16px',
-                        background: 'var(--cth-paper-100)', color: 'var(--cth-ink-500)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
+                        fontSize: 11, padding: '3px 10px', lineHeight: '16px', borderRadius: 999,
+                        background: 'var(--cth-cream-100)', color: 'var(--cth-ink-500)',
                         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, flexShrink: 0
                       }}>{t('onboarding.orchestrator.workersOnly')}</span>
                     </label>
@@ -701,23 +707,35 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 </div>
                 {engineBlocked && (
                   <div style={{
-                    display: 'flex', flexDirection: 'column', gap: 8, padding: 16,
-                    background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 2px var(--cth-ink-900)',
-                    fontSize: 13, lineHeight: '17px', color: 'var(--cth-ink-900)'
+                    display: 'flex', gap: 12, alignItems: 'flex-start', padding: 14,
+                    borderRadius: 'var(--cth-radius-card)',
+                    background: 'var(--cth-coral-light)'
                   }}>
-                    <span>{engineAvailabilityMessage(selectedEngine, providerPreset(godProvider).label, godName)}</span>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <PixelButton variant="secondary" size="sm" onClick={() => { void probeEngines(); }} disabled={probing}>
-                        {probing ? 'Checking…' : 'Check again'}
-                      </PixelButton>
-                      {selectedEngine.docsUrl && (
-                        <PixelButton variant="ghost" size="sm" onClick={() => { void window.cth.openExternal(selectedEngine.docsUrl!); }}>
-                          Install instructions
+                    <span style={{ flexShrink: 0, display: 'inline-flex', color: 'var(--cth-coral)', marginTop: 1 }}>
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path d="M10 2.9 18.1 17H1.9L10 2.9Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                        <path d="M10 8v3.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        <circle cx="10" cy="14.3" r="1" fill="currentColor" />
+                      </svg>
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
+                      <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-900)' }}>
+                        {engineAvailabilityMessage(selectedEngine, providerPreset(godProvider).label, godName)}
+                      </span>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <PixelButton variant="secondary" size="sm" onClick={() => { void probeEngines(); }} disabled={probing}>
+                          {probing ? t('setupPanel.checkingBtn') : t('onboarding.orchestrator.checkAgain')}
                         </PixelButton>
-                      )}
+                        {selectedEngine.docsUrl && (
+                          <PixelButton variant="secondary" size="sm" onClick={() => { void window.cth.openExternal(selectedEngine.docsUrl!); }}>
+                            {t('onboarding.orchestrator.installHelp')}
+                          </PixelButton>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
+                {!engineBlocked && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <FieldLabel>{t('onboarding.orchestrator.modelLabel')}</FieldLabel>
                   <Dropdown
@@ -730,25 +748,46 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       const isBest = !!m.id && m.id === best;
                       return {
                         value: m.id ?? '',
-                        label: isBest ? `${m.label} · ${t('onboarding.orchestrator.recommended')}` : m.label
+                        label: m.label,
+                        hint: isBest ? t('onboarding.orchestrator.recommended') : undefined
                       };
                     })}
                     onChange={(v) => setGodModel(v || undefined)}
                     ariaLabel={t('onboarding.orchestrator.modelLabel')}
                     width="100%"
                   />
-                  <div style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>
+                  <div style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
                     {t('onboarding.orchestrator.modelNote', { godName })}
                   </div>
                 </div>
+                )}
               </>
             )}
 
             {step === 'repos' && (
               <>
-                <p style={{ margin: 0, lineHeight: '22px' }}>
+                <p style={{ margin: 0, fontSize: 13, lineHeight: '21px', color: 'var(--cth-ink-600)' }}>
                   {plain ? t('onboarding.repos.descPlain') : t('onboarding.repos.desc')}
                 </p>
+
+                {/* The advice about nesting is its own note, not a third clause
+                    on the end of a paragraph nobody finishes reading. */}
+                <div style={{
+                  display: 'flex', gap: 10, alignItems: 'flex-start',
+                  padding: '10px 12px', borderRadius: 'var(--cth-radius-card)',
+                  background: 'var(--cth-sky-light)'
+                }}>
+                  <span style={{ flexShrink: 0, display: 'inline-flex', color: 'var(--cth-sky)' }}>
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                      <circle cx="10" cy="10" r="7.4" stroke="currentColor" strokeWidth="1.6" />
+                      <path d="M10 9.2v4.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      <circle cx="10" cy="6.4" r="1" fill="currentColor" />
+                    </svg>
+                  </span>
+                  <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-700)' }}>
+                    {t('onboarding.repos.nested')}
+                  </span>
+                </div>
 
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
                   <FieldLabel>{t('onboarding.repos.fieldLabel')}</FieldLabel>
@@ -759,9 +798,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   )}
                 </div>
 
-                <div style={{
+                <div className="cth-scrollpane" style={{
                   display: 'flex', flexDirection: 'column', gap: 8,
-                  maxHeight: 210, overflowY: 'auto'
+                  maxHeight: 210, overflowY: 'auto', flexShrink: 0
                 }}>
                   {repos.length === 0 && (
                     <div style={{
@@ -865,13 +904,12 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   {plain ? t('onboarding.permissions.autoNotePlain') : t('onboarding.permissions.autoNote')}
                 </div>
 
-                <div style={{ height: 1, background: 'var(--cth-ink-300)', margin: '2px 0' }} />
+              </>
+            )}
 
-                {/* RELIABILITY "— keeping work firing while you're away. */}
-                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, color: 'var(--cth-ink-900)' }}>
-                  {t('onboarding.permissions.reliabilityHead')}
-                </div>
-                <p style={{ margin: 0, lineHeight: '20px', fontSize: 13, color: 'var(--cth-ink-700)' }}>
+            {step === 'away' && (
+              <>
+                <p style={{ margin: 0, fontSize: 13, lineHeight: '21px', color: 'var(--cth-ink-600)' }}>
                   {plain ? t('onboarding.permissions.reliabilityDescPlain') : t('onboarding.permissions.reliabilityDesc')}
                 </p>
 
@@ -1114,33 +1152,35 @@ function ToggleRow({ icon, label, desc, on, tint, edge, onChange }: {
   onChange: (v: boolean) => void;
 }) {
   return (
+    // A switch, on the right, where the app puts every other one. A checkbox
+    // plus a tinted card plus a 2px edge was three things saying the same word.
     <label style={{
-      display: 'flex', gap: 12, alignItems: 'flex-start', padding: 16,
-      background: on ? tint : 'var(--cth-paper-100)',
-      boxShadow: `inset 0 0 0 ${on ? 2 : 1}px ${on ? edge : 'var(--cth-ink-300)'}`,
-      cursor: 'pointer'
+      display: 'flex', gap: 12, alignItems: 'center', padding: 14,
+      borderRadius: 'var(--cth-radius-card)',
+      background: 'var(--cth-paper-100)',
+      boxShadow: `inset 0 0 0 1px ${on ? edge : 'var(--cth-ink-100)'}`,
+      cursor: 'pointer',
+      transition: 'box-shadow 120ms ease'
     }}>
-      <input
-        type="checkbox"
-        checked={on}
-        onChange={(e) => onChange(e.target.checked)}
-        style={{ width: 18, height: 18, flexShrink: 0, marginTop: 5 }}
-      />
       <span style={{
-        width: 28, height: 28, flexShrink: 0, display: 'flex',
-        alignItems: 'center', justifyContent: 'center',
-        background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
+        width: 30, height: 30, flexShrink: 0, display: 'flex',
+        alignItems: 'center', justifyContent: 'center', borderRadius: '50%',
+        background: on ? tint : 'var(--cth-cream-100)',
+        color: on ? edge : 'var(--cth-ink-500)',
+        transition: 'background 120ms ease, color 120ms ease'
       }}>
         <Icon name={icon} />
       </span>
-      <span style={{ minWidth: 0 }}>
-        <span style={{ display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '18px', marginBottom: 4 }}>
-          {label}
-        </span>
-        <span style={{ display: 'block', fontSize: 13, lineHeight: '18px', color: 'var(--cth-ink-700)' }}>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{
+          display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+          fontSize: 13.5, lineHeight: '18px', marginBottom: 2, color: 'var(--cth-ink-900)'
+        }}>{label}</span>
+        <span style={{ display: 'block', fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
           {desc}
         </span>
       </span>
+      <Switch on={on} label={label} tone={edge} onChange={() => onChange(!on)} />
     </label>
   );
 }
