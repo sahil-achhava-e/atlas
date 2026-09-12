@@ -183,9 +183,10 @@ export const AGENT_PROVIDER_PRESETS: AgentProviderPreset[] = [
     canReceiveInbox: true,
     // Longest-context Claude variant — matches the "give Michael a bigger model"
     // advisory and the Recommended tag on the orchestrator picker.
-    // Atlas runs on the strongest model in the catalogue: it plans the work and
-    // decides who does it, and that judgement is what the whole floor rests on.
-    recommendedOrchestratorModel: 'claude-opus-5',
+    // Atlas runs on the 1M-context Opus. This is what onboarding prefills for
+    // the orchestrator; whatever is picked there wins, and is what modelForRole
+    // reads back from config.godModel.
+    recommendedOrchestratorModel: 'claude-opus-4-8[1m]',
     // What a hired agent starts on when nobody names a model. Atlas overrides it
     // per worker when a job wants more or less; a human overrides it in the
     // Add agent dialog. Sonnet because most work is not orchestration.

@@ -211,6 +211,31 @@ export function SetupPanel(
       {SECTIONS.filter((sec) => !only || only.includes(sec.kind)).map((section) => {
         const rows = visible.filter((t) => t.kind === section.kind);
         if (rows.length === 0) return null;
+        // Installed first, then the rest. A list that interleaves "Ready" and
+        // "Not set up" makes you read every row to answer "what do I have?" —
+        // which is the only question this panel exists to answer.
+        const installed = rows.filter((r) => r.found);
+        const missing = rows.filter((r) => !r.found);
+        const band = (label: string, count: number) => (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8, margin: '14px 0 10px',
+            fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11,
+            color: 'var(--cth-ink-500)'
+          }}>
+            <span>{label}</span>
+            <span style={{
+              padding: '1px 7px', borderRadius: 999, fontVariantNumeric: 'tabular-nums',
+              background: 'var(--cth-cream-100)', color: 'var(--cth-ink-500)'
+            }}>{count}</span>
+            <span style={{ flex: 1, height: 1, background: 'var(--cth-ink-100)' }} />
+          </div>
+        );
+        const list = (tools: ToolStatus[]) => tools.map((tool, i) => (
+          <div key={tool.id}>
+            {i > 0 && <div style={rowRule} />}
+            <ToolRow tool={tool} />
+          </div>
+        ));
         return (
           <div key={section.kind} style={groupCard}>
             <div style={{
@@ -218,14 +243,18 @@ export function SetupPanel(
               color: 'var(--cth-ink-900)'
             }}>{t(section.titleKey)}</div>
             <div style={{
-              fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)', margin: '2px 0 12px'
+              fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)', margin: '2px 0 0'
             }}>{t(section.blurbKey)}</div>
-            {rows.map((tool, i) => (
-              <div key={tool.id}>
-                {i > 0 && <div style={rowRule} />}
-                <ToolRow tool={tool} />
-              </div>
-            ))}
+            {/* One band each, and only when both halves exist: a section where
+                everything is installed should not carry a header saying so. */}
+            {installed.length > 0 && missing.length > 0
+              ? <>
+                  {band(t('setupPanel.bandInstalled'), installed.length)}
+                  {list(installed)}
+                  {band(t('setupPanel.bandMissing'), missing.length)}
+                  {list(missing)}
+                </>
+              : <div style={{ marginTop: 12 }}>{list(rows)}</div>}
           </div>
         );
       })}

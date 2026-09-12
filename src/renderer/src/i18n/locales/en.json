@@ -254,7 +254,7 @@
     },
     "agentsModels": {
       "defaultModel": "Default agent model",
-      "defaultModelDesc": "Every newly spawned Claude agent ({{godName}} included) starts on this model unless picked per-agent. Marked \"· default\" in the model pickers.",
+      "defaultModelDesc": "What an agent you add starts on, unless you pick a model for it. {{godName}} is not affected: it runs on the model chosen when the workspace was set up.",
       "savedNote": "saved, applies to newly spawned agents",
       "saveFailed": "save failed",
       "advanced": "Advanced",
@@ -887,10 +887,12 @@
       },
       "engine": {
         "title": "Agent engines",
-        "blurb": "The CLIs your agents run on. You only need the ones you actually use, not all of them."
+        "blurb": "The CLIs your agents can run on. You only need the one this workspace uses; the rest are here so you can see what is already on the machine."
       }
     },
-    "titleEngines": "Engines and tools"
+    "titleEngines": "Engines and tools",
+    "bandInstalled": "On this machine",
+    "bandMissing": "Not installed"
   },
   "aiEngines": {
     "providers": "Ai engine providers (byok)",
@@ -921,7 +923,10 @@
       "safeReadonlyNote": "These servers read data only, need no secrets, and are scoped to the agent workspace. They are enabled for every new agent.",
       "writeNote": "These servers can mutate state beyond the workspace. Off by default: enable only after reviewing.",
       "secretNote": "Off until you give it one. The Database server takes a Postgres connection string. Point it at a local database, ideally with a read-only user, and every agent spawned afterwards can query it."
-    }
+    },
+    "everyProject": "Every project",
+    "dbScopeLabel": "Which project this database belongs to",
+    "addDatabase": "Add database"
   },
   "devicePicker": {
     "microphone": "Microphone",

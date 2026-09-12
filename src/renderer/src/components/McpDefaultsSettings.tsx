@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { HarnessConfig } from '@/store/config';
 import { MCP_CATALOG, mcpSecretEnvKeys, type DbConnection, type McpTier } from '@shared/mcpCatalog';
 import { Switch } from './Switch';
+import { Dropdown } from './Dropdown';
 import { PixelButton } from './PixelButton';
 
 export interface McpDefaultsSettingsProps {
@@ -108,10 +109,10 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
   };
 
   const fieldStyle = {
-    padding: '10px 12px 5px',
-    background: 'var(--cth-cream-100)', border: 'none',
+    height: 34, padding: '0 12px', boxSizing: 'border-box',
+    background: 'var(--cth-paper-100)', border: 'none',
     boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-btn)',
-    fontFamily: 'var(--cth-font-mono)', fontSize: 13,
+    fontFamily: 'var(--cth-font-mono)', fontSize: 12.5,
     color: 'var(--cth-ink-900)', outline: 'none'
   } as const;
 
@@ -214,7 +215,12 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                   {entry.id === 'db' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {conns.map((c) => (
-                        <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <div key={c.id} style={{
+                          display: 'flex', flexDirection: 'column', gap: 8,
+                          padding: 12, borderRadius: 'var(--cth-radius-card)',
+                          background: 'var(--cth-cream-100)'
+                        }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <input
                             className="cth-input"
                             value={c.label}
@@ -222,17 +228,18 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                             placeholder="label, e.g. visits"
                             style={{ ...fieldStyle, width: 120, fontFamily: 'var(--cth-font-ui)' }}
                           />
-                          <select
+                          <Dropdown
                             value={c.cwd ?? ''}
-                            onChange={(e) => scopeConn(c.id, e.target.value || undefined)}
-                            style={{ ...fieldStyle, width: 190 }}
-                            aria-label="project this database belongs to"
-                          >
-                            <option value="">every project</option>
-                            {(config.registeredRepos ?? []).map((r) => (
-                              <option key={r} value={r}>{r.split('/').filter(Boolean).pop()}</option>
-                            ))}
-                          </select>
+                            options={[
+                              { value: '', label: t('mcpDefaults.everyProject') },
+                              ...(config.registeredRepos ?? []).map((r) => ({
+                                value: r, label: r.split('/').filter(Boolean).pop() ?? r
+                              }))
+                            ]}
+                            onChange={(v) => scopeConn(c.id, v || undefined)}
+                            ariaLabel={t('mcpDefaults.dbScopeLabel')}
+                            width={180}
+                          />
                           <input
                             className="cth-input"
                             type="password"
@@ -244,18 +251,33 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                               : 'postgresql://user:pass@localhost:5432/epicxp_visits'}
                             style={{ ...fieldStyle, flex: 1, minWidth: 200 }}
                           />
-                          <PixelButton variant="secondary" size="sm" onClick={() => { void saveUrl(c.id); }}>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <PixelButton variant="primary" size="sm" onClick={() => { void saveUrl(c.id); }}>
                             {t('common.save')}
                           </PixelButton>
                           <PixelButton variant="secondary" size="sm" onClick={() => { void removeConn(c.id); }}>
                             {t('common.delete')}
                           </PixelButton>
                         </div>
+                        </div>
                       ))}
                       <div>
-                        <PixelButton variant="secondary" size="sm" onClick={() => { void addConn(); }}>
-                          + add a database
-                        </PixelButton>
+                        <button
+                          onClick={() => { void addConn(); }}
+                          style={{
+                            height: 30, padding: '0 14px', border: 'none', cursor: 'pointer',
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                            fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
+                            color: '#fff', background: 'var(--cth-lilac)',
+                            borderRadius: 'var(--cth-radius-btn)', boxShadow: 'var(--cth-shadow-sm)'
+                          }}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M8 3.2v9.6M3.2 8h9.6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+                          </svg>
+                          {t('mcpDefaults.addDatabase')}
+                        </button>
                       </div>
                     </div>
                   )}
@@ -271,13 +293,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                         placeholder={hasSecret[entry.id + envName]
                           ? `${envName} · set — paste a new one to replace it`
                           : PLACEHOLDER[envName] ?? envName}
-                        style={{
-                          flex: 1, minWidth: 0, padding: '10px 12px 5px',
-                          background: 'var(--cth-cream-100)', border: 'none',
-                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-btn)',
-                          fontFamily: 'var(--cth-font-mono)', fontSize: 13,
-                          color: 'var(--cth-ink-900)', outline: 'none'
-                        }}
+                        style={{ ...fieldStyle, flex: 1, minWidth: 0 }}
                       />
                       <PixelButton variant="secondary" size="sm" onClick={() => { void saveSecret(entry.id, envName); }}>
                         {t('common.save')}
