@@ -6,6 +6,11 @@ type Variant = 'default' | 'inset' | 'active' | 'terminal' | 'dialog';
 export interface PixelPanelProps {
   variant?: Variant;
   title?: string;
+  /** When given, the title bar carries a close control. Every dialog in the app
+   *  can be dismissed from its own corner rather than only from the footer. */
+  onClose?: () => void;
+  /** Accessible name for that control. */
+  closeLabel?: string;
   accent?: AccentColorName;
   children?: ReactNode;
   style?: CSSProperties;
@@ -32,6 +37,8 @@ const fillByVariant: Record<Variant, string> = {
 export function PixelPanel({
   variant = 'default',
   title,
+  onClose,
+  closeLabel = 'Close',
   accent,
   children,
   style,
@@ -70,10 +77,29 @@ export function PixelPanel({
             color: 'var(--cth-ink-900)',
             fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
             fontSize: 15, letterSpacing: '-0.2px', lineHeight: '20px',
-            boxShadow: 'inset 0 -1px 0 var(--cth-ink-100)'
+            boxShadow: 'inset 0 -1px 0 var(--cth-ink-100)',
+            display: 'flex', alignItems: 'center', gap: 12
           }}
         >
-          {title}
+          <span style={{ flex: 1, minWidth: 0 }}>{title}</span>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={closeLabel}
+              className="cth-ghost-btn"
+              style={{
+                width: 28, height: 28, flexShrink: 0, border: 'none',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: 'var(--cth-radius-btn)',
+                background: 'transparent', color: 'var(--cth-ink-500)', cursor: 'pointer'
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
         </div>
       )}
       {children}

@@ -493,6 +493,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
         <PixelPanel
           variant="dialog"
           title={tr('addAgent.title')}
+          onClose={onClose}
+          closeLabel={tr('common.cancel')}
           style={{ padding: 16 }}
           noPadding
         >

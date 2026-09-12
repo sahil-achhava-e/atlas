@@ -15,6 +15,7 @@ import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { Dropdown } from './Dropdown';
 import { Switch } from './Switch';
+import { providerPreset } from '@/store/config';
 import { groupCard, rowRule } from '@/design/surfaces';
 import { SetupPanel } from './SetupPanel';
 import { Icon } from './Icon';
@@ -277,7 +278,13 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
     setOrchSpawnOn(next);
     stage({ orchestratorMaySpawn: next } as Partial<HarnessConfig>);
   };
-  const [defaultModelSel, setDefaultModelSel] = useState<string>(cfgX.defaultModel ?? 'claude-fable-5');
+  // The fallback has to be the one a spawn ACTUALLY uses when nothing is
+  // configured, which is the provider preset's recommendation. It said
+  // 'claude-fable-5' while every new agent started on Opus 4.8 · 1M, so this
+  // picker showed a model the app was not using.
+  const [defaultModelSel, setDefaultModelSel] = useState<string>(
+    cfgX.defaultModel ?? providerPreset('claude').recommendedOrchestratorModel ?? ''
+  );
   const saveDefaultModel = (id: string): void => {
     setDefaultModelSel(id);
     stage({ defaultModel: id } as Partial<HarnessConfig>);
@@ -710,12 +717,14 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
           // size for every tab; the content pane scrolls inside it.
           width: 840, maxWidth: '92vw', height: 'min(80vh, 760px)',
           display: 'flex', flexDirection: 'column',
-          filter: 'drop-shadow(4px 4px 0 rgba(26, 19, 32, 0.25))'
+          filter: 'drop-shadow(0 18px 40px rgba(17, 20, 24, 0.28))'
         }}
       >
         <PixelPanel
           variant="dialog"
           title={modalTitle}
+          onClose={requestClose}
+          closeLabel={t('settings.close')}
           noPadding
           style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}
         >

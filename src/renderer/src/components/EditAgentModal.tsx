@@ -105,7 +105,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
           one job — describe an agent — and a tall narrow dialog next to a wide
           one reads as two unrelated screens. */}
       <div onClick={(e) => e.stopPropagation()} style={{ width: 940, maxWidth: '95vw' }}>
-        <PixelPanel variant="dialog" title="Edit agent" style={{ padding: 16 }} noPadding>
+        <PixelPanel variant="dialog" title="Edit agent" onClose={onClose} closeLabel="Close" style={{ padding: 16 }} noPadding>
           <div style={{
             display: 'flex', flexDirection: 'column', gap: 16,
             padding: 16, maxHeight: '86vh', overflowY: 'auto'
