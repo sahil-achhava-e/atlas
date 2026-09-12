@@ -487,7 +487,9 @@
     "agentActions": "{{name}} actions",
     "editAgent": "Edit agent",
     "restarting": "restarting…",
-    "restartNoProcess": "No live process to restart. Start this agent first."
+    "restartNoProcess": "No live process to restart. Start this agent first.",
+    "restartShort": "Restart",
+    "editShort": "Edit"
   },
   "addAgent": {
     "title": "Add agent",

@@ -766,10 +766,10 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
             <div
               key={a.id}
               style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 12px', marginBottom: 8,
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '12px 14px', marginBottom: 8,
                 background: 'var(--cth-paper-100)',
-                borderRadius: 'var(--cth-radius-input)',
+                borderRadius: 'var(--cth-radius-card)',
                 boxShadow: armed
                   ? `0 0 0 1px color-mix(in srgb, var(--cth-coral) 40%, transparent)`
                   : '0 0 0 1px var(--cth-ink-100)'
@@ -779,9 +779,9 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                 onClick={() => select(a.id)}
                 aria-label={a.name}
                 style={{
-                  width: 32, height: 32, flexShrink: 0, padding: 0, border: 'none',
-                  borderRadius: 10, overflow: 'hidden', cursor: 'pointer',
-                  background: 'var(--cth-cream-200)',
+                  width: 36, height: 36, flexShrink: 0, padding: 0, border: 'none',
+                  borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
+                  background: 'var(--cth-cream-100)',
                   boxShadow: `0 0 0 2px var(--cth-status-${a.status})`,
                   display: 'inline-flex', alignItems: 'flex-end', justifyContent: 'center'
                 }}
@@ -795,11 +795,24 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                     onClick={() => select(a.id)}
                     style={{
                       border: 'none', background: 'transparent', padding: 0, cursor: 'pointer',
-                      fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
+                      fontFamily: 'var(--cth-font-ui)', fontSize: 13.5, fontWeight: 600,
                       color: 'var(--cth-ink-900)', textAlign: 'start',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                     }}
                   >{a.name}</button>
+                  {/* What it is doing, beside its name: the meter says how much
+                      it has spent, not whether it is working. */}
+                  <span style={{
+                    flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5,
+                    fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 600,
+                    color: 'var(--cth-ink-500)'
+                  }}>
+                    <span style={{
+                      width: 6, height: 6, borderRadius: '50%',
+                      background: `var(--cth-status-${a.status})`
+                    }} />
+                    {a.status}
+                  </span>
                   {a.isGod && (
                     <span style={{
                       flexShrink: 0, padding: '2px 7px', borderRadius: 'var(--cth-radius-pill)',
@@ -831,12 +844,53 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                 </div>
               </div>
 
-              <AgentRowMenu
-                agent={a}
-                onRestart={() => void restartWithModel(a, a.model, { resume: true })}
-                onEdit={() => setEditAgent(a)}
-                restarting={restarting === a.id}
-              />
+              {/* Both actions, on the row. A menu behind three dots hides two
+                  buttons behind an extra click and gives no clue what is in
+                  there; there is room for both. */}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <button
+                  onClick={() => void restartWithModel(a, a.model, { resume: true })}
+                  disabled={restarting === a.id}
+                  aria-label={t('commandCenter.restartContinue')}
+                  data-label={t('commandCenter.restartContinue')}
+                  className="cth-ghost-btn"
+                  style={{
+                    height: 30, padding: '0 10px', border: 'none',
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    borderRadius: 'var(--cth-radius-btn)',
+                    background: 'var(--cth-mint-light)', color: 'var(--cth-mint)',
+                    fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
+                    cursor: restarting === a.id ? 'default' : 'pointer',
+                    opacity: restarting === a.id ? 0.6 : 1
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path d="M16 10a6 6 0 1 1-1.8-4.3M16 3.4V7h-3.6"
+                      stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {restarting === a.id ? t('commandCenter.restarting') : t('commandCenter.restartShort')}
+                </button>
+                <button
+                  onClick={() => setEditAgent(a)}
+                  aria-label={t('commandCenter.editAgent')}
+                  data-label={t('commandCenter.editAgent')}
+                  className="cth-ghost-btn"
+                  style={{
+                    height: 30, padding: '0 10px', border: 'none',
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    borderRadius: 'var(--cth-radius-btn)',
+                    background: 'var(--cth-lemon-light)', color: 'var(--cth-lemon)',
+                    fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path d="M13.4 3.6a1.9 1.9 0 0 1 2.7 2.7L7.5 14.9l-3.5.9.9-3.5 8.5-8.7Z"
+                      stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                  </svg>
+                  {t('commandCenter.editShort')}
+                </button>
+              </span>
             </div>
           );
         })}
@@ -1206,95 +1260,4 @@ function Select({ value, onChange, disabled, children }: {
   return <Dropdown value={value} options={options} onChange={onChange} width="auto" align="top" />;
 }
 
-/**
- * The per-agent overflow menu.
- *
- * The row shows live state; everything you can DO to an agent hides behind one
- * control. Three items, and each exists because it has no other home: the token
- * limit, restart-and-continue, and a jump to Edit (which owns engine and model).
- */
-function AgentRowMenu({ agent, onRestart, onEdit, restarting }: {
-  agent: Agent;
-  onRestart: () => void;
-  onEdit: () => void;
-  restarting: boolean;
-}) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (root.current && !root.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [open]);
-
-  const item: React.CSSProperties = {
-    width: '100%', height: 32, padding: '0 10px',
-    display: 'flex', alignItems: 'center', gap: 8,
-    border: 'none', background: 'transparent', cursor: 'pointer',
-    borderRadius: 'var(--cth-radius-btn)',
-    fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)',
-    textAlign: 'start'
-  };
-
-  return (
-    <div ref={root} style={{ position: 'relative', flexShrink: 0 }}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-label={t('commandCenter.agentActions', { name: agent.name })}
-        aria-expanded={open}
-        className="cth-iconbar"
-        data-label={t('commandCenter.agentActions', { name: agent.name })}
-        style={{
-          width: 28, height: 28, border: 'none', background: 'transparent',
-          borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--cth-ink-500)'
-        }}
-      >
-        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <circle cx="10" cy="4.6" r="1.5" fill="currentColor" />
-          <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-          <circle cx="10" cy="15.4" r="1.5" fill="currentColor" />
-        </svg>
-      </button>
-
-      {open && (
-        <div style={{
-          position: 'absolute', insetInlineEnd: 0, top: 'calc(100% + 6px)', zIndex: 60,
-          minWidth: 210, padding: 4, borderRadius: 'var(--cth-radius-input)',
-          background: 'var(--cth-paper-100)',
-          boxShadow: '0 0 0 1px var(--cth-ink-100), var(--cth-shadow-hover)'
-        }}>
-          <>
-              <button style={item} disabled={restarting} onClick={() => { onRestart(); setOpen(false); }}>
-                <span style={{ display: 'inline-flex', color: 'var(--cth-sky)' }}>
-                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M13.2 8a5.2 5.2 0 11-1.9-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                    <path d="M13.4 2.6v3.2h-3.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                {restarting ? t('commandCenter.restarting') : t('commandCenter.restartContinue')}
-              </button>
-              <button
-                style={item}
-                onClick={() => { onEdit(); setOpen(false); }}
-              >
-                <span style={{ display: 'inline-flex', color: 'var(--cth-plum)' }}>
-                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                    <path d="M12.4 3.8l3.8 3.8-8.2 8.2-4.4.6.6-4.4z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                {t('commandCenter.editAgent')}
-              </button>
-          </>
-        </div>
-      )}
-    </div>
-  );
-}
 
