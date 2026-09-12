@@ -15,6 +15,7 @@ import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { Dropdown } from './Dropdown';
 import { Switch } from './Switch';
+import { groupCard, rowRule } from '@/design/surfaces';
 import { SetupPanel } from './SetupPanel';
 import { Icon } from './Icon';
 import { McpDefaultsSettings } from './McpDefaultsSettings';
@@ -170,7 +171,6 @@ const sectionHeadTight = { ...sectionHead, marginBottom: 2 } as const;
 const sectionHeadFlush = { ...sectionHead, marginBottom: 0 } as const;
 /** The 2px rule between Settings sections. */
 const sectionRule = { height: 1, background: 'var(--cth-ink-100)' } as const;
-
 export type Section = 'General' | 'Agents & Models' | 'Connections' | 'Voice';
 // No Autonomy & Budgets tab: autonomy and who-may-hire moved next to the
 // model and the keys, and the circuit breaker is gone — it only ticked inside
@@ -756,7 +756,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                       }}>
                         {selected ? '◉ ' : '○ '}{title}
                       </span>
-                      <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>{desc}</span>
+                      <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>{desc}</span>
                     </button>
                   );
                 })}
@@ -862,7 +862,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                       {/* No Updates block: the updater reads the upstream
                           project's releases, which are not this fork's. */}
                       {/* Home folder */}
-                      <div>
+                      <div style={groupCard}>
                         <div style={sectionHead}>
                           {t('settings.general.homeFolder')}
                         </div>
@@ -875,18 +875,17 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                         </div>
                       </div>
 
-                      <div style={sectionRule} />
 
                       {/* Environment — settings that used to be trapped in onboarding */}
-                      <div>
+                      <div style={groupCard}>
                         <div style={sectionHead}>
                           {t('settings.general.environment')}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>{t('settings.general.keepAwake')}</span>
-                              <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                              <span style={{ fontSize: 13.5, lineHeight: '20px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>{t('settings.general.keepAwake')}</span>
+                              <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
                                 {t('settings.general.keepAwakeDesc')}
                               </span>
                             </div>
@@ -894,8 +893,8 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>{t('settings.general.simpleMode')}</span>
-                              <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                              <span style={{ fontSize: 13.5, lineHeight: '20px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>{t('settings.general.simpleMode')}</span>
+                              <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
                                 {t('settings.general.simpleModeDesc')}
                               </span>
                             </div>
@@ -904,17 +903,15 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                         </div>
                       </div>
 
-                      <div style={sectionRule} />
 
                       {/* Language — app UI language (i18n) */}
-                      <div>
+                      <div style={groupCard}>
                         <div style={sectionHead}>
                           {t('settings.general.language')}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>{t('settings.general.language')}</span>
-                            <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                            <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
                               {t('settings.general.languageDesc')}
                             </span>
                           </div>
@@ -928,19 +925,18 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                         </div>
                       </div>
 
-                      <div style={sectionRule} />
 
                       {/* Desktop notifications toggle */}
-                      <div>
+                      <div style={groupCard}>
                         <div style={sectionHead}>
                           {t('settings.general.notifications')}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
+                            <span style={{ fontSize: 13.5, lineHeight: '20px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>
                               {t('settings.general.desktopNotifications')}
                             </span>
-                            <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                            <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
                               {t('settings.general.desktopNotificationsDesc')}
                             </span>
                           </div>
@@ -948,19 +944,18 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                         </div>
                       </div>
 
-                      <div style={sectionRule} />
 
                       {/* Scheduled auto-compact (compact-maintenance mission) */}
-                      <div>
+                      <div style={groupCard}>
                         <div style={sectionHead}>
                           {t('settings.general.maintenance')}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
+                            <span style={{ fontSize: 13.5, lineHeight: '20px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>
                               {t('settings.general.autoCompact')}
                             </span>
-                            <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                            <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
                               {t('settings.general.autoCompactDesc')}
                             </span>
                           </div>
@@ -991,12 +986,12 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           installed" are the same question. The memory half of that
                           panel moved to the Memory tab, where the switch is. */}
                       <SetupPanel only={['prerequisite', 'engine']} onDone={onClose} />
-                      <div>
+                      <div style={groupCard}>
                         <div style={sectionHead}>
                           {t('settings.agentsModels.defaultModel')}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                          <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
                             {t('settings.agentsModels.defaultModelDesc', { godName })}
                           </span>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -1005,10 +1000,15 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                                 key={m.label}
                                 onClick={() => { if (m.id) void saveDefaultModel(m.id); }}
                                 style={{
-                                  padding: '3px 12px 1px', border: 'none', cursor: 'pointer',
-                                  fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)',
-                                  background: defaultModelSel === m.id ? 'var(--cth-sky-light)' : 'var(--cth-cream-100)',
-                                  boxShadow: defaultModelSel === m.id ? 'inset 0 0 0 1.5px var(--cth-ink-500)' : 'inset 0 0 0 1px var(--cth-ink-100)'
+                                  height: 32, padding: '0 14px', border: 'none', cursor: 'pointer',
+                                  display: 'inline-flex', alignItems: 'center',
+                                  borderRadius: 'var(--cth-radius-btn)',
+                                  fontFamily: 'var(--cth-font-ui)', fontSize: 12.5,
+                                  fontWeight: defaultModelSel === m.id ? 600 : 500,
+                                  color: defaultModelSel === m.id ? 'var(--cth-lilac)' : 'var(--cth-ink-700)',
+                                  background: defaultModelSel === m.id ? 'var(--cth-lilac-light)' : 'var(--cth-cream-100)',
+                                  boxShadow: defaultModelSel === m.id ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none',
+                                  transition: 'background 120ms ease, color 120ms ease'
                                 }}
                               >{m.label}</button>
                             ))}
@@ -1016,53 +1016,46 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                         </div>
                       </div>
 
-                      <div style={sectionRule} />
 
                       {/* No key block here: the only key this floor needs is the
                           OpenAI one for voice chat, and Voice asks for it. One
                           field, one place. */}
 
-                      <div style={sectionRule} />
 
                       {/* Autonomy and who may hire live HERE, next to the model
                           and the keys: all four are decisions about how an agent
                           runs, and they were a tab away from each other. */}
-                      <div>
+                      <div style={groupCard}>
                         <div style={sectionHead}>
                           {t('settings.autonomy.autonomy')}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
+                            <span style={{ fontSize: 13.5, lineHeight: '20px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>
                               {autoModeOn ? t('settings.autonomy.autoOn') : t('settings.autonomy.autoOff')}
                             </span>
-                            <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                            <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
                               {t('settings.autonomy.autoDesc')}
                             </span>
                           </div>
                           <Switch on={autoModeOn} label={t('settings.autonomy.autoOn')} onChange={toggleAutoMode} />
                         </div>
-                      </div>
 
-                      <div style={{ height: 1, background: 'var(--cth-ink-300)', margin: '12px 0' }} />
+                        <div style={rowRule} />
 
-                      <div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
-                              Who can add agents
+                            <span style={{ fontSize: 13.5, lineHeight: '20px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>
+                              {t('settings.autonomy.whoHires')}
                             </span>
-                            <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
-                              {orchSpawnOn
-                                ? `${godName} can hire on his own. Every agent he starts spends tokens you did not approve.`
-                                : `Only you. ${godName} can still ask, and his request waits in the queue instead of failing.`}
+                            <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
+                              {t(orchSpawnOn ? 'settings.autonomy.whoHiresOn' : 'settings.autonomy.whoHiresOff', { godName })}
                             </span>
                           </div>
                           <Switch on={orchSpawnOn} label={t('settings.autonomy.orchSpawn')} onChange={toggleOrchSpawn} />
                         </div>
                       </div>
 
-                      <div style={sectionRule} />
 
                       {/* No Advanced/max-turns box: a cap that stops an agent
                           mid-task is a worse failure than a long run, and the
@@ -1074,7 +1067,6 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                   {activeSection === 'Connections' && (
                     <>
                       <McpDefaultsSettings config={config} />
-                      <div style={sectionRule} />
                     </>
                   )}
 
@@ -1092,15 +1084,15 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           free and offline, straight into this same box. */}
 
                       {/* Realtime Michael — voice device selection (rt-8) */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ ...groupCard, display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <div style={sectionHeadTight}>
                           {t('settings.voice.realtime')}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          <span style={{ fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-900)' }}>
+                          <span style={{ fontSize: 13.5, lineHeight: '20px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>
                             {t('settings.voice.voiceChat', { godName })}
                           </span>
-                          <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                          <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
                             {t('settings.voice.voiceChatDesc', { godName })}
                           </span>
                         </div>
@@ -1114,9 +1106,9 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             main; only the presence boolean comes back. */}
                         <div style={{
                           display: 'flex', flexDirection: 'column', gap: 8,
-                          padding: 16,
-                          background: 'var(--cth-paper-100)',
-                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
+                          padding: 14,
+                          background: 'var(--cth-cream-100)',
+                          borderRadius: 'var(--cth-radius-card)'
                         }}>
                           <span style={sectionHeadFlush}>
                             {t('settings.voice.openaiKey')}
@@ -1129,6 +1121,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           </span>
                           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                             <input
+                              className="cth-input"
                               type="password"
                               value={openAiVoiceKey}
                               onChange={(e) => setOpenAiVoiceKey(e.target.value)}
@@ -1188,7 +1181,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             ariaLabel={t('settings.voice.idleDisconnect')}
                             width={280}
                           />
-                          <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                          <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
                             {t('settings.voice.idleDisconnectDesc')}
                           </span>
                         </label>

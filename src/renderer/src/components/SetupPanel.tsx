@@ -17,6 +17,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { groupCard, rowRule } from '@/design/surfaces';
 import { PixelButton } from './PixelButton';
 import { Icon } from './Icon';
 import { useStore } from '@/store/store';
@@ -54,12 +55,7 @@ function ToolRow({ tool }: { tool: ToolStatus }) {
     );
   };
   return (
-    <div style={{
-      padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6,
-      background: 'var(--cth-paper-100)',
-      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
-      borderRadius: 'var(--cth-radius-card)'
-    }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{
           fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13.5,
@@ -165,12 +161,12 @@ export function SetupPanel(
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 200 }}>
-          <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13 }}>
+          <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 13, lineHeight: '16px' }}>
             {only && !only.includes('prerequisite')
               ? t('setupPanel.titleEngines')
               : t('setupPanel.title')}
           </div>
-          <div style={{ fontSize: 13, color: 'var(--cth-ink-500)', marginTop: 2 }}>
+          <div style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)', marginTop: 2 }}>
             {tools === null
               ? t('setupPanel.checking')
               : missingEssential.length
@@ -180,7 +176,7 @@ export function SetupPanel(
                 : t('setupPanel.summary', { ready: readyCount, total: visible.length })}
           </div>
         </div>
-        <PixelButton variant="ghost" size="md" onClick={() => void refresh()} disabled={busy}>
+        <PixelButton variant="secondary" size="sm" onClick={() => void refresh()} disabled={busy}>
           {busy ? t('setupPanel.checkingBtn') : t('setupPanel.recheck')}
         </PixelButton>
       </div>
@@ -192,9 +188,9 @@ export function SetupPanel(
           above already says everything is ready. */}
       {missingEssential.length > 0 && (
       <div style={{
-        padding: 16, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap',
-        background: missingEssential.length ? 'var(--cth-lemon-light)' : 'var(--cth-cream-100)',
-        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
+        padding: 14, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap',
+        background: 'var(--cth-lemon-light)',
+        borderRadius: 'var(--cth-radius-card)'
       }}>
         <div style={{ flex: 1, minWidth: 220, fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: 1.5 }}>
           {t('setupPanel.askDesc', { count: missingEssential.length })}
@@ -216,15 +212,20 @@ export function SetupPanel(
         const rows = visible.filter((t) => t.kind === section.kind);
         if (rows.length === 0) return null;
         return (
-          <div key={section.kind} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div key={section.kind} style={groupCard}>
             <div style={{
-              fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 0.5,
-              color: 'var(--cth-ink-500)'
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 13, lineHeight: '16px',
+              color: 'var(--cth-ink-900)'
             }}>{t(section.titleKey)}</div>
-            <div style={{ fontSize: 11, color: 'var(--cth-ink-500)', marginTop: -2 }}>{t(section.blurbKey)}</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {rows.map((t) => <ToolRow key={t.id} tool={t} />)}
-            </div>
+            <div style={{
+              fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)', margin: '2px 0 12px'
+            }}>{t(section.blurbKey)}</div>
+            {rows.map((tool, i) => (
+              <div key={tool.id}>
+                {i > 0 && <div style={rowRule} />}
+                <ToolRow tool={tool} />
+              </div>
+            ))}
           </div>
         );
       })}

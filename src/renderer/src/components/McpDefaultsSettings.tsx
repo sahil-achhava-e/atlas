@@ -110,7 +110,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
   const fieldStyle = {
     padding: '10px 12px 5px',
     background: 'var(--cth-cream-100)', border: 'none',
-    boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
+    boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-btn)',
     fontFamily: 'var(--cth-font-mono)', fontSize: 13,
     color: 'var(--cth-ink-900)', outline: 'none'
   } as const;
@@ -216,6 +216,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                       {conns.map((c) => (
                         <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <input
+                            className="cth-input"
                             value={c.label}
                             onChange={(e) => renameConn(c.id, e.target.value)}
                             placeholder="label, e.g. visits"
@@ -233,6 +234,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                             ))}
                           </select>
                           <input
+                            className="cth-input"
                             type="password"
                             autoComplete="off"
                             value={draft[c.id] ?? ''}
@@ -261,6 +263,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                   {entry.id !== 'db' && envKeys.map((envName) => (
                     <div key={envName} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <input
+                        className="cth-input"
                         type="password"
                         autoComplete="off"
                         value={draft[entry.id + envName] ?? ''}
@@ -271,7 +274,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                         style={{
                           flex: 1, minWidth: 0, padding: '10px 12px 5px',
                           background: 'var(--cth-cream-100)', border: 'none',
-                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
+                          boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-btn)',
                           fontFamily: 'var(--cth-font-mono)', fontSize: 13,
                           color: 'var(--cth-ink-900)', outline: 'none'
                         }}

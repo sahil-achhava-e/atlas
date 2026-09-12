@@ -18,6 +18,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { PixelButton } from '@/components/PixelButton';
+import { Dropdown } from '@/components/Dropdown';
 import { useTranslation } from 'react-i18next';
 import { useRealtimeMichael } from './session';
 import { useStore } from '@/store/store';
@@ -46,17 +47,9 @@ async function listDevices(kind: 'audioinput' | 'audiooutput'): Promise<AudioDev
 
 const labelStyle: React.CSSProperties = {
   fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-  fontSize: 11,
-  lineHeight: '12px',
-  color: 'var(--cth-ink-500)',
-};
-const selectStyle: React.CSSProperties = {
-  fontFamily: 'var(--cth-font-mono)',
-  fontSize: 13,
-  padding: '10px 12px',
-  border: '2px solid var(--cth-ink-300)',
-  background: 'var(--cth-paper-100)',
-  color: 'var(--cth-ink-900)'
+  fontSize: 12,
+  lineHeight: '14px',
+  color: 'var(--cth-ink-600)',
 };
 
 export function RealtimeDevicePicker(): React.ReactElement {
@@ -111,35 +104,31 @@ export function RealtimeDevicePicker(): React.ReactElement {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 280 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <span style={labelStyle}>{t('devicePicker.microphone')}</span>
-        <select
+        <Dropdown
           value={deviceId ?? ''}
-          onChange={(e) => setDeviceId(e.target.value || null)}
-          style={selectStyle}
-        >
-          <option value="">{t('devicePicker.systemDefault')}</option>
-          {mics.map((m) => (
-            <option key={m.deviceId} value={m.deviceId}>
-              {m.label}
-            </option>
-          ))}
-        </select>
+          options={[
+            { value: '', label: t('devicePicker.systemDefault') },
+            ...mics.map((m) => ({ value: m.deviceId, label: m.label }))
+          ]}
+          onChange={(v) => setDeviceId(v || null)}
+          ariaLabel={t('devicePicker.microphone')}
+          width="100%"
+        />
       </div>
 
       {CAN_PICK_SPEAKER && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <span style={labelStyle}>{t('devicePicker.speaker')}</span>
-          <select
+          <Dropdown
             value={outputDeviceId ?? ''}
-            onChange={(e) => setOutputDeviceId(e.target.value || null)}
-            style={selectStyle}
-          >
-            <option value="">{t('devicePicker.systemDefault')}</option>
-            {speakers.map((s) => (
-              <option key={s.deviceId} value={s.deviceId}>
-                {s.label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: t('devicePicker.systemDefault') },
+              ...speakers.map((sp) => ({ value: sp.deviceId, label: sp.label }))
+            ]}
+            onChange={(v) => setOutputDeviceId(v || null)}
+            ariaLabel={t('devicePicker.speaker')}
+            width="100%"
+          />
         </div>
       )}
 
@@ -148,7 +137,7 @@ export function RealtimeDevicePicker(): React.ReactElement {
           <PixelButton variant="secondary" size="sm" onClick={() => { void askAccess(); }} disabled={asking}>
             {asking ? t('devicePicker.asking') : t('devicePicker.showNames')}
           </PixelButton>
-          <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+          <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
             {askError || t('devicePicker.namesHint')}
           </span>
         </div>

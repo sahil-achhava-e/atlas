@@ -284,7 +284,10 @@
       "hardStopDesc": "When tripped, KILL the agent instead of just constraining it. Off = steer-first (recommended).",
       "killOnTrip": "kill on trip",
       "steerFirst": "steer first",
-      "saved": "saved"
+      "saved": "saved",
+      "whoHires": "Who can add agents",
+      "whoHiresOn": "{{godName}} can hire on its own. Every agent it starts spends tokens you did not approve.",
+      "whoHiresOff": "Only you. {{godName}} can still ask, and the request waits in the queue instead of failing."
     },
     "memory": {
       "semanticMemory": "Semantic memory",
@@ -858,7 +861,7 @@
     }
   },
   "setupPanel": {
-    "title": "Prerequisites",
+    "title": "What is installed",
     "checking": "Checking what is installed…",
     "summary": "{{ready}} of {{total}} ready",
     "summaryMissing": "{{ready}} of {{total}} ready, {{missing}} still to set up",
@@ -875,7 +878,7 @@
     "askMichael": "ask {{godName}} to install these",
     "sections": {
       "prerequisites": {
-        "title": "Prerequisites",
+        "title": "Core tools",
         "blurb": "The groundwork everything else builds on."
       },
       "memory": {
