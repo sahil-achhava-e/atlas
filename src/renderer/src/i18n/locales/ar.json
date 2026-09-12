@@ -387,7 +387,6 @@
   },
   "commandCenter": {
     "title": "مركز القيادة",
-    "runsTheFloor": "{{name}} يُدير الأرضية",
     "deliveryPaused": "موقوف",
     "deliveryAuto": "تلقائي",
     "deliveryPausedTitle": "الرسائل المصفوفة محتجزة لكل وكيل على الأرضية. لا يضيع شيء؛ وتُسلَّم بمجرد إعادة تشغيل هذا.",
@@ -432,10 +431,8 @@
     "noStatusTick": "لا نبضة حالة بعد",
     "modelRestarts": "نموذج {{provider}} (يُعيد تشغيل الوكيل)",
     "restartContinue": "أعد التشغيل وتابع",
-    "restartContinueTitle": "أنهِ {{name}} وأعِد إنشاءه مع استئناف محادثته الحالية. يُصلح طرفية تالفة أو مشوّشة دون فقدان السياق",
     "engine": "المحرّك:",
     "apply": "طبّق",
-    "confirmRestartEngine": "هذا يُعيد تشغيل {{name}}؛ ولا يمكن استئناف محادثة على محرّك مختلف.",
     "restartFailed": "فشلت إعادة التشغيل.",
     "archived": "مؤرشَف ({{count}})",
     "showClosed": "أظهر الوكلاء المغلقين",

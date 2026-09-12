@@ -59,7 +59,7 @@ function newWebhookId(): string {
 }
 
 /** Pixel-aesthetic text input, mirroring AddAgentModal's inputStyle. */
-const slackInputStyle: CSSProperties = {
+const fieldStyle: CSSProperties = {
   width: '100%',
   padding: '9px 12px',
   background: 'var(--cth-paper-100)',
@@ -74,75 +74,12 @@ const slackInputStyle: CSSProperties = {
   boxSizing: 'border-box'
 };
 
-const slackLabelStyle: CSSProperties = {
+const fieldLabelStyle: CSSProperties = {
   fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
   fontSize: 12,
   lineHeight: '14px',
   color: 'var(--cth-ink-600)',
 };
-
-/** The exact connect walkthrough shown behind the i icon. Steps 6 & 7 spell out
- *  the both-lists requirement: subscribe to message.channels / message.groups in
- *  BOTH "Subscribe to bot events" AND "Subscribe to events on behalf of users". */
-const SLACK_CONNECT_STEPS = `Connect Atlas to Slack
-
-1. api.slack.com/apps -> Create New App -> From scratch. Name it
-   "Atlas" and pick your workspace.
-2. Basic Information -> Signing Secret -> copy it into the
-   "Signing secret" field here.
-3. OAuth & Permissions -> Bot Token Scopes: add
-     chat:write          (office replies in-thread)
-     channels:history    (read public-channel messages)
-     groups:history      (read private-channel messages)
-   Install to workspace, then copy the Bot User OAuth Token
-   (xoxb-...) into the "Bot token" field here.
-4. Press Start (below) to launch the webhook and get your
-   Request URL.
-5. Event Subscriptions -> Enable Events -> Request URL: paste the
-   Request URL from here and wait for Slack's green check (Verified).
-6. Event Subscriptions -> "Subscribe to bot events": add
-     message.channels
-     message.groups
-7. Event Subscriptions -> "Subscribe to events on behalf of users"
-   (add the matching User Token Scope channels:history / groups:history
-   first if Slack asks): add
-     message.channels
-     message.groups
-8. Save Changes, reinstall if Slack prompts, then invite the bot
-   to your channel:  /invite @MunderDifflin`;
-
-/** The request/response contract shown behind the webhook i icon. Every webhook
- *  shares one server and one tunnel and is told apart by its id in the path, so
- *  `<tunnel>` is the public base URL and `<webhookId>` picks the endpoint. The
- *  secret/token go in headers so they stay out of URLs and access logs. */
-const webhookApiDoc = (godName: string): string => `Webhook API
-
-Every webhook has its own URL, its own secret and its own mode. They share one
-server and one tunnel; the id in the path says which one you are calling.
-
-Trigger work (POST <tunnel>/<webhookId>):
-  header  x-md-webhook-secret: <that webhook's secret>
-  body    {"message": "do X for me", "title": "optional short title",
-           "kind": "directive" | "communication", "from": "who is calling"}
-  -> 200  {"ok": true, "token": "<capability token>", "taskId": "<card id>"}
-  -> 202  {"ok": true, "status": "awaiting approval"}
-
-Check status (GET <tunnel>/<webhookId>):
-  header  x-md-webhook-token: <token>     (or  ?token=<token>)
-  -> 200  {"ok": true, "status": "todo|doing|blocked|done",
-           "title": "...", "result": "<summary or null>"}
-
-The mode decides which of the two answers you get:
-  allow all           routes straight through -> 200
-  communication only  chatter routes; a directive gets 202 awaiting approval
-  strict              everything gets 202 awaiting approval
-
-A 202 means the message is parked in Trigger History until you approve it; the
-token you were handed still reads that task once it is routed. The secret
-authorizes new work, the token only reads one task's status. Keep both private.
-
-Each webhook checks bodies against its own JSON schema — edit that in the
-Triggers tab of ${godName}'s Command Center.`;
 
 /** Clear every renderer-side persisted key so a relaunch starts truly empty. */
 function clearLocalState(): void {
@@ -157,7 +94,7 @@ function clearLocalState(): void {
 }
 
 // v0.3.4 redesign: six tabs, one topic each. 'AI Engines' folded into
-// Agents & Models; MCP + Slack + webhook + REST live together in Connections;
+// Agents & Models; Connections is the MCP server list;
 // voice gets its own tab; Danger Zone became a red row at the bottom of General.
 /* The small-caps section heading, defined once. It was written out inline
    seventeen times, in three slightly different forms, which is how a tab ends
@@ -238,7 +175,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
    *     one back to diff it, so there is no staged value to hold.
    *   - Free Flow, which arms a global hotkey in main. Staging that would leave
    *     the hotkey and the checkbox disagreeing until you pressed Save.
-   * Slack and webhooks keep their own controls too: those connect and
+   * The MCP servers keep their own controls too: those connect and
    * disconnect live rather than storing a preference.
    */
   const [pending, setPending] = useState<Partial<HarnessConfig>>({});
@@ -901,7 +838,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                     </>
                   )}
 
-                  {/* CONNECTIONS — everything external (MCP + Slack + webhook + REST) */}
+                  {/* CONNECTIONS — the MCP servers every new agent is given */}
                   {activeSection === 'Connections' && (
                     <>
                       <McpDefaultsSettings config={config} />
@@ -965,7 +902,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                               onChange={(e) => setOpenAiVoiceKey(e.target.value)}
                               onKeyDown={(e) => { if (isComposingKey(e)) return; if (e.key === 'Enter') void saveOpenAiVoiceKey(); }}
                               placeholder={hasOpenAiKey ? t('settings.voice.keyPlaceholderSaved') : 'sk-…'}
-                              style={{ ...slackInputStyle, flex: 1, fontFamily: 'var(--cth-font-mono)' }}
+                              style={{ ...fieldStyle, flex: 1, fontFamily: 'var(--cth-font-mono)' }}
                             />
                             <PixelButton
                               variant="secondary"
@@ -999,7 +936,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                         {/* rt-9 idle-tunable: how long an idle voice session stays open before
                             it auto-closes. The spend cap remains the real runaway guard. */}
                         <label style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 280 }}>
-                          <span style={slackLabelStyle}>{t('settings.voice.idleDisconnect')}</span>
+                          <span style={fieldLabelStyle}>{t('settings.voice.idleDisconnect')}</span>
                           <Dropdown
                             value={String(idleDisconnectMs)}
                             options={[

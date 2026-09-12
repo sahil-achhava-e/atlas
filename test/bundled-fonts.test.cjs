@@ -15,13 +15,15 @@ const root = path.join(__dirname, '..');
 const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 
 const FONT_DIR = 'src/renderer/src/assets/fonts';
+// Two faces ship: Inter for the UI, JetBrains Mono for code, terminals and the
+// display face. Press Start 2P was the original arcade identity and the
+// redesign dropped it — fonts.css no longer declares it, so the file went too.
 const FILES = [
-  'press-start-2p-latin-400.woff2',
   'inter-latin-var.woff2',
   'jetbrains-mono-latin-var.woff2'
 ];
 
-test('the three faces are real woff2 files inside the repo', () => {
+test('both faces are real woff2 files inside the repo', () => {
   for (const f of FILES) {
     const buf = fs.readFileSync(path.join(root, FONT_DIR, f));
     // 'wOF2' — a truncated or HTML-error-page download would not carry it.

@@ -387,7 +387,6 @@
   },
   "commandCenter": {
     "title": "Command center",
-    "runsTheFloor": "{{name}} runs the floor",
     "deliveryPaused": "paused",
     "deliveryAuto": "auto",
     "deliveryPausedTitle": "Queued messages are being held for EVERY agent on the floor. Nothing is lost; it is delivered when you switch this back on.",
@@ -445,10 +444,8 @@
     "noStatusTick": "no status tick yet",
     "modelRestarts": "{{provider}} model (restarts agent)",
     "restartContinue": "Restart and continue",
-    "restartContinueTitle": "Kill and respawn {{name}}, resuming its current conversation. Fixes a corrupted/garbled terminal without losing context",
     "engine": "engine:",
     "apply": "Apply",
-    "confirmRestartEngine": "This restarts {{name}}; a conversation on a different engine can't be resumed.",
     "restartFailed": "Restart failed.",
     "archived": "ARCHIVED ({{count}})",
     "showClosed": "show closed agents",

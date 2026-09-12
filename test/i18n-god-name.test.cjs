@@ -54,8 +54,7 @@ test('strings about ONE agent interpolate {{name}}, not the orchestrator', () =>
   // These describe whichever agent is on screen. Naming god here is not a
   // translation nit: "This restarts Michael" on a dialog that restarts Kevin is
   // a destructive action describing the wrong target.
-  const perAgent = ['commandCenter.runsTheFloor', 'commandCenter.noTerminal',
-                    'commandCenter.confirmRestartEngine', 'commandCenter.restartContinueTitle'];
+  const perAgent = ['commandCenter.noTerminal'];
   for (const l of LOCALES) {
     const f = flatten(locale(l));
     for (const k of perAgent) {
@@ -67,8 +66,7 @@ test('strings about ONE agent interpolate {{name}}, not the orchestrator', () =>
 
 test('every per-agent string has a call site that actually passes a name', () => {
   const src = read('src/renderer/src/components/CommandCenterPanel.tsx');
-  for (const k of ['commandCenter.runsTheFloor', 'commandCenter.noTerminal',
-                   'commandCenter.confirmRestartEngine', 'commandCenter.restartContinueTitle']) {
+  for (const k of ['commandCenter.noTerminal']) {
     const call = new RegExp(`t\\('${k.replace('.', '\\.')}',\\s*\\{[^}]*name:`);
     assert.match(src, call, `${k} is used without passing a name`);
   }
