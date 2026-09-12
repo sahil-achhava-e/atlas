@@ -11,6 +11,7 @@ import { useDirectionSync } from '@/i18n/useDirection';
 import { useArabicTerminalSync } from '@/terminal/useArabicTerminalSync';
 import { AgentDetailPanel } from '@/components/AgentDetailPanel';
 import { AddAgentModal } from '@/components/AddAgentModal';
+import { useTranslation } from 'react-i18next';
 import { MichaelBooting } from '@/components/MichaelBooting';
 import { OnboardingWizard } from '@/components/OnboardingWizard';
 import { HivePicker } from '@/components/HivePicker';
@@ -36,6 +37,7 @@ import { go, parseRoute, type Route } from '@/routes';
 declare const __APP_VERSION__: string;
 
 export function App() {
+  const { t } = useTranslation();
   // Point every {{godName}} string at the orchestrator's real, renameable name.
   useGodNameSync();
   // Mirror the document only for a user who has picked an RTL app language.
@@ -644,14 +646,26 @@ export function App() {
               display: 'flex', flexDirection: 'column',
               justifyContent: 'center', alignItems: 'center', gap: 12
             }}>
+              {/* The same three brand dots as the boot card, so the two things
+                  you see while waiting look like one app. */}
+              <div style={{ display: 'flex', gap: 7 }}>
+                {[0, 1, 2].map((i) => (
+                  <span key={i} style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: 'var(--cth-lilac)',
+                    animation: 'cth-boot-pulse 1.1s ease-in-out infinite',
+                    animationDelay: `${i * 0.16}s`
+                  }} />
+                ))}
+              </div>
               <div style={{
-                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
-                color: 'var(--cth-ink-500)'
-              }}>WAKING THE FLOOR</div>
-              <p style={{ margin: 0, fontSize: 13, textAlign: 'center', color: 'var(--cth-ink-700)' }}>
-                {bootingGodName} is clocking in.<br />
-                The terminal will land here once he's seated.
-              </p>
+                fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 13, lineHeight: '16px',
+                color: 'var(--cth-ink-900)'
+              }}>{t('floor.wakingTitle')}</div>
+              <p style={{
+                margin: 0, fontSize: 12.5, lineHeight: '18px',
+                textAlign: 'center', color: 'var(--cth-ink-500)'
+              }}>{t('floor.wakingLine', { godName: bootingGodName })}</p>
             </PixelPanel>
           ) : (
             <PixelPanel variant="default" noPadding style={{
@@ -660,16 +674,16 @@ export function App() {
               justifyContent: 'center', alignItems: 'center', gap: 12
             }}>
               <div style={{
-                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
-                color: 'var(--cth-ink-500)'
-              }}>NO AGENT SELECTED</div>
-              <p style={{ margin: 0, fontSize: 13, textAlign: 'center', color: 'var(--cth-ink-700)' }}>
-                Pick an agent above, or spawn a new one.<br />
-                The terminal and command bar will land here.
-              </p>
-              <PixelButton variant="secondary" size="md" onClick={() => setAddAgentOpen(true)}>
+                fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 13, lineHeight: '16px',
+                color: 'var(--cth-ink-900)'
+              }}>{t('floor.noAgentTitle')}</div>
+              <p style={{
+                margin: 0, fontSize: 12.5, lineHeight: '18px',
+                textAlign: 'center', color: 'var(--cth-ink-500)'
+              }}>{t('floor.noAgentLine')}</p>
+              <PixelButton variant="primary" size="md" onClick={() => setAddAgentOpen(true)}>
                 <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-                  <Icon name="plus" /> Add agent
+                  <Icon name="plus" /> {t('agentStrip.addAgent')}
                 </span>
               </PixelButton>
             </PixelPanel>

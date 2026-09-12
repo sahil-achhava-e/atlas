@@ -1532,5 +1532,15 @@
     "loading": "loading image…",
     "decodeFailed": "could not decode this image. The file may be corrupt or misnamed"
   },
-  "triggers": {}
+  "triggers": {},
+  "michaelBooting": {
+    "title": "Starting up",
+    "line": "{{godName}} is opening the floor and picking up where it left off."
+  },
+  "floor": {
+    "wakingTitle": "Waking the floor",
+    "wakingLine": "{{godName}} is starting up. The terminal lands here once it is running.",
+    "noAgentTitle": "No agent selected",
+    "noAgentLine": "Pick an agent above, or add one. The terminal and its composer land here."
+  }
 }

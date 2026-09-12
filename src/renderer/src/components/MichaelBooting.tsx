@@ -1,4 +1,5 @@
 import { PixelPanel } from '@/components/PixelPanel';
+import { useTranslation } from 'react-i18next';
 import { useResolvedGodName } from '@/hooks/useResolvedGodName';
 
 /**
@@ -12,6 +13,7 @@ import { useResolvedGodName } from '@/hooks/useResolvedGodName';
  * rather than assuming the default.
  */
 export function MichaelBooting() {
+  const { t } = useTranslation();
   const godName = useResolvedGodName();
   return (
     <div style={{
@@ -20,32 +22,31 @@ export function MichaelBooting() {
       pointerEvents: 'none'
     }}>
       <div style={{ pointerEvents: 'auto', width: 360 }}>
-        <PixelPanel variant="dialog" title="Clocking in" noPadding>
+        <PixelPanel variant="dialog" title={t('michaelBooting.title')} noPadding>
           <div style={{
             padding: 20,
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16
           }}>
-            {/* Stepped pixel blocks — staggered blink, no easing (matches aesthetic) */}
-            <div style={{ display: 'flex', gap: 8 }}>
-              {[0, 1, 2, 3].map((i) => (
+            {/* Three dots in the brand, not four dark-red blocks with a hard
+                shadow: this is the first thing a returning user sees. */}
+            <div style={{ display: 'flex', gap: 7 }}>
+              {[0, 1, 2].map((i) => (
                 <span
                   key={i}
                   style={{
-                    width: 14, height: 14,
-                    background: '#6E1423',
-                    boxShadow: 'var(--cth-shadow-hard)',
-                    animation: 'cth-blink 1s steps(1, end) infinite',
-                    animationDelay: `${i * 0.2}s`
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: 'var(--cth-lilac)',
+                    animation: 'cth-boot-pulse 1.1s ease-in-out infinite',
+                    animationDelay: `${i * 0.16}s`
                   }}
                 />
               ))}
             </div>
             <p style={{
               margin: 0, fontSize: 13, lineHeight: '20px', textAlign: 'center',
-              color: 'var(--cth-ink-700)'
+              color: 'var(--cth-ink-600)'
             }}>
-              {godName} is settling into the corner office and getting the floor
-              ready. Hang tight…
+              {t('michaelBooting.line', { godName })}
             </p>
           </div>
         </PixelPanel>

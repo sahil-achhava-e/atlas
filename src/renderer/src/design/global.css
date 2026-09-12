@@ -195,6 +195,13 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
 }
 
 /* Keyframes — pixel-style: step-based, no easing */
+/* The boot card's three dots: they breathe rather than blink, because a hard
+   step at 1s reads as a fault light. */
+@keyframes cth-boot-pulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.85); }
+  50%      { opacity: 1;    transform: scale(1); }
+}
+
 @keyframes cth-blink {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: 0; }
