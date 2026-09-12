@@ -653,8 +653,8 @@
       "features": {
         "engines": {
           "label": "{{count}} engines",
-          "desc": "Claude Code, Codex, Cursor, Gemini and {{rest}} more.",
-          "descPlain": "{{count}} AI assistants. You pick who does what."
+          "desc": "{{names}}. Pick one for Atlas; every agent can run a different one.",
+          "descPlain": "{{names}}. You pick which one Atlas uses."
         },
         "clone": {
           "label": "{{godName}} runs it",
@@ -672,9 +672,9 @@
           "descPlain": "One screen for everything they are doing."
         },
         "guardrails": {
-          "label": "It asks first",
-          "desc": "With auto mode off, an agent stops for your approval before it changes a file or runs a command.",
-          "descPlain": "Agents check with you before they change anything, unless you say otherwise."
+          "label": "Auto mode",
+          "desc": "On by default: agents do the work without stopping to ask. Turn it off and they check with you before changing a file or running a command.",
+          "descPlain": "On by default: agents get on with the work. Turn it off and they check with you first."
         },
         "hires": {
           "label": "Hire in one click",

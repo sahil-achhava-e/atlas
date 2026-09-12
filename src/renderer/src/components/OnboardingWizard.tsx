@@ -8,7 +8,7 @@ import { AtlasMark } from './AtlasMark';
 import { Dropdown } from './Dropdown';
 import { ProviderLogo } from './ProviderLogo';
 import { modelsForProvider, onboardingEngineChoices, type AgentProvider, type HarnessConfig } from '@/store/config';
-import { AGENT_PROVIDER_PRESETS, providerPreset } from '@shared/agentProvider';
+import { providerPreset } from '@shared/agentProvider';
 import {
   classifyEngineAvailability, engineAvailabilityBadge, engineAvailabilityMessage, engineBlocksOnboarding
 } from '@shared/engineAvailability';
@@ -54,13 +54,19 @@ interface Feature {
   tint: string;          // tile background token
   edge: string;          // tile border token
 }
-/** How many engines Atlas actually supports, counted from the presets rather
- *  than written into a sentence. The card said "Eleven engines" while the list
- *  had grown to twelve; a number in copy that nothing computes always drifts.
- *  `custom` is not an engine — it is "type your own command". */
+/** The engines this setup actually offers on the next step, counted and named
+ *  from the same list that draws it. The card used to say "Eleven engines" and
+ *  "and eight more" from a preset file the user never sees; what matters is
+ *  what step 3 puts in front of you. */
 const ENGINE_COUNTS = (() => {
-  const count = AGENT_PROVIDER_PRESETS.filter((p) => p.id !== 'custom').length;
-  return { count, rest: count - 4 };   // four are named in the sentence
+  const shown = onboardingEngineChoices().eligible;
+  const names = shown.map((p) => p.label.split(' · ')[0]);
+  return {
+    count: shown.length,
+    names: names.length > 1
+      ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+      : (names[0] ?? '')
+  };
 })();
 
 const FEATURES: Feature[] = [
