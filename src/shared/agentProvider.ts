@@ -111,6 +111,8 @@ export interface AgentProviderPreset {
    *  model as `config.godModel ?? preset.recommendedOrchestratorModel ?? MODEL_GOD`.
    *  Advisory + user-overridable. */
   recommendedOrchestratorModel?: string;
+  /** What a hired agent starts on when nobody names a model. */
+  recommendedWorkerModel?: string;
   /** Whether the router may DELIVER inbox mail to this provider (vs bouncing it
    *  to the god). Requires lifecycle status so the renderer can deliver only at a
    *  safe idle prompt: Claude natively, Antigravity/Codex/Grok via hook bridges.
@@ -181,7 +183,13 @@ export const AGENT_PROVIDER_PRESETS: AgentProviderPreset[] = [
     canReceiveInbox: true,
     // Longest-context Claude variant — matches the "give Michael a bigger model"
     // advisory and the Recommended tag on the orchestrator picker.
-    recommendedOrchestratorModel: 'claude-opus-4-8[1m]',
+    // Atlas runs on the strongest model in the catalogue: it plans the work and
+    // decides who does it, and that judgement is what the whole floor rests on.
+    recommendedOrchestratorModel: 'claude-opus-5',
+    // What a hired agent starts on when nobody names a model. Atlas overrides it
+    // per worker when a job wants more or less; a human overrides it in the
+    // Add agent dialog. Sonnet because most work is not orchestration.
+    recommendedWorkerModel: 'claude-sonnet-5',
     resumeFlag: '--resume',
     // Official Claude Code install (npm global). Used by the missing-CLI auto-install.
     installCommand: 'npm install -g @anthropic-ai/claude-code',

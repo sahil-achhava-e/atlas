@@ -283,7 +283,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
   // 'claude-fable-5' while every new agent started on Opus 4.8 · 1M, so this
   // picker showed a model the app was not using.
   const [defaultModelSel, setDefaultModelSel] = useState<string>(
-    cfgX.defaultModel ?? providerPreset('claude').recommendedOrchestratorModel ?? ''
+    cfgX.defaultModel ?? providerPreset('claude').recommendedWorkerModel ?? ''
   );
   const saveDefaultModel = (id: string): void => {
     setDefaultModelSel(id);
