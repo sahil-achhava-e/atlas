@@ -26,9 +26,6 @@ import { useRtl } from '@/i18n/useDirection';
 /** Roster rail width. A fixed 232px is right on a 14" laptop but reads as a
  *  sliver on a 27" display, where names truncate for no reason — so it tracks
  *  the viewport between those two ends. */
-const SIDEBAR_WIDTH = 'clamp(232px, 14vw, 340px)';
-/** Remembers the roster collapse across fullscreen sessions and app restarts. */
-const ROSTER_COLLAPSED_KEY = 'cth.fullscreen.rosterCollapsed';
 
 /** Roster type scale, derived from the shared terminal zoom so Cmd +/- resizes
  *  the whole roster along with the terminal — one knob for the whole view
@@ -188,16 +185,6 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
   // Roster collapse. Persisted because it is a working preference, not a mode:
   // someone who hides the rail to read wide terminal output wants it still hidden
   // the next time they go fullscreen, not to re-hide it every single time.
-  const [rosterCollapsed, setRosterCollapsed] = useState<boolean>(() => {
-    try { return localStorage.getItem(ROSTER_COLLAPSED_KEY) === '1'; } catch { return false; }
-  });
-  const toggleRoster = (): void => {
-    setRosterCollapsed((v) => {
-      const next = !v;
-      try { localStorage.setItem(ROSTER_COLLAPSED_KEY, next ? '1' : '0'); } catch { /* private mode */ }
-      return next;
-    });
-  };
   const drag: RowDrag = {
     dragId,
     overId,
@@ -311,29 +298,62 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
         }}
       >
         <span style={{
-          fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '20px',
-          color: 'var(--cth-ink-900)'
-        }}>ATLAS · FOCUS MODE</span>
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 13, lineHeight: '20px',
+          color: 'var(--cth-ink-900)', flexShrink: 0
+        }}>{t('fullscreenTerminal.focusTitle')}</span>
+
+        {/* The roster, horizontal. One portrait per agent, the current one lit:
+            switching agents has to survive the rail going away. */}
+        <div className="cth-titlebar-nodrag" style={{
+          display: 'flex', alignItems: 'center', gap: 4, minWidth: 0, overflowX: 'auto'
+        }}>
+          {agents.map((a) => {
+            const on = a.id === agent.id;
+            return (
+              <button
+                key={a.id}
+                onClick={() => { select(a.id); setFullscreen(a.id); }}
+                aria-pressed={on}
+                style={{
+                  height: 26, padding: '0 10px 0 4px', flexShrink: 0,
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  border: 'none', cursor: 'pointer',
+                  borderRadius: 999,
+                  background: on ? 'var(--cth-paper-100)' : 'transparent',
+                  boxShadow: on ? 'var(--cth-shadow-sm)' : 'none',
+                  fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
+                  color: on ? 'var(--cth-ink-900)' : 'var(--cth-ink-600)'
+                }}
+              >
+                <span style={{
+                  width: 20, height: 20, borderRadius: '50%', overflow: 'hidden',
+                  display: 'inline-flex', alignItems: 'flex-end', justifyContent: 'center',
+                  background: `var(--cth-${a.accent}-light, var(--cth-cream-100))`
+                }}>
+                  <SpritePortrait character={a.character} scale={0.9} />
+                </span>
+                {a.name}
+              </button>
+            );
+          })}
+          <button
+            onClick={() => setAddAgentOpen(true)}
+            aria-label={t('agentStrip.addAgent')}
+            style={{
+              width: 26, height: 26, flexShrink: 0, border: 'none', cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: '50%', background: 'var(--cth-lilac-light)', color: 'var(--cth-lilac)'
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 3.2v9.6M3.2 8h9.6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
         {/* Same top-right controls as the main title bar — fullscreen covers
             it, so theme / exit-fullscreen / IDE must live here too. */}
         <div className="cth-titlebar-nodrag" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            onClick={toggleRoster}
-            aria-label={rosterCollapsed ? t('fullscreenTerminal.showAgentList') : t('fullscreenTerminal.hideAgentList')}
-            aria-pressed={rosterCollapsed}
-            style={{
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 28, height: 28, padding: 0,
-              // Pressed-in when collapsed, so the rail's absence reads as a state
-              // this button is holding rather than something that broke.
-              background: rosterCollapsed ? 'var(--cth-lemon)' : 'var(--cth-paper-100)',
-              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
-              border: 'none', borderRadius: 2, cursor: 'pointer',
-              color: rosterCollapsed ? 'var(--cth-ink-900)' : 'var(--cth-ink-900)'
-            }}
-          >
-            <Icon name="sidebar" size={1} style={{ width: 16, height: 16 }} />
-          </button>
+
           <button
             onClick={() => {
               const next = toggleAppTheme();
@@ -409,153 +429,10 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
             per agent with live status, and keeping a hidden copy mounted would go
             on doing that work for a rail nobody can see. Remounting is cheap; the
             terminals live in the pool and are untouched by this. */}
-        {!rosterCollapsed && (
-        <aside style={{
-          width: SIDEBAR_WIDTH, flexShrink: 0,
-          display: 'flex', flexDirection: 'column',
-          background: 'var(--cth-cream-200)',
-          borderRight: '1px solid var(--cth-ink-300)'
-        }}>
-          <div style={{ padding: 12, borderBottom: '1px solid var(--cth-ink-300)' }}>
-            <button
-              onClick={() => setAddAgentOpen(true)}
-              style={{
-                width: '100%', height: 32,
-                background: 'var(--cth-cream-100)',
-                border: 'none',
-                boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-                fontFamily: 'var(--cth-font-ui)',
-                fontSize: 'clamp(14px, 0.7vw, 15px)',
-                color: 'var(--cth-ink-900)',
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                cursor: 'pointer'
-              }}
-            >
-              <Icon name="plus" /> {t('agentStrip.addAgent')}
-            </button>
-          </div>
-
-          <div className="cth-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '6px 0' }}>
-            {/* The god agent runs the floor rather than a checkout, so it gets no
-                repository header — it sits alone at the top of the roster. */}
-            {gods.map(a => (
-              <SidebarRow
-                key={a.id}
-                agent={a}
-                active={a.id === agent.id}
-                onClick={() => { select(a.id); setFullscreen(a.id); }}
-                onNoteChange={(note) => setAgentNote(a.id, note)}
-                drag={drag}
-                scale={scale}
-              />
-            ))}
-            {groups.map(([repoKey, { label, members }]) => (
-              // Repos are the roster's real structure, so they get real
-              // separation — a hairline plus air above, not just a label.
-              <div key={repoKey} style={{ marginTop: 16, paddingTop: 10, borderTop: '1px solid var(--cth-ink-300)' }}>
-                <div
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '0 10px 6px',
-                    fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-                    fontSize: scale.group, lineHeight: 1.5,
-                    color: 'var(--cth-ink-500)'
-                  }}
-                >
-                  {/* Native 16px, never a fraction of it: this is pixel art on
-                      a 16-unit grid, so squeezing it to match a 7px label
-                      merged the outline into mush. Dimmed instead of shrunk. */}
-                  <span style={{ flexShrink: 0, display: 'inline-flex', opacity: 0.7 }}>
-                    <Icon name="folder" size={scale.group >= 13 ? 2 : 1} />
-                  </span>
-                  <span style={{
-                    minWidth: 0,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                  }}>{label.toUpperCase()}</span>
-                </div>
-                {members.map(a => (
-                  <SidebarRow
-                    key={a.id}
-                    agent={a}
-                    active={a.id === agent.id}
-                    onClick={() => { select(a.id); setFullscreen(a.id); }}
-                    onNoteChange={(note) => setAgentNote(a.id, note)}
-                    drag={drag}
-                    scale={scale}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-
-          {/* Last session's team, same as the floor strip — pinned to the bottom
-              so it can't be scrolled out of reach behind a long roster. */}
-          {(restorableAgents.length > 0 || autoRestoring) && (
-            <div style={{
-              flexShrink: 0, padding: 12, display: 'flex', flexDirection: 'column', gap: 8,
-              borderTop: '1px solid var(--cth-ink-300)'
-            }}>
-              {autoRestoring && (
-                // Same banner as the floor strip: terminals that open by
-                // themselves need to say why.
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '4px 12px',
-                  fontFamily: 'var(--cth-font-ui)', fontSize: 11,
-                  color: 'var(--cth-ink-900)',
-                  background: 'var(--cth-status-working)',
-                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
-                }}>
-                  <Icon name="play" /> restoring your team…
-                </div>
-              )}
-              {!autoRestoring && restorableAgents.length > 0 && (
-                <PixelButton
-                  variant="primary"
-                  size="sm"
-                  onClick={restoreTeam}
-                  disabled={restoring}
-                  style={{ width: '100%' }}
-                  title={t('fullscreenTerminal.respawnTitle', { names: restorableAgents.map((a: Agent) => a.name).join(', ') })}
-                >
-                  <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-                    <Icon name="play" /> {restoring ? t('agentStrip.restoringTeam') : t('agentStrip.restoreTeam', { count: restorableAgents.length })}
-                  </span>
-                </PixelButton>
-              )}
-              {!autoRestoring && restorableAgents.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                  {restorableAgents.map((a: Agent) => (
-                    <span
-                      key={a.id}
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 2,
-                        height: 20, padding: '0 2px 0 6px',
-                        fontFamily: 'var(--cth-font-ui)', fontSize: 11,
-                        color: 'var(--cth-ink-700)', background: 'var(--cth-paper-100)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
-                      }}
-                    >
-                      {a.name}
-                      <button
-                        onClick={() => useStore.getState().removeRestorableAgent(a.id)}
-                        aria-label={`Dismiss ${a.name}`}
-                        style={{
-                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                          width: 14, height: 14, padding: 0, lineHeight: 1,
-                          fontFamily: 'var(--cth-font-ui)', fontSize: 11,
-                          color: 'var(--cth-ink-500)', background: 'transparent',
-                          border: 'none', cursor: 'pointer'
-                        }}
-                      >✕</button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </aside>
-        )}
+        {/* No roster rail. Focus mode is one agent's work at full width;
+            the agents moved into the bar above, where they cost a row instead
+            of a column. Restoring a team still lives in the normal view's
+            sidebar, which is where you land after a restart anyway. */}
 
         <div style={{
           flex: 1, minWidth: 0, minHeight: 0,
