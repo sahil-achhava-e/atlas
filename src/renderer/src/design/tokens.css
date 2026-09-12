@@ -28,6 +28,13 @@
   --cth-ink-400: #78818F;   /* 3.9:1 white — paths, timestamps: never read first */
   --cth-ink-300: #C3CAD5;
   --cth-ink-100: #E2E6EC;
+  /* The edge of an INTERACTIVE CONTROL — a field, a select, a switch — which is
+     not a divider. ink-100 is documented as "meant to recede" and measured
+     1.25:1 around an input; ink-300 measured 1.65:1 around an off switch. In
+     both cases the control was there and you could not find its boundary. This
+     is the one place that gets 3:1 (WCAG 1.4.11): 3.39:1 against white,
+     3.14:1 against the cream panel. */
+  --cth-control-edge: #848C99;
 
   /* Accents — v0.3.4 recalibration: same hues, professional saturation.
      The originals (#FFD93D, #FF6B6B, …) were full-saturation arcade tones that
@@ -208,6 +215,7 @@
                               there — a label you could not read. */
   --cth-ink-300: #4A515E;   /*  3.4-4.0:1  — BORDERS. must stay >= 3.0 */
   --cth-ink-100: #262B34;   /*  1.4-1.7:1  — dividers, meant to recede */
+  --cth-control-edge: #6A7280; /*  3.59:1 on #171A20 fields, 3.12:1 on #222630 */
 
   /* Accents — one step lighter/softer than the light set so they read on dark
      without fluorescing */

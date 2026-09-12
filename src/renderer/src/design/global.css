@@ -110,7 +110,7 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
    into is exactly as focused as one you tabbed into, and here we WANT the mouse
    case — it is the one the founder is looking at while typing. */
 .cth-input {
-  box-shadow: inset 0 0 0 1px var(--cth-ink-100);
+  box-shadow: inset 0 0 0 1px var(--cth-control-edge);
   transition: box-shadow 120ms ease;
 }
 .cth-input:focus,
@@ -126,7 +126,7 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
    nested rectangles read as a box inside a box, which is what this looked like
    before. */
 .cth-field {
-  box-shadow: inset 0 0 0 1px var(--cth-ink-100);
+  box-shadow: inset 0 0 0 1px var(--cth-control-edge);
   border-radius: var(--cth-radius-input);
   transition: box-shadow 120ms ease;
 }

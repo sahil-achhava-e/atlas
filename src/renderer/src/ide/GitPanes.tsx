@@ -201,7 +201,8 @@ export function ComparePane({ gitRoot, onOpenRevDiff }: {
   const sel: React.CSSProperties = {
     flex: 1, minWidth: 0, height: 22, fontFamily: 'var(--cth-font-mono)', fontSize: 11,
     background: 'var(--cth-paper-100)', color: 'var(--cth-ink-900)',
-    border: 'none', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
+    // A <select> is a field, so it takes the field edge, not the divider ink.
+    border: 'none', boxShadow: 'inset 0 0 0 1px var(--cth-control-edge)', borderRadius: 'var(--cth-radius-input)'
   };
 
   return (

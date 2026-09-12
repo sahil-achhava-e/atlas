@@ -107,7 +107,10 @@ export function Toggle({ on, onClick, onLabel, offLabel }: {
       <span style={{
         position: 'relative', width: 30, height: 16, flexShrink: 0,
         borderRadius: 'var(--cth-radius-pill)',
-        background: on ? 'var(--cth-status-success)' : 'var(--cth-cream-200)',
+        // ink-300 like every other switch: this one used cream-200, which is a
+        // SURFACE colour and measured 1.15:1 against the card it sat on.
+        background: on ? 'var(--cth-status-success)' : 'var(--cth-ink-300)',
+        boxShadow: on ? 'none' : 'inset 0 0 0 1px var(--cth-control-edge)',
         transition: 'background 120ms ease'
       }}>
         <span style={{

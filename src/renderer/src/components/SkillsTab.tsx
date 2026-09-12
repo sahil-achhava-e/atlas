@@ -36,8 +36,8 @@ function SkillSwitch({ on, label, onText, offText, onChange }: {
       <span style={{
         position: 'relative', width: 26, height: 14, flexShrink: 0,
         background: on ? 'var(--cth-mint)' : 'var(--cth-ink-300)',
-        boxShadow: 'none',
-            borderRadius: 'var(--cth-radius-input)',
+        boxShadow: on ? 'none' : 'inset 0 0 0 1px var(--cth-control-edge)',
+        borderRadius: 'var(--cth-radius-input)',
         transition: 'background 120ms steps(2)'
       }}>
         <span style={{

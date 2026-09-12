@@ -1228,7 +1228,9 @@ function Pre({ children }: { children: React.ReactNode }) {
 const textareaStyle: React.CSSProperties = {
   flex: 1, width: '100%', resize: 'none', padding: '10px 12px',
   background: 'var(--cth-paper-100)', border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
+  // control-edge, not ink-100: the divider ink measured 1.23:1 around these boxes
+  // in dark mode and 1.25:1 in light — a field you cannot see the edge of.
+  boxShadow: 'inset 0 0 0 1px var(--cth-control-edge)', borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '17px',
   color: 'var(--cth-ink-900)', outline: 'none', boxSizing: 'border-box'
 };

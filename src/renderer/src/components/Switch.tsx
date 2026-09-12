@@ -34,6 +34,10 @@ export function Switch({
         opacity: disabled ? 0.5 : 1,
         borderRadius: 999,
         background: on ? tone : 'var(--cth-ink-300)',
+        // An OFF track is quiet by design, and quiet measured 2.18:1 in dark and
+        // 1.65:1 in light against the card — the switch vanished. The ring gives
+        // it an edge without making "off" look like a filled state.
+        boxShadow: on ? 'none' : 'inset 0 0 0 1px var(--cth-control-edge)',
         transition: 'background 140ms ease'
       }}
     >
