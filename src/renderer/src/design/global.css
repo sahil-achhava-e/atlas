@@ -484,13 +484,16 @@ input:focus-visible, textarea:focus-visible { outline: none; }
    appears after 260ms rather than 400, carries the panel's own shadow, and
    fades up 3px so it reads as arriving rather than blinking on. */
 .cth-iconbar button { position: relative; }
-.cth-iconbar button::after,
-.cth-iconbar button::before {
+/* Only a button that HAS a label gets the bubble. Without the guard, a tab
+   with its label already on screen still painted an empty tooltip on hover:
+   attr(data-label) resolved to nothing but the padding and shadow still drew. */
+.cth-iconbar button[data-label]::after,
+.cth-iconbar button[data-label]::before {
   opacity: 0;
   pointer-events: none;
   transition: opacity 110ms ease-out 260ms, transform 110ms ease-out 260ms;
 }
-.cth-iconbar button::after {
+.cth-iconbar button[data-label]::after {
   content: attr(data-label);
   position: absolute;
   top: calc(100% + 8px);
@@ -509,7 +512,7 @@ input:focus-visible, textarea:focus-visible { outline: none; }
   z-index: 120;
 }
 /* the arrow */
-.cth-iconbar button::before {
+.cth-iconbar button[data-label]::before {
   content: "";
   position: absolute;
   top: calc(100% + 3px);
@@ -519,9 +522,9 @@ input:focus-visible, textarea:focus-visible { outline: none; }
   border-bottom-color: #16141F;
   z-index: 121;
 }
-.cth-iconbar button:hover::after,
-.cth-iconbar button:hover::before,
-.cth-iconbar button:focus-visible::after,
+.cth-iconbar button[data-label]:hover::after,
+.cth-iconbar button[data-label]:hover::before,
+.cth-iconbar button[data-label]:focus-visible::after,
 .cth-iconbar button:focus-visible::before {
   opacity: 1;
   transform: translate(-50%, 0);

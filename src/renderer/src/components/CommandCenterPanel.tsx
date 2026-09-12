@@ -120,6 +120,8 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
   const secondaryTabs = visibleTabs.filter((x) => !PRIMARY.includes(x.key));
   // The one number on this panel that is about the human, not the machines.
   const openAsks = useOpenAsks();
+  /** Focus mode has no roster, so the header carries the other agents. */
+  const agents = useStore((st) => st.agents);
 
   // External tab requests (the office task board → 'tasks', the boss-room
   // calendar → 'triggers'). seq-keyed so clicking again re-opens the tab even
@@ -272,6 +274,30 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
             }}>{headerLine}</div>
           </div>
 
+          {/* In focus mode there is no roster anywhere, so the other agents
+              live here: one portrait each, the current one lit. */}
+          {fullscreen && agents.length > 1 && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+              {agents.filter((a) => a.id !== agent.id).map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => { useStore.getState().select(a.id); useStore.getState().setFullscreen(a.id); }}
+                  aria-label={a.name}
+                  data-label={a.name}
+                  style={{
+                    width: 30, height: 30, padding: 0, flexShrink: 0,
+                    border: 'none', cursor: 'pointer', borderRadius: '50%',
+                    overflow: 'hidden', display: 'inline-flex',
+                    alignItems: 'flex-end', justifyContent: 'center',
+                    background: 'var(--cth-cream-100)'
+                  }}
+                >
+                  <SpritePortrait character={a.character} scale={0.85} />
+                </button>
+              ))}
+            </span>
+          )}
+
           {/* Edit and IDE, in the corner the state pill used to hold. Icon-only
               with the tab row's hover label: two labelled buttons here cost more
               width than the agent's own name. */}
@@ -353,13 +379,20 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                 }}>{t(d.labelKey)}</span>
               )}
               {badge > 0 && (
+                // Docked the bar is icons, so the count rides the corner. With
+                // the label on screen it belongs beside the words, where it
+                // reads as part of the name rather than a sticker on a glyph.
                 <span style={{
-                  position: 'absolute', top: 2, insetInlineEnd: 2,
-                  minWidth: 15, height: 15, padding: '0 4px',
+                  ...(fullscreen
+                    ? { position: 'relative', marginInlineStart: 2 }
+                    : { position: 'absolute', top: 2, insetInlineEnd: 2 }),
+                  minWidth: 16, height: 16, padding: '0 5px',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  borderRadius: 'var(--cth-radius-pill)',
-                  background: 'var(--cth-coral)', color: '#FFFFFF',
-                  fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 10, lineHeight: 1
+                  borderRadius: 999,
+                  background: on ? 'rgba(255,255,255,0.25)' : 'var(--cth-coral)',
+                  color: '#FFFFFF',
+                  fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 10.5, lineHeight: 1,
+                  fontVariantNumeric: 'tabular-nums'
                 }}>{badge}</span>
               )}
             </button>

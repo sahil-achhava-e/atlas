@@ -176,7 +176,9 @@ export function TasksKanban() {
    *  board wins in focus mode, so both are right and neither is the default for
    *  everyone. */
   const [view, setView] = useState<'list' | 'board'>(() => {
-    try { return localStorage.getItem(VIEW_KEY) === 'board' ? 'board' : 'list'; } catch { return 'list'; }
+    // The board is the default: it is what the tab is for, and the list is the
+    // fallback for a narrow pane. A stored preference still wins.
+    try { return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'board'; } catch { return 'board'; }
   });
   const pickView = (v: 'list' | 'board') => {
     setView(v);

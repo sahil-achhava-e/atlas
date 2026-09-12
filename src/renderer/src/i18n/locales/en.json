@@ -30,7 +30,7 @@
     "blockedNote": "Approval needed."
   },
   "blockedBanner": {
-    "needsYou": "needs you"
+    "needsYou": "Needs you"
   },
   "costHud": {
     "spendCap": "Spend cap",
@@ -52,7 +52,7 @@
     "thinking": "working",
     "working": "working",
     "waiting": "waiting",
-    "blocked": "needs you",
+    "blocked": "Needs you",
     "success": "done",
     "ghost": "gone",
     "compacting": "compacting",
@@ -396,7 +396,7 @@
       "terminal": "Terminal",
       "floor": "Team",
       "tasks": "Tasks",
-      "human": "Needs you",
+      "human": "Questions",
       "triggers": "Triggers",
       "history": "Trigger log",
       "memory": "Memory",
@@ -853,7 +853,7 @@
     },
     "activity": {
       "waiting": "waiting",
-      "needsYou": "needs you",
+      "needsYou": "Needs you",
       "compacting": "compacting context",
       "looping": "looping: breaker armed",
       "runningFloor": "running the floor",
@@ -1098,7 +1098,7 @@
     "in": "in {{unit}}",
     "kindDirective": "directive",
     "kindCommunication": "communication",
-    "decisionPending": "needs you",
+    "decisionPending": "Needs you",
     "decisionApproved": "approved",
     "decisionRejected": "rejected",
     "decisionAuto": "auto-allowed",
