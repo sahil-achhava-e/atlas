@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { AVATAR_LIBRARY } from '@/scene/office/avatarLibrary';
@@ -40,6 +41,7 @@ const FACES: { id: string; name: string }[] = [
 ];
 
 export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
+  const { t } = useTranslation();
   /** The orchestrator keeps its name and its face. Every other agent is a hire
    *  you named; this one IS the app on the floor — the mark, the header, the
    *  routes and every string that says "Atlas" follow it. */
@@ -374,7 +376,10 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
               )}
 
               <span style={{ fontSize: 12.5, color: 'var(--cth-ink-500)', lineHeight: 1.45 }}>
-                Engine changes are saved for the next restart. Use Command Center → Floor to restart a live session onto a new provider/model now.
+                {t('editAgent.engineNote', {
+                  tab: t('commandCenter.tabs.floor'),
+                  action: t('commandCenter.restartContinue')
+                })}
               </span>
             </Section>
 
