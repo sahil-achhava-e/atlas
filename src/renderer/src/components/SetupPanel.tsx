@@ -33,12 +33,11 @@ function StatusChip({ tool }: { tool: ToolStatus }) {
   const ready = tool.found;
   return (
     <span style={{
-      fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 0.5,
-      padding: '2px 10px', flexShrink: 0, whiteSpace: 'nowrap',
-      background: ready ? 'var(--cth-mint-light)' : 'var(--cth-cream-200)',
-      boxShadow: `inset 0 0 0 1px ${ready ? 'var(--cth-mint)' : 'var(--cth-ink-300)'}`,
-            borderRadius: 'var(--cth-radius-input)',
-      color: 'var(--cth-ink-900)'
+      fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11,
+      padding: '3px 10px', flexShrink: 0, whiteSpace: 'nowrap',
+      borderRadius: 999,
+      background: ready ? 'var(--cth-mint-light)' : 'var(--cth-cream-100)',
+      color: ready ? 'var(--cth-mint)' : 'var(--cth-ink-500)'
     }}>
       {ready ? t('setupPanel.statusReady') : tool.essential ? t('setupPanel.statusMissing') : t('setupPanel.statusNotSetUp')}
     </span>
@@ -56,26 +55,29 @@ function ToolRow({ tool }: { tool: ToolStatus }) {
   };
   return (
     <div style={{
-      padding: 16, display: 'flex', flexDirection: 'column', gap: 8,
-      background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
+      padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6,
+      background: 'var(--cth-paper-100)',
+      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+      borderRadius: 'var(--cth-radius-card)'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, flex: 1, minWidth: 0 }}>
-          {tool.label.toUpperCase()}
-        </span>
+        <span style={{
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13.5,
+          flex: 1, minWidth: 0, color: 'var(--cth-ink-900)'
+        }}>{tool.label}</span>
         {tool.essential && !tool.found && (
           <span style={{ fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>{t('setupPanel.recommended')}</span>
         )}
         <StatusChip tool={tool} />
       </div>
 
-      <div style={{ fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: 1.5 }}>{tool.why}</div>
+      <div style={{ fontSize: 12.5, color: 'var(--cth-ink-600)', lineHeight: 1.45 }}>{tool.why}</div>
 
       {/* Found: show WHERE, so a "ready" claim is verifiable rather than trusted. */}
       {tool.found && tool.path && (
         <div style={{
-          fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)',
-          wordBreak: 'break-all'
+          fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-400)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
         }}>
           {tool.path}{tool.detail ? ` · ${tool.detail}` : ''}
         </div>
@@ -86,16 +88,17 @@ function ToolRow({ tool }: { tool: ToolStatus }) {
         <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
           <code style={{
             flex: 1, minWidth: 0, fontFamily: 'var(--cth-font-mono)', fontSize: 11,
-            padding: '4px 10px', background: 'var(--cth-cream-100)',
-            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
+            padding: '6px 10px', background: 'var(--cth-cream-100)',
+            borderRadius: 'var(--cth-radius-btn)',
             color: 'var(--cth-ink-900)', overflowX: 'auto', whiteSpace: 'pre'
           }}>{tool.installCommand}</code>
           <button
             onClick={copy}
             style={{
-              flexShrink: 0, fontFamily: 'var(--cth-font-ui)', fontSize: 11, padding: '0 8px',
-              background: 'var(--cth-cream-200)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-              border: 'none', cursor: 'pointer', color: 'var(--cth-ink-900)'
+              flexShrink: 0, fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11.5,
+              padding: '0 12px', borderRadius: 'var(--cth-radius-btn)',
+              background: 'var(--cth-cream-100)', border: 'none',
+              cursor: 'pointer', color: 'var(--cth-ink-600)'
             }}
           >{copied ? t('common.copy') + ' ✓' : t('common.copy')}</button>
         </div>

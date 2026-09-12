@@ -13,6 +13,8 @@ import {
 } from '@shared/triggers';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
+import { Dropdown } from './Dropdown';
+import { Switch } from './Switch';
 import { SetupPanel } from './SetupPanel';
 import { Icon } from './Icon';
 import { McpDefaultsSettings } from './McpDefaultsSettings';
@@ -57,21 +59,24 @@ function newWebhookId(): string {
 /** Pixel-aesthetic text input, mirroring AddAgentModal's inputStyle. */
 const slackInputStyle: CSSProperties = {
   width: '100%',
-  padding: '10px 12px 4px',
+  padding: '9px 12px',
   background: 'var(--cth-paper-100)',
   border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
+  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+  borderRadius: 'var(--cth-radius-btn)',
   fontFamily: 'var(--cth-font-ui)',
-  fontSize: 13,
+  fontSize: 13.5,
+  lineHeight: '20px',
   color: 'var(--cth-ink-900)',
-  outline: 'none'
+  outline: 'none',
+  boxSizing: 'border-box'
 };
 
 const slackLabelStyle: CSSProperties = {
   fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-  fontSize: 11,
-  lineHeight: '12px',
-  color: 'var(--cth-ink-700)',
+  fontSize: 12,
+  lineHeight: '14px',
+  color: 'var(--cth-ink-600)',
 };
 
 /** The exact connect walkthrough shown behind the i icon. Steps 6 & 7 spell out
@@ -156,15 +161,15 @@ function clearLocalState(): void {
    seventeen times, in three slightly different forms, which is how a tab ends
    up looking subtly unlike its neighbours. */
 const sectionHead = {
-  fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
-  color: 'var(--cth-ink-500)', marginBottom: 10
+  fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 13, lineHeight: '16px',
+  color: 'var(--cth-ink-900)', marginBottom: 12
 } as const;
 /** Same heading, tight under a section that supplies its own spacing. */
 const sectionHeadTight = { ...sectionHead, marginBottom: 2 } as const;
 /** Same heading with no bottom margin at all. */
 const sectionHeadFlush = { ...sectionHead, marginBottom: 0 } as const;
 /** The 2px rule between Settings sections. */
-const sectionRule = { height: 2, background: 'var(--cth-ink-300)' } as const;
+const sectionRule = { height: 1, background: 'var(--cth-ink-100)' } as const;
 
 export type Section = 'General' | 'Agents & Models' | 'Connections' | 'Voice';
 // No Autonomy & Budgets tab: autonomy and who-may-hire moved next to the
@@ -691,7 +696,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
       onClick={busy ? undefined : onClose}
       style={{
         position: 'fixed', inset: 0,
-        background: 'rgba(26, 19, 32, 0.7)',
+        background: 'rgba(17, 20, 26, 0.5)', backdropFilter: 'blur(3px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 300
       }}
@@ -806,11 +811,11 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
 
                 {/* Left nav */}
                 <div style={{
-                  width: 160, flexShrink: 0,
-                  display: 'flex', flexDirection: 'column',
-                  borderRight: '2px solid var(--cth-ink-300)',
-                  paddingTop: 8, paddingBottom: 8,
-                  background: 'var(--cth-cream-200)'
+                  width: 188, flexShrink: 0,
+                  display: 'flex', flexDirection: 'column', gap: 4,
+                  borderRight: '1px solid var(--cth-ink-100)',
+                  padding: 12,
+                  background: 'var(--cth-cream-100)'
                 }}>
                   {NAV_SECTIONS.map((section) => {
                     const active = activeSection === section;
@@ -821,15 +826,15 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                         onClick={() => setActiveSection(section)}
                         style={{
                           display: 'block', width: '100%', textAlign: 'left',
-                          padding: '16px 16px 12px',
-                          border: 'none',
-                          borderLeft: active ? '3px solid var(--cth-lemon)' : '3px solid transparent',
-                          background: active ? 'var(--cth-ink-900)' : 'transparent',
-                          color: active ? 'var(--cth-cream-50)' : 'var(--cth-ink-700)',
+                          padding: '9px 12px', border: 'none',
+                          borderRadius: 'var(--cth-radius-btn)',
+                          background: active ? 'var(--cth-lilac-light)' : 'transparent',
+                          boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none',
+                          color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-700)',
                           fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-                          fontSize: 11,
-                          lineHeight: '12px',
+                          fontSize: 13, lineHeight: '18px',
                           cursor: 'pointer',
+                          transition: 'background 120ms ease, color 120ms ease'
                         }}
                       >
                         {t(NAV_SECTION_KEYS[section])}
@@ -870,7 +875,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                         </div>
                       </div>
 
-                      <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
+                      <div style={sectionRule} />
 
                       {/* Environment — settings that used to be trapped in onboarding */}
                       <div>
@@ -885,9 +890,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                                 {t('settings.general.keepAwakeDesc')}
                               </span>
                             </div>
-                            <PixelButton variant={keepAwake ? 'primary' : 'secondary'} size="sm" onClick={toggleKeepAwake}>
-                              {keepAwake ? t('common.on') : t('common.off')}
-                            </PixelButton>
+                            <Switch on={keepAwake} label={t('settings.general.keepAwake')} onChange={toggleKeepAwake} />
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -896,14 +899,12 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                                 {t('settings.general.simpleModeDesc')}
                               </span>
                             </div>
-                            <PixelButton variant={simpleMode ? 'primary' : 'secondary'} size="sm" onClick={toggleSimpleMode}>
-                              {simpleMode ? t('common.on') : t('common.off')}
-                            </PixelButton>
+                            <Switch on={simpleMode} label={t('settings.general.simpleMode')} onChange={toggleSimpleMode} />
                           </div>
                         </div>
                       </div>
 
-                      <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
+                      <div style={sectionRule} />
 
                       {/* Language — app UI language (i18n) */}
                       <div>
@@ -917,20 +918,17 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                               {t('settings.general.languageDesc')}
                             </span>
                           </div>
-                          <select
+                          <Dropdown
                             value={i18n.language}
-                            onChange={(e) => setLanguage(e.target.value)}
-                            style={slackInputStyle}
-                            aria-label={t('settings.general.language')}
-                          >
-                            {LANGUAGES.map((l) => (
-                              <option key={l.code} value={l.code}>{l.label}</option>
-                            ))}
-                          </select>
+                            options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
+                            onChange={setLanguage}
+                            ariaLabel={t('settings.general.language')}
+                            width={200}
+                          />
                         </div>
                       </div>
 
-                      <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
+                      <div style={sectionRule} />
 
                       {/* Desktop notifications toggle */}
                       <div>
@@ -946,17 +944,11 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                               {t('settings.general.desktopNotificationsDesc')}
                             </span>
                           </div>
-                          <PixelButton
-                            variant={notifications ? 'primary' : 'secondary'}
-                            size="sm"
-                            onClick={toggleNotifications}
-                          >
-                            {notifications ? t('common.on') : t('common.off')}
-                          </PixelButton>
+                          <Switch on={notifications} label={t('settings.general.desktopNotifications')} onChange={toggleNotifications} />
                         </div>
                       </div>
 
-                      <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
+                      <div style={sectionRule} />
 
                       {/* Scheduled auto-compact (compact-maintenance mission) */}
                       <div>
@@ -972,13 +964,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                               {t('settings.general.autoCompactDesc')}
                             </span>
                           </div>
-                          <PixelButton
-                            variant={autoCompactOn ? 'primary' : 'secondary'}
-                            size="sm"
-                            onClick={toggleAutoCompact}
-                          >
-                            {autoCompactOn ? t('common.on') : t('common.off')}
-                          </PixelButton>
+                          <Switch on={autoCompactOn} label={t('settings.general.autoCompact')} onChange={toggleAutoCompact} />
                         </div>
                         {/* No auto-update row: releases come from the
                             upstream project, not this fork. No telemetry row
@@ -1030,13 +1016,13 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                         </div>
                       </div>
 
-                      <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
+                      <div style={sectionRule} />
 
                       {/* No key block here: the only key this floor needs is the
                           OpenAI one for voice chat, and Voice asks for it. One
                           field, one place. */}
 
-                      <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
+                      <div style={sectionRule} />
 
                       {/* Autonomy and who may hire live HERE, next to the model
                           and the keys: all four are decisions about how an agent
@@ -1054,9 +1040,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                               {t('settings.autonomy.autoDesc')}
                             </span>
                           </div>
-                          <PixelButton variant={autoModeOn ? 'primary' : 'secondary'} size="sm" onClick={toggleAutoMode}>
-                            {autoModeOn ? t('settings.autonomy.autonomous') : t('settings.autonomy.askFirst')}
-                          </PixelButton>
+                          <Switch on={autoModeOn} label={t('settings.autonomy.autoOn')} onChange={toggleAutoMode} />
                         </div>
                       </div>
 
@@ -1074,13 +1058,11 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                                 : `Only you. ${godName} can still ask, and his request waits in the queue instead of failing.`}
                             </span>
                           </div>
-                          <PixelButton variant={orchSpawnOn ? 'primary' : 'secondary'} size="sm" onClick={toggleOrchSpawn}>
-                            {orchSpawnOn ? `me and ${godName}` : 'only me'}
-                          </PixelButton>
+                          <Switch on={orchSpawnOn} label={t('settings.autonomy.orchSpawn')} onChange={toggleOrchSpawn} />
                         </div>
                       </div>
 
-                      <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
+                      <div style={sectionRule} />
 
                       {/* No Advanced/max-turns box: a cap that stops an agent
                           mid-task is a worse failure than a long run, and the
@@ -1092,7 +1074,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                   {activeSection === 'Connections' && (
                     <>
                       <McpDefaultsSettings config={config} />
-                      <div style={{ height: 1, background: 'var(--cth-ink-300)' }} />
+                      <div style={sectionRule} />
                     </>
                   )}
 
@@ -1187,23 +1169,25 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             it auto-closes. The spend cap remains the real runaway guard. */}
                         <label style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 280 }}>
                           <span style={slackLabelStyle}>{t('settings.voice.idleDisconnect')}</span>
-                          <select
+                          <Dropdown
                             value={String(idleDisconnectMs)}
-                            onChange={(e) => {
-                              const v = Number(e.target.value);
-                              setIdleDisconnectMs(v);
-                              stage({ realtimeIdleDisconnectMs: v } as Partial<HarnessConfig>);
+                            options={[
+                              { value: '30000', label: t('settings.voice.30s') },
+                              { value: '60000', label: t('settings.voice.1m') },
+                              { value: '120000', label: t('settings.voice.2m') },
+                              { value: '180000', label: t('settings.voice.3m') },
+                              { value: '300000', label: t('settings.voice.5m') },
+                              { value: '600000', label: t('settings.voice.10m') },
+                              { value: '0', label: t('settings.voice.never') }
+                            ]}
+                            onChange={(v) => {
+                              const n = Number(v);
+                              setIdleDisconnectMs(n);
+                              stage({ realtimeIdleDisconnectMs: n } as Partial<HarnessConfig>);
                             }}
-                            style={{ ...slackInputStyle, fontFamily: 'var(--cth-font-mono)' }}
-                          >
-                            <option value="30000">{t('settings.voice.30s')}</option>
-                            <option value="60000">{t('settings.voice.1m')}</option>
-                            <option value="120000">{t('settings.voice.2m')}</option>
-                            <option value="180000">{t('settings.voice.3m')}</option>
-                            <option value="300000">{t('settings.voice.5m')}</option>
-                            <option value="600000">{t('settings.voice.10m')}</option>
-                            <option value="0">{t('settings.voice.never')}</option>
-                          </select>
+                            ariaLabel={t('settings.voice.idleDisconnect')}
+                            width={280}
+                          />
                           <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                             {t('settings.voice.idleDisconnectDesc')}
                           </span>

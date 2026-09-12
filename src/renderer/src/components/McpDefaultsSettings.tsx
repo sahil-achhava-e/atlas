@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { HarnessConfig } from '@/store/config';
 import { MCP_CATALOG, mcpSecretEnvKeys, type DbConnection, type McpTier } from '@shared/mcpCatalog';
+import { Switch } from './Switch';
 import { PixelButton } from './PixelButton';
 
 export interface McpDefaultsSettingsProps {
@@ -174,10 +175,10 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                     key={entry.id}
                     style={{
                       display: 'flex', flexDirection: 'column', gap: 8,
-                      padding: '7px 16px',
+                      padding: '10px 14px',
                       background: 'var(--cth-paper-100)',
-                      boxShadow: `inset 0 0 0 1px ${isConsent && on ? '#6E1423' : 'var(--cth-ink-300)'}`,
-            borderRadius: 'var(--cth-radius-input)'
+                      boxShadow: `inset 0 0 0 1px ${isConsent && on ? 'var(--cth-coral)' : 'var(--cth-ink-100)'}`,
+                      borderRadius: 'var(--cth-radius-card)'
                     }}
                   >
                   <div style={{
@@ -198,27 +199,12 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                         {entry.description}
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => { void toggle(entry.id); }}
-                      style={{
-                        flexShrink: 0,
-                        padding: '3px 16px 1px',
-                        background: on
-                          ? (isConsent ? 'var(--cth-coral-light, #f6d3c4)' : 'var(--cth-lemon)')
-                          : 'var(--cth-cream-200)',
-                        boxShadow: `inset 0 0 0 1px ${on ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)'}`,
-            borderRadius: 'var(--cth-radius-input)',
-                        border: 'none',
-                        fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-                        fontSize: 11,
-                        lineHeight: '14px',
-                        color: 'var(--cth-ink-900)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {on ? t('common.on') : t('common.off')}
-                    </button>
+                    <Switch
+                      on={on}
+                      label={entry.label}
+                      onChange={() => { void toggle(entry.id); }}
+                      tone={isConsent ? 'var(--cth-coral)' : 'var(--cth-mint)'}
+                    />
                   </div>
 
                   {/* The Database entry is a LIST: one row per database, each
