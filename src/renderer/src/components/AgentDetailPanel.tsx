@@ -209,7 +209,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
           </span>
         </PixelButton>
         {isReal && (
-          <PixelButton variant="destructive" size="sm" onClick={onKill}>
+          <PixelButton variant="danger-ghost" size="sm" onClick={onKill}>
             <Icon name="x" />
           </PixelButton>
         )}
@@ -228,7 +228,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
       {isReal && <AgentControlStrip agentId={agent.id} />}
 
       {/* Tabs */}
-      <SidebarTabs current={sidebarTab} accent={agent.accent} onChange={setSidebarTab} />
+      <SidebarTabs current={sidebarTab} onChange={setSidebarTab} />
 
       {/* Active tab body — fills remaining space */}
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>

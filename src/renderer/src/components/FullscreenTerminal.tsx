@@ -764,7 +764,7 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
           style={{ height: 24, padding: '0 8px', lineHeight: '24px' }}
         />
         {!agent.isGod && (
-          <PixelButton variant="destructive" size="sm" onClick={onKill}>
+          <PixelButton variant="danger-ghost" size="sm" onClick={onKill}>
             {/* inline-flex + center: the other buttons hold TEXT, whose line box
                 the button centres for free. A bare <Icon> is replaced-content
                 sitting on the text baseline, so it rode low and overhung the

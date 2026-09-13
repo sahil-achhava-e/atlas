@@ -1,6 +1,6 @@
 import { CSSProperties, ReactNode, useState } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'danger-ghost';
 type Size = 'sm' | 'md' | 'lg';
 
 export interface PixelButtonProps {
@@ -76,6 +76,17 @@ export function PixelButton({
           fill:    hover ? 'var(--cth-cream-100)' : 'transparent',
           text:    disabled ? disabledText : 'var(--cth-ink-800)',
           border:  'transparent',
+          shadow:  'transparent'
+        };
+      case 'danger-ghost':
+        // Destructive, but not SHOUTING it while idle. A solid red block parked
+        // permanently beside three outline buttons makes a toolbar look like an
+        // alarm; the red belongs on the pointer, where the consequence is about
+        // to happen. Same idea the IDE's close button hand-rolled in CSS.
+        return {
+          fill:    disabled ? 'transparent' : (hover ? 'var(--cth-coral)' : 'transparent'),
+          text:    disabled ? disabledText : (hover ? 'var(--cth-on-danger)' : 'var(--cth-coral-text)'),
+          border:  disabled ? 'transparent' : (hover ? 'var(--cth-coral)' : 'var(--cth-ink-300)'),
           shadow:  'transparent'
         };
       case 'destructive':

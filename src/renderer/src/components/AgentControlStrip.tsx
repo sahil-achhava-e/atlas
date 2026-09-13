@@ -75,7 +75,9 @@ export function AgentControlStrip({ agentId }: { agentId: string }) {
     <div style={{
       display: 'flex', flexDirection: 'column', gap: 8,
       padding: '10px 12px', background: 'var(--cth-paper-100)',
-      borderBottom: '1px solid var(--cth-ink-300)', flexShrink: 0
+      // ink-100 is the divider step; ink-300 is the BORDER step and drew this
+      // strip off with a rule heavier than anything around it.
+      borderBottom: '1px solid var(--cth-ink-100)', flexShrink: 0
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {/* Neither of these kills anything, and the old two-word labels never
@@ -88,7 +90,11 @@ export function AgentControlStrip({ agentId }: { agentId: string }) {
             {snap?.paused ? t('agentControl.allowTools') : t('agentControl.blockTools')}
           </span>
         </PixelButton>
-        <PixelButton variant="destructive" size="sm" onClick={halt}>
+        {/* Not `destructive`. This component's own note says neither of these
+            kills anything — a graceful halt keeps the session — and a solid red
+            fill parked in the strip said the opposite every second it was on
+            screen. The red arrives on hover, where the click is. */}
+        <PixelButton variant="danger-ghost" size="sm" onClick={halt}>
           <span
             aria-label={t('agentControl.stopAfterStepAria')}
           >
@@ -116,7 +122,12 @@ export function AgentControlStrip({ agentId }: { agentId: string }) {
           onKeyDown={(e) => { if (isComposingKey(e)) return; if (e.key === 'Enter') sendSteer(); }}
           placeholder={t('agentControl.steerPlaceholder')}
           style={{
-            flex: 1, padding: '4px 10px', background: 'var(--cth-paper-100)', border: 'none',
+            // height matches the sm buttons beside it: a field an odd few px
+            // shorter than its own send button is the kind of thing you cannot
+            // name but can see.
+            flex: 1, minWidth: 0, height: 26, padding: '0 10px', boxSizing: 'border-box',
+            background: 'var(--cth-paper-100)', border: 'none',
+            borderRadius: 'var(--cth-radius-input)',
             fontFamily: 'var(--cth-font-ui)',
             fontSize: 13, color: 'var(--cth-ink-900)', outline: 'none'
           }}

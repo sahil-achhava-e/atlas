@@ -1,28 +1,36 @@
 'use strict';
 /**
- * Munder Difflin brand mark — Michael's portrait on the brand yellow tile.
+ * The Atlas mark — the source of truth for every raster in build/ and docs/.
  *
- * THE SVG IS THE SOURCE OF TRUTH. docs/logo.svg is authored here as pure
- * vector — every sprite pixel is a run-merged <rect>, no fonts, no gradients,
- * no filters — so it renders identically in every browser and scales from a
- * 16px favicon to print. Every raster below is generated from the same geometry,
- * never traced back from a PNG.
+ * The mark is the one in the app's own header (AtlasMark.tsx), drawn here as
+ * geometry rather than JSX: Atlas carried the sky, this app runs a floor of
+ * agents that carry work, so the mark is a sphere held on two shoulders which
+ * also reads as the letter A. One agent orbits it, because the thing that makes
+ * Atlas Atlas is that it is never working alone.
  *
- * Grown out of the PH thumbnail (tools/make-ph-thumbnail.cjs): same sprite, same
- * flat brand ground, reframed as a mark.
+ * PURE GEOMETRY, NO DEPENDENCIES. Every shape here is a rounded rect, a
+ * polygon of straight edges, or a circle, so the rasteriser is a signed
+ * distance field plus point-in-polygon at 8x supersampling — no canvas, no
+ * native module, nothing ThreatLocker can refuse to load. The SVG and the PNGs
+ * come from the SAME numbers, so they cannot drift.
+ *
+ * TWO FRAMINGS, because they are hung in different places:
+ *   mark — full bleed, corner radius 10/32, exactly the proportion of the
+ *          in-app header logo. Favicons, the site, the Windows .ico.
+ *   icon — macOS. The art is inset to 824/1024 with Apple's 0.2237 corner
+ *          ratio, which is the Big Sur tile every other icon in the Dock is
+ *          drawn to. The margin is what the drop shadow lives in; a full-bleed
+ *          macOS icon looks a size larger than its neighbours.
  *
  * Writes, from one source:
- *   docs/logo.svg          source of truth (full bleed, ink border)
- *   docs/logo.png          512  — site favicon, site header (dark), in-app
- *                                 toolbar + app favicon, README header
- *   docs/logo-light.png    512  — site header on light theme (warm border)
- *   docs/favicon-32.png     32  — native-size favicon, so browsers stop
- *                                 downsampling a 512px portrait into mush
+ *   docs/logo.svg             source of truth (full bleed)
+ *   docs/logo.png         512 site header, README
+ *   docs/favicon-32.png    32 native-size favicon
  *   docs/apple-touch-icon.png 180
- *   build/icon.svg         design source for the app icon (margined)
- *   build/icon.png        1024  — Linux, and the electron-builder base
- *   build/icon.ico               — Windows, full bleed, 16..256
- *   build/icon.icns              — macOS, margined + drop shadow, 16..1024
+ *   build/icon.svg       1024 design source for the app icon (margined)
+ *   build/icon.png       1024 Linux, and the electron-builder base
+ *   build/icon.ico            Windows, full bleed, 16..256
+ *   build/icon.icns           macOS, margined + drop shadow, 16..1024
  *
  *   node tools/make-logo.cjs
  */
@@ -32,167 +40,41 @@ const path = require('node:path');
 const zlib = require('node:zlib');
 const { execFileSync } = require('node:child_process');
 
-// Resolve from THIS file, not a hardcoded checkout: the path below pointed at a
-// different clone entirely, so running the generator here would have read that
-// repo's sprite and written its assets.
 const ROOT = path.resolve(__dirname, '..');
-const loadTs = require(path.join(ROOT, 'test/load-ts.cjs'));
-const art = loadTs('src/renderer/src/scene/office/portraitArt.ts');
 
-const SW = art.SCENE_W;
+// ── the mark, in the 32-unit space AtlasMark.tsx is drawn in ──────────────
+// Violet to a deeper indigo: --cth-lilac and --cth-lilac-hover as the light
+// theme resolves them, so the icon in the Dock is the mark in the header.
+const VIOLET = [0x5B, 0x3D, 0xF5];
+const INDIGO = [0x4A, 0x2F, 0xD8];
+const WHITE  = [0xFF, 0xFF, 0xFF];
 
-// ── palette ───────────────────────────────────────────────────────────────
-const GROUND = [241, 181, 61];    // #F1B53D — brand yellow, sampled from the shipping icon
-const WHITE  = [250, 248, 244];
-const PUPIL  = [46, 38, 42];
+const U = 32;                       // the mark's own coordinate space
+const MARK_RADIUS = 10 / U;         // rx=10 on a 32 box — the header logo's curve
+const APPLE_RADIUS = 0.2237;        // Big Sur's corner ratio, of the tile side
+const APPLE_INSET = 100 / 1024;     // Apple's margin: 824 of art on 1024 canvas
 
-// Two border weights, matching the pair the site already ships: near-black for
-// dark surfaces, warm brown for the light theme (sampled from logo-light.png).
-const BORDERS = { ink: [26, 19, 32], warm: [110, 75, 12] };
+/** The shoulders, carrying — the same path string as AtlasMark, as points.
+ *  Every segment is straight, which is why point-in-polygon is exact here. */
+const SHOULDERS = [
+  [9, 24.2], [13.2, 15.4], [18.8, 15.4], [23, 24.2],
+  [19.6, 24.2], [18.6, 22], [13.4, 22], [12.4, 24.2]
+];
+const WEIGHT = { cx: 16, cy: 10.2, r: 3.6, a: 1 };      // the sphere it holds
+const ORBIT  = { cx: 24.4, cy: 7.6, r: 1.7, a: 0.55 };  // one agent, in orbit
+const SHOULDER_ALPHA = 0.95;
+// The light that makes the tile an object rather than a swatch. Fractions of
+// the tile, matching the radialGradient in AtlasMark.
+const SHEEN = { cx: 0.3, cy: 0.16, r: 0.9, a: 0.28 };
 
-// Tile geometry, inherited from the old build/icon.svg so the new mark lands in
-// the same family. Ratios are of the TILE, so both framings stay proportional.
-const R_RADIUS = 144 / 800;
-const R_STROKE = 26 / 800;
-
-// Two framings from one source, used for different things:
-//   mark — full bleed. Site, README, favicons, in-app toolbar, Windows .ico.
-//          A transparent margin is dead space in every one of those.
-//   icon — macOS-style margined tile with a drop shadow, for the .icns.
-// Both framings are now FULL BLEED.
-//
-// The margined variant put a band of brand yellow between the tile edge and the
-// figure, and that gap is what made the sprite's outermost columns — the far
-// edge of the hair (rows 3-11) and the outer shoulder (rows 19-24), with the
-// face between them — read as two detached dark tabs rather than as Michael's
-// own silhouette. At Dock size they looked like the edges of other characters.
-//
-// Full bleed fixes it without touching a single sprite pixel: the figure meets
-// the tile, so those columns read as the outline they are. Cropping them off
-// instead was tried and was wrong — it cut away real hair and shoulder.
-const FRAMES = { mark: 0, icon: 0 };
-
-// ── sprite ────────────────────────────────────────────────────────────────
-/** Eyes dead centre: a mark looks AT you. (Canon pupils sit at the inner pixel.) */
-function centreEyes(base) {
-  const sp = Uint8ClampedArray.from(base);
-  const set = (x, y, c) => {
-    const i = (y * SW + x) * 4;
-    sp[i] = c[0]; sp[i + 1] = c[1]; sp[i + 2] = c[2]; sp[i + 3] = 255;
-  };
-  for (const x of [5, 6, 10, 11]) for (const y of [9, 10]) set(x, y, WHITE);
-  set(6, 9, PUPIL);
-  set(10, 9, PUPIL);
-  return sp;
-}
-
-// Sprite rows, measured not guessed: 1-17 head and hair, 18 shoulders,
-// 19-24 tie, 25+ torso. Carrying to 28 gives the tile something to clip, so the
-// bust is cut by the frame instead of floating above the bottom edge.
-const CROP_ROWS = 28;
-
-// Framing lifted from the thumbnail, whose proportions are the ones that work:
-// the FIGURE (14 columns wide, x2..x15 — not the full 18-wide sprite box) spans
-// 58% of the frame, with 5% air above the hair. That leaves the brand yellow
-// reading as a field, which matters — at small sizes the yellow is recognised
-// before the face is. Filling the frame edge to edge kills it.
-const R_FIGURE = 140 / 240;
-const R_HEADROOM = 12 / 240;
-
-/**
- * Sprite -> a grid of colour|null, one cell per sprite pixel.
- *
- * No contour is drawn, deliberately. The face only meets the ground at a few
- * cheek pixels — everywhere else the silhouette is dark hair and a navy suit,
- * both of which already separate hard from the yellow. A dilated outline just
- * fuses with the hair into a black mass.
- */
-function buildGrid(sprite) {
-  const gw = SW, gh = CROP_ROWS;
-  const cells = [];
-  for (let gy = 0; gy < gh; gy++) {
-    for (let gx = 0; gx < gw; gx++) {
-      const i = (gy * SW + gx) * 4;
-      if (sprite[i + 3] < 128) continue;
-      cells.push({ gx, gy, c: [sprite[i], sprite[i + 1], sprite[i + 2]] });
-    }
-  }
-  const ys = cells.map((c) => c.gy), xs = cells.map((c) => c.gx);
-  return {
-    gw, gh, cells,
-    x0: Math.min(...xs), x1: Math.max(...xs) + 1,
-    y0: Math.min(...ys), y1: Math.max(...ys) + 1
-  };
-}
-
-/** Place the grid in the tile at an INTEGER scale, bleeding off the bottom. */
-function layout(N, grid, frame) {
-  const margin = N * FRAMES[frame];
-  const tile = { x: margin, y: margin, w: N - 2 * margin, h: N - 2 * margin };
-  tile.r = tile.w * R_RADIUS;
-  const stroke = tile.w * R_STROKE;
-  // Integer scale keeps every sprite pixel square — the whole point of the mark.
-  // ROUNDED, not floored: flooring throws away up to a whole pixel of scale,
-  // which at 64px is a third of the figure. Overflow is clipped by the tile.
-  const scale = Math.max(1, Math.round((tile.w * R_FIGURE) / (grid.x1 - grid.x0)));
-  const drawnW = (grid.x1 - grid.x0) * scale;
-  return {
-    tile, stroke, scale,
-    ox: Math.round(tile.x + (tile.w - drawnW) / 2 - grid.x0 * scale),
-    oy: Math.round(tile.y + tile.h * R_HEADROOM - grid.y0 * scale)
-  };
-}
-
-// ── SVG ───────────────────────────────────────────────────────────────────
-/** Merge each row's identical-colour runs into one rect — fewer, cleaner nodes. */
-function runs(grid) {
-  const at = new Map(grid.cells.map((c) => [c.gy * grid.gw + c.gx, c.c]));
-  const out = [];
-  for (let gy = 0; gy < grid.gh; gy++) {
-    let start = null, cur = null;
-    const flush = (end) => { if (start !== null) out.push({ gy, gx: start, len: end - start, c: cur }); start = null; };
-    for (let gx = 0; gx <= grid.gw; gx++) {
-      const c = at.get(gy * grid.gw + gx);
-      const key = c ? c.join(',') : null;
-      if (key !== (cur ? cur.join(',') : null)) { flush(gx); if (c) { start = gx; cur = c; } else cur = null; }
-    }
-    flush(grid.gw);
-  }
-  return out;
+/** Where the tile sits inside an N-canvas, per framing. */
+function layout(N, frame) {
+  const inset = frame === 'icon' ? N * APPLE_INSET : 0;
+  const w = N - inset * 2;
+  return { x: inset, y: inset, w, h: w, r: w * (frame === 'icon' ? APPLE_RADIUS : MARK_RADIUS) };
 }
 
 const hex = (c) => '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase();
-
-function buildSvg(N, grid, frame, border) {
-  const L = layout(N, grid, frame);
-  const t = L.tile, s = L.stroke;
-  // Stroke straddles the path, so inset by half of it — otherwise the border
-  // spills past the tile and gets clipped by the viewBox edge.
-  const rx = t.x + s / 2, ry = t.y + s / 2, rw = t.w - s, rh = t.h - s, rr = t.r - s / 2;
-  const body = runs(grid).map((r) => {
-    const x = L.ox + r.gx * L.scale, y = L.oy + r.gy * L.scale;
-    return `    <rect x="${x}" y="${y}" width="${r.len * L.scale}" height="${L.scale}" fill="${hex(r.c)}"/>`;
-  }).join('\n');
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${N}" height="${N}" viewBox="0 0 ${N} ${N}" shape-rendering="crispEdges">
-  <!-- Munder Difflin — the brand mark, and the source of truth for every raster
-       in build/ and docs/. Generated by tools/make-logo.cjs; edit that, not this.
-       Pure vector: no fonts, no gradients, no filters. -->
-  <title>Munder Difflin</title>
-  <defs>
-    <clipPath id="tile">
-      <rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" rx="${rr}"/>
-    </clipPath>
-  </defs>
-  <g clip-path="url(#tile)">
-    <rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" fill="${hex(GROUND)}"/>
-${body}
-  </g>
-  <rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" rx="${rr}"
-        fill="none" stroke="${hex(border)}" stroke-width="${s}" shape-rendering="geometricPrecision"/>
-</svg>
-`;
-}
 
 // ── PNG ───────────────────────────────────────────────────────────────────
 const CRC = (() => {
@@ -242,59 +124,113 @@ function sdRoundRect(px, py, x, y, w, h, r) {
   return Math.hypot(ax, ay) + Math.min(Math.max(qx, qy), 0) - r;
 }
 
-const SS = 4;   // 4x4 supersampling — smooth tile edge, hard pixel-art edges
+
+// ── SVG ───────────────────────────────────────────────────────────────────
+function buildSvg(N, frame) {
+  const L = layout(N, frame);
+  const k = L.w / U;                       // mark units -> canvas units
+  const P = (x, y) => `${(L.x + x * k).toFixed(2)},${(L.y + y * k).toFixed(2)}`;
+  const poly = SHOULDERS.map(([x, y]) => P(x, y)).join(' ');
+  const circle = (c) =>
+    `<circle cx="${(L.x + c.cx * k).toFixed(2)}" cy="${(L.y + c.cy * k).toFixed(2)}" ` +
+    `r="${(c.r * k).toFixed(2)}" fill="#FFFFFF"${c.a < 1 ? ` fill-opacity="${c.a}"` : ''}/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${N}" height="${N}" viewBox="0 0 ${N} ${N}">
+  <!-- Atlas — the brand mark, and the source of truth for every raster in
+       build/ and docs/. Generated by tools/make-logo.cjs; edit that, not this.
+       The same geometry as the app's own header logo (AtlasMark.tsx). -->
+  <title>Atlas</title>
+  <defs>
+    <linearGradient id="bg" x1="${L.x}" y1="${L.y}" x2="${L.x + L.w}" y2="${L.y + L.h}" gradientUnits="userSpaceOnUse">
+      <stop stop-color="${hex(VIOLET)}"/><stop offset="1" stop-color="${hex(INDIGO)}"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="${SHEEN.cx}" cy="${SHEEN.cy}" r="${SHEEN.r}">
+      <stop stop-color="#FFFFFF" stop-opacity="${SHEEN.a}"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="${L.x}" y="${L.y}" width="${L.w}" height="${L.h}" rx="${L.r.toFixed(2)}" fill="url(#bg)"/>
+  <rect x="${L.x}" y="${L.y}" width="${L.w}" height="${L.h}" rx="${L.r.toFixed(2)}" fill="url(#sheen)"/>
+  <polygon points="${poly}" fill="#FFFFFF" fill-opacity="${SHOULDER_ALPHA}"/>
+  ${circle(WEIGHT)}
+  ${circle(ORBIT)}
+</svg>
+`;
+}
+
+/** Signed distance to a rounded rect — negative inside. */
+function sdRoundRect(px, py, x, y, w, h, r) {
+  const cx = x + w / 2, cy = y + h / 2;
+  const qx = Math.abs(px - cx) - (w / 2 - r), qy = Math.abs(py - cy) - (h / 2 - r);
+  const ax = Math.max(qx, 0), ay = Math.max(qy, 0);
+  return Math.hypot(ax, ay) + Math.min(Math.max(qx, qy), 0) - r;
+}
+
+/** Crossing-number test. Exact for these shapes: every edge is straight. */
+function inPolygon(px, py, pts) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i], [xj, yj] = pts[j];
+    if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+const over = (dst, src, a) => [0, 1, 2].map((i) => dst[i] * (1 - a) + src[i] * a);
 
 /**
  * The tile is an analytic rounded rect, so its drop shadow is the SAME shape
- * offset down — no convolution needed, just a soft falloff on the distance
- * field. Exact at any size and effectively free.
+ * offset down — no convolution, just a soft falloff on the distance field.
  */
-function rasterise(N, grid, frame, border) {
-  const L = layout(N, grid, frame);
-  const t = L.tile, s = L.stroke;
-  const rx = t.x + s / 2, ry = t.y + s / 2, rw = t.w - s, rh = t.h - s, rr = t.r - s / 2;
+function rasterise(N, frame) {
+  const L = layout(N, frame);
+  const k = L.w / U;
+  const at = (x, y) => [L.x + x * k, L.y + y * k];
   const shadow = frame === 'icon' ? { dy: N * 0.020, blur: N * 0.030, a: 0.30 } : null;
+  // Small icons get more samples: at 16px a quarter-pixel step is the whole
+  // difference between a curve and a staircase.
+  const SS = N <= 64 ? 8 : 4;
 
-  const at = new Map(grid.cells.map((c) => [c.gy * grid.gw + c.gx, c.c]));
-  const spriteAt = (px, py) => {
-    const gx = Math.floor((px - L.ox) / L.scale), gy = Math.floor((py - L.oy) / L.scale);
-    return at.get(gy * grid.gw + gx) ?? null;
-  };
+  const [wx, wy] = at(WEIGHT.cx, WEIGHT.cy);
+  const [ox, oy] = at(ORBIT.cx, ORBIT.cy);
+  const poly = SHOULDERS.map(([x, y]) => at(x, y));
+  const sheenC = [L.x + SHEEN.cx * L.w, L.y + SHEEN.cy * L.h], sheenR = SHEEN.r * L.w;
 
   const out = Buffer.alloc(N * N * 4);
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
-      let cov = 0, ink = 0, rSum = 0, gSum = 0, bSum = 0;
+      let cov = 0, rSum = 0, gSum = 0, bSum = 0;
       for (let sy = 0; sy < SS; sy++) {
         for (let sx = 0; sx < SS; sx++) {
           const px = x + (sx + 0.5) / SS, py = y + (sy + 0.5) / SS;
-          const d = sdRoundRect(px, py, rx, ry, rw, rh, rr);
-          if (d > s / 2) continue;                    // outside the stroke entirely
+          if (sdRoundRect(px, py, L.x, L.y, L.w, L.h, L.r) > 0) continue;
           cov++;
-          if (d > -s / 2) { ink++; continue; }        // within the border band
-          const c = spriteAt(px, py) ?? GROUND;
+          // the ground: violet to indigo down the diagonal
+          const t = Math.min(1, Math.max(0, ((px - L.x) + (py - L.y)) / (L.w + L.h)));
+          let c = [0, 1, 2].map((i) => VIOLET[i] + (INDIGO[i] - VIOLET[i]) * t);
+          // the sheen
+          const sd = Math.hypot(px - sheenC[0], py - sheenC[1]);
+          c = over(c, WHITE, SHEEN.a * Math.min(1, Math.max(0, 1 - sd / sheenR)));
+          // the shoulders, the weight, the one in orbit
+          if (inPolygon(px, py, poly)) c = over(c, WHITE, SHOULDER_ALPHA);
+          if (Math.hypot(px - wx, py - wy) <= WEIGHT.r * k) c = over(c, WHITE, WEIGHT.a);
+          if (Math.hypot(px - ox, py - oy) <= ORBIT.r * k) c = over(c, WHITE, ORBIT.a);
           rSum += c[0]; gSum += c[1]; bSum += c[2];
         }
       }
       const tileA = cov / (SS * SS);
-
       let sa = 0;
       if (shadow) {
-        const d = sdRoundRect(x + 0.5, y + 0.5 - shadow.dy, rx, ry, rw, rh, rr) - s / 2;
+        const d = sdRoundRect(x + 0.5, y + 0.5 - shadow.dy, L.x, L.y, L.w, L.h, L.r);
         sa = Math.min(1, Math.max(0, 0.5 - d / shadow.blur)) * shadow.a;
       }
       if (!tileA && !sa) continue;
-
-      // Tile over shadow, straight (un-premultiplied) output.
       const outA = tileA + sa * (1 - tileA);
-      const wT = tileA / outA, wS = 1 - wT;          // shadow colour is pure black
-      const i = (y * N + x) * 4;
+      const wT = tileA / outA;                  // shadow is pure black, so it
+      const i = (y * N + x) * 4;                // contributes no colour
       if (cov) {
-        out[i] = Math.round(((rSum + ink * border[0]) / cov) * wT);
-        out[i + 1] = Math.round(((gSum + ink * border[1]) / cov) * wT);
-        out[i + 2] = Math.round(((bSum + ink * border[2]) / cov) * wT);
+        out[i] = Math.round((rSum / cov) * wT);
+        out[i + 1] = Math.round((gSum / cov) * wT);
+        out[i + 2] = Math.round((bSum / cov) * wT);
       }
-      void wS;                                        // black contributes nothing
       out[i + 3] = Math.round(outA * 255);
     }
   }
@@ -322,7 +258,6 @@ function buildIco(pngs) {
 }
 
 // ── run ───────────────────────────────────────────────────────────────────
-const grid = buildGrid(centreEyes(art.sceneFrameBufs('michael').front[0]));
 const D = (p) => path.join(ROOT, p);
 const wrote = [];
 const write = (rel, buf) => {
@@ -330,21 +265,18 @@ const write = (rel, buf) => {
   wrote.push(`${rel.padEnd(28)} ${(buf.length / 1024).toFixed(1)} KB`);
 };
 
-// Source of truth + the site/app rasters (full bleed).
-write('docs/logo.svg', Buffer.from(buildSvg(1024, grid, 'mark', BORDERS.ink)));
-write('docs/logo.png', rasterise(512, grid, 'mark', BORDERS.ink));
-write('docs/logo-light.png', rasterise(512, grid, 'mark', BORDERS.warm));
-write('docs/favicon-32.png', rasterise(32, grid, 'mark', BORDERS.ink));
-write('docs/apple-touch-icon.png', rasterise(180, grid, 'mark', BORDERS.ink));
+write('docs/logo.svg', Buffer.from(buildSvg(1024, 'mark')));
+write('docs/logo.png', rasterise(512, 'mark'));
+write('docs/favicon-32.png', rasterise(32, 'mark'));
+write('docs/apple-touch-icon.png', rasterise(180, 'mark'));
 
-// App icons.
-write('build/icon.svg', Buffer.from(buildSvg(1024, grid, 'icon', BORDERS.ink)));
-write('build/icon.png', rasterise(1024, grid, 'icon', BORDERS.ink));
+write('build/icon.svg', Buffer.from(buildSvg(1024, 'icon')));
+write('build/icon.png', rasterise(1024, 'icon'));
 write('build/icon.ico', buildIco([16, 32, 48, 64, 128, 256].map((size) => ({
-  size, data: rasterise(size, grid, 'mark', BORDERS.ink)
+  size, data: rasterise(size, 'mark')
 }))));
 
-// macOS .icns via iconutil, from a margined+shadowed iconset.
+// macOS .icns via iconutil, from the margined + shadowed iconset.
 const setDir = D('build/icon.iconset');
 fs.rmSync(setDir, { recursive: true, force: true });
 fs.mkdirSync(setDir, { recursive: true });
@@ -353,7 +285,7 @@ for (const [name, size] of [
   ['icon_128x128', 128], ['icon_128x128@2x', 256], ['icon_256x256', 256],
   ['icon_256x256@2x', 512], ['icon_512x512', 512], ['icon_512x512@2x', 1024]
 ]) {
-  fs.writeFileSync(path.join(setDir, `${name}.png`), rasterise(size, grid, 'icon', BORDERS.ink));
+  fs.writeFileSync(path.join(setDir, `${name}.png`), rasterise(size, 'icon'));
 }
 execFileSync('iconutil', ['-c', 'icns', setDir, '-o', D('build/icon.icns')]);
 fs.rmSync(setDir, { recursive: true, force: true });
