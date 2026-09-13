@@ -645,6 +645,15 @@ div:hover > .cth-iconbar[data-label] { opacity: 1 !important; }
    fills in on hover rather than just darkening a glyph. */
 .cth-ide-close:hover { background: var(--cth-coral) !important; color: var(--cth-on-danger) !important; }
 
+/* Quiet until you reach for it. A control that ENDS something should not sit
+   there as a block of red — that makes a toolbar read as an alarm — but it must
+   not look like its neighbours at the moment of the click either. Same rule the
+   IDE's close button above follows, as a class anything can wear. */
+.cth-danger-hover:hover {
+  background: var(--cth-coral);
+  color: var(--cth-on-danger);
+}
+
 /* A panel scrolls with a bar that appears when the pointer is inside it. A
    permanent 10px rail beside a list of six events is furniture; the gutter is
    reserved either way so content never shifts when the bar arrives. */

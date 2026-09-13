@@ -30,51 +30,12 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
   const [openTerminalError, setOpenTerminalError] = useState<string | undefined>();
   const [editOpen, setEditOpen] = useState(false);
 
-  /**
-   * THE HEADER STRIP HAS TO GIVE SOMETHING UP WHEN THE SIDEBAR IS DRAGGED IN.
-   *
-   * Four buttons with icon+label need about 246px on their own, and the
-   * portrait and gaps take another 72. The sidebar can be dragged down to
-   * 320px total (SidebarSplitter's `min`), so past a point there is simply
-   * not enough room for the labels AND the agent's name.
-   *
-   * Something has to yield, and the name is the one thing in this row that
-   * cannot: it is how you know WHICH agent you are looking at. So below the
-   * threshold the buttons drop their words and keep their icons — the tooltip
-   * and aria-label on each already carry the full explanation, so nothing is
-   * actually lost, and the ~110px that frees goes back to the name.
-   *
-   * Measured on the strip itself rather than on `sidebarWidth`, because the
-   * strip's width is set by its container and NOT by what is inside it. That
-   * is what makes a single threshold safe here: swapping labels for icons
-   * cannot change the number being compared, so the row cannot oscillate.
-   *
-   * WHERE 440 COMES FROM. Everything that is not the name costs ~318px: the
-   * four buttons measure ~246 at Inter 13px, the portrait 32, and the five
-   * 8px gaps another 40. The name is set in Press Start 2P, which is a
-   * fixed-advance pixel font — at fontSize 10 that is a flat 10px per
-   * character, plus 17 for the rename pencil beside it. Ten readable
-   * characters therefore need 117, and 318 + 117 rounds to 440.
-   *
-   * That threshold deliberately puts the DEFAULT 420px sidebar in compact
-   * mode. It has to: at 420 the labelled row leaves the name about 67px,
-   * which is six pixel-font characters — the "DWIGHT S." truncation this was
-   * reported as. Icons at the default width is the fix, not a side effect.
-   *
-   * Recompute the number if a fifth button lands in this row or a label grows.
-   */
+  /* The header used to measure itself and swap labels for icons below 440px,
+     because four labelled buttons left the name about six characters at the
+     default 420px sidebar. The row is icon-only at every width now — the same
+     treatment the boss's header uses — so there is no breakpoint to observe and
+     no second layout to keep honest. */
   const headerRef = useRef<HTMLDivElement | null>(null);
-  const [compactHeader, setCompactHeader] = useState(false);
-  useEffect(() => {
-    const el = headerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect.width ?? 0;
-      if (w > 0) setCompactHeader(w < 440);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
   const archiveAgent = useStore(s => s.archiveAgent);
   const updateAgent = useStore(s => s.updateAgent);
   const renameAgent = useStore(s => s.renameAgent);
@@ -172,47 +133,76 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
             }}>{agent.project}</span>
           </div>
         </div>
-        <PixelButton variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
-          <span
-            aria-label="Edit this agent"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-          >
-            <Icon name="edit" />{!compactHeader && ' edit'}
-          </span>
-        </PixelButton>
-        {/* v0.3.4: the IDE lives at agent level (replaces the old files tab) —
-            opens the full-window Monaco editor rooted at this agent's workspace. */}
-        <PixelButton variant="secondary" size="sm" onClick={() => useStore.getState().setIdeOpen(true, agent.id)}>
-          <span
-            aria-label={t('agentDetail.openIde')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-          >
-            <Icon name="code" />{!compactHeader && t('agentDetail.ide')}
-          </span>
-        </PixelButton>
-        <PixelButton variant="secondary" size="sm" onClick={openTerminal} disabled={openTerminalState === 'opening'}>
-          {/* "open" said nothing about WHAT opens, sitting in a row where IDE
-              and Talk both also open something. The label names the thing you
-              get; the tip names the folder you get it in. */}
-          <span
-            aria-label={t('agentDetail.openTerminalAria')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-          >
-            <Icon name="terminal" />
-            {/* The transient states survive compact mode: they are feedback on
-                a click you just made, and they are two characters wide. Only
-                the resting word "terminal" is worth its space. */}
-            {openTerminalState === 'opening' ? t('agentDetail.opening')
-              : openTerminalState === 'ok' ? t('agentDetail.ok')
-              : openTerminalState === 'error' ? t('agentDetail.err')
-              : compactHeader ? '' : t('agentDetail.open')}
-          </span>
-        </PixelButton>
-        {isReal && (
-          <PixelButton variant="danger-ghost" size="sm" onClick={onKill}>
-            <Icon name="x" />
-          </PixelButton>
-        )}
+        {/* Built the way the boss's own header is: 32px icon buttons, each in
+            its own tone, with the name on the shared hover bubble. Three
+            labelled outline buttons plus a filled red square cost more width
+            than the agent's name had, and read as a toolbar shouting at you.
+            The tones match the boss's exactly — lemon edits, sky opens code —
+            so the same action looks the same wherever you meet it. */}
+        <span className="cth-iconbar" style={{ display: 'inline-flex', gap: 2, flexShrink: 0 }}>
+          {[
+            { key: 'edit', icon: 'edit' as const, tone: 'var(--cth-lemon)',
+              label: t('agentDetail.editAria', { defaultValue: 'Edit this agent' }),
+              onClick: () => setEditOpen(true), disabled: false },
+            // v0.3.4: the IDE lives at agent level (replaces the old files tab)
+            // — the full-window Monaco editor rooted at this agent's workspace.
+            { key: 'ide', icon: 'code' as const, tone: 'var(--cth-sky)',
+              label: t('agentDetail.openIde'),
+              onClick: () => useStore.getState().setIdeOpen(true, agent.id), disabled: false },
+            // The transient states ride the LABEL now rather than the button
+            // face: they are feedback on a click you just made, and the bubble
+            // is already where this row explains itself.
+            { key: 'open', icon: 'terminal' as const,
+              tone: openTerminalState === 'error' ? 'var(--cth-coral-text)'
+                : openTerminalState === 'ok' ? 'var(--cth-mint-text)'
+                : 'var(--cth-jade)',
+              label: openTerminalState === 'opening' ? t('agentDetail.opening')
+                : openTerminalState === 'ok' ? t('agentDetail.ok')
+                : openTerminalState === 'error' ? t('agentDetail.err')
+                : t('agentDetail.openTerminalAria'),
+              onClick: openTerminal, disabled: openTerminalState === 'opening' }
+          ].map((a) => (
+            <button
+              key={a.key}
+              onClick={a.disabled ? undefined : a.onClick}
+              disabled={a.disabled}
+              data-label={a.label}
+              aria-label={a.label}
+              style={{
+                width: 32, height: 32, flexShrink: 0,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                border: 'none', background: 'transparent',
+                cursor: a.disabled ? 'not-allowed' : 'pointer',
+                opacity: a.disabled ? 0.5 : 1,
+                borderRadius: 'var(--cth-radius-btn)',
+                color: a.tone,
+                transition: 'background 120ms ease, color 120ms ease'
+              }}
+            >
+              <Icon name={a.icon} />
+            </button>
+          ))}
+          {/* Kill keeps its own treatment: it is the one control here that ends
+              something, so it is the one that turns red under the pointer. */}
+          {isReal && (
+            <button
+              className="cth-danger-hover"
+              onClick={onKill}
+              data-label={t('agentDetail.killAria', { defaultValue: 'Stop and archive this agent' })}
+              aria-label={t('agentDetail.killAria', { defaultValue: 'Stop and archive this agent' })}
+              style={{
+                width: 32, height: 32, flexShrink: 0,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                border: 'none', background: 'transparent', cursor: 'pointer',
+                borderRadius: 'var(--cth-radius-btn)',
+                color: 'var(--cth-coral-text)',
+                transition: 'background 120ms ease, color 120ms ease'
+              }}
+            >
+              <Icon name="x" />
+            </button>
+          )}
+        </span>
       </div>
 
       {openTerminalError && (
