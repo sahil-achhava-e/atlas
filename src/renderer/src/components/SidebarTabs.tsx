@@ -13,8 +13,7 @@ import { Icon, type IconName } from './Icon';
 const TABS: { key: SidebarTab; labelKey: string; icon: IconName; tone: string }[] = [
   { key: 'terminal', labelKey: 'sidebar.terminal', icon: 'terminal', tone: 'var(--cth-status-idle)' },
   { key: 'git',      labelKey: 'sidebar.git',      icon: 'code',     tone: 'var(--cth-sky)' },
-  { key: 'messages', labelKey: 'sidebar.messages', icon: 'bell',     tone: 'var(--cth-coral)' },
-  { key: 'traces',   labelKey: 'sidebar.traces',   icon: 'web',      tone: 'var(--cth-indigo)' }
+  { key: 'messages', labelKey: 'sidebar.messages', icon: 'bell',     tone: 'var(--cth-coral)' }
 ];
 
 export interface SidebarTabsProps {

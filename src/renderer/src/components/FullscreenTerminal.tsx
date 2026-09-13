@@ -11,7 +11,6 @@ import { CommandCenterPanel } from './CommandCenterPanel';
 import { SidebarTabs } from './SidebarTabs';
 import { GitTab } from './GitTab';
 import { ThreadsPanel } from './ThreadsPanel';
-import { ToolWaterfall } from './ToolWaterfall';
 import { EditAgentModal } from './EditAgentModal';
 import { Icon } from './Icon';
 import { SpritePortrait } from './SpritePortrait';
@@ -364,7 +363,6 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
                 )}
                 {sidebarTab === 'git' && <GitTab cwd={agent.cwd} />}
                 {sidebarTab === 'messages' && <ThreadsPanel agentId={agent.id} />}
-                {sidebarTab === 'traces' && <ToolWaterfall agentId={agent.id} />}
               </div>
             </>
           )}

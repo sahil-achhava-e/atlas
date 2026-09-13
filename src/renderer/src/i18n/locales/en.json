@@ -61,25 +61,13 @@
   },
   "agentControl": {
     "deliveryPaused": "queued messages held (whole floor)",
-    "halting": "stopping after this step…",
-    "steersQueued": "{{count}} notes waiting",
-    "steerPlaceholder": "send this agent a note… (arrives as context on its next turn, nothing is typed into its terminal)",
-    "steer": "steer",
-    "flashResumed": "tools allowed again",
-    "flashPaused": "tools blocked from the next call on",
-    "flashHalt": "will stop after the current step",
-    "flashSteer": "note queued, arrives on its next turn",
-    "allowTools": "allow tools",
-    "allowToolsTip": "Give its tools back. The agent keeps its session and picks up where it stopped.",
-    "allowToolsAria": "Allow tools again",
-    "blockTools": "block tools",
-    "blockToolsTip": "The agent keeps thinking and talking to you, but cannot read, write or run anything until you allow it again. Immediate, and reversible.",
-    "blockToolsAria": "Block this agent from using tools",
-    "stopAfterStep": "stop after this step",
-    "stopAfterStepTip": "Let it finish the step it is on, then stop. The process and its session survive, so Restart and Continue can pick it back up. To end the process outright, use the X.",
-    "stopAfterStepAria": "Stop this agent after the current step",
-    "steerTip": "Hands the agent a note at its next turn boundary. It does not interrupt what it is doing now, and nothing is typed into its terminal.",
-    "steerAria": "Send this agent a note"
+    "flashSteer": "note sent — arrives on its next turn",
+    "halting": "stopping after this step",
+    "steer": "Send note",
+    "steerAria": "Send a note. It reaches the agent on its next turn; nothing is typed into its terminal",
+    "steerPlaceholder": "Note for this agent…",
+    "steersQueued": "{{count}} waiting",
+    "toolsBlocked": "tools blocked"
   },
   "agentCard": {
     "boss": "Boss",
@@ -131,17 +119,7 @@
   "sidebar": {
     "terminal": "terminal",
     "git": "git",
-    "messages": "messages",
-    "traces": "traces"
-  },
-  "toolWaterfall": {
-    "fresh": "fresh {{tokens}}t",
-    "cache": "cache {{tokens}}t ({{pct}}%)",
-    "total": "{{tokens}}t total",
-    "noTelemetry": "no live telemetry yet. Spawn / respawn this agent to instrument it",
-    "empty": "No tool calls captured yet. Each tool the agent runs appears here with its real duration.",
-    "barOk": "{{tool}} · {{ms}}ms · ok",
-    "barFailed": "{{tool}} · {{ms}}ms · failed"
+    "messages": "messages"
   },
   "agentDetail": {
     "open": "Open",

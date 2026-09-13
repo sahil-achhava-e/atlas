@@ -1,29 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PixelButton } from './PixelButton';
-import { AgentHoldButton } from './AgentHoldButton';
 import { isComposingKey } from '@shared/imeGuard';
 
 /**
- * Operator control for one agent (#7C.1-7C.3) — pause (deny tools at the next
- * boundary), graceful halt (clean stop), and mid-run steering (inject context
- * without typing into the TUI). All ride Claude Code's hook-return protocol; no
- * PTY keystrokes. A thin strip under the agent header.
+ * Send a note to one agent, without typing into its terminal.
  *
- * The labels used to be "CONTROL", "pause", "halt", "steer", which told you the
- * mechanism and nothing about the consequence. "Control" what, and what is the
- * difference between pausing and halting? Both stop something; only one is
- * recoverable in the same breath. So each button says what HAPPENS, and the
- * explanations are on a styled hover tip rather than a native `title` that
- * waits a second and then renders an unstyled OS bubble.
+ * The note rides Claude Code's hook-return protocol: it is handed back as
+ * `additionalContext` on the agent's next UserPromptSubmit or PostToolUse, so
+ * it arrives as something the agent READ rather than as keystrokes injected
+ * into a TUI that may be mid-render. Queued per agent, and a stalled agent
+ * never drains its queue, so the oldest is dropped past twenty.
  *
- * The heading is gone: once the buttons read as sentences it was labelling the
- * obvious, and a row of three clear verbs needs no title above it.
- *
- * The 1:1 hold sits here too. It is a different KIND of control — the other two
- * restrain the AGENT, 1:1 restrains MICHAEL, and the agent keeps running and
- * answering you — so that distinction now lives in its tooltip rather than in
- * the layout.
+ * WHAT THIS STRIP USED TO BE. Three more controls lived here — block tools
+ * (deny every tool call at the PreToolUse boundary), stop after this step (a
+ * clean halt at the next boundary), and 1:1 (tell the boss an agent is
+ * reserved so it routes work elsewhere). They were removed from the UI at the
+ * founder's call. The MACHINERY is untouched: pause, resume and halt are
+ * driven by the voice path in realtimeActions.ts and still work there, and the
+ * hive still records and reports `onHold`. What went is four buttons in a
+ * strip that sits above every agent, permanently, whether or not you were ever
+ * going to press them.
  */
 interface Snapshot {
   paused: boolean;
@@ -52,68 +49,31 @@ export function AgentControlStrip({ agentId }: { agentId: string }) {
     noteTimer.current = setTimeout(() => setNote(''), 1800);
   };
 
-  const togglePause = async () => {
-    const s = snap?.paused ? await window.cth.controlResume(agentId) : await window.cth.controlPause(agentId, true);
-    if (s) setSnap(s);
-    flash(snap?.paused ? t('agentControl.flashResumed') : t('agentControl.flashPaused'));
-  };
-  const halt = async () => {
-    const s = await window.cth.controlHalt(agentId);
-    if (s) setSnap(s);
-    flash(t('agentControl.flashHalt'));
-  };
   const sendSteer = async () => {
-    const t_ = steer.trim();
-    if (!t_) return;
-    const s = await window.cth.controlSteer(agentId, t_);
+    const text = steer.trim();
+    if (!text) return;
+    const s = await window.cth.controlSteer(agentId, text);
     if (s) setSnap(s);
     setSteer('');
     flash(t('agentControl.flashSteer'));
   };
 
+  // Still reported, because they can still be true — set by voice, not by a
+  // button that used to be here.
+  const status = [
+    snap?.autoDeliveryPaused ? t('agentControl.deliveryPaused') : null,
+    snap?.paused ? t('agentControl.toolsBlocked') : null,
+    snap?.halted ? t('agentControl.halting') : null,
+    snap?.pendingSteers ? t('agentControl.steersQueued', { count: snap.pendingSteers }) : null,
+    note || null
+  ].filter(Boolean);
+
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', gap: 8,
+      display: 'flex', flexDirection: 'column', gap: 6,
       padding: '10px 12px', background: 'var(--cth-paper-100)',
-      // ink-100 is the divider step; ink-300 is the BORDER step and drew this
-      // strip off with a rule heavier than anything around it.
       borderBottom: '1px solid var(--cth-ink-100)', flexShrink: 0
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {/* Neither of these kills anything, and the old two-word labels never
-            said so — the difference is WHEN the agent stops and whether it keeps
-            its session. Say the consequence on the button, the detail on hover. */}
-        <PixelButton variant={snap?.paused ? 'primary' : 'secondary'} size="sm" onClick={togglePause}>
-          <span
-            aria-label={snap?.paused ? t('agentControl.allowToolsAria') : t('agentControl.blockToolsAria')}
-          >
-            {snap?.paused ? t('agentControl.allowTools') : t('agentControl.blockTools')}
-          </span>
-        </PixelButton>
-        {/* Not `destructive`. This component's own note says neither of these
-            kills anything — a graceful halt keeps the session — and a solid red
-            fill parked in the strip said the opposite every second it was on
-            screen. The red arrives on hover, where the click is. */}
-        <PixelButton variant="danger-ghost" size="sm" onClick={halt}>
-          <span
-            aria-label={t('agentControl.stopAfterStepAria')}
-          >
-            {t('agentControl.stopAfterStep')}
-          </span>
-        </PixelButton>
-        {/* Sits with them at the founder's call. It is a different KIND of
-            control — the two above restrain the agent, this one restrains
-            Michael — so the tooltip carries that distinction now that the
-            grouping no longer does. */}
-        <AgentHoldButton agentId={agentId} />
-        {/* v0.3.4: the auto-delivery switch moved to the god's Command Center
-            header — ONE floor-wide control instead of a per-agent toggle. */}
-        {snap?.autoDeliveryPaused && (
-          <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>{t('agentControl.deliveryPaused')}</span>
-        )}
-        {snap?.halted && <span style={{ fontSize: 11, color: 'var(--cth-coral-text)' }}>{t('agentControl.halting')}</span>}
-        {!!snap?.pendingSteers && <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>{t('agentControl.steersQueued', { count: snap.pendingSteers })}</span>}
-      </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <input
           className="cth-input"
@@ -121,10 +81,8 @@ export function AgentControlStrip({ agentId }: { agentId: string }) {
           onChange={(e) => setSteer(e.target.value)}
           onKeyDown={(e) => { if (isComposingKey(e)) return; if (e.key === 'Enter') sendSteer(); }}
           placeholder={t('agentControl.steerPlaceholder')}
+          aria-label={t('agentControl.steerAria')}
           style={{
-            // height matches the sm buttons beside it: a field an odd few px
-            // shorter than its own send button is the kind of thing you cannot
-            // name but can see.
             flex: 1, minWidth: 0, height: 26, padding: '0 10px', boxSizing: 'border-box',
             background: 'var(--cth-paper-100)', border: 'none',
             borderRadius: 'var(--cth-radius-input)',
@@ -133,12 +91,12 @@ export function AgentControlStrip({ agentId }: { agentId: string }) {
           }}
         />
         <PixelButton variant="secondary" size="sm" onClick={sendSteer} disabled={!steer.trim()}>
-          <span
-            aria-label={t('agentControl.steerAria')}
-          >{t('agentControl.steer')}</span>
+          <span aria-label={t('agentControl.steerAria')}>{t('agentControl.steer')}</span>
         </PixelButton>
       </div>
-      {note && <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>{note}</span>}
+      {status.length > 0 && (
+        <span style={{ fontSize: 11, color: 'var(--cth-ink-600)' }}>{status.join(' · ')}</span>
+      )}
     </div>
   );
 }

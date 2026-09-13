@@ -11,7 +11,6 @@ import { CommandCenterPanel } from './CommandCenterPanel';
 import { disposeTerminal } from './terminalPool';
 import { SidebarTabs } from './SidebarTabs';
 import { ThreadsPanel } from './ThreadsPanel';
-import { ToolWaterfall } from './ToolWaterfall';
 import { AgentControlStrip } from './AgentControlStrip';
 import { EditAgentModal } from './EditAgentModal';
 import { GitTab } from './GitTab';
@@ -265,9 +264,6 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
           <ThreadsPanel agentId={agent.id} />
         )}
 
-        {sidebarTab === 'traces' && (
-          <ToolWaterfall agentId={agent.id} />
-        )}
       </div>
 
       {editOpen && (
