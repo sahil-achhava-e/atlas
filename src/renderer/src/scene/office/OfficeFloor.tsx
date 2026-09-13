@@ -10,6 +10,17 @@ import { Character, paintCup } from './Character';
 import { DeskScreen } from './DeskScreen';
 import { MessageEnvelope, type MessageAct } from './MessageEnvelope';
 import { hexToNumber, DEFAULT_CHARACTER } from './cast';
+import { LIBRARY_BY_ID } from './avatarLibrary';
+
+/** The selection glow's fallback colour, for an agent with no accent set.
+ *  A cast member carries a signature `shirt`; a library face carries its
+ *  garment colour as `recipe.c1`; anything else gets the default cast shirt. */
+function glowFor(charName: string, member?: { shirt: string }): number {
+  if (member) return hexToNumber(member.shirt);
+  const c1 = LIBRARY_BY_ID[charName]?.recipe?.c1;
+  if (Array.isArray(c1) && c1.length >= 3) return (c1[0] << 16) | (c1[1] << 8) | c1[2];
+  return hexToNumber('#F2685C');
+}
 import { pickSoloLine, pickExchange, type BreakSpot } from './cafeteriaLines';
 import { colors, accentNumber } from '@/design/tokens';
 import { loadTheme, resolveThemeMap, themeTilesetUrls } from './themeLoader';
@@ -1400,7 +1411,23 @@ export function OfficeFloor() {
       (app as any).__taskBoardPoll = taskBoardPoll;
 
       const addCharacter = async (agent: Agent) => {
-        const charName = theme.cast.byName[agent.character] ? agent.character : theme.cast.defaultCharacter;
+        /* EVERY HIRED AGENT LOOKED LIKE ATLAS.
+         *
+         * `theme.cast.byName` is the fifteen-strong Office cast. The Add agent
+         * picker offers those PLUS the thirty faces in the avatar library, and
+         * a library id (`lib-neo`) is not a key in `byName` — so this gate sent
+         * every one of them to `defaultCharacter`, which is 'michael': the
+         * boss's own face. Pick Neo, hire, and Atlas walked to the desk.
+         *
+         * The art layer never had this limit. portraitArt resolves a cast
+         * recipe, then a library recipe, then generates a face from whatever
+         * string it was given — which is why the picker and the agent card,
+         * both of which call it directly, showed the right face all along. Only
+         * the floor gated on the cast map, and the floor is the main view.
+         *
+         * So: any non-empty character draws itself. Only a missing one falls
+         * back. */
+        const charName = agent.character?.trim() || theme.cast.defaultCharacter;
         const member = theme.cast.byName[charName];
         const seatIndex = claimSeat(agent);
         const seatTile: Tile = (seatIndex != null ? seatTiles[seatIndex] : undefined)
@@ -1421,7 +1448,10 @@ export function OfficeFloor() {
           seatTile,
           seatDirection: facingForSeat(seatTile),
           spawnTile: entrance, // walk in from the office door
-          glowColor: accentNumber(agent.accent) ?? hexToNumber(member.shirt),
+          // `member` is undefined for a library or generated face, so the
+          // selection glow takes that face's own garment colour rather than
+          // crashing on `.shirt` (which is what made the cast gate load-bearing).
+          glowColor: accentNumber(agent.accent) ?? glowFor(charName, member),
           onClick: (id) => useStore.getState().select(id),
         });
         character.show(charLayer);
