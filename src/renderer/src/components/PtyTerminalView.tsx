@@ -41,6 +41,10 @@ const zoomBtnStyle: CSSProperties = {
   borderRadius: 'var(--cth-radius-sm)',
   cursor: 'pointer',
   padding: 0,
+  // The app's focus ring is lilac, which works on both app grounds but measures
+  // 2.38:1 here: the terminal is true black in BOTH themes, and these controls
+  // sit on it. Inline outline-color wins over the global rule's shorthand.
+  outlineColor: 'rgba(255, 255, 255, 0.9)',
   transition: 'background 120ms ease, color 120ms ease'
 };
 

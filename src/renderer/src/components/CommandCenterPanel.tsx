@@ -728,7 +728,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                 cursor: dispatchText.trim() ? 'pointer' : 'not-allowed',
                 background: dispatchText.trim() ? 'var(--cth-lilac)' : 'transparent',
                 boxShadow: dispatchText.trim() ? 'var(--cth-shadow-btn)' : 'inset 0 0 0 1px var(--cth-ink-100)',
-                color: dispatchText.trim() ? '#FFFFFF' : 'var(--cth-ink-500)',
+                color: dispatchText.trim() ? 'var(--cth-on-accent)' : 'var(--cth-ink-500)',
                 fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
                 transition: 'background 120ms ease, box-shadow 120ms ease, color 120ms ease'
               }}
@@ -821,7 +821,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   {a.isGod && (
                     <span style={{
                       flexShrink: 0, padding: '2px 7px', borderRadius: 'var(--cth-radius-pill)',
-                      background: 'var(--cth-lilac-light)', color: 'var(--cth-lilac)',
+                      background: 'var(--cth-lilac-light)', color: 'var(--cth-lilac-text)',
                       fontFamily: 'var(--cth-font-ui)', fontSize: 10, fontWeight: 700
                     }}>{t('commandCenter.godTag')}</span>
                   )}
@@ -870,7 +870,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   }}
                 >
                   <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true"
-                    style={{ color: 'var(--cth-mint)' }}>
+                    style={{ color: 'var(--cth-mint-text)' }}>
                     <path d="M16 10a6 6 0 1 1-1.8-4.3M16 3.4V7h-3.6"
                       stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -891,7 +891,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   }}
                 >
                   <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true"
-                    style={{ color: 'var(--cth-lemon)' }}>
+                    style={{ color: 'var(--cth-lemon-text)' }}>
                     <path d="M13.4 3.6a1.9 1.9 0 0 1 2.7 2.7L7.5 14.9l-3.5.9.9-3.5 8.5-8.7Z"
                       stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
                   </svg>
@@ -1069,7 +1069,7 @@ function Sparkline({ series }: { series: number[] }) {
     ? series.map((v) => blocks[Math.min(blocks.length - 1, Math.round((v / max) * (blocks.length - 1)))]).join('')
     : '▁▁▁▁▁▁';
   return (
-    <span style={{ flex: 1, fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '12px', color: 'var(--cth-sky)', whiteSpace: 'nowrap', overflow: 'hidden', minWidth: 0 }}>
+    <span style={{ flex: 1, fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '12px', color: 'var(--cth-sky-text)', whiteSpace: 'nowrap', overflow: 'hidden', minWidth: 0 }}>
       {text}
     </span>
   );

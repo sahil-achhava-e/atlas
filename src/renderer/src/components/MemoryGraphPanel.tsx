@@ -201,7 +201,7 @@ export function MemoryGraphPanel({
             height: 30, padding: '0 12px', border: 'none', cursor: 'pointer',
             borderRadius: 'var(--cth-radius-btn)',
             background: showTopics ? 'var(--cth-lilac)' : 'var(--cth-cream-100)',
-            color: showTopics ? '#FFFFFF' : 'var(--cth-ink-700)',
+            color: showTopics ? 'var(--cth-on-accent)' : 'var(--cth-ink-700)',
             boxShadow: showTopics ? 'var(--cth-shadow-sm)' : 'none',
             fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, fontWeight: 600,
             transition: 'background 120ms ease, color 120ms ease'
@@ -224,7 +224,7 @@ export function MemoryGraphPanel({
             width: 30, height: 30, border: 'none', cursor: 'pointer',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             borderRadius: 'var(--cth-radius-btn)', background: 'transparent',
-            color: 'var(--cth-sky)'
+            color: 'var(--cth-sky-text)'
           }}
         >
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">

@@ -29,8 +29,8 @@ const editorTheme = EditorView.theme({
 
 const editorSyntax = HighlightStyle.define([
   { tag: tags.propertyName, color: 'var(--cth-ink-700)' },
-  { tag: tags.string, color: 'var(--cth-mint)' },
-  { tag: [tags.number, tags.bool, tags.null], color: 'var(--cth-coral)' },
+  { tag: tags.string, color: 'var(--cth-mint-text)' },
+  { tag: [tags.number, tags.bool, tags.null], color: 'var(--cth-coral-text)' },
   { tag: tags.punctuation, color: 'var(--cth-ink-500)' }
 ]);
 

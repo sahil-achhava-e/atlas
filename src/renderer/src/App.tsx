@@ -513,13 +513,13 @@ export function App() {
         <span style={{ marginLeft: 'auto' }} />
 
         <button
-          className="cth-titlebar-nodrag"
+          className="cth-titlebar-nodrag cth-titlebar-filled"
           onClick={() => setAddAgentOpen(true)}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 7,
             height: 34, padding: '0 16px', flexShrink: 0,
             border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
-            background: 'var(--cth-lilac)', color: '#FFFFFF',
+            background: 'var(--cth-lilac)', color: 'var(--cth-on-accent)',
             boxShadow: 'var(--cth-shadow-btn)',
             fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
             transition: 'background 120ms ease'
@@ -561,7 +561,7 @@ export function App() {
             boxShadow: 'none',
             border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
             transition: 'background 120ms ease, color 120ms ease',
-            color: appThemeNow === 'dark' ? 'var(--cth-lemon)' : 'var(--cth-indigo)'
+            color: appThemeNow === 'dark' ? 'var(--cth-lemon-text)' : 'var(--cth-indigo)'
           }}
         >
           {appThemeNow === 'dark' ? <SunIcon /> : <MoonIcon />}
@@ -606,7 +606,7 @@ export function App() {
             boxShadow: 'none',
             border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
             transition: 'background 120ms ease, color 120ms ease',
-            color: 'var(--cth-sky)'
+            color: 'var(--cth-sky-text)'
           }}
         >
           {fullscreenAgentId ? <CollapseIcon /> : <ExpandIcon />}

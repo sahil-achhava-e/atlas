@@ -221,7 +221,7 @@ export function CodeEditor({
         {loading ? (
           <div style={{ padding: 12, color: 'var(--cth-ink-500)' }}>loading…</div>
         ) : error ? (
-          <div style={{ padding: 12, color: 'var(--cth-coral)' }}>{error}</div>
+          <div style={{ padding: 12, color: 'var(--cth-coral-text)' }}>{error}</div>
         ) : (
           <CodeMirror
             value={content}

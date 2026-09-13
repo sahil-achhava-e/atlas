@@ -624,7 +624,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                           <span style={{
                             display: 'block', fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
                             fontSize: 13.5, lineHeight: '18px',
-                            color: sel ? 'var(--cth-lilac)' : 'var(--cth-ink-900)'
+                            color: sel ? 'var(--cth-lilac-text)' : 'var(--cth-ink-900)'
                           }}>
                             {p.label}
                           </span>
@@ -653,7 +653,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                               fontSize: 11, padding: '3px 10px', lineHeight: '16px',
                               borderRadius: 999,
                               background: a.state === 'installed' ? 'var(--cth-mint-light)' : 'var(--cth-cream-100)',
-                              color: a.state === 'installed' ? 'var(--cth-mint)' : 'var(--cth-ink-500)',
+                              color: a.state === 'installed' ? 'var(--cth-mint-text)' : 'var(--cth-ink-500)',
                               fontFamily: 'var(--cth-font-ui)', fontWeight: 600, flexShrink: 0
                             }}>{badge}</span>
                           );
@@ -662,7 +662,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                           <span style={{
                             fontSize: 11, padding: '3px 10px', lineHeight: '16px',
                             borderRadius: 999,
-                            background: 'var(--cth-lilac-light)', color: 'var(--cth-lilac)',
+                            background: 'var(--cth-lilac-light)', color: 'var(--cth-lilac-text)',
                             fontFamily: 'var(--cth-font-ui)', fontWeight: 600, flexShrink: 0
                           }}>{t('onboarding.orchestrator.recommended')}</span>
                         )}
@@ -711,7 +711,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     borderRadius: 'var(--cth-radius-card)',
                     background: 'var(--cth-coral-light)'
                   }}>
-                    <span style={{ flexShrink: 0, display: 'inline-flex', color: 'var(--cth-coral)', marginTop: 1 }}>
+                    <span style={{ flexShrink: 0, display: 'inline-flex', color: 'var(--cth-coral-text)', marginTop: 1 }}>
                       <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                         <path d="M10 2.9 18.1 17H1.9L10 2.9Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
                         <path d="M10 8v3.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -777,7 +777,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   padding: '10px 12px', borderRadius: 'var(--cth-radius-card)',
                   background: 'var(--cth-sky-light)'
                 }}>
-                  <span style={{ flexShrink: 0, display: 'inline-flex', color: 'var(--cth-sky)' }}>
+                  <span style={{ flexShrink: 0, display: 'inline-flex', color: 'var(--cth-sky-text)' }}>
                     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                       <circle cx="10" cy="10" r="7.4" stroke="currentColor" strokeWidth="1.6" />
                       <path d="M10 9.2v4.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -1125,13 +1125,13 @@ function PersonaCard({ icon, title, desc, selected, tone, tint, onClick }: {
           display: 'grid', placeItems: 'center',
           fontSize: 11, lineHeight: 1,
           background: selected ? 'var(--cth-lilac)' : 'transparent',
-          color: '#FFFFFF',
+          color: 'var(--cth-on-accent)',
           boxShadow: `inset 0 0 0 ${selected ? 0 : 1}px var(--cth-ink-300)`
         }}>{selected ? '\u2713' : ''}</span>
       </span>
       <span style={{
         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 14, lineHeight: '19px',
-        color: selected ? 'var(--cth-lilac)' : 'var(--cth-ink-900)'
+        color: selected ? 'var(--cth-lilac-text)' : 'var(--cth-ink-900)'
       }}>
         {title}
       </span>
@@ -1219,12 +1219,12 @@ function RailStep({ n, label, state }: {
         // Done is filled quietly, current wears the brand, todo is an outline.
         background: state === 'done' ? 'var(--cth-lilac-light)'
           : current ? 'var(--cth-lilac)' : 'var(--cth-cream-100)',
-        color: current ? '#FFFFFF'
+        color: current ? 'var(--cth-on-accent)'
           : state === 'done' ? 'var(--cth-lilac)' : 'var(--cth-ink-500)'
       }}>{state === 'done' ? '\u2713' : n}</span>
       <span style={{
         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '16px',
-        color: current ? 'var(--cth-lilac)' : state === 'done' ? 'var(--cth-ink-700)' : 'var(--cth-ink-500)'
+        color: current ? 'var(--cth-lilac-text)' : state === 'done' ? 'var(--cth-ink-700)' : 'var(--cth-ink-500)'
       }}>{label}</span>
     </div>
   );

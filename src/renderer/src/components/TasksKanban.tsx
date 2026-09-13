@@ -227,7 +227,7 @@ export function TasksKanban() {
                 borderRadius: 'calc(var(--cth-radius-btn) - 2px)',
                 background: view === v.key ? 'var(--cth-paper-100)' : 'transparent',
                 boxShadow: view === v.key ? 'var(--cth-shadow-sm)' : 'none',
-                color: view === v.key ? 'var(--cth-lilac)' : 'var(--cth-ink-500)',
+                color: view === v.key ? 'var(--cth-lilac-text)' : 'var(--cth-ink-500)',
                 transition: 'background 120ms ease, color 120ms ease'
               }}
             >
@@ -423,7 +423,9 @@ function TaskCard({ task, accent, assigneeName, assigneeCharacter, onOpen, onDis
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '2px 8px', borderRadius: 'var(--cth-radius-pill)',
               background: 'color-mix(in srgb, var(--cth-status-blocked) 14%, transparent)',
-              color: 'var(--cth-status-blocked)',
+              // The tint keeps the status colour; the word takes the readable
+              // one. Amber on its own 14% tint measured 2.74:1.
+              color: 'var(--cth-lemon-text)',
               fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 600
             }}>
               <StatusGlyph status="blocked" size={11} />
@@ -606,7 +608,7 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
                   <span style={{
                     width: 20, height: 20, borderRadius: 'var(--cth-radius-pill)',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'var(--cth-lilac)', color: '#FFFFFF', fontSize: 10, fontWeight: 700
+                    background: 'var(--cth-lilac)', color: 'var(--cth-on-accent)', fontSize: 10, fontWeight: 700
                   }}>{assigneeName.slice(0, 1).toUpperCase()}</span>
                   {assigneeName}
                 </span>
@@ -677,7 +679,7 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
                           display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5,
                           fontFamily: 'var(--cth-font-ui)', fontSize: 11, color: 'var(--cth-ink-500)'
                         }}>
-                          <span style={{ fontWeight: 600, color: 'var(--cth-lilac)' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--cth-lilac-text)' }}>
                             {t('kanban.asked')}
                           </span>
                           {when(asked) && <span>{when(asked)}</span>}
@@ -794,7 +796,7 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
                   display: 'inline-flex', alignItems: 'center', gap: 7,
                   height: 34, padding: '0 16px', flexShrink: 0,
                   border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
-                  background: 'var(--cth-lilac)', color: '#FFFFFF',
+                  background: 'var(--cth-lilac)', color: 'var(--cth-on-accent)',
                   boxShadow: 'var(--cth-shadow-btn)',
                   fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
                   transition: 'background 120ms ease, box-shadow 120ms ease'
@@ -820,21 +822,25 @@ function PriorityDots({ level }: { level: number }) {
   // Five levels, each with its own name and its own colour, because "P4" and a
   // row of bars both need a key card. The tint is the colour at low alpha so a
   // board full of these reads as a board, not as a traffic light.
+  // Two colours, not one: `tone` fills the dot and tints the pill, `text` is
+  // the word. The same value cannot do both — lemon on its own 14% tint
+  // measured 2.74:1, because a colour bright enough to see as a dot is too
+  // bright to read as 11px type.
   const band = level >= 5
-    ? { key: 'urgent', tone: 'var(--cth-coral)' }
+    ? { key: 'urgent', tone: 'var(--cth-coral)', text: 'var(--cth-coral-text)' }
     : level === 4
-      ? { key: 'high', tone: 'var(--cth-lemon)' }
+      ? { key: 'high', tone: 'var(--cth-lemon)', text: 'var(--cth-lemon-text)' }
       : level === 3
-        ? { key: 'normal', tone: 'var(--cth-ink-500)' }
+        ? { key: 'normal', tone: 'var(--cth-ink-500)', text: 'var(--cth-ink-700)' }
         : level === 2
-          ? { key: 'low', tone: 'var(--cth-sky)' }
-          : { key: 'lowest', tone: 'var(--cth-ink-500)' };
+          ? { key: 'low', tone: 'var(--cth-sky)', text: 'var(--cth-sky-text)' }
+          : { key: 'lowest', tone: 'var(--cth-ink-500)', text: 'var(--cth-ink-700)' };
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
       padding: '2px 9px', borderRadius: 'var(--cth-radius-pill)',
       background: `color-mix(in srgb, ${band.tone} 14%, transparent)`,
-      color: band.tone,
+      color: band.text,
       fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 600
     }}>
       <span style={{

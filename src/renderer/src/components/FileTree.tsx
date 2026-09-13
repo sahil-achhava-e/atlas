@@ -109,7 +109,7 @@ export function FileTree({ root, activeRel, onOpenFile, onCopyPath }: FileTreePr
         <div>
           {node.children?.map(c => renderNode(c, 0))}
           {node.loading && <div style={{ padding: 12, fontSize: 13, color: 'var(--cth-ink-500)' }}>{t('fileTree.loading')}</div>}
-          {node.error && <div style={{ padding: 12, fontSize: 13, color: 'var(--cth-coral)' }}>{node.error}</div>}
+          {node.error && <div style={{ padding: 12, fontSize: 13, color: 'var(--cth-coral-text)' }}>{node.error}</div>}
         </div>
       );
     }
@@ -163,7 +163,7 @@ export function FileTree({ root, activeRel, onOpenFile, onCopyPath }: FileTreePr
               </div>
             )}
             {node.error && (
-              <div style={{ padding: '2px 10px', paddingLeft: 24 + depth * 14, fontSize: 13, color: 'var(--cth-coral)' }}>
+              <div style={{ padding: '2px 10px', paddingLeft: 24 + depth * 14, fontSize: 13, color: 'var(--cth-coral-text)' }}>
                 {node.error}
               </div>
             )}

@@ -60,7 +60,7 @@ function Chip({ text, tone = 'quiet' }: { text: string; tone?: 'quiet' | 'accent
     <span style={{
       fontSize: 11, fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
       padding: '2px 9px', flexShrink: 0, borderRadius: 999,
-      color: tone === 'accent' ? 'var(--cth-mint)' : 'var(--cth-ink-500)',
+      color: tone === 'accent' ? 'var(--cth-mint-text)' : 'var(--cth-ink-600)',
       background: tone === 'accent' ? 'var(--cth-mint-light)' : 'var(--cth-cream-100)'
     }}>{text}</span>
   );
@@ -154,8 +154,8 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
     fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11.5,
     borderRadius: 'var(--cth-radius-btn)',
     color:
-      kind === 'primary' ? 'var(--cth-lilac)'
-      : kind === 'danger' ? 'var(--cth-coral)'
+      kind === 'primary' ? 'var(--cth-lilac-text)'
+      : kind === 'danger' ? 'var(--cth-coral-text)'
       : 'var(--cth-ink-600)',
     background:
       kind === 'primary' ? 'var(--cth-lilac-light)'
@@ -187,7 +187,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
                   borderRadius: 'calc(var(--cth-radius-btn) - 2px)',
-                  color: pane === k ? 'var(--cth-lilac)' : 'var(--cth-ink-500)',
+                  color: pane === k ? 'var(--cth-lilac-text)' : 'var(--cth-ink-500)',
                   background: pane === k ? 'var(--cth-paper-100)' : 'transparent',
                   boxShadow: pane === k ? 'var(--cth-shadow-sm)' : 'none',
                   transition: 'background 120ms ease, color 120ms ease'
@@ -198,7 +198,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
                   <span style={{
                     fontSize: 11, fontWeight: 600, fontVariantNumeric: 'tabular-nums',
                     padding: '0 6px', borderRadius: 999,
-                    color: pane === k ? 'var(--cth-lilac)' : 'var(--cth-ink-500)',
+                    color: pane === k ? 'var(--cth-lilac-text)' : 'var(--cth-ink-500)',
                     background: pane === k ? 'var(--cth-lilac-light)' : 'var(--cth-paper-100)'
                   }}>{k === 'yours' ? counts.yours : counts.bundled}</span>
                 )}
@@ -239,7 +239,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 cursor: adding ? 'default' : 'pointer', opacity: adding ? 0.6 : 1,
                 fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
-                color: '#fff', background: 'var(--cth-lilac)',
+                color: 'var(--cth-on-accent)', background: 'var(--cth-lilac)',
                 borderRadius: 'var(--cth-radius-btn)', boxShadow: 'var(--cth-shadow-sm)'
               }}
             >
@@ -381,7 +381,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
                       </button>
                     )}
                     {action[s.path]?.error && (
-                      <span style={{ fontSize: 11, color: 'var(--cth-coral)' }}>{action[s.path]?.error}</span>
+                      <span style={{ fontSize: 11, color: 'var(--cth-coral-text)' }}>{action[s.path]?.error}</span>
                     )}
                   </div>
                 </div>

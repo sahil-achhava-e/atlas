@@ -38,7 +38,7 @@ function StatusChip({ tool }: { tool: ToolStatus }) {
       padding: '3px 10px', flexShrink: 0, whiteSpace: 'nowrap',
       borderRadius: 999,
       background: ready ? 'var(--cth-mint-light)' : 'var(--cth-cream-100)',
-      color: ready ? 'var(--cth-mint)' : 'var(--cth-ink-500)'
+      color: ready ? 'var(--cth-mint-text)' : 'var(--cth-ink-500)'
     }}>
       {ready ? t('setupPanel.statusReady') : tool.essential ? t('setupPanel.statusMissing') : t('setupPanel.statusNotSetUp')}
     </span>

@@ -86,8 +86,8 @@ export function UpdateBadge() {
   // me), warn = amber (something went wrong), busy/idle stay in the titlebar's
   // own greys so a quiet app looks exactly like it did before.
   const chipBg =
-    view.tone === 'ready' ? 'var(--cth-mint-light, #d0f0e0)'
-      : view.tone === 'warn' ? 'var(--cth-amber-light, #f6e2b3)'
+    view.tone === 'ready' ? 'var(--cth-mint-light)'
+      : view.tone === 'warn' ? 'var(--cth-lemon-light)'
         : 'transparent';
 
   const pending = pendingVersion(status, __APP_VERSION__);
@@ -208,7 +208,7 @@ export function UpdateBadge() {
           <span aria-hidden style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             width: 18, height: 18, borderRadius: 999,
-            background: 'var(--cth-mint-light, #d0f0e0)', color: 'var(--cth-ink-900)', fontSize: 13
+            background: 'var(--cth-mint-light)', color: 'var(--cth-ink-900)', fontSize: 13
           }}>&#10003;</span>
           You are on the latest version.
         </div>

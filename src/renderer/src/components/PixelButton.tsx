@@ -43,7 +43,10 @@ export function PixelButton({
   // `--cth-ink-500` is the one foreground that works against cream-300 in BOTH
   // themes, because both tokens flip together — and a muted label is what a
   // disabled control should look like anyway.
-  const disabledText = 'var(--cth-ink-600)';
+  // ink-700, not ink-600: a disabled button's fill is cream-200, and ink-600 on
+  // THAT measured 4.48:1. WCAG exempts inactive controls, but a label nobody can
+  // read is still a label nobody can read.
+  const disabledText = 'var(--cth-ink-700)';
 
   const palette = (() => {
     switch (variant) {

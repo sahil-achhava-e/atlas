@@ -235,7 +235,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                         </div>
                         <span style={{
                           fontSize: 11, fontWeight: active ? 600 : 400,
-                          color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-600)',
+                          color: active ? 'var(--cth-lilac-text)' : 'var(--cth-ink-600)',
                           maxWidth: 46, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                         }}>{c.name}</span>
                       </button>
@@ -373,7 +373,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                             boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none',
                             fontFamily: 'var(--cth-font-ui)', fontSize: 12.5,
                             fontWeight: active ? 600 : 500,
-                            color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-700)',
+                            color: active ? 'var(--cth-lilac-text)' : 'var(--cth-ink-700)',
                             cursor: 'pointer', border: 'none',
                             transition: 'background 120ms ease, color 120ms ease'
                           }}
@@ -401,7 +401,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                   style={{
                     border: 'none', background: 'none', padding: 0, cursor: 'pointer',
                     fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, fontWeight: 600,
-                    color: 'var(--cth-lilac)', textDecoration: 'underline',
+                    color: 'var(--cth-lilac-text)', textDecoration: 'underline',
                     textUnderlineOffset: 2
                   }}
                 >{t('editAgent.openTeam', { tab: t('commandCenter.tabs.floor') })}</button>
@@ -476,7 +476,10 @@ function Section({
           fontSize: 13, lineHeight: '16px',
           color: 'var(--cth-ink-900)',
         }}>{label}</span>
-        <span style={{ fontSize: 11.5, color: 'var(--cth-ink-400)' }}>{hint}</span>
+        {/* ink-600, not ink-400: this rail is a cream-200 surface, and the
+            quietest step measured 4.13:1 on it. On a tinted surface the quiet
+            text goes one step up. */}
+        <span style={{ fontSize: 11.5, color: 'var(--cth-ink-600)' }}>{hint}</span>
       </div>
       {children}
     </div>

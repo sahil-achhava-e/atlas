@@ -105,7 +105,7 @@ export function AgentControlStrip({ agentId }: { agentId: string }) {
         {snap?.autoDeliveryPaused && (
           <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>{t('agentControl.deliveryPaused')}</span>
         )}
-        {snap?.halted && <span style={{ fontSize: 11, color: 'var(--cth-coral)' }}>{t('agentControl.halting')}</span>}
+        {snap?.halted && <span style={{ fontSize: 11, color: 'var(--cth-coral-text)' }}>{t('agentControl.halting')}</span>}
         {!!snap?.pendingSteers && <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>{t('agentControl.steersQueued', { count: snap.pendingSteers })}</span>}
       </div>
       <div style={{ display: 'flex', gap: 8 }}>

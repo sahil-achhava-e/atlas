@@ -23,9 +23,13 @@
      (#8A93A3 at 3.1:1, #9CA5B4 at 2.5:1) were under the floor for 11-13px text
      on both white and cream. Kept strictly monotonic: 900 darkest → 100
      lightest, or a "quieter" step stops being quieter. */
-  --cth-ink-600: #5F6879;   /* 5.6:1 white — field labels, quiet button text */
-  --cth-ink-500: #6B7484;   /* 4.7:1 white — hints, secondary lines */
-  --cth-ink-400: #78818F;   /* 3.9:1 white — paths, timestamps: never read first */
+  --cth-ink-600: #5F6879;   /* 5.19:1 — field labels, quiet button text */
+  /* Every step that carries TEXT clears 4.5:1 — WCAG AA for normal text — and
+     the number quoted is the worst of the two grounds text actually sits on:
+     the white card and the cream panel. The old comments quoted white only,
+     which is the easier ground, and hid that ink-400 was 3.64:1 on a panel. */
+  --cth-ink-500: #616A79;   /* 5.05:1 — hints, secondary lines */
+  --cth-ink-400: #676F7C;   /* 4.69:1 — paths, timestamps: never read first */
   --cth-ink-300: #C3CAD5;
   --cth-ink-100: #E2E6EC;
   /* The edge of an INTERACTIVE CONTROL — a field, a select, a switch — which is
@@ -41,19 +45,31 @@
      read as noise at UI density; these sit in the calmer band that products
      like Linear/Radix use — recognizable color, no glare. */
   --cth-coral: #DC2626;       --cth-coral-light: #FEE2E2;
-  --cth-mint: #16A34A;       --cth-mint-light: #DCFCE7;
+  --cth-mint: #149142;       --cth-mint-light: #DCFCE7;
   --cth-sky: #0284C7;       --cth-sky-light: #E0F2FE;
-  --cth-lemon: #D97706;       --cth-lemon-light: #FEF3C7;
+  --cth-lemon: #BB6705;       --cth-lemon-light: #FEF3C7;
   --cth-lilac: #5B3DF5;       --cth-lilac-light: #EDE9FE;
+  /* An accent as TEXT, where AA is 4.5:1 rather than the 3:1 a fill needs. The
+     light accents are tuned to be seen ON white, not read on it: mint measured
+     3.05:1, lemon 2.95:1, sky 3.79:1, coral 4.47:1. The dark accents are light
+     enough to pass as they are, so these equal the accent there. */
+  --cth-coral-text: #C42020;  --cth-mint-text:  #117B38;
+  --cth-sky-text:   #026DA4;  --cth-lemon-text: #9D5604;
+  --cth-lilac-text: #5B3DF5;
   --cth-lilac-hover: #4A2FD8;   /* brand accent, one step down: primary button hover */
-  --cth-peach: #F2914D;       --cth-peach-light: #FFE2C9;
+  /* The light accents below are ICON and STATUS-DOT colours, so 3:1 against the
+     app's own surfaces is the bar (WCAG 1.4.11). Measured on white, cream-50,
+     cream-100 and cream-200, four of them were under it and peach was the
+     worst at 1.88:1 — a dot you cannot find. Only the light values moved; the
+     dark accents already clear it, being light on a dark ground. */
+  --cth-peach: #CA5C0F;       --cth-peach-light: #FFE2C9;
   /* Six more so a floor of a dozen agents can all look different. Same
      saturation band as the originals, filling the hues they skipped:
      pink, magenta, true blue, emerald, olive and a neutral. */
   --cth-rose: #E85C93;    --cth-rose-light: #FFD6E5;
   --cth-plum: #B457CE;    --cth-plum-light: #F0D9F7;
   --cth-indigo: #4E6FE3;  --cth-indigo-light: #D8DEFB;
-  --cth-jade: #12A38C;    --cth-jade-light: #C4EFE6;
+  --cth-jade: #0F8C78;    --cth-jade-light: #C4EFE6;
   --cth-olive: #9AAE3C;   --cth-olive-light: #E8F0C4;
   --cth-slate: #78859A;   --cth-slate-light: #DDE2E8;
 
@@ -150,6 +166,9 @@
      accents are saturated fills in BOTH themes, so this is white in both —
      ink-900 would invert with the theme and go near-black on lilac. */
   --cth-on-accent: #FFFFFF;
+  /* The hairline of light along a panel's top edge. Near-white is the point of
+     it on a pale surface; on a dark one the same value is a glowing bar. */
+  --cth-panel-gloss: rgba(255, 255, 255, 0.9);
   /* Text that sits ON a coral fill. Coral is DARK in light mode (#DC2626) and
      LIGHT in dark mode (#F87171) — it has to be, to read against its own
      ground — so a single foreground cannot serve both: white measures 4.83:1
@@ -208,11 +227,10 @@
   --cth-ink-800: #C4CBD7;   /*  8.7-10.3:1 — strong secondary */
   --cth-ink-700: #A8B0BE;   /*  7.0-8.3:1  — secondary text */
   --cth-ink-600: #8E96A5;   /*  5.8-6.9:1  — field labels, quiet button text */
-  --cth-ink-500: #737C8B;   /*  4.9-5.8:1  — tertiary / hints */
-  --cth-ink-400: #7A8390;   /*  4.5-5.0:1  — paths, timestamps, disabled text.
-                              Measured on a CARD (#171A20), not the page: quiet
-                              text sits on cards, and the old #5E6675 was 3.02
-                              there — a label you could not read. */
+  --cth-ink-500: #848D9B;   /*  5.20:1     — tertiary / hints */
+  --cth-ink-400: #7B8492;   /*  4.61:1     — paths, timestamps, disabled text.
+     Dimmer than ink-500, not brighter: in dark the ramp runs the other way and
+     400 had been sitting ABOVE 500, which put the quietest step out of order. */
   --cth-ink-300: #4A515E;   /*  3.4-4.0:1  — BORDERS. must stay >= 3.0 */
   --cth-ink-100: #262B34;   /*  1.4-1.7:1  — dividers, meant to recede */
   --cth-control-edge: #6A7280; /*  3.59:1 on #171A20 fields, 3.12:1 on #222630 */
@@ -220,9 +238,20 @@
   /* Accents — one step lighter/softer than the light set so they read on dark
      without fluorescing */
   --cth-coral: #F87171;       --cth-mint: #4ADE80;
+  /* Already 6.30:1 and 10.00:1 as text on a dark ground — no darker variant to
+     make, so these point straight at the accent. */
+  --cth-coral-text: #F87171;  --cth-mint-text:  #4ADE80;
+  --cth-sky-text:   #38BDF8;  --cth-lemon-text: #FBBF24;
+  /* The one that needed lifting: lilac on its own tint measured 4.42:1. */
+  --cth-lilac-text: #8F77FF;
   --cth-on-danger: #111418;   /* 6.7:1 on the light coral dark mode uses */
   --cth-sky: #38BDF8;       --cth-lemon: #FBBF24;
   --cth-lilac: #8B72FF;       --cth-peach: #FFB076;
+  /* White measured 3.53:1 on this lighter lilac — the same problem the coral
+     fill had. The accent must stay light to read on a dark ground, so the
+     FOREGROUND flips instead: near-black here is 5.23:1. */
+  --cth-on-accent: #111418;
+  --cth-panel-gloss: rgba(255, 255, 255, 0.05);
   /* Brand accent, one step along for hover. On dark that step goes UP. */
   --cth-lilac-hover: #A492FF;
 

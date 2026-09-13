@@ -54,8 +54,12 @@ function StatusBadge({ w }: { w: WorkerSnapshot }) {
     <span style={{
       fontFamily: 'var(--cth-font-mono)', fontSize: 11, padding: '1px 10px', letterSpacing: 0.5,
       color: releasing ? 'var(--cth-paper-100)' : 'var(--cth-ink-900)',
-      background: releasing ? 'var(--cth-ink-700)' : 'var(--cth-green, #2f8f4e)',
-      boxShadow: releasing ? 'none' : 'inset 0 0 0 1px var(--cth-ink-100)'
+      // --cth-green does not exist, so this was the hardcoded fallback in BOTH
+      // themes: a mid green that put near-white text at 3.69:1 in dark. The
+      // tinted chip every other badge uses works in either theme, because
+      // mint-light is a tint of the surface rather than a fixed colour.
+      background: releasing ? 'var(--cth-ink-700)' : 'var(--cth-mint-light)',
+      boxShadow: releasing ? 'none' : 'inset 0 0 0 1px var(--cth-mint)'
     }}>
       {releasing ? t('workersTab.stopping') : t('workersTab.working')}
     </span>

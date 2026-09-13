@@ -301,7 +301,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
                 color: 'var(--cth-ink-900)'
               }}
             >
-              <span style={{ display: 'inline-flex', color: 'var(--cth-lemon)' }}><Icon name="folder" /></span>
+              <span style={{ display: 'inline-flex', color: 'var(--cth-lemon-text)' }}><Icon name="folder" /></span>
               <span style={{
                 overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', maxWidth: 180
               }}>{a.name}</span>
@@ -383,7 +383,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               width: 30, height: 30, padding: 0, border: 'none', cursor: 'pointer', flexShrink: 0,
               borderRadius: 'var(--cth-radius-btn)',
-              background: 'transparent', color: 'var(--cth-mint)',
+              background: 'transparent', color: 'var(--cth-mint-text)',
               transition: 'background 120ms ease'
             }}
           ><Icon name="plus" /></button>
@@ -408,7 +408,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
               borderRadius: 'var(--cth-radius-btn)',
               cursor: canSend ? 'pointer' : 'not-allowed',
               background: canSend ? 'var(--cth-lilac)' : 'transparent',
-              color: canSend ? '#FFFFFF' : 'var(--cth-ink-500)',
+              color: canSend ? 'var(--cth-on-accent)' : 'var(--cth-ink-500)',
               boxShadow: canSend ? 'var(--cth-shadow-btn)' : 'none',
               fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
               transition: 'background 120ms ease, box-shadow 120ms ease, color 120ms ease'
@@ -420,7 +420,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
         {attachError && (
           <div style={{
             padding: '8px 12px', fontSize: 12, lineHeight: '16px',
-            color: 'var(--cth-coral)', background: 'var(--cth-coral-light)'
+            color: 'var(--cth-coral-text)', background: 'var(--cth-coral-light)'
           }}>
             {t('queueComposer.attachFailed', { error: attachError })}
           </div>
@@ -536,7 +536,7 @@ function QueuedMessageRow(
                 style={{
                   border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
                   fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '16px',
-                  fontWeight: 600, color: 'var(--cth-lilac)'
+                  fontWeight: 600, color: 'var(--cth-lilac-text)'
                 }}
               >{expanded ? t('queueComposer.seeLess') : t('queueComposer.seeMore')}</button>
             )}

@@ -176,7 +176,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span style={{
                 fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
-                color: isConsent ? 'var(--cth-coral)' : 'var(--cth-ink-500)',
+                color: isConsent ? 'var(--cth-coral-text)' : 'var(--cth-ink-500)',
               }}>
                 {t(TIER_LABEL_KEY[tier])}
               </span>
@@ -248,7 +248,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                         <code style={{
                           fontFamily: 'var(--cth-font-mono)', fontSize: 12.5, lineHeight: '20px',
                           color: 'var(--cth-ink-900)', overflowX: 'auto', whiteSpace: 'pre'
-                        }}>postgresql://<span style={{ color: 'var(--cth-lilac)' }}>user</span>:<span style={{ color: 'var(--cth-lilac)' }}>password</span>@<span style={{ color: 'var(--cth-sky)' }}>host</span>:<span style={{ color: 'var(--cth-sky)' }}>5432</span>/<span style={{ color: 'var(--cth-mint)' }}>database</span></code>
+                        }}>postgresql://<span style={{ color: 'var(--cth-lilac-text)' }}>user</span>:<span style={{ color: 'var(--cth-lilac-text)' }}>password</span>@<span style={{ color: 'var(--cth-sky-text)' }}>host</span>:<span style={{ color: 'var(--cth-sky-text)' }}>5432</span>/<span style={{ color: 'var(--cth-mint-text)' }}>database</span></code>
                         <span style={{
                           fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)'
                         }}>{t('mcpDefaults.dbUrlHint')}</span>
@@ -267,7 +267,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                           {hasSecret[c.id] && (
                             <span style={{
                               fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999,
-                              background: 'var(--cth-mint-light)', color: 'var(--cth-mint)'
+                              background: 'var(--cth-mint-light)', color: 'var(--cth-mint-text)'
                             }}>{t('mcpDefaults.dbSet')}</span>
                           )}
                         </div>
@@ -313,7 +313,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                             height: 30, padding: '0 14px', border: 'none', cursor: 'pointer',
                             display: 'inline-flex', alignItems: 'center', gap: 6,
                             fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
-                            color: '#fff', background: 'var(--cth-lilac)',
+                            color: 'var(--cth-on-accent)', background: 'var(--cth-lilac)',
                             borderRadius: 'var(--cth-radius-btn)', boxShadow: 'var(--cth-shadow-sm)'
                           }}
                         >
@@ -358,7 +358,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
       })}
 
       {note && (
-        <span style={{ fontSize: 13, color: 'var(--cth-mint)' }}>{note}</span>
+        <span style={{ fontSize: 13, color: 'var(--cth-mint-text)' }}>{note}</span>
       )}
     </div>
   );

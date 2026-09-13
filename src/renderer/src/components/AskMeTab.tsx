@@ -401,7 +401,7 @@ export function AskMeTab() {
                         cursor: ready ? 'pointer' : 'not-allowed',
                         background: ready ? 'var(--cth-lilac)' : 'transparent',
                         boxShadow: ready ? 'var(--cth-shadow-btn)' : 'inset 0 0 0 1px var(--cth-ink-100)',
-                        color: ready ? '#FFFFFF' : 'var(--cth-ink-500)',
+                        color: ready ? 'var(--cth-on-accent)' : 'var(--cth-ink-500)',
                         fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
                         transition: 'background 120ms ease, box-shadow 120ms ease, color 120ms ease'
                       }}
@@ -415,7 +415,7 @@ export function AskMeTab() {
                     onClick={() => openTaskDetail(t.id)}
                     style={{
                       border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-                      fontSize: 12, color: 'var(--cth-lilac)',
+                      fontSize: 12, color: 'var(--cth-lilac-text)',
                       fontFamily: 'var(--cth-font-ui)', fontWeight: 600
                     }}
                   >
@@ -432,7 +432,7 @@ export function AskMeTab() {
               {/* the cascade: what's stuck behind this answer */}
               {stuck.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-coral)' }}>
+                  <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, color: 'var(--cth-coral-text)' }}>
                     {stuck.length === 1
                       ? translate('askMe.blockingDownstream', { count: stuck.length })
                       : translate('askMe.blockingDownstreamPlural', { count: stuck.length })}

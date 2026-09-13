@@ -150,11 +150,11 @@ export function Dropdown({
                   <span style={{
                     flexShrink: 0, padding: '2px 8px', borderRadius: 999,
                     fontSize: 11, fontWeight: 600,
-                    background: 'var(--cth-lilac-light)', color: 'var(--cth-lilac)'
+                    background: 'var(--cth-lilac-light)', color: 'var(--cth-lilac-text)'
                   }}>{o.hint}</span>
                 )}
                 {selected && (
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ color: 'var(--cth-lilac)' }}>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ color: 'var(--cth-lilac-text)' }}>
                     <path d="M3.4 8.4l3 3 6.2-6.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}

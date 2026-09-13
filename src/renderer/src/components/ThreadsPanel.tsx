@@ -138,7 +138,7 @@ export function ThreadsPanel({ agentId }: ThreadsPanelProps) {
                         {long && (
                           <button
                             onClick={() => setExpanded(s => ({ ...s, [m.id]: !isExp }))}
-                            style={{ marginLeft: 6, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--cth-sky)', fontFamily: 'var(--cth-font-ui)', fontSize: 13, padding: 0 }}
+                            style={{ marginLeft: 6, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--cth-sky-text)', fontFamily: 'var(--cth-font-ui)', fontSize: 13, padding: 0 }}
                           >{isExp ? t('threads.less') : t('threads.more')}</button>
                         )}
                       </div>

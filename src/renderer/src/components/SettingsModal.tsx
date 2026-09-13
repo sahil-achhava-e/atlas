@@ -513,7 +513,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
               </div>
 
               {changeErr && (
-                <div style={{ fontSize: 13, lineHeight: '18px', color: 'var(--cth-coral)' }}>{changeErr}</div>
+                <div style={{ fontSize: 13, lineHeight: '18px', color: 'var(--cth-coral-text)' }}>{changeErr}</div>
               )}
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -535,7 +535,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                     idea - a bell is a notification, this is a demolition. */}
                 <span style={{
                   width: 36, height: 36, flexShrink: 0, borderRadius: '50%',
-                  background: 'var(--cth-coral-light)', color: 'var(--cth-coral)',
+                  background: 'var(--cth-coral-light)', color: 'var(--cth-coral-text)',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center'
                 }}>
                   <svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -605,7 +605,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           borderRadius: 'var(--cth-radius-btn)',
                           background: active ? 'var(--cth-lilac-light)' : 'transparent',
                           boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none',
-                          color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-700)',
+                          color: active ? 'var(--cth-lilac-text)' : 'var(--cth-ink-700)',
                           fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
                           fontSize: 13, lineHeight: '18px',
                           cursor: 'pointer',
@@ -780,7 +780,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                                   borderRadius: 'var(--cth-radius-btn)',
                                   fontFamily: 'var(--cth-font-ui)', fontSize: 12.5,
                                   fontWeight: defaultModelSel === m.id ? 600 : 500,
-                                  color: defaultModelSel === m.id ? 'var(--cth-lilac)' : 'var(--cth-ink-700)',
+                                  color: defaultModelSel === m.id ? 'var(--cth-lilac-text)' : 'var(--cth-ink-700)',
                                   background: defaultModelSel === m.id ? 'var(--cth-lilac-light)' : 'var(--cth-cream-100)',
                                   boxShadow: defaultModelSel === m.id ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none',
                                   transition: 'background 120ms ease, color 120ms ease'
@@ -969,7 +969,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                       <div style={{
                         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
-                        color: 'var(--cth-coral)'
+                        color: 'var(--cth-coral-text)'
                       }}>{t('settings.general.dangerZone')}</div>
                       <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-700)' }}>
                         {t('settings.general.dangerDesc', { godName })}
@@ -993,7 +993,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                 background: 'var(--cth-cream-50)'
               }}>
                 {saveNote && (
-                  <span style={{ fontSize: 13, color: 'var(--cth-mint)' }}>{saveNote}</span>
+                  <span style={{ fontSize: 13, color: 'var(--cth-mint-text)' }}>{saveNote}</span>
                 )}
                 {dirty && !saveNote && (
                   <span style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>{t('settings.unsavedChanges')}</span>

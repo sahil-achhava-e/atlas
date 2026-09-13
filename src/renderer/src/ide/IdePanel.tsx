@@ -422,7 +422,7 @@ export function IdePanel() {
             gap: 6, height: 26, padding: '0 10px', flexShrink: 0,
             background: 'var(--cth-coral-light)', boxShadow: 'none',
             border: 'none', borderRadius: 'var(--cth-radius-btn)',
-            cursor: 'pointer', color: 'var(--cth-coral)',
+            cursor: 'pointer', color: 'var(--cth-coral-text)',
             fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
             transition: 'background 120ms ease, color 120ms ease'
           }}
@@ -440,7 +440,7 @@ export function IdePanel() {
         <div style={{
           order: 2, flexShrink: 0, height: 24,
           display: 'flex', alignItems: 'center', gap: 12, padding: '0 12px',
-          background: 'var(--cth-lilac)', color: '#FFFFFF',
+          background: 'var(--cth-lilac)', color: 'var(--cth-on-accent)',
           fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 500
         }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
@@ -515,7 +515,7 @@ export function IdePanel() {
                     height: 22, padding: '0 10px', border: 'none', cursor: 'pointer',
                     borderRadius: 'var(--cth-radius-btn)',
                     fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11.5, lineHeight: '14px',
-                    color: railTab === k && !gitCollapsed ? 'var(--cth-lilac)' : 'var(--cth-ink-500)',
+                    color: railTab === k && !gitCollapsed ? 'var(--cth-lilac-text)' : 'var(--cth-ink-500)',
                     background: railTab === k && !gitCollapsed ? 'var(--cth-lilac-light)' : 'transparent',
                     transition: 'background 120ms ease, color 120ms ease'
                   }}
@@ -629,7 +629,7 @@ export function IdePanel() {
                         background: tab.mode === 'revdiff' ? 'var(--cth-lilac-light)'
                           : tab.mode === 'image' ? 'var(--cth-peach-light)'
                           : 'var(--cth-sky-light)',
-                        color: tab.mode === 'revdiff' ? 'var(--cth-lilac)'
+                        color: tab.mode === 'revdiff' ? 'var(--cth-lilac-text)'
                           : tab.mode === 'image' ? 'var(--cth-peach)'
                           : 'var(--cth-sky)'
                       }}>{tab.mode === 'revdiff' ? (tab.revLabel ?? t('idePanel.rev')) : tab.mode === 'image' ? t('idePanel.img') : t('idePanel.diff')}</span>
@@ -775,7 +775,7 @@ export function IdePanel() {
                       <span style={{
                         fontFamily: 'var(--cth-font-mono)', fontSize: 11, fontWeight: 600,
                         padding: '2px 8px', borderRadius: 999,
-                        background: 'var(--cth-lemon-light)', color: 'var(--cth-lemon)'
+                        background: 'var(--cth-lemon-light)', color: 'var(--cth-lemon-text)'
                       }}>HEAD</span>
                       <Icon name="arrow-right" />
                       <span>{t('idePanel.workingTree')}</span>
@@ -844,7 +844,7 @@ function EditorBar({ rel, dirty, saveState, onSave, onCopy, mdView, onMdView, on
               onClick={() => onMdView(v)}
               style={{
                 ...textBtn,
-                color: mdView === v ? 'var(--cth-lilac)' : 'var(--cth-ink-500)',
+                color: mdView === v ? 'var(--cth-lilac-text)' : 'var(--cth-ink-500)',
                 background: mdView === v ? 'var(--cth-lilac-light)' : 'var(--cth-paper-100)',
                 boxShadow: mdView === v ? 'inset 0 0 0 1px var(--cth-lilac)' : 'inset 0 0 0 1px var(--cth-ink-100)'
               }}
@@ -861,7 +861,7 @@ function EditorBar({ rel, dirty, saveState, onSave, onCopy, mdView, onMdView, on
           ...textBtn,
           // Saving is the action this bar exists for: it wears the colour when
           // there is something to save, and goes quiet when there is not.
-          color: dirty ? '#FFFFFF' : 'var(--cth-ink-500)',
+          color: dirty ? 'var(--cth-on-accent)' : 'var(--cth-ink-500)',
           background: dirty ? IDE_TONES.save : 'var(--cth-paper-100)',
           boxShadow: dirty ? 'none' : 'inset 0 0 0 1px var(--cth-ink-100)',
           cursor: dirty ? 'pointer' : 'not-allowed'
@@ -948,7 +948,7 @@ function Centered({ children, tone }: { children: React.ReactNode; tone?: 'error
     <div style={{
       height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: 16, textAlign: 'center', fontFamily: 'var(--cth-font-ui)', fontSize: 13,
-      color: tone === 'error' ? 'var(--cth-coral)' : 'var(--cth-ink-500)'
+      color: tone === 'error' ? 'var(--cth-coral-text)' : 'var(--cth-ink-500)'
     }}>{children}</div>
   );
 }

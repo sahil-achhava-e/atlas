@@ -32,7 +32,7 @@ export function ToolWaterfall({ agentId }: { agentId: string }) {
             <span style={{ color: 'var(--cth-ink-700)' }}>
               {t('toolWaterfall.fresh', { tokens: fmtTokens(sample.input + sample.cacheCreation) })}
             </span>
-            <span style={{ color: 'var(--cth-sky)' }}>
+            <span style={{ color: 'var(--cth-sky-text)' }}>
               {t('toolWaterfall.cache', { tokens: fmtTokens(sample.cacheRead), pct: Math.round(cacheFraction(sample) * 100) })}
             </span>
             {sample.model && <span style={{ color: 'var(--cth-ink-500)' }}>{sample.model}</span>}
@@ -66,7 +66,7 @@ export function ToolWaterfall({ agentId }: { agentId: string }) {
               <span style={{ width: 54, textAlign: 'right', fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)' }}>
                 {fmtDur(s.durationMs)}
               </span>
-              <span style={{ width: 12, textAlign: 'center', fontSize: 11, color: ok ? 'var(--cth-mint)' : 'var(--cth-coral)' }}>
+              <span style={{ width: 12, textAlign: 'center', fontSize: 11, color: ok ? 'var(--cth-mint-text)' : 'var(--cth-coral)' }}>
                 {ok ? '✓' : '✗'}
               </span>
             </div>

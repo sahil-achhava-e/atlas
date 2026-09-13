@@ -135,7 +135,7 @@ export function SchedulesSection({ onSummary }: { onSummary?: (s: string) => voi
               height: 30, padding: '0 14px', border: 'none', cursor: 'pointer',
               display: 'inline-flex', alignItems: 'center', gap: 6,
               fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
-              color: '#fff', background: 'var(--cth-lilac)',
+              color: 'var(--cth-on-accent)', background: 'var(--cth-lilac)',
               borderRadius: 'var(--cth-radius-btn)', boxShadow: 'var(--cth-shadow-sm)'
             }}
           >

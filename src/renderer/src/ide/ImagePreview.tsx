@@ -133,7 +133,7 @@ function Centered({ children, tone }: { children: React.ReactNode; tone?: 'error
     <div style={{
       margin: 'auto', padding: 16, textAlign: 'center',
       fontFamily: 'var(--cth-font-ui)', fontSize: 13,
-      color: tone === 'error' ? 'var(--cth-coral)' : 'var(--cth-ink-500)'
+      color: tone === 'error' ? 'var(--cth-coral-text)' : 'var(--cth-ink-500)'
     }}>{children}</div>
   );
 }

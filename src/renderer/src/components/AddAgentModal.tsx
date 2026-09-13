@@ -54,7 +54,7 @@ const ossChip = (active: boolean): CSSProperties => ({
   background: active ? 'var(--cth-lilac-light)' : 'var(--cth-cream-100)',
   boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none',
   fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, fontWeight: active ? 600 : 500,
-  color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-700)',
+  color: active ? 'var(--cth-lilac-text)' : 'var(--cth-ink-700)',
   cursor: 'pointer', border: 'none'
 });
 const ossGroupHead: CSSProperties = {
@@ -510,7 +510,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
             {hireMeta && (
               <div style={{
                 padding: '10px 16px',
-                background: 'var(--cth-lemon-light, #fdf3cf)',
+                background: 'var(--cth-lemon-light)',
                 borderRadius: 'var(--cth-radius-card)',
                 fontSize: 13,
                 color: 'var(--cth-ink-900)',
@@ -532,8 +532,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           fontFamily: 'var(--cth-font-mono)',
                           fontSize: 13,
                           padding: '0 4px',
-                          background: 'var(--cth-paprika-light, #f6d3c4)',
-                          boxShadow: 'inset 0 0 0 1px var(--cth-paprika-700, #b3502e)', borderRadius: 'var(--cth-radius-input)',
+                          background: 'var(--cth-coral-light)',
+                          boxShadow: 'inset 0 0 0 1px var(--cth-coral)', borderRadius: 'var(--cth-radius-input)',
                           color: 'var(--cth-ink-900)'
                         }}
                       >
@@ -552,8 +552,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           fontFamily: 'var(--cth-font-mono)',
                           fontSize: 13,
                           padding: '0 4px',
-                          background: 'var(--cth-mint-light, #d0f0e0)',
-                          boxShadow: 'inset 0 0 0 1px var(--cth-mint-700, #1f7a4d)', borderRadius: 'var(--cth-radius-input)',
+                          background: 'var(--cth-mint-light)',
+                          boxShadow: 'inset 0 0 0 1px var(--cth-mint)', borderRadius: 'var(--cth-radius-input)',
                           color: 'var(--cth-ink-900)'
                         }}
                       >
@@ -577,8 +577,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           {safe.map((id) => (
                             <code key={id} style={{
                               fontFamily: 'var(--cth-font-mono)', fontSize: 13, padding: '0 4px',
-                              background: 'var(--cth-sky-light, #d0e8f8)',
-                              boxShadow: 'inset 0 0 0 1px var(--cth-sky-700, #1f5a8a)', borderRadius: 'var(--cth-radius-input)',
+                              background: 'var(--cth-sky-light)',
+                              boxShadow: 'inset 0 0 0 1px var(--cth-sky)', borderRadius: 'var(--cth-radius-input)',
                               color: 'var(--cth-ink-900)'
                             }}>{id}</code>
                           ))}
@@ -590,8 +590,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           {consent.map((id) => (
                             <code key={id} style={{
                               fontFamily: 'var(--cth-font-mono)', fontSize: 13, padding: '0 4px',
-                              background: 'var(--cth-paprika-light, #f6d3c4)',
-                              boxShadow: 'inset 0 0 0 1px var(--cth-paprika-700, #b3502e)', borderRadius: 'var(--cth-radius-input)',
+                              background: 'var(--cth-coral-light)',
+                              boxShadow: 'inset 0 0 0 1px var(--cth-coral)', borderRadius: 'var(--cth-radius-input)',
                               color: 'var(--cth-ink-900)'
                             }}>{id}</code>
                           ))}
@@ -628,7 +628,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                     >
                       <span style={{
                         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '16px',
-                        color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-900)',
+                        color: active ? 'var(--cth-lilac-text)' : 'var(--cth-ink-900)',
                         display: 'flex', alignItems: 'center', gap: 8
                       }}>
                         <span style={{
@@ -642,7 +642,9 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                       </span>
                       <span style={{
                         fontFamily: 'var(--cth-font-ui)', fontSize: 11.5, lineHeight: '15px',
-                        color: 'var(--cth-ink-400)', paddingInlineStart: 26
+                        // Same rule as the Edit dialog: this rail is a tinted
+                        // surface, where ink-400 measured 4.13:1.
+                        color: 'var(--cth-ink-600)', paddingInlineStart: 26
                       }}>{tr(s.hintKey)}</span>
                     </button>
                   );
@@ -711,11 +713,11 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               </span>
                               <span style={{
                                 fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11.5, lineHeight: '14px',
-                                color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-900)'
+                                color: active ? 'var(--cth-lilac-text)' : 'var(--cth-ink-900)'
                               }}>{f.name}</span>
                               <span style={{
                                 fontSize: 11, lineHeight: '12px',
-                                color: used ? 'var(--cth-coral)' : 'var(--cth-ink-500)'
+                                color: used ? 'var(--cth-coral-text)' : 'var(--cth-ink-500)'
                               }}>{f.note ?? (used ? tr('addAgent.faceInUse') : '')}</span>
                             </button>
                           );
@@ -826,19 +828,19 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                                   width: 30, height: 30, flexShrink: 0, display: 'grid', placeItems: 'center',
                                   borderRadius: 'var(--cth-radius-btn)',
                                   background: active ? 'var(--cth-paper-100)' : 'var(--cth-cream-100)',
-                                  color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-500)'
+                                  color: active ? 'var(--cth-lilac-text)' : 'var(--cth-ink-500)'
                                 }}>
                                   <Icon name="folder" />
                                 </span>
                                 <span style={{
                                   flex: 1, minWidth: 0,
                                   fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13.5, lineHeight: '18px',
-                                  color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-900)'
+                                  color: active ? 'var(--cth-lilac-text)' : 'var(--cth-ink-900)'
                                 }}>{basename(r)}</span>
                                 {active && (
                                   <span style={{
                                     fontSize: 11, fontWeight: 600, padding: '2px 9px', borderRadius: 999,
-                                    color: 'var(--cth-lilac)', background: 'var(--cth-paper-100)'
+                                    color: 'var(--cth-lilac-text)', background: 'var(--cth-paper-100)'
                                   }}>{tr('addAgent.assigned')}</span>
                                 )}
                               </button>
@@ -937,7 +939,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                                 boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none',
                                 fontFamily: 'var(--cth-font-ui)', fontSize: 12.5,
                                 fontWeight: active ? 600 : 500,
-                                color: active ? 'var(--cth-lilac)' : 'var(--cth-ink-700)',
+                                color: active ? 'var(--cth-lilac-text)' : 'var(--cth-ink-700)',
                                 cursor: 'pointer', border: 'none',
                                 transition: 'background 120ms ease, color 120ms ease'
                               }}
