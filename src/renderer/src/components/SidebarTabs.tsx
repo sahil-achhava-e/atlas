@@ -19,6 +19,10 @@ const TABS: { key: SidebarTab; labelKey: string; icon: IconName; tone: string }[
 
 export interface SidebarTabsProps {
   current: SidebarTab;
+  /** Focus mode has the width for words; the docked panel does not. Icon-only
+   *  there, with the name on a hover bubble (.cth-iconbar), which is exactly
+   *  what the command centre's bar does in the same two places. */
+  fullscreen?: boolean;
   onChange: (tab: SidebarTab) => void;
 }
 
@@ -33,10 +37,10 @@ export interface SidebarTabsProps {
  * and those hairlines were drawn in the token that flips to near-WHITE, so the
  * bar came out banded in bright lines nothing else in the app has.
  */
-export function SidebarTabs({ current, onChange }: SidebarTabsProps) {
+export function SidebarTabs({ current, fullscreen = false, onChange }: SidebarTabsProps) {
   const { t } = useTranslation();
   return (
-    <div style={{
+    <div className="cth-tabbar cth-iconbar" style={{
       display: 'flex',
       gap: 2,
       padding: '8px 8px',
@@ -50,12 +54,14 @@ export function SidebarTabs({ current, onChange }: SidebarTabsProps) {
           <button
             key={tab.key}
             onClick={() => onChange(tab.key)}
+            data-label={fullscreen ? undefined : t(tab.labelKey)}
+            aria-label={t(tab.labelKey)}
             aria-pressed={active}
             style={{
               flex: '1 1 0',
               minWidth: 0,
               height: 32,
-              padding: '0 10px',
+              padding: fullscreen ? '0 10px' : 0,
               border: 'none',
               cursor: 'pointer',
               borderRadius: 'var(--cth-radius-btn)',
@@ -75,16 +81,18 @@ export function SidebarTabs({ current, onChange }: SidebarTabsProps) {
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 7,
+              gap: fullscreen ? 7 : 0,
               transition: 'background 120ms ease, color 120ms ease'
             }}
           >
             <span style={{ display: 'inline-flex', color: active ? 'inherit' : tab.tone }}>
               <Icon name={tab.icon} />
             </span>
-            <span style={{
-              minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-            }}>{t(tab.labelKey)}</span>
+            {fullscreen && (
+              <span style={{
+                minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+              }}>{t(tab.labelKey)}</span>
+            )}
           </button>
         );
       })}

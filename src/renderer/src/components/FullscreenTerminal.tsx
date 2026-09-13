@@ -8,6 +8,10 @@ import { terminalInstanceKey } from './terminalRecovery';
 import { MessageQueueComposer } from './MessageQueueComposer';
 import { AgentControlStrip } from './AgentControlStrip';
 import { CommandCenterPanel } from './CommandCenterPanel';
+import { SidebarTabs } from './SidebarTabs';
+import { GitTab } from './GitTab';
+import { ThreadsPanel } from './ThreadsPanel';
+import { ToolWaterfall } from './ToolWaterfall';
 import { EditAgentModal } from './EditAgentModal';
 import { Icon } from './Icon';
 import { SpritePortrait } from './SpritePortrait';
@@ -155,6 +159,10 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
   const restorableAgents = useStore(s => s.restorableAgents);
   const fullscreenAgentId = useStore(s => s.fullscreenAgentId);
   const setFullscreen = useStore(s => s.setFullscreen);
+  // The same selection the docked panel uses, so a tab you opened there is the
+  // tab you land on here.
+  const sidebarTab = useStore(s => s.sidebarTab);
+  const setSidebarTab = useStore(s => s.setSidebarTab);
   const select = useStore(s => s.select);
   const setAddAgentOpen = useStore(s => s.setAddAgentOpen);
   const addAgentOpen = useStore(s => s.addAgentOpen);
@@ -326,24 +334,37 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
                   sidebar, so going fullscreen took the operator controls away. */}
               <AgentControlStrip key={agent.id} agentId={agent.id} />
 
+              {/* Focus mode used to hardcode the terminal, so git, messages and
+                  traces — all reachable in the docked panel — simply did not
+                  exist on the screen with the most room for them. Same tabs,
+                  same store key, and here they carry their names. */}
+              <SidebarTabs current={sidebarTab} fullscreen onChange={setSidebarTab} />
+
               <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-                  <PtyTerminalView
-                    key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}
-                    ptyId={agent.ptyId}
-                    onStreamData={parser}
-                    onUserPrompt={(t) => {
-                      updateAgent(agent.id, { lastPrompt: t });
-                      if (t.trim().toLowerCase() === '/clear') {
-                        updateAgent(agent.id, { contextTokens: 0, contextLimit: undefined, progress: 0 });
-                      }
-                      void window.cth.historyAdd({ agentId: agent.id, cwd: agent.cwd, text: t });
-                    }}
-                    onToggleFullscreen={() => setFullscreen(null)}
-                    fullscreen
-                  />
-                </div>
-                <MessageQueueComposer agent={agent} />
+                {sidebarTab === 'terminal' && (
+                  <>
+                    <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+                      <PtyTerminalView
+                        key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}
+                        ptyId={agent.ptyId}
+                        onStreamData={parser}
+                        onUserPrompt={(t) => {
+                          updateAgent(agent.id, { lastPrompt: t });
+                          if (t.trim().toLowerCase() === '/clear') {
+                            updateAgent(agent.id, { contextTokens: 0, contextLimit: undefined, progress: 0 });
+                          }
+                          void window.cth.historyAdd({ agentId: agent.id, cwd: agent.cwd, text: t });
+                        }}
+                        onToggleFullscreen={() => setFullscreen(null)}
+                        fullscreen
+                      />
+                    </div>
+                    <MessageQueueComposer agent={agent} />
+                  </>
+                )}
+                {sidebarTab === 'git' && <GitTab cwd={agent.cwd} />}
+                {sidebarTab === 'messages' && <ThreadsPanel agentId={agent.id} />}
+                {sidebarTab === 'traces' && <ToolWaterfall agentId={agent.id} />}
               </div>
             </>
           )}
