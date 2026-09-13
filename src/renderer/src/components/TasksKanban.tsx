@@ -274,7 +274,8 @@ export function TasksKanban() {
                     minWidth: 20, height: 20, padding: '0 6px',
                     borderRadius: 'var(--cth-radius-pill)', background: 'var(--cth-cream-200)',
                     fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 600,
-                    color: 'var(--cth-ink-500)'
+                    // The count sits ON the cream-200 pill: ink-500 was 4.36:1 there.
+                    color: 'var(--cth-ink-700)'
                   }}>{cards.length}</span>
                 </div>
                 <div style={{

@@ -745,7 +745,8 @@ export function IdePanel() {
                       background: 'var(--cth-cream-200)', borderBottom: '1px solid var(--cth-ink-700)',
                       fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-700)'
                     }}>
-                      <span style={{ fontFamily: 'var(--cth-font-mono)', color: 'var(--cth-ink-500)' }}>
+                      {/* ink-700: inside the cream-200 bar, where ink-500 was 4.36:1. */}
+                      <span style={{ fontFamily: 'var(--cth-font-mono)', color: 'var(--cth-ink-700)' }}>
                         {activeTab.revLabel ?? `${activeTab.revA} → ${activeTab.revB}`}
                       </span>
                       <span style={{

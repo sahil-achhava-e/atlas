@@ -107,7 +107,9 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                       {folderName(current)}
                     </div>
                     <div style={{
-                      fontFamily: 'var(--cth-font-mono)', fontSize: 13, color: 'var(--cth-ink-500)',
+                      // ink-700, not ink-500: this card is the sky-tinted one, and
+                      // the quieter step measured 4.13:1 on that tint in dark.
+                      fontFamily: 'var(--cth-font-mono)', fontSize: 13, color: 'var(--cth-ink-700)',
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                       // NOT `direction: rtl`. That truncates a long path from the
                       // START, which is what you want, but it also REORDERS the
