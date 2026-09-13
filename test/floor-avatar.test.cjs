@@ -68,6 +68,18 @@ test('the selection glow survives a face that is not in the cast', () => {
     'the glow should go through the helper that handles a non-cast face');
 });
 
+test('a spawn from main keeps the character it asked for', () => {
+  // The same bug through a different door: main hands the renderer a character
+  // string verbatim, and the renderer used to narrow it to a cast key or fall
+  // back to DEFAULT_CHARACTER — so a voice hire asking for a library face got
+  // the boss's. castMember may canonicalise a display name; it may not filter.
+  const hive = read('src/renderer/src/hooks/useHive.ts');
+  assert.ok(!/castMember\(rec\.character\?\.trim\(\)\.toLowerCase\(\)\) \?\?/.test(hive),
+    'useHive filters an explicit character through the cast again');
+  assert.match(hive, /const asked = rec\.character\?\.trim\(\);/,
+    'useHive should honour an explicit character as given');
+});
+
 test('every face the picker can offer has something to draw', () => {
   // A library entry with no recipe would fall through to the generated face —
   // drawable, but not the character whose name is on the tile.

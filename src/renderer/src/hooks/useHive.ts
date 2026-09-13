@@ -1027,8 +1027,15 @@ export function useHive(config: HarnessConfig | null): void {
       // than breaking the card.
       const castMember = (q?: string) =>
         q ? OFFICE_CAST.find((m) => m.name === q || m.displayName.toLowerCase() === q)?.name : undefined;
+      // An explicit character is honoured AS GIVEN when the cast does not know
+      // it. castMember only canonicalises a display name ("Atlas") to its key
+      // ("michael"); it is not a filter. It used to be one, and since a library
+      // id such as `lib-neo` is in neither column, a voice-spawned agent that
+      // asked for one landed on DEFAULT_CHARACTER — the boss's own face. Same
+      // bug the floor had, through a different door.
+      const asked = rec.character?.trim();
       const character =
-        castMember(rec.character?.trim().toLowerCase()) ??
+        (asked ? castMember(asked.toLowerCase()) ?? asked : undefined) ??
         castMember((rec.name || rec.id).toLowerCase()) ??
         DEFAULT_CHARACTER;
       // Accent is otherwise hashed from the worker id, which is stable but not
