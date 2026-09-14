@@ -796,7 +796,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   </span>
                   {a.isGod && (
                     <span style={{
-                      flexShrink: 0, padding: '2px 7px', borderRadius: 'var(--cth-radius-pill)',
+                      flexShrink: 0, padding: '2px 7px', borderRadius: 'var(--cth-radius-input)',
                       background: 'var(--cth-lilac-light)', color: 'var(--cth-lilac-text)',
                       fontFamily: 'var(--cth-font-ui)', fontSize: 10, fontWeight: 700
                     }}>{t('commandCenter.godTag')}</span>

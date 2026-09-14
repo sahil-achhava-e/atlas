@@ -65,7 +65,7 @@ export function Chip({ children, tone = 'plain' }: { children: ReactNode; tone?:
   return (
     <span style={{
       flexShrink: 0, display: 'inline-flex', alignItems: 'center',
-      padding: '3px 10px', borderRadius: 'var(--cth-radius-pill)',
+      padding: '3px 10px', borderRadius: 'var(--cth-radius-input)',
       fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '15px',
       background: bg, color: fg
     }}>{children}</span>

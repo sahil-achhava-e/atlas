@@ -450,7 +450,7 @@ export function App() {
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 marginInlineStart: 4, padding: '4px 10px',
-                borderRadius: 'var(--cth-radius-pill)',
+                borderRadius: 'var(--cth-radius-input)',
                 background: 'var(--cth-cream-100)',
                 fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 500,
                 color: 'var(--cth-ink-700)', maxWidth: 240,
