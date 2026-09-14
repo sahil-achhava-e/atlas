@@ -148,6 +148,7 @@ function RuleCard({ title, blurb, rule, messageLabel, messageHint, messagePlaceh
               onChange={(e) => onPatch({ message: e.target.value })}
               rows={3}
               placeholder={messagePlaceholder}
+              className="cth-input"
               style={textareaStyle}
             />
             <Hint>{messageHint}</Hint>

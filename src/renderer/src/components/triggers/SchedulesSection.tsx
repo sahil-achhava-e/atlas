@@ -154,6 +154,7 @@ export function SchedulesSection({ onSummary }: { onSummary?: (s: string) => voi
               value={mLabel}
               onChange={(e) => setMLabel(e.target.value)}
               placeholder={t('schedulesSection.labelPlaceholder')}
+              className="cth-input"
               style={inputStyle}
             />
           </Field>
@@ -179,6 +180,7 @@ export function SchedulesSection({ onSummary }: { onSummary?: (s: string) => voi
               onChange={(e) => setMBody(e.target.value)}
               rows={3}
               placeholder={t('schedulesSection.promptPlaceholder')}
+              className="cth-input"
               style={textareaStyle}
             />
           </Field>
@@ -300,7 +302,7 @@ function MissionRow({ mission, targetName, agents, onPatch, onDelete }: {
       {open && (
         <div style={{ marginTop: 4 }}>
           <Field label={t('schedulesSection.label')}>
-            <input value={label} onChange={(e) => setLabel(e.target.value)} style={inputStyle} />
+            <input className="cth-input" value={label} onChange={(e) => setLabel(e.target.value)} style={inputStyle} />
           </Field>
           <Field label={t('schedulesSection.goesTo')}>
             <Select value={to} onChange={setTo} style={{ width: '100%' }}>
@@ -324,6 +326,7 @@ function MissionRow({ mission, targetName, agents, onPatch, onDelete }: {
               onChange={(e) => setBody(e.target.value)}
               rows={4}
               placeholder={t('schedulesSection.promptPlaceholder')}
+              className="cth-input"
               style={textareaStyle}
             />
           </Field>

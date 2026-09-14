@@ -18,12 +18,18 @@ import {
 
 /* ───────────────────────────── shared styles ─────────────────────────────── */
 
+// The edge and the focus ring come from `.cth-input` in global.css, which every
+// field in the app shares — these were drawn here in ink-100, the DIVIDER token
+// whose own comment says it is meant to recede (1.5:1 in light, 1.7:1 in dark),
+// so the boxes were all but invisible. `outline: none` went with it: it was
+// suppressing the browser's focus ring without putting one back, which left
+// these fields with no keyboard focus indicator at all.
 export const inputStyle: CSSProperties = {
   width: '100%', boxSizing: 'border-box', padding: '10px 12px',
   background: 'var(--cth-paper-100)', border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
+  borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '17px',
-  color: 'var(--cth-ink-900)', outline: 'none'
+  color: 'var(--cth-ink-900)'
 };
 
 export const monoInputStyle: CSSProperties = {
@@ -39,7 +45,7 @@ export const textareaStyle: CSSProperties = {
 
 export const selectStyle: CSSProperties = {
   padding: '3px 10px', background: 'var(--cth-paper-100)', border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
+  boxShadow: 'inset 0 0 0 1px var(--cth-control-edge)', borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-900)',
   cursor: 'pointer', minWidth: 0, maxWidth: '100%'
 };
@@ -390,6 +396,7 @@ export function IntervalPicker({ value, onChange, minMs = MINUTE, maxMs = Number
               const mins = Number(e.target.value);
               if (Number.isFinite(mins) && mins > 0) onChange(clamp(Math.round(mins) * MINUTE));
             }}
+            className="cth-input"
             style={{ ...monoInputStyle, width: 68, padding: '3px 5px' }}
           />
           <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>{t('triggersUi.min')}</span>
@@ -414,6 +421,7 @@ export function PctField({ value, onChange }: { value: number; onChange: (pct: n
           const n = Number(e.target.value);
           onChange(Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 0);
         }}
+        className="cth-input"
         style={{ ...monoInputStyle, width: 60, padding: '3px 5px' }}
       />
       <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>%</span>
@@ -452,6 +460,7 @@ export function SecretField({ value, revealed, onReveal, onCopy, copied, placeho
         placeholder={placeholder}
         onChange={(e) => onChange?.(e.target.value)}
         onBlur={onBlur}
+        className="cth-input"
         style={{ ...monoInputStyle, flex: 1, minWidth: 0, padding: '4px 10px' }}
       />
       <MiniButton onClick={onReveal}>{revealed ? t('common.hide') : t('common.show')}</MiniButton>
@@ -530,6 +539,7 @@ export function WeeklyPicker({ value, onChange }: {
             const [h, m] = e.target.value.split(':').map(Number);
             if (Number.isFinite(h) && Number.isFinite(m)) onChange({ ...value, minute: h * 60 + m });
           }}
+          className="cth-input"
           style={{ ...inputStyle, width: 108, padding: '3px 10px' }}
         />
         <span style={{ flex: 1 }} />
