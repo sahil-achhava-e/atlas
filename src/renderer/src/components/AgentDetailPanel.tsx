@@ -13,8 +13,9 @@ import { SidebarTabs } from './SidebarTabs';
 import { ThreadsPanel } from './ThreadsPanel';
 import { AgentControlStrip } from './AgentControlStrip';
 import { EditAgentModal } from './EditAgentModal';
+import { ConfirmDialog } from './ConfirmDialog';
 import { GitTab } from './GitTab';
-import { Icon } from './Icon';
+import { EditIcon, CodeIcon, StopIcon } from './TabIcons';
 import { AgentNameEditor } from './AgentNameEditor';
 import { useStore, type Agent } from '@/store/store';
 import { usePtyParser } from '@/hooks/usePtyParser';
@@ -25,9 +26,8 @@ export interface AgentDetailPanelProps {
 
 export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
   const { t } = useTranslation();
-  const [openTerminalState, setOpenTerminalState] = useState<'idle' | 'opening' | 'ok' | 'error'>('idle');
-  const [openTerminalError, setOpenTerminalError] = useState<string | undefined>();
   const [editOpen, setEditOpen] = useState(false);
+  const [killOpen, setKillOpen] = useState(false);
 
   /* The header used to measure itself and swap labels for icons below 440px,
      because four labelled buttons left the name about six characters at the
@@ -55,29 +55,9 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
   // Michael gets the full command-center dashboard instead of the plain panel.
   if (agent.isGod) return <CommandCenterPanel agent={agent} />;
 
-  const openTerminal = async () => {
-    setOpenTerminalState('opening');
-    setOpenTerminalError(undefined);
-    try {
-      const result = await window.cth.openTerminalAt(agent.cwd);
-      if (result.ok) {
-        setOpenTerminalState('ok');
-        setTimeout(() => setOpenTerminalState('idle'), 1500);
-      } else {
-        setOpenTerminalState('error');
-        setOpenTerminalError(result.error ?? 'unknown error');
-        setTimeout(() => setOpenTerminalState('idle'), 4000);
-      }
-    } catch (e) {
-      setOpenTerminalState('error');
-      setOpenTerminalError(e instanceof Error ? e.message : String(e));
-      setTimeout(() => setOpenTerminalState('idle'), 4000);
-    }
-  };
-
   const onKill = async () => {
+    setKillOpen(false);
     if (!agent.ptyId) return;
-    if (!confirm(t('agentDetail.killConfirm', { name: agent.name }))) return;
     await window.cth.killPty(agent.ptyId);
     disposeTerminal(agent.ptyId);
     archiveAgent(agent.id);
@@ -117,7 +97,6 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
             <AgentNameEditor
               name={agent.name}
               onCommit={(name) => renameAgent(agent.id, name)}
-              uppercase
               fontSize={10}
             />
           </div>
@@ -140,26 +119,17 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
             so the same action looks the same wherever you meet it. */}
         <span className="cth-iconbar" style={{ display: 'inline-flex', gap: 2, flexShrink: 0 }}>
           {[
-            { key: 'edit', icon: 'edit' as const, tone: 'var(--cth-lemon)',
+            // The SAME glyphs the boss's header wears, not the pixel set: the
+            // two headers claim to be one treatment, and were drawn in two
+            // different hands. Lemon edits, sky opens code, in both places.
+            { key: 'edit', Glyph: EditIcon, tone: 'var(--cth-lemon)',
               label: t('agentDetail.editAria', { defaultValue: 'Edit this agent' }),
               onClick: () => setEditOpen(true), disabled: false },
             // v0.3.4: the IDE lives at agent level (replaces the old files tab)
             // — the full-window Monaco editor rooted at this agent's workspace.
-            { key: 'ide', icon: 'code' as const, tone: 'var(--cth-sky)',
+            { key: 'ide', Glyph: CodeIcon, tone: 'var(--cth-sky)',
               label: t('agentDetail.openIde'),
-              onClick: () => useStore.getState().setIdeOpen(true, agent.id), disabled: false },
-            // The transient states ride the LABEL now rather than the button
-            // face: they are feedback on a click you just made, and the bubble
-            // is already where this row explains itself.
-            { key: 'open', icon: 'terminal' as const,
-              tone: openTerminalState === 'error' ? 'var(--cth-coral-text)'
-                : openTerminalState === 'ok' ? 'var(--cth-mint-text)'
-                : 'var(--cth-jade)',
-              label: openTerminalState === 'opening' ? t('agentDetail.opening')
-                : openTerminalState === 'ok' ? t('agentDetail.ok')
-                : openTerminalState === 'error' ? t('agentDetail.err')
-                : t('agentDetail.openTerminalAria'),
-              onClick: openTerminal, disabled: openTerminalState === 'opening' }
+              onClick: () => useStore.getState().setIdeOpen(true, agent.id), disabled: false }
           ].map((a) => (
             <button
               key={a.key}
@@ -178,7 +148,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
                 transition: 'background 120ms ease, color 120ms ease'
               }}
             >
-              <Icon name={a.icon} />
+              <a.Glyph />
             </button>
           ))}
           {/* Kill keeps its own treatment: it is the one control here that ends
@@ -186,7 +156,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
           {isReal && (
             <button
               className="cth-danger-hover"
-              onClick={onKill}
+              onClick={() => setKillOpen(true)}
               data-label={t('agentDetail.killAria', { defaultValue: 'Stop and archive this agent' })}
               aria-label={t('agentDetail.killAria', { defaultValue: 'Stop and archive this agent' })}
               style={{
@@ -198,20 +168,11 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
                 transition: 'background 120ms ease, color 120ms ease'
               }}
             >
-              <Icon name="x" />
+              <StopIcon />
             </button>
           )}
         </span>
       </div>
-
-      {openTerminalError && (
-        <div style={{
-          fontSize: 13, color: 'var(--cth-coral-text)',
-          padding: '2px 12px',
-          background: 'var(--cth-coral-light)',
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-        }}>{openTerminalError}</div>
-      )}
 
       {/* #7C — operator control (pause / halt / steer) for live agents */}
       {isReal && <AgentControlStrip agentId={agent.id} />}
@@ -266,6 +227,16 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
 
       </div>
 
+      {killOpen && (
+        <ConfirmDialog
+          title={t('agentDetail.killConfirmTitle')}
+          body={t('agentDetail.killConfirm', { name: agent.name })}
+          confirmLabel={t('agentDetail.killConfirmAction')}
+          destructive
+          onCancel={() => setKillOpen(false)}
+          onConfirm={onKill}
+        />
+      )}
       {editOpen && (
         <EditAgentModal agent={agent} onClose={() => setEditOpen(false)} />
       )}
@@ -284,7 +255,7 @@ function EmptyTab({ title, children }: { title: string; children: React.ReactNod
       <div style={{
         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
         color: 'var(--cth-ink-500)'
-      }}>{title.toUpperCase()}</div>
+      }}>{title}</div>
       <p style={{
         margin: 0, fontSize: 13, textAlign: 'center', color: 'var(--cth-ink-700)',
         maxWidth: 280

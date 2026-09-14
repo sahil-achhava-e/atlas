@@ -211,7 +211,7 @@ export function AgentStrip({ config }: AgentStripProps) {
                     <span style={{
                       fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
                       color: 'var(--cth-ink-500)'
-                    }}>{t('agentStrip.privateNote', { name: a.name.toUpperCase() })}</span>
+                    }}>{t('agentStrip.privateNote', { name: a.name })}</span>
                     <button
                       onClick={() => setNoteEditId(null)}
                       aria-label={t('agentStrip.closeNoteEditor')}
@@ -409,7 +409,7 @@ function AddAgentTile({ label, onClick }: { label: string; onClick: () => void }
         fontSize: 11, lineHeight: '13px',
         color: hover ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)',
         width: '100%', textAlign: 'center'
-      }}>{label.toUpperCase()}</span>
+      }}>{label}</span>
     </button>
   );
 }

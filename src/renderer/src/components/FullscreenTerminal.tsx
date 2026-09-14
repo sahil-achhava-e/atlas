@@ -12,6 +12,7 @@ import { SidebarTabs } from './SidebarTabs';
 import { GitTab } from './GitTab';
 import { ThreadsPanel } from './ThreadsPanel';
 import { EditAgentModal } from './EditAgentModal';
+import { ConfirmDialog } from './ConfirmDialog';
 import { Icon } from './Icon';
 import { SpritePortrait } from './SpritePortrait';
 import { PORTRAIT_W } from '@/scene/office/portraitArt';
@@ -522,7 +523,7 @@ function SidebarRow({
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
               fontSize: scale.name, lineHeight: 1.5
-            }}>{agent.name.toUpperCase()}</span>
+            }}>{agent.name}</span>
             {/* Your unsent text outranks the agent's own state here: an idle
                 agent with a draft on its prompt is not idle-and-free, it is
                 idle-and-held, and nothing else on screen said so. */}
@@ -679,26 +680,14 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
   const { t } = useTranslation();
   const typing = useHasTerminalDraft(agent.ptyId);
   const archiveAgent = useStore((st) => st.archiveAgent);
-  const [openState, setOpenState] = useState<'idle' | 'opening' | 'ok' | 'error'>('idle');
-
-  /** Same action as the docked panel: open the OS terminal in this agent's
-   *  working directory. Fullscreen had no way to do it, which is backwards —
-   *  this is the mode where you are most likely to want a shell beside it. */
-  const openTerminal = async () => {
-    setOpenState('opening');
-    try {
-      const res = await window.cth.openTerminalAt(agent.worktreePath || agent.cwd);
-      setOpenState(res.ok ? 'ok' : 'error');
-    } catch { setOpenState('error'); }
-    setTimeout(() => setOpenState('idle'), 1500);
-  };
+  const [killOpen, setKillOpen] = useState(false);
 
   /** Kill + archive, mirroring AgentDetailPanel. Confirmed, because it ends a
    *  running process. God is exempt: the floor respawns it immediately, so the
    *  button would read as "restart Michael" while looking like "close". */
   const onKill = async () => {
+    setKillOpen(false);
     if (!agent.ptyId) return;
-    if (!confirm(t('agentDetail.killConfirm', { name: agent.name }))) return;
     await window.cth.killPty(agent.ptyId);
     disposeTerminal(agent.ptyId);
     // archiveAgent re-homes focus mode to the next agent, and only leaves it when
@@ -716,9 +705,9 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
       boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
     }}>
       <span style={{
-        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '16px',
+        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '18px',
         color: 'var(--cth-ink-900)'
-      }}>{agent.name.toUpperCase()}</span>
+      }}>{agent.name}</span>
       {/* Edit belongs with the NAME, not with the action cluster on the right:
           it changes who this agent is, and the right-hand group is things you do
           with the agent. Icon-only because it sits inside the identity line —
@@ -763,15 +752,6 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
             HUD stays Michael-only (it belongs to his card). */}
         <RealtimeMichaelToggle />
         {agent.isGod && <CostHud compact />}
-        <PixelButton variant="secondary" size="sm" onClick={openTerminal} disabled={openState === 'opening'}>
-          <span
-            aria-label={t('fullscreenTerminal.openTerminalAria')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-          >
-            <Icon name="terminal" />
-            {openState === 'opening' ? t('agentDetail.opening') : openState === 'ok' ? t('agentDetail.ok') : openState === 'error' ? t('agentDetail.err') : t('agentDetail.open')}
-          </span>
-        </PixelButton>
         {/* The badge is a STATUS, not a button, but it sits in a row of them.
             Its own box is 20px (lineHeight 18 + 2px padding) against the 24px
             every size="sm" PixelButton is fixed at, so the row read as ragged.
@@ -783,7 +763,7 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
           style={{ height: 24, padding: '0 8px', lineHeight: '24px' }}
         />
         {!agent.isGod && (
-          <PixelButton variant="danger-ghost" size="sm" onClick={onKill}>
+          <PixelButton variant="danger-ghost" size="sm" onClick={() => setKillOpen(true)}>
             {/* inline-flex + center: the other buttons hold TEXT, whose line box
                 the button centres for free. A bare <Icon> is replaced-content
                 sitting on the text baseline, so it rode low and overhung the
@@ -795,6 +775,16 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
               <Icon name="x" />
             </span>
           </PixelButton>
+        )}
+        {killOpen && (
+          <ConfirmDialog
+            title={t('agentDetail.killConfirmTitle')}
+            body={t('agentDetail.killConfirm', { name: agent.name })}
+            confirmLabel={t('agentDetail.killConfirmAction')}
+            destructive
+            onCancel={() => setKillOpen(false)}
+            onConfirm={onKill}
+          />
         )}
       </div>
     </div>

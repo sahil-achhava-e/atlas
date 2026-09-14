@@ -661,3 +661,19 @@ div:hover > .cth-iconbar[data-label] { opacity: 1 !important; }
 .cth-scrollpane::-webkit-scrollbar-thumb { background: transparent; background-clip: content-box; }
 .cth-scrollpane:hover::-webkit-scrollbar-thumb { background: var(--cth-ink-300); background-clip: content-box; }
 .cth-scrollpane:hover::-webkit-scrollbar-thumb:hover { background: var(--cth-ink-500); background-clip: content-box; }
+
+/* The rightmost icon button sits against the panel's edge, and the panel clips
+   (AgentDetailPanel's PixelPanel is overflow:hidden, so the terminal cannot
+   spill past the rounded corners). A bubble centred on that button lost its
+   right half: "Stop and archive this agent" read as "Stop and archive th".
+   Anchor the last one to the button's right edge so it grows inward instead.
+   The arrow stays centred on the button, which is what it points at. */
+.cth-iconbar button[data-label]:last-child::after {
+  left: auto;
+  right: 0;
+  transform: translate(0, -3px);
+}
+.cth-iconbar button[data-label]:last-child:hover::after,
+.cth-iconbar button[data-label]:last-child:focus-visible::after {
+  transform: translate(0, 0);
+}

@@ -117,14 +117,11 @@
     "restoreAll": "restore all ({{count}})"
   },
   "sidebar": {
-    "terminal": "terminal",
-    "git": "git",
-    "messages": "messages"
+    "terminal": "Terminal",
+    "git": "Git",
+    "messages": "Messages"
   },
   "agentDetail": {
-    "open": "Open",
-    "opening": "...",
-    "ok": "ok",
     "err": "err",
     "inFullscreen": "In focus mode",
     "fullscreenDesc": "This terminal is open in focus mode. Press Esc or exit focus mode to bring it back here.",
@@ -132,10 +129,10 @@
     "noPtyDesc": "This agent has no live terminal. Spawn an agent through \"add agent\" to use the terminal tab.",
     "killConfirm": "Close {{name}}? The PTY process will terminate and the agent is archived (kept in history, off the floor).",
     "ideTip": "Open the IDE: browse and edit files in {{project}}, and see uncommitted changes as a diff.",
-    "terminalTip": "Open your system terminal app in {{cwd}}. A normal shell in this agent's folder, separate from the agent's own terminal.",
     "openIde": "Open the IDE",
     "ide": "IDE",
-    "openTerminalAria": "Open a system terminal in this agent's folder"
+    "killConfirmTitle": "Stop this agent?",
+    "killConfirmAction": "Stop and archive"
   },
   "settingsHero": {
     "sponsoredBy": "Sponsored by",
@@ -1175,8 +1172,6 @@
     "closeAgent": "Close {{name}}. Ends the process and archives the agent",
     "ideTip": "Open the IDE: browse and edit files in {{name}}'s workspace, and see their uncommitted changes as a diff.",
     "openIdeAria": "Open the IDE",
-    "openTerminalTip": "Open your system terminal app in {{cwd}}. A normal shell in this agent's folder, separate from the agent's own terminal.",
-    "openTerminalAria": "Open a system terminal in this agent's folder",
     "focusTitle": "Focus"
   },
   "memoryPanel": {

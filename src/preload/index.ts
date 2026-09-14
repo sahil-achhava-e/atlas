@@ -634,10 +634,6 @@ const api = {
   ): Promise<{ ok: true; path: string; paths: string[] } | { ok: false; error: string }> =>
     ipcRenderer.invoke('dialog:chooseFolder', opts),
 
-  // ─── Terminal.app ────────────────────────────────────────────────────────
-  openTerminalAt: (cwd: string): Promise<{ ok: boolean; error?: string }> =>
-    ipcRenderer.invoke('terminal:openAtFolder', cwd),
-
   // ─── Clipboard ─────────────────────────────────────────────────────────────
   copyToClipboard: (text: string): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke('app:copyToClipboard', text),

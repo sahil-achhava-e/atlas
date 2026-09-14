@@ -219,11 +219,11 @@ export function AgentCard({
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
             <span style={{
               fontFamily: 'var(--cth-font-display)',
-              fontSize: 10, lineHeight: '14px',
+              fontSize: 12, lineHeight: '16px',
               color: 'var(--cth-ink-900)',
               paddingRight: 12,
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-            }}>{name.toUpperCase()}</span>
+            }}>{name}</span>
 
             {/* What it is FOR. The card is a rectangle so this line has width to
                 land in: three lines hold a real sentence, and the tooltip holds

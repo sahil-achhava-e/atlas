@@ -5,7 +5,6 @@ export interface AgentNameEditorProps {
   name: string;
   onCommit: (name: string) => Promise<{ ok: boolean; error?: string }>;
   /** Cards render names in their established all-caps display style. */
-  uppercase?: boolean;
   /** Fade the ✎ until the row is hovered. A card carries several small marks
    *  already; a permanently lit one competes with the name it belongs to. */
   quiet?: boolean;
@@ -16,7 +15,6 @@ export interface AgentNameEditorProps {
 export function AgentNameEditor({
   name,
   onCommit,
-  uppercase = false,
   quiet = false,
   fontSize = 'var(--cth-text-display-sm)'
 }: AgentNameEditorProps) {
@@ -94,7 +92,7 @@ export function AgentNameEditor({
           boxShadow: `inset 0 0 0 1px var(--cth-${error ? 'coral' : 'ink-300'})`,
             borderRadius: 'var(--cth-radius-input)',
           fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize,
-          color: 'var(--cth-ink-900)', textTransform: uppercase ? 'uppercase' : undefined
+          color: 'var(--cth-ink-900)'
         }}
       />
     );
@@ -109,7 +107,7 @@ export function AgentNameEditor({
           color: 'var(--cth-ink-900)',
           minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
         }}
-      >{uppercase ? name.toUpperCase() : name}</span>
+      >{name}</span>
       <button
         type="button"
         draggable={false}

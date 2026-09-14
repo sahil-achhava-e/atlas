@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { type SidebarTab } from '@/store/store';
-import { Icon, type IconName } from './Icon';
+import { TerminalIcon, GitIcon, BellIcon } from './TabIcons';
 
 // v0.3.4: the files tab is gone — the per-agent IDE button (header) opens the
 // full Monaco editor + file tree, which superseded the read-only browser.
@@ -10,10 +10,16 @@ import { Icon, type IconName } from './Icon';
 // the bell's coral, git's sky. The WORD never takes it — a 12.5px label in
 // status green measured 2.1:1 on white, and a marker used as body text stops
 // being readable.
-const TABS: { key: SidebarTab; labelKey: string; icon: IconName; tone: string }[] = [
-  { key: 'terminal', labelKey: 'sidebar.terminal', icon: 'terminal', tone: 'var(--cth-status-idle)' },
-  { key: 'git',      labelKey: 'sidebar.git',      icon: 'code',     tone: 'var(--cth-sky)' },
-  { key: 'messages', labelKey: 'sidebar.messages', icon: 'bell',     tone: 'var(--cth-coral)' }
+//
+// The glyphs come from TabIcons, the same 20 grid and 1.7px stroke the command
+// centre's bar uses, rather than the 16px pixel set drawn for the office floor:
+// the two bars sit one panel apart and were drawn in two different hands. The
+// terminal and the bell are the SAME glyph and the same tone Atlas wears for
+// those ideas; git is the one this bar has that his does not.
+const TABS: { key: SidebarTab; labelKey: string; Glyph: (p: { size?: number }) => JSX.Element; tone: string }[] = [
+  { key: 'terminal', labelKey: 'sidebar.terminal', Glyph: TerminalIcon, tone: 'var(--cth-status-idle)' },
+  { key: 'git',      labelKey: 'sidebar.git',      Glyph: GitIcon,      tone: 'var(--cth-sky)' },
+  { key: 'messages', labelKey: 'sidebar.messages', Glyph: BellIcon,     tone: 'var(--cth-coral)' }
 ];
 
 export interface SidebarTabsProps {
@@ -85,7 +91,7 @@ export function SidebarTabs({ current, fullscreen = false, onChange }: SidebarTa
             }}
           >
             <span style={{ display: 'inline-flex', color: active ? 'inherit' : tab.tone }}>
-              <Icon name={tab.icon} />
+              <tab.Glyph />
             </span>
             {fullscreen && (
               <span style={{

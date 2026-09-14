@@ -3151,20 +3151,6 @@ ipcMain.handle('dialog:chooseFolder', async (evt, opts: unknown) => {
 });
 
 // ─── IPC: Terminal.app at a folder ──────────────────────────────────────────
-ipcMain.handle('terminal:openAtFolder', async (_evt, cwd: unknown) => {
-  if (typeof cwd !== 'string' || cwd.length === 0) return { ok: false, error: 'invalid cwd' };
-  return new Promise<{ ok: boolean; error?: string }>((resolve) => {
-    const p = spawn('open', ['-a', 'Terminal', cwd]);
-    let err = '';
-    p.stderr.on('data', (d) => { err += d.toString(); });
-    p.on('error', (e) => resolve({ ok: false, error: e.message }));
-    p.on('close', (code) => {
-      if (code === 0) resolve({ ok: true });
-      else resolve({ ok: false, error: err.trim() || `open exited ${code}` });
-    });
-  });
-});
-
 // ─── IPC: integrations (Phase 2 registry — backend for Ryan's Settings UI) ────
 // Records are metadata only (config-backed); secrets are encrypted at rest and NEVER
 // returned over IPC. `list` redacts secretRef to a `hasSecret` boolean.

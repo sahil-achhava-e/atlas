@@ -58,6 +58,38 @@ export const SkillsIcon = ({ size = 18 }: P) => (
   <svg {...box(size)}><path {...S} d="M8.2 3.2h3.6v2.2a1.6 1.6 0 103.2 0h2.2v3.4h-2.2a1.6 1.6 0 100 3.2h2.2v4.8h-4.4v-2a1.6 1.6 0 10-3.2 0v2H3.4v-4.4h2a1.6 1.6 0 100-3.2h-2V5.4h4.8z" /></svg>
 );
 
+/** git: a branch leaving the trunk, and the commit it lands back on. The agent
+ *  bar used the `<>` code glyph for this tab, which is what the IDE button
+ *  wears one row above it — two destinations cannot share a shape. */
+export const GitIcon = ({ size = 18 }: P) => (
+  <svg {...box(size)}><circle {...S} cx="6.2" cy="5.2" r="2.2" /><circle {...S} cx="6.2" cy="14.8" r="2.2" />
+    <circle {...S} cx="14" cy="5.2" r="2.2" />
+    <path {...S} d="M6.2 7.4v5.2M14 7.4v1.6a3.4 3.4 0 01-3.4 3.4H6.2" /></svg>
+);
+
+/** Stop and archive: a stop square inside the ring, because this control ends
+ *  a running process. Deliberately not the power mark the status pill wears —
+ *  that one is a STATE, and an action that looks like a status is a misread
+ *  waiting to happen. */
+export const StopIcon = ({ size = 17 }: P) => (
+  <svg {...box(size)}><circle {...S} cx="10" cy="10" r="7.1" />
+    <rect {...S} x="7.4" y="7.4" width="5.2" height="5.2" rx="1.2" /></svg>
+);
+/** The thread disclosure. Rotated 90° by the caller when the thread is open. */
+export const ChevronIcon = ({ size = 16 }: P) => (
+  <svg {...box(size)}><path {...S} d="M8 5.2l4.4 4.8L8 14.8" /></svg>
+);
+
+/** A re-read, and a path copied. Same grid and stroke as everything above. */
+export const RefreshIcon = ({ size = 17 }: P) => (
+  <svg {...box(size)}><path {...S} d="M16.2 8.4A6.4 6.4 0 005 5.6L3.6 7M3.8 11.6a6.4 6.4 0 0011.2 2.8L16.4 13" />
+    <path {...S} d="M3.4 3.8v3.4h3.4M16.6 16.2v-3.4h-3.4" /></svg>
+);
+export const CopyIcon = ({ size = 17 }: P) => (
+  <svg {...box(size)}><rect {...S} x="7.2" y="7.2" width="9.2" height="9.2" rx="2.2" />
+    <path {...S} d="M12.8 4.6a2.2 2.2 0 00-2.2-2.2H5.8a2.2 2.2 0 00-2.2 2.2v4.8a2.2 2.2 0 002.2 2.2" /></svg>
+);
+
 /** Header actions, same grid and stroke as the tabs above. */
 export const EditIcon = ({ size = 17 }: P) => (
   <svg {...box(size)}><path {...S} d="M12.4 3.8l3.8 3.8-8.2 8.2-4.4.6.6-4.4z" />
