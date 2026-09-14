@@ -1210,7 +1210,9 @@
     "less": "less",
     "more": "more",
     "replyPlaceholder": "Reply to {{name}}…",
-    "send": "Send"
+    "send": "Send",
+    "justNow": "just now",
+    "needsYou": "Needs you"
   },
   "skillsTab": {
     "installed": "Installed",
@@ -1444,7 +1446,10 @@
     "ffClickOrHold": "Click voice, or hold the right Option key to talk",
     "ffHoldHint": "Hold it ALONE for a moment to start; release to transcribe into the composer, where you can edit before sending. Either Option key works, and Option+key combos still reach the terminal untouched.",
     "attachFailed": "Could not attach: {{error}}",
-    "removeOne": "Remove from queue"
+    "removeOne": "Remove from queue",
+    "nudgeLabel": "Inbox nudge",
+    "nudgeSummary_one": "One new hive message. Read it, act on what is pending, file the rest.",
+    "nudgeSummary_other": "{{count}} new hive messages. Read them, act on what is pending, file the rest."
   },
   "idePanel": {
     "workspace": "{{name}}'s workspace",

@@ -28,6 +28,23 @@ export function inboxNudgeText(ids: string[]): string {
 }
 
 /**
+ * The message ids a nudge names, for the queue row that shows one.
+ *
+ * The composer prints queued text verbatim, which for a nudge is a 380-character
+ * machine-written paragraph the human never wrote and cannot act on. Pulling the
+ * ids out lets that row say what the nudge IS — three messages, named — with the
+ * literal text still one click away, since that is what gets typed.
+ *
+ * Returns [] for a nudge built with no ids (`inboxNudgeText([])` omits the run
+ * entirely) and for any text that is not a nudge.
+ */
+export function inboxNudgeIds(text: string): string[] {
+  const m = /— at least: ([^.]+)\./.exec(text);
+  if (!m) return [];
+  return m[1].split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+/**
  * Is this queued text an inbox-wake nudge?
  *
  * Matches the fixed head only, since every nudge carries different ids — the

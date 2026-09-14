@@ -21,7 +21,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const loadTs = require('./load-ts.cjs');
 
-const { inboxNudgeText, isInboxNudge } = loadTs('src/shared/hiveNudge.ts');
+const { inboxNudgeText, isInboxNudge, inboxNudgeIds } = loadTs('src/shared/hiveNudge.ts');
 
 // — the queue's one-pending-nudge invariant depends entirely on this predicate —
 
@@ -67,4 +67,20 @@ test('a nudge with no ids is still a well-formed nudge', () => {
   const text = inboxNudgeText([]);
   assert.equal(isInboxNudge(text), true);
   assert.doesNotMatch(text, /at least:/);
+});
+
+// — the queue row renders the ids instead of the paragraph, so it has to get
+//   them back out of a string the app itself wrote —
+
+test('the ids come back out of every nudge that named some', () => {
+  for (const ids of [['m-1'], ['m-8801', 'm-8807', 'm-8812'],
+                     ['2026-08-19T18-01-00-000Z-ryan-notify-race', 'b-2']]) {
+    assert.deepEqual(inboxNudgeIds(inboxNudgeText(ids)), ids, JSON.stringify(ids));
+  }
+});
+
+test('no ids, and no nudge at all, both read as an empty list', () => {
+  assert.deepEqual(inboxNudgeIds(inboxNudgeText([])), []);
+  assert.deepEqual(inboxNudgeIds('check the booking window on develop'), []);
+  assert.deepEqual(inboxNudgeIds(''), []);
 });

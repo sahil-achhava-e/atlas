@@ -11,6 +11,7 @@ import type { TerminalAutomationBlock } from './terminalAutomation';
 import { useTerminalFontSize } from './terminalFontSize';
 import { isComposingKey } from '@shared/imeGuard';
 import { useRtl } from '@/i18n/useDirection';
+import { isInboxNudge, inboxNudgeIds } from '@shared/hiveNudge';
 
 const EMPTY_QUEUE: QueuedMessage[] = [];
 
@@ -487,6 +488,13 @@ function QueuedMessageRow(
   const [clipped, setClipped] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
 
+  // The inbox nudge is the one queued message a person did not write: 380
+  // characters of machine instruction, printed verbatim, that read as a wall
+  // and said nothing at a glance. Collapsed, it says what it IS — n messages,
+  // named. Expanded, it is still the literal text, because that is what gets
+  // typed into the terminal and the row must not lie about it.
+  const nudgeIds = isInboxNudge(message.text) ? inboxNudgeIds(message.text) : null;
+
   // Measure against the CLAMPED box, so the toggle survives being expanded (the
   // expanded box never overflows and would otherwise report clipped = false).
   useLayoutEffect(() => {
@@ -525,12 +533,38 @@ function QueuedMessageRow(
             wordBreak: 'break-word',
             ...(expanded
               ? { maxHeight: 200, overflowY: 'auto' as const }
-              : { whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' })
+              : nudgeIds
+                ? {}
+                : { whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' })
           }}
-        >{message.text}</div>
-        {(clipped || expanded || paused) && (
+        >{nudgeIds && !expanded ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, whiteSpace: 'normal' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{
+                flexShrink: 0, padding: '0 6px',
+                fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '16px',
+                background: 'var(--cth-sky-light)', color: 'var(--cth-sky-text)',
+                boxShadow: 'inset 0 0 0 1px var(--cth-sky)', borderRadius: 'var(--cth-radius-input)'
+              }}>{t('queueComposer.nudgeLabel')}</span>
+              <span>{t('queueComposer.nudgeSummary', { count: nudgeIds.length })}</span>
+            </div>
+            {nudgeIds.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                {nudgeIds.map((id) => (
+                  <span key={id} style={{
+                    padding: '0 6px',
+                    fontFamily: 'var(--cth-font-mono)', fontSize: 11, lineHeight: '16px',
+                    background: 'var(--cth-cream-100)', color: 'var(--cth-ink-700)',
+                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
+                  }}>{id}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : message.text}</div>
+        {(clipped || expanded || paused || nudgeIds) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {(clipped || expanded) && (
+            {(clipped || expanded || nudgeIds) && (
               <button
                 onClick={() => setExpanded((e) => !e)}
                 style={{
