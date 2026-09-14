@@ -661,7 +661,18 @@ function drawShades(buf: Buf, lens: RGB, wide = false): void {
   set(buf, x0 + 1, 8, shades(lens)[0]);
 }
 
-type HatKind = 'fedora' | 'pointed' | 'flat' | 'cap' | 'band';
+// Headwear is doing most of the work in a thirty-face set: the face grid is
+// fixed — every portrait has the same two eye pixels and the same mouth row —
+// so what a person wears on their head is very nearly the only thing that can
+// tell two of them apart at 18px wide. Five kinds could not carry thirty faces,
+// which is why so many of them read as the same person.
+//
+// These are garments, drawn as shapes. The face underneath is identical in
+// every case; nothing here changes a feature.
+type HatKind =
+  | 'fedora' | 'pointed' | 'flat' | 'cap' | 'band'
+  | 'turban' | 'wrap' | 'conical' | 'beret' | 'ushanka'
+  | 'beanie' | 'shemagh' | 'scarf' | 'fez' | 'wide' | 'kufi';
 
 /** Headwear, drawn over the hair. */
 function drawHat(buf: Buf, kind: HatKind, col: RGB): void {
@@ -687,6 +698,86 @@ function drawHat(buf: Buf, kind: HatKind, col: RGB): void {
     rect(buf, 4, 2, 13, 4, base);
     rect(buf, 4, 2, 13, 2, hi);
     rect(buf, 1, 5, 9, 5, sh);
+  } else if (kind === 'turban') {
+    // Wrapped and tall, with the wrap lines reading across the crown.
+    rect(buf, 4, 0, 13, 4, base);
+    rect(buf, 3, 2, 14, 4, base);
+    rect(buf, 4, 0, 13, 0, hi);
+    for (const y of [1, 3]) rect(buf, 4, y, 13, y, sh);   // wrap seams
+    rect(buf, 3, 5, 14, 5, base);
+    set(buf, 3, 6, sh);
+  } else if (kind === 'wrap') {
+    // A high headwrap: a wide crown that sits above the brow and folds at the side.
+    rect(buf, 3, 0, 14, 3, base);
+    rect(buf, 2, 1, 15, 3, base);
+    rect(buf, 3, 0, 14, 0, hi);
+    rect(buf, 4, 4, 13, 5, base);
+    set(buf, 2, 2, hi); set(buf, 15, 4, sh); set(buf, 15, 5, sh);
+    rect(buf, 4, 5, 13, 5, sh);
+  } else if (kind === 'conical') {
+    // A broad conical hat: a point and a very wide brim, the widest silhouette
+    // in the set.
+    set(buf, 8, 0, base); set(buf, 9, 0, base);
+    rect(buf, 7, 1, 10, 1, base);
+    rect(buf, 6, 2, 11, 2, base);
+    rect(buf, 5, 3, 12, 3, hi);
+    rect(buf, 0, 4, 17, 4, base);
+    rect(buf, 1, 5, 16, 5, sh);
+  } else if (kind === 'beret') {
+    // Soft, tilted, with the pull to one side.
+    rect(buf, 4, 2, 12, 4, base);
+    rect(buf, 5, 1, 11, 1, base);
+    rect(buf, 5, 1, 10, 1, hi);
+    set(buf, 13, 2, base); set(buf, 13, 3, sh);
+    rect(buf, 4, 4, 13, 4, sh);
+  } else if (kind === 'ushanka') {
+    // Fur hat with the flaps down: the head reads wider at the ears.
+    rect(buf, 4, 1, 13, 4, base);
+    rect(buf, 4, 1, 13, 1, hi);
+    rect(buf, 3, 3, 3, 9, base); rect(buf, 14, 3, 14, 9, base);
+    set(buf, 3, 9, sh); set(buf, 14, 9, sh);
+    rect(buf, 4, 4, 13, 4, sh);
+  } else if (kind === 'beanie') {
+    // Knitted, with a turned-up band at the brow.
+    rect(buf, 4, 2, 13, 5, base);
+    rect(buf, 4, 2, 13, 2, hi);
+    rect(buf, 3, 5, 14, 6, sh);               // the fold
+    rect(buf, 3, 6, 14, 6, base);
+  } else if (kind === 'shemagh') {
+    // Cloth over the crown, falling past the jaw on both sides, with a cord.
+    rect(buf, 3, 1, 14, 4, base);
+    rect(buf, 4, 1, 13, 1, hi);
+    rect(buf, 2, 4, 2, 14, base); rect(buf, 15, 4, 15, 14, base);
+    rect(buf, 3, 4, 3, 12, base); rect(buf, 14, 4, 14, 12, base);
+    rect(buf, 3, 2, 14, 2, sh);               // cord
+    set(buf, 2, 14, sh); set(buf, 15, 14, sh);
+  } else if (kind === 'scarf') {
+    // A headscarf: covers the hair and frames the face down to the shoulder.
+    rect(buf, 3, 2, 14, 6, base);
+    rect(buf, 4, 1, 13, 1, base);
+    rect(buf, 4, 1, 13, 1, hi);
+    rect(buf, 3, 6, 3, 17, base); rect(buf, 14, 6, 14, 17, base);
+    rect(buf, 2, 8, 2, 17, base); rect(buf, 15, 8, 15, 17, base);
+    for (let y = 7; y <= 17; y++) { set(buf, 14, y, sh); set(buf, 15, y, sh); }
+  } else if (kind === 'fez') {
+    // A short straight cylinder with a flat top and a tassel.
+    rect(buf, 5, 0, 12, 4, base);
+    rect(buf, 5, 0, 12, 0, hi);
+    rect(buf, 5, 4, 12, 4, sh);
+    set(buf, 13, 1, sh); set(buf, 13, 2, sh); set(buf, 13, 3, sh);  // tassel
+  } else if (kind === 'wide') {
+    // A tall crown on a very wide flat brim.
+    rect(buf, 5, 0, 12, 3, base);
+    rect(buf, 5, 0, 12, 0, hi);
+    rect(buf, 5, 3, 12, 3, sh);
+    rect(buf, 0, 4, 17, 5, base);
+    rect(buf, 0, 5, 17, 5, sh);
+  } else if (kind === 'kufi') {
+    // A low rounded cap that sits ON the crown, leaving the hairline visible.
+    rect(buf, 5, 2, 12, 4, base);
+    rect(buf, 6, 1, 11, 1, base);
+    rect(buf, 6, 1, 11, 1, hi);
+    rect(buf, 5, 4, 12, 4, sh);
   } else {
     rect(buf, 3, 5, 14, 6, base);            // bandana
     set(buf, 3, 7, sh); set(buf, 2, 7, sh);

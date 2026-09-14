@@ -24,8 +24,8 @@ const SRC = readFileSync(
   join(__dirname, '..', 'src/renderer/src/scene/office/avatarLibrary.ts'), 'utf8');
 const BODY = SRC.slice(SRC.indexOf('AVATAR_LIBRARY: LibraryFace[] = ['));
 
-const FACES = [...BODY.matchAll(/\{ id: '([^']+)', name: '([^']+)', recipe: \{(.*?)\} \},/g)]
-  .map(([, id, name, recipe]) => ({ id, name, recipe }));
+const FACES = [...BODY.matchAll(/\{ id: '([^']+)', name: '([^']+)', country: '([^']+)', recipe: \{(.*?)\} \},/g)]
+  .map(([, id, name, country, recipe]) => ({ id, name, country, recipe }));
 
 const has = (f, re) => re.test(f.recipe);
 const share = (n) => n / FACES.length;
@@ -72,6 +72,26 @@ test('roughly half the set is recognised by something worn on the head', () => {
   assert.ok(n >= 8 && n <= 18, `${n}/30 wear something — too few and the set flattens, too many and it is all costume`);
 });
 
+test('the set covers thirty countries, each once', () => {
+  const countries = FACES.map((f) => f.country);
+  assert.equal(new Set(countries).size, 30,
+    `two faces claim the same country: ${countries.filter((c, i) => countries.indexOf(c) !== i)}`);
+});
+
+test('no two faces wear the same headwear', () => {
+  // Dress is what separates thirty people on a grid where every face is drawn
+  // identically. Two of anything and the set is back to looking like itself.
+  const kinds = FACES
+    .map((f) => ({ name: f.name, kind: /headwear: \{ kind: '(\w+)'/.exec(f.recipe)?.[1] }))
+    .filter((x) => x.kind);
+  assert.ok(kinds.length >= 12, `expected a good share of the set in headwear, got ${kinds.length}`);
+  const seen = new Map();
+  for (const { name, kind } of kinds) {
+    assert.ok(!seen.has(kind), `${name} and ${seen.get(kind)} both wear a ${kind}`);
+    seen.set(kind, name);
+  }
+});
+
 test('no two UNCOVERED faces share skin, hair colour, hair style and facial hair', () => {
   // The exact shape of the old bug: four entries identical on every axis that
   // reads at this size, distinguished only by a shirt colour and a name.
@@ -87,29 +107,17 @@ test('no two UNCOVERED faces share skin, hair colour, hair style and facial hair
       /hairc: ([A-Z]+|\[[^\]]+\])/.exec(f.recipe)?.[1] ?? '?',
       /hair: '(\w+)'/.exec(f.recipe)[1],
       /beard:/.test(f.recipe) ? 'beard' : (/facial: '(\w+)'/.exec(f.recipe)?.[1] ?? '-'),
+      /headwear: \{ kind: '(\w+)'/.exec(f.recipe)?.[1] ?? '-',
     ].join('/');
     assert.ok(!seen.has(key), `${f.name} and ${seen.get(key)} are the same face: ${key}`);
     seen.set(key, f.name);
   }
 });
 
-test('every covered face is covered in its own colour', () => {
-  // A helmet hides the person, so two helmets of the same colour are two
-  // identical agents however different the recipes under them are.
-  const covers = FACES
-    .map((f) => ({ name: f.name, c: /(?:helmet|faceMask|facePaint): \{ (?:c|skin): (\[[^\]]+\])/.exec(f.recipe)?.[1] }))
-    .filter((x) => x.c);
-  assert.ok(covers.length >= 4, `expected several covered faces, found ${covers.length}`);
-  const seen = new Map();
-  for (const { name, c } of covers) {
-    assert.ok(!seen.has(c), `${name} and ${seen.get(c)} wear the same colour: ${c}`);
-    seen.set(c, name);
-  }
-});
-
 test('nothing is named after a character from a film or a show', () => {
-  // The set is birds, stars, minerals and trees on purpose. This is a tripwire
-  // for the next person adding a face, not a complete list of fiction.
+  // The first library was borrowed from film and television. These are ordinary
+  // given names. A tripwire for the next person adding a face, not a complete
+  // list of fiction.
   const borrowed = [
     'vader', 'neo', 'joker', 'deadpool', 'gandalf', 'geralt', 'jinx', 'eleven',
     'hopper', 'wednesday', 'morpheus', 'trooper', 'indiana', 'sparrow', 'tommy',
@@ -117,5 +125,16 @@ test('nothing is named after a character from a film or a show', () => {
   ];
   for (const f of FACES) {
     assert.ok(!borrowed.includes(f.name.toLowerCase()), `${f.name} is borrowed`);
+  }
+});
+
+test('no recipe changes a facial feature', () => {
+  // The eyes, nose and mouth are the same pixels for every face in the set, and
+  // that is deliberate: a set built on national dress must vary the DRESS. Pupil
+  // colour and expression are per-face; the geometry is not, and there is no
+  // knob in the recipe that would let it be.
+  for (const f of FACES) {
+    assert.doesNotMatch(f.recipe, /nose|jaw|cheek|lip|eyeShape|feature/i,
+      `${f.name} reaches for a facial feature — the grid does not have one`);
   }
 });

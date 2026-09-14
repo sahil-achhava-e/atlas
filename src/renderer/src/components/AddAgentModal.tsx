@@ -187,7 +187,9 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     // Locked: it is the orchestrator's own face. Shown rather than hidden, so
     // "where is Atlas" has a visible answer.
     { id: 'michael', name: 'Atlas', note: tr('addAgent.faceReserved'), locked: true },
-    ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name })),
+    // The country goes in the note slot: it is what the face is WEARING, so it
+    // explains the picker rather than decorating it.
+    ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name, note: f.country })),
   ];
   const faceId = effectiveCharacter;
   /** Step 1 is done when a face has been PICKED and a name typed. `character`
@@ -722,7 +724,11 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               <span style={{
                                 fontSize: 11, lineHeight: '12px',
                                 color: used ? 'var(--cth-coral-text)' : 'var(--cth-ink-500)'
-                              }}>{f.note ?? (used ? tr('addAgent.faceInUse') : '')}</span>
+                              // "in use" outranks the country: one is a fact
+                              // about YOUR roster and the other is a label. The
+                              // country line is new, and reading it first would
+                              // have silently retired the in-use marker.
+                              }}>{used ? tr('addAgent.faceInUse') : (f.note ?? '')}</span>
                             </button>
                           );
                         })}
