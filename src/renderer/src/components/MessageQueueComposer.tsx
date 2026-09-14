@@ -205,26 +205,41 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
           color: 'var(--cth-ink-700)', textAlign: 'center'
         }}>{t('queueComposer.dropToAttach')}</span>
       )}
-      {/* Header: label, count, status, clear-all */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{
-          fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-          fontSize: 11, lineHeight: '12px',
-          color: 'var(--cth-ink-700)'
-        }}>{t('queueComposer.queue')}</span>
+      {/* Header: label, count, status, clear-all.
+          The whole row is conditional. With nothing queued, `statusHint` is
+          null, the count is hidden and Clear all needs two items — so the only
+          thing left was the word "Queue", sitting above an empty composer
+          labelling nothing. A blocked prompt still needs its recover button,
+          which is why that is part of the condition rather than the queue
+          alone. */}
+      {(queue.length > 0 || block === 'draft' || block === 'picker') && (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
         {queue.length > 0 && (
           <span style={{
-            fontSize: 11, padding: '1px 6px 0',
-            background: 'var(--cth-cream-200)',
-            boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-            fontFamily: 'var(--cth-font-ui)', color: 'var(--cth-ink-900)'
+            flexShrink: 0,
+            fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+            // 12px, matching the status beside it. At 11px the label was
+            // smaller than the line it labels, which read as a caption for the
+            // sentence rather than a heading over it.
+            fontSize: 12, lineHeight: '16px',
+            color: 'var(--cth-ink-700)'
+          }}>{t('queueComposer.queue')}</span>
+        )}
+        {queue.length > 1 && (
+          <span style={{
+            flexShrink: 0,
+            fontFamily: 'var(--cth-font-mono)', fontSize: 11, lineHeight: '16px',
+            padding: '0 6px',
+            background: 'var(--cth-cream-200)', color: 'var(--cth-ink-700)',
+            borderRadius: 'var(--cth-radius-input)'
           }}>{queue.length}</span>
         )}
         {statusHint && (
           <span
             style={{
-              fontSize: 13,
-              color: idle ? 'var(--cth-ink-700)' : 'var(--cth-ink-500)',
+              minWidth: 0,
+              fontSize: 12, lineHeight: '16px',
+              color: 'var(--cth-ink-500)',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
             }}
           >{statusHint}</span>
@@ -250,6 +265,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             }}
           >{block === 'picker' ? t('queueComposer.closePicker') : t('queueComposer.recoverPrompt')}</button>
         )}
+
         {queue.length > 1 && (
           <button
             onClick={() => clearQueue(agent.id)}
@@ -266,6 +282,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
           >{t('queueComposer.clearAll')}</button>
         )}
       </div>
+      )}
 
       {/* Pending list */}
       {queue.length > 0 && (
@@ -277,6 +294,10 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             <QueuedMessageRow
               key={m.id}
               index={i}
+              // The number answers "which goes first", which is a question only
+              // a list of two or more can raise. On a single row it was a "1."
+              // beside a count chip that also said 1.
+              showIndex={queue.length > 1}
               message={m}
               paused={deliveryPaused}
               onSendNow={() => releaseQueuedMessage(agent.id, m.id)}
@@ -473,8 +494,10 @@ function useDeliveryPaused(agentId: string, active: boolean): boolean {
  * toggle only renders when the text actually clips, so short messages stay tidy.
  */
 function QueuedMessageRow(
-  { index, message, paused, onSendNow, onRemove }: {
+  { index, showIndex, message, paused, onSendNow, onRemove }: {
     index: number;
+    /** Ordinals only earn their place when there is an order. */
+    showIndex: boolean;
     message: QueuedMessage;
     /** Floor-wide auto-delivery is paused — offer the per-message override. */
     paused: boolean;
@@ -519,10 +542,12 @@ function QueuedMessageRow(
       background: 'var(--cth-paper-100)',
       boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-btn)'
     }}>
-      <span style={{
-        fontFamily: 'var(--cth-font-mono)', fontSize: 13,
-        color: 'var(--cth-ink-500)', lineHeight: '18px', flexShrink: 0
-      }}>{`${index + 1}.`}</span>
+      {showIndex && (
+        <span style={{
+          fontFamily: 'var(--cth-font-mono)', fontSize: 13,
+          color: 'var(--cth-ink-500)', lineHeight: '18px', flexShrink: 0
+        }}>{`${index + 1}.`}</span>
+      )}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <div
           ref={bodyRef}
