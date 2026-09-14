@@ -35,6 +35,7 @@
  * goes through the existing `openExternal` opener.
  */
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Icon } from '@/components/Icon';
 import { summarizeReleaseNotes } from '@shared/releaseNotes';
 import { extractDropHtml } from '@shared/releaseDrop';
@@ -79,6 +80,7 @@ function markStarAsked(): void {
 }
 
 export function UpdateToast() {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<ToastStatus | null>(null);
   const [busy, setBusy] = useState(false);
   // Read once per window, so persisting the flag below cannot make the link
@@ -240,8 +242,8 @@ export function UpdateToast() {
       </div>
       <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-700)' }}>
         {status.state === 'downloaded'
-          ? 'Restart Atlas whenever you like to apply it — nothing restarts on its own.'
-          : 'This install can’t update itself — grab the new build from the releases page.'}
+          ? t('updateToast.restartWhenever')
+          : t('updateToast.manualOnly')}
       </span>
 
       {notes.length > 0 && (
@@ -250,7 +252,7 @@ export function UpdateToast() {
             fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
             color: 'var(--cth-ink-500)'
           }}>
-            What’s new
+            {t('updateToast.whatsNew')}
           </div>
           {/* The digest is already capped at ~280 chars; the clamp is the second
               belt, for the day a release body defeats the parser. */}
@@ -274,13 +276,13 @@ export function UpdateToast() {
               href={status.state === 'available-manual' ? status.url : GITHUB_RELEASES_URL}
               onClick={(e) => { e.preventDefault(); openRelease(); }}
               style={linkStyle}
-            >Read more</a>
+            >{t('updateToast.readMore')}</a>
             {showStar && (
               <a
                 href={GITHUB_REPO_URL}
                 onClick={(e) => { e.preventDefault(); void window.cth.openExternal(GITHUB_REPO_URL); }}
                 style={linkStyle}
-              >⭐ Star us on GitHub</a>
+              >{t('updateToast.starOnGitHub')}</a>
             )}
           </div>
         </div>

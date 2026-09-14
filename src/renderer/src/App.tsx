@@ -544,7 +544,7 @@ export function App() {
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M8 3.4v9.2M3.4 8h9.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
           </svg>
-          Add agent
+          {t('agentStrip.addAgent')}
         </button>
 
         <span style={{
@@ -656,7 +656,7 @@ export function App() {
                     </p>
                     <PixelButton variant="primary" size="md" onClick={() => setAddAgentOpen(true)}>
                       <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-                        <Icon name="plus" /> Add agent
+                        <Icon name="plus" /> {t('agentStrip.addAgent')}
                       </span>
                     </PixelButton>
                   </div>

@@ -96,7 +96,7 @@ function ToolRow({ tool }: { tool: ToolStatus }) {
               background: 'var(--cth-cream-100)', border: 'none',
               cursor: 'pointer', color: 'var(--cth-ink-600)'
             }}
-          >{copied ? t('common.copy') + ' ✓' : t('common.copy')}</button>
+          >{copied ? t('common.copied') : t('common.copy')}</button>
         </div>
       )}
 

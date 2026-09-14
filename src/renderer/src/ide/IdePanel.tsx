@@ -468,7 +468,7 @@ export function IdePanel() {
           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
           textAlign: 'center', color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-ui)', fontSize: 16
         }}>
-          No workspace available.<br />Spawn an agent first — the IDE opens on its working directory.
+          {t('idePanel.noWorkspaceTitle')}<br />{t('idePanel.noWorkspaceHint')}
         </div>
       ) : (
         <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { Icon } from './Icon';
@@ -36,6 +37,7 @@ function parentPath(path: string): string {
 export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
   const current = config.harnessHome;
   const recents = (config.recentHives ?? []).filter((h) => h && h !== current);
+  const { t } = useTranslation();
   const [busy, setBusy] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
 
@@ -52,7 +54,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
       // Success never returns (the process relaunches). A return means an error.
       if (!res.ok) {
         window.localStorage.removeItem(SKIP_KEY);
-        setError(res.error ?? 'Could not open that folder.');
+        setError(res.error ?? t('hivePicker.openFailed'));
         setBusy(undefined);
       }
     } catch (e) {
@@ -77,18 +79,17 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
       padding: 32
     }}>
       <div style={{ width: 560, maxWidth: '94vw' }}>
-        <PixelPanel variant="dialog" title="Choose a workspace" noPadding>
+        <PixelPanel variant="dialog" title={t('hivePicker.title')} noPadding>
           <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-700)' }}>
-              A workspace is one folder holding one crew: its agents, their memory, the task board
-              and the history. They are separate, so you can keep work apart and switch between them.
+              {t('hivePicker.blurb')}
             </p>
 
             {/* CURRENT — the last-used home, the one-click default. */}
             {current && (
               <div>
                 <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 1, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
-                  CURRENT WORKSPACE
+                  {t('hivePicker.current')}
                 </div>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
@@ -117,7 +118,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                     }}>{parentPath(current)}</div>
                   </div>
                   <PixelButton variant="primary" size="md" onClick={onOpenCurrent} disabled={!!busy}>
-                    Open
+                    {t('hivePicker.open')}
                   </PixelButton>
                 </div>
               </div>
@@ -127,7 +128,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             {recents.length > 0 && (
               <div>
                 <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 1, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
-                  RECENT WORKSPACES
+                  {t('hivePicker.recent')}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 220, overflowY: 'auto' }}>
                   {recents.map((h) => (
@@ -179,12 +180,12 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <PixelButton variant="secondary" size="md" onClick={browse} disabled={!!busy}>
                 <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-                  <Icon name="folder" /> Open another folder
+                  <Icon name="folder" /> {t('hivePicker.openAnother')}
                 </span>
               </PixelButton>
               <PixelButton variant="secondary" size="md" onClick={browse} disabled={!!busy}>
                 <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-                  <Icon name="plus" /> New workspace
+                  <Icon name="plus" /> {t('hivePicker.newWorkspace')}
                 </span>
               </PixelButton>
             </div>

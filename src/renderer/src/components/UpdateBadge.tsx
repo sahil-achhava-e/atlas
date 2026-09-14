@@ -13,12 +13,15 @@
  * is wiring and pixels.
  */
 import { useCallback, useEffect, useState } from 'react';
+import { Icon } from './Icon';
+import { useTranslation } from 'react-i18next';
 import { describeUpdate, manualDownloadUrl, manualInstallSteps, pendingVersion, reduceStatus, type UpdateStatus } from '@shared/updateState';
 import { PixelButton } from './PixelButton';
 
 declare const __APP_VERSION__: string;
 
 export function UpdateBadge() {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<UpdateStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [hover, setHover] = useState(false);
@@ -148,7 +151,7 @@ export function UpdateBadge() {
           Click to download v{pending}
         </div>
         <div style={{ marginTop: 4, color: 'var(--cth-ink-700)' }}>
-          Download the latest version and replace the app you have. Prefer the app to update itself? Settings &rarr; Updates.
+          {t('updateBadge.manualBody')}
         </div>
         <div style={{
           marginTop: 8, fontFamily: 'var(--cth-font-mono, monospace)', fontSize: 11, color: 'var(--cth-ink-500)'
@@ -163,7 +166,7 @@ export function UpdateBadge() {
     {started && (
       <div
         role="dialog"
-        aria-label="Install the update"
+        aria-label={t('updateBadge.installAria')}
         className="cth-titlebar-nodrag"
         style={{
           position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 400,
@@ -177,14 +180,14 @@ export function UpdateBadge() {
           v{started} is downloading in your browser.
         </div>
         <div style={{ marginTop: 6, color: 'var(--cth-ink-700)' }}>
-          When it lands, quit this app and install the new version over the current one. Open it and
+          {t('updateBadge.afterBody')}
           pick the same project. Your agents, memory and settings stay where they are.
         </div>
         <ol style={{ margin: '8px 0 0', paddingLeft: 18, color: 'var(--cth-ink-700)' }}>
           {steps.steps.map((t) => <li key={t}>{t}</li>)}
         </ol>
         <div style={{ display: 'flex', gap: 8, marginTop: 10, justifyContent: 'flex-end' }}>
-          <PixelButton variant="ghost" size="sm" onClick={() => setStarted(null)}>got it</PixelButton>
+          <PixelButton variant="ghost" size="sm" onClick={() => setStarted(null)}>{t('updateBadge.gotIt')}</PixelButton>
         </div>
       </div>
     )}
@@ -209,8 +212,8 @@ export function UpdateBadge() {
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             width: 18, height: 18, borderRadius: 999,
             background: 'var(--cth-mint-light)', color: 'var(--cth-ink-900)', fontSize: 13
-          }}>&#10003;</span>
-          You are on the latest version.
+          }}><Icon name="check" /></span>
+          {t('updateBadge.upToDate')}
         </div>
         <div style={{ marginTop: 4, color: 'var(--cth-ink-700)' }}>
           v{__APP_VERSION__} is the newest release. Checked just now.

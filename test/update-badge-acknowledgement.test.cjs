@@ -15,6 +15,10 @@ const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 const read = (rel) => readFileSync(join(__dirname, '..', rel), 'utf8');
 const SRC = read('src/renderer/src/components/UpdateBadge.tsx');
+// The copy moved into the locale file when this component was translated, so
+// the words are asserted where they now live. Checking only that the component
+// names a key would pass with the key pointing at an empty string.
+const EN = JSON.parse(read('src/renderer/src/i18n/locales/en.json'));
 
 test('the check branch acknowledges a no-update result', () => {
   assert.ok(/setCheckedOk\(true\)/.test(SRC),
@@ -28,7 +32,9 @@ test('the check branch acknowledges a no-update result', () => {
 test('the acknowledgement renders and auto-dismisses', () => {
   assert.ok(/checkedOk && !started &&/.test(SRC),
     'the acknowledgement popover must render when checkedOk is set');
-  assert.ok(/on the latest version/i.test(SRC),
+  assert.ok(/updateBadge\.upToDate/.test(SRC),
+    'the acknowledgement must render some copy, not just a tick');
+  assert.ok(/on the latest version/i.test(EN.updateBadge.upToDate),
     'it must say, in words, that the user is already current');
   assert.ok(/setTimeout\(\(\) => setCheckedOk\(false\)/.test(SRC),
     'it must auto-dismiss, or it is a stuck mode instead of a flash');
