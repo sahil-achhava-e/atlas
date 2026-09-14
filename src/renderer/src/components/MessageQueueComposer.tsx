@@ -191,7 +191,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
       onDrop={onDrop}
       style={{
         flexShrink: 0,
-        borderTop: '1px solid var(--cth-ink-700)',
+        borderTop: '1px solid var(--cth-ink-100)',
         background: 'var(--cth-cream-100)',
         display: 'flex',
         flexDirection: 'column',

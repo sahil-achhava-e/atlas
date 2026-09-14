@@ -80,7 +80,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
         display: 'flex', alignItems: 'center', gap: 8,
         padding: '10px 12px',
         background: 'var(--cth-cream-100)',
-        borderBottom: '1px solid var(--cth-ink-700)',
+        borderBottom: '1px solid var(--cth-ink-100)',
         flexShrink: 0
       }}>
         <div style={{

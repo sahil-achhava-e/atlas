@@ -314,7 +314,12 @@ export function AgentStrip({ config }: AgentStripProps) {
             position: 'fixed', right: restoreMenuPos.right, bottom: restoreMenuPos.bottom,
             zIndex: 350, minWidth: 240, maxHeight: '50vh', overflowY: 'auto',
             background: 'var(--cth-cream-50)',
-            boxShadow: '0 0 0 2px var(--cth-ink-900), 3px 4px 0 0 rgba(26,19,32,0.22)',
+            // Was a 2px ink-900 ring with a hard offset block under it — the
+            // pre-redesign pixel shadow, drawn in the token that flips to near
+            // WHITE in dark. Every other floating surface in the app is a
+            // hairline plus the elevation token.
+            boxShadow: 'inset 0 0 0 1px var(--cth-ink-100), var(--cth-shadow-card)',
+            borderRadius: 'var(--cth-radius-card)',
             padding: 12, display: 'flex', flexDirection: 'column', gap: 8,
             fontFamily: 'var(--cth-font-ui)'
           }}>

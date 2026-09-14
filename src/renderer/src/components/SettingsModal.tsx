@@ -497,8 +497,14 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                       disabled={changeBusy}
                       style={{
                         textAlign: 'left', cursor: changeBusy ? 'default' : 'pointer',
-                        padding: '16px 12px', background: 'var(--cth-paper-100)', border: 'none',
-                        boxShadow: `inset 0 0 0 ${selected ? 2 : 1}px ${selected ? 'var(--cth-ink-900)' : 'var(--cth-ink-300)'}`,
+                        padding: '16px 12px', border: 'none',
+                        borderRadius: 'var(--cth-radius-btn)',
+                        // Selected reads as the brand here like it does on a
+                        // tab, a branch chip and a primary button. ink-900 is
+                        // the TEXT token: near-black in light, near-white in
+                        // dark, so the chosen option inverted between themes.
+                        background: selected ? 'var(--cth-lilac-light)' : 'var(--cth-paper-100)',
+                        boxShadow: `inset 0 0 0 ${selected ? 1.5 : 1}px ${selected ? 'var(--cth-lilac)' : 'var(--cth-ink-300)'}`,
                         display: 'flex', flexDirection: 'column', gap: 4
                       }}
                     >

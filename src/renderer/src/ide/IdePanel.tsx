@@ -742,7 +742,7 @@ export function IdePanel() {
                   <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <div style={{
                       display: 'flex', alignItems: 'center', gap: 8, padding: '3px 12px',
-                      background: 'var(--cth-cream-200)', borderBottom: '1px solid var(--cth-ink-700)',
+                      background: 'var(--cth-cream-100)', borderBottom: '1px solid var(--cth-ink-100)',
                       fontFamily: 'var(--cth-font-ui)', fontSize: 13, color: 'var(--cth-ink-700)'
                     }}>
                       {/* ink-700: inside the cream-200 bar, where ink-500 was 4.36:1. */}
