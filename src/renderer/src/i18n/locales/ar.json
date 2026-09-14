@@ -555,7 +555,7 @@
     "generateWithAI": "ولّد واحدًا بالذكاء الاصطناعي…",
     "hideAIPrompt": "أخفِ موجّه الذكاء الاصطناعي",
     "aiPromptHint": "انسخ هذا إلى Claude/ChatGPT/Gemini، واملأ التفاصيل في الأسفل، ثم احفظ ردّه بصيغة JSON في ملف ‎.json واستورده هنا.",
-    "copied": "نُسخ ✓",
+    "copied": "نُسخ",
     "copyPrompt": "انسخ الموجّه",
     "spawn": "إنشاء",
     "spawning": "جارٍ الإنشاء...",
