@@ -627,7 +627,7 @@ function SidebarRow({
             fontSize: noteLabelSize,
             lineHeight: `${Math.round(noteLabelSize * 1.5)}px`,
             color: 'var(--cth-ink-700)'
-          }}>PRIVATE NOTE</div>
+          }}>{t('agentStrip.privateNoteShort')}</div>
           {/* A textarea, not an input: the note is a bullet list, so Enter has
               to make a new line rather than doing nothing. autoFocus is safe
               now that opening is an explicit click, not a pointer fly-by. */}
@@ -645,16 +645,16 @@ function SidebarRow({
             }}
             placeholder={t('agentStrip.notePlaceholder')}
             aria-label={t('agentCard.noteAria', { name: agent.name })}
+            className="cth-input"
             style={{
               width: '100%',
               height: noteHeight,
               padding: '5px 7px',
               border: 'none',
-              outline: 'none',
               resize: 'vertical',
               boxSizing: 'border-box',
               background: 'var(--cth-cream-100)',
-              boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
+              borderRadius: 'var(--cth-radius-input)',
               fontFamily: 'var(--cth-font-mono)',
               fontSize: noteFontSize,
               lineHeight: `${Math.round(noteFontSize * 1.6)}px`,

@@ -114,7 +114,8 @@
     "restorable": "{{name}}. قابل للاستعادة من الجلسة الماضية",
     "dismiss": "تجاهل {{name}}. أزِله نهائيًا من قائمة الاستعادة",
     "dismissAria": "تجاهل {{name}}",
-    "restoreAll": "استعادة الكل ({{count}})"
+    "restoreAll": "استعادة الكل ({{count}})",
+    "privateNoteShort": "ملاحظة خاصة"
   },
   "sidebar": {
     "terminal": "الطرفية",

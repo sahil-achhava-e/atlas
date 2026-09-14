@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
+import { Icon } from './Icon';
 import { useTranslation } from 'react-i18next';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
@@ -268,7 +269,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                         fontSize: 14, lineHeight: 1,
                         cursor: 'pointer', border: 'none'
                       }}
-                    >{accent === a ? '\u2713' : ''}</button>
+                    >{accent === a ? <Icon name="check" /> : null}</button>
                   ))}
                   <label
                     style={{
@@ -283,7 +284,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                       fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13
                     }}
                   >
-                    {accent.startsWith('#') ? '\u2713' : '+'}
+                    <Icon name={accent.startsWith('#') ? 'check' : 'plus'} />
                     <input
                       type="color"
                       value={accent.startsWith('#') ? accent : DEFAULT_ACCENT_HEX}

@@ -231,12 +231,13 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={(e) => { if (isComposingKey(e)) return; if (e.key === 'Enter') run(); }}
                     placeholder={t('memoryPanel.searchPlaceholder')}
+                    className="cth-input"
                     style={{
                       flex: 1, padding: '10px 12px 4px',
                       background: 'var(--cth-paper-100)', border: 'none',
-                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
+                      borderRadius: 'var(--cth-radius-input)',
                       fontFamily: 'var(--cth-font-ui)', fontSize: 13,
-                      color: 'var(--cth-ink-900)', outline: 'none'
+                      color: 'var(--cth-ink-900)'
                     }}
                   />
                   <PixelButton variant="primary" size="sm" onClick={run} disabled={busy}>

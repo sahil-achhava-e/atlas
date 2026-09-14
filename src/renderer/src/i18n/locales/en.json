@@ -100,7 +100,7 @@
     "noMatches": "No question matches “{{query}}”."
   },
   "agentStrip": {
-    "privateNote": "PRIVATE NOTE · {{name}}",
+    "privateNote": "Private note · {{name}}",
     "done": "Done",
     "closeNoteEditor": "Close note editor",
     "notePlaceholder": "One line per bullet…",
@@ -114,7 +114,8 @@
     "restorable": "{{name}}, restorable from last session",
     "dismiss": "Dismiss {{name}}. Remove permanently from the restore list",
     "dismissAria": "Dismiss {{name}}",
-    "restoreAll": "Restore all ({{count}})"
+    "restoreAll": "Restore all ({{count}})",
+    "privateNoteShort": "Private note"
   },
   "sidebar": {
     "terminal": "Terminal",

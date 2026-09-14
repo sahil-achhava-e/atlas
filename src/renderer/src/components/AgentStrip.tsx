@@ -237,11 +237,15 @@ export function AgentStrip({ config }: AgentStripProps) {
                     onKeyDown={(e) => { if (e.key === 'Escape') setNoteEditId(null); }}
                     placeholder={t('agentStrip.notePlaceholder')}
                     aria-label={t('agentCard.noteAria', { name: a.name })}
+                    // Edge and focus ring from .cth-input, like every other
+                    // field: this drew itself in ink-100 (1.5:1, a divider) and
+                    // set outline:none without putting a ring back.
+                    className="cth-input"
                     style={{
                       width: '100%', padding: '10px 12px',
-                      border: 'none', outline: 'none', resize: 'none', boxSizing: 'border-box',
+                      border: 'none', resize: 'none', boxSizing: 'border-box',
                       background: 'var(--cth-cream-100)',
-                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
+                      borderRadius: 'var(--cth-radius-input)',
                       fontFamily: 'var(--cth-font-mono)', fontSize: 13,
                       lineHeight: '18px', color: 'var(--cth-ink-900)'
                     }}

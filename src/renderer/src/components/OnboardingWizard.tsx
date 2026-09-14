@@ -514,6 +514,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     value={home}
                     onChange={(e) => setHome(e.target.value)}
                     placeholder={t('onboarding.home.placeholder')}
+                    className="cth-input"
                     style={inputStyle}
                   />
                   <PixelButton variant="secondary" size="lg" onClick={pickHome}>
@@ -1127,7 +1128,7 @@ function PersonaCard({ icon, title, desc, selected, tone, tint, onClick }: {
           background: selected ? 'var(--cth-lilac)' : 'transparent',
           color: 'var(--cth-on-accent)',
           boxShadow: `inset 0 0 0 ${selected ? 0 : 1}px var(--cth-ink-300)`
-        }}>{selected ? '\u2713' : ''}</span>
+        }}>{selected ? <Icon name="check" /> : null}</span>
       </span>
       <span style={{
         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 14, lineHeight: '19px',
@@ -1221,7 +1222,7 @@ function RailStep({ n, label, state }: {
           : current ? 'var(--cth-lilac)' : 'var(--cth-cream-100)',
         color: current ? 'var(--cth-on-accent)'
           : state === 'done' ? 'var(--cth-lilac)' : 'var(--cth-ink-500)'
-      }}>{state === 'done' ? '\u2713' : n}</span>
+      }}>{state === 'done' ? <Icon name="check" /> : n}</span>
       <span style={{
         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '16px',
         color: current ? 'var(--cth-lilac-text)' : state === 'done' ? 'var(--cth-ink-700)' : 'var(--cth-ink-500)'
@@ -1239,15 +1240,18 @@ function prevStep(s: Step): Step {
   return i <= 0 ? STEP_ORDER[0] : STEP_ORDER[i - 1];
 }
 
+// Edge and focus ring come from `.cth-input` — the elements below carry the
+// class. This drew itself in ink-100, the divider token, and set outline:none
+// with nothing to replace it: the first field a new user ever meets had no
+// visible boundary and no keyboard focus indicator.
 const inputStyle: React.CSSProperties = {
   flex: 1,
   height: 40,
   padding: '0 12px',
   background: 'var(--cth-paper-100)',
   border: 'none',
-  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
+  borderRadius: 'var(--cth-radius-input)',
   fontFamily: 'var(--cth-font-mono)',
   fontSize: 14,
-  color: 'var(--cth-ink-900)',
-  outline: 'none'
+  color: 'var(--cth-ink-900)'
 };

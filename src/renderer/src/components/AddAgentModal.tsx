@@ -755,7 +755,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                               fontSize: 15, lineHeight: 1,
                               cursor: 'pointer', border: 'none'
                             }}
-                          >{accent === a ? '\u2713' : ''}</button>
+                          >{accent === a ? <Icon name="check" /> : null}</button>
                         ))}
 
                         {/* Anything outside the twelve. The native colour input
@@ -775,7 +775,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                             fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13
                           }}
                         >
-                          {accent.startsWith('#') ? '\u2713' : '+'}
+                          <Icon name={accent.startsWith('#') ? 'check' : 'plus'} />
                           <input
                             type="color"
                             value={accent.startsWith('#') ? accent : DEFAULT_ACCENT_HEX}
