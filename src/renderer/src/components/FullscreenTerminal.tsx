@@ -2,22 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { PixelBadge } from './PixelBadge';
-import { PixelButton } from './PixelButton';
 import { PtyTerminalView } from './PtyTerminalView';
 import { terminalInstanceKey } from './terminalRecovery';
 import { MessageQueueComposer } from './MessageQueueComposer';
-import { AgentControlStrip } from './AgentControlStrip';
 import { CommandCenterPanel } from './CommandCenterPanel';
 import { SidebarTabs } from './SidebarTabs';
 import { GitTab } from './GitTab';
 import { ThreadsPanel } from './ThreadsPanel';
 import { EditAgentModal } from './EditAgentModal';
 import { ConfirmDialog } from './ConfirmDialog';
-import { EditIcon } from './TabIcons';
-import { Icon } from './Icon';
+import { EditIcon, CodeIcon, StopIcon } from './TabIcons';
 import { SpritePortrait } from './SpritePortrait';
 import { PORTRAIT_W } from '@/scene/office/portraitArt';
-import { RealtimeMichaelToggle } from './RealtimeMichaelToggle';
 import { CostHud } from '@/realtime/CostHud';
 import { useStore, type Agent } from '@/store/store';
 import { usePtyParser } from '@/hooks/usePtyParser';
@@ -333,7 +329,6 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
 
               {/* #7C — pause / halt / steer. These only existed in the docked
                   sidebar, so going fullscreen took the operator controls away. */}
-              <AgentControlStrip key={agent.id} agentId={agent.id} />
 
               {/* Focus mode used to hardcode the terminal, so git, messages and
                   traces — all reachable in the docked panel — simply did not
@@ -698,6 +693,16 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
     archiveAgent(agent.id);
   };
 
+  // The boss's header, for a worker. It had grown its own shape: no portrait,
+  // the name at 13px beside a full absolute cwd, the description in quotes, and
+  // a row of four labelled buttons. The path is the one thing here nobody reads
+  // in focus mode — you are looking at the agent's own terminal, which prints
+  // its prompt — and Talk controls ATLAS globally, so a worker's header was
+  // offering a control that does nothing to the worker.
+  const headerLine = (agent.status !== 'idle' && agent.action)
+    ? agent.action
+    : (agent.description?.trim() || (agent.isGod ? t('commandCenter.roleGod') : t('commandCenter.roleWorker')));
+
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12,
@@ -705,89 +710,96 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
       background: 'var(--cth-cream-50)',
       boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
     }}>
+      {/* The portrait wears the agent's state as a ring, so identity and status
+          are one object instead of two things to scan. */}
       <span style={{
-        fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '18px',
-        color: 'var(--cth-ink-900)'
-      }}>{agent.name}</span>
-      {/* Edit belongs with the NAME, not with the action cluster on the right:
-          it changes who this agent is, and the right-hand group is things you do
-          with the agent. Icon-only because it sits inside the identity line —
-          the word "edit" there would push the path off. God is excluded, as
-          everywhere else: his identity is the hive's, not the roster's. */}
-      {!agent.isGod && (
-        <PixelButton variant="secondary" size="sm" onClick={onEdit}>
-          <span
-            aria-label={`Edit ${agent.name}`}
-            style={{ display: 'inline-flex', alignItems: 'center', lineHeight: 0 }}
-          >
-            <Icon name="edit" />
-          </span>
-        </PixelButton>
-      )}
-      <span style={{
-        fontSize: 13, color: 'var(--cth-ink-500)',
-        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-        maxWidth: 300
-      }}>{agent.cwd}</span>
-      <span style={{
-        fontSize: 13, color: 'var(--cth-ink-700)',
-        fontStyle: 'italic'
-      }}>“{agent.description}”</span>
-      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-        {/* v0.3.4: the IDE opens from agent level — full Monaco editor + git
-            diff over this agent's workspace. The id is passed EXPLICITLY:
-            fullscreen does not change the selection, so leaving the IDE to infer
-            its agent would open whichever agent happens to be selected in the
-            sidebar rather than the one filling the screen. */}
-        <PixelButton variant="secondary" size="sm" onClick={() => useStore.getState().setIdeOpen(true, agent.id)}>
-          <span
-            aria-label={t('fullscreenTerminal.openIdeAria')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-          >
-            <Icon name="code" /> {t('commandCenter.ide')}
-          </span>
-        </PixelButton>
-        {/* Voice toggle is ALWAYS reachable in fullscreen — it controls Michael (the
-            god orchestrator) globally, not the agent in view, so users can start a
-            voice session even while a worker's terminal fills the screen. The cost
-            HUD stays Michael-only (it belongs to his card). */}
-        <RealtimeMichaelToggle />
-        {agent.isGod && <CostHud compact />}
-        {/* The badge is a STATUS, not a button, but it sits in a row of them.
-            Its own box is 20px (lineHeight 18 + 2px padding) against the 24px
-            every size="sm" PixelButton is fixed at, so the row read as ragged.
-            Sized through the badge's own style prop rather than a wrapper: a
-            wrapper only centres the 20px box inside 24px, it does not make the
-            visible border match. */}
-        <PixelBadge
-          status={typing ? 'typing' : agent.status}
-          style={{ height: 24, padding: '0 8px', lineHeight: '24px' }}
-        />
-        {!agent.isGod && (
-          <PixelButton variant="danger-ghost" size="sm" onClick={() => setKillOpen(true)}>
-            {/* inline-flex + center: the other buttons hold TEXT, whose line box
-                the button centres for free. A bare <Icon> is replaced-content
-                sitting on the text baseline, so it rode low and overhung the
-                24px box — the button measured the same as its neighbours while
-                reading taller than them. */}
-            <span
-              style={{ display: 'inline-flex', alignItems: 'center', lineHeight: 0 }}
-            >
-              <Icon name="x" />
-            </span>
-          </PixelButton>
-        )}
-        {killOpen && (
-          <ConfirmDialog
-            title={t('agentDetail.killConfirmTitle')}
-            body={t('agentDetail.killConfirm', { name: agent.name })}
-            confirmLabel={t('agentDetail.killConfirmAction')}
-            destructive
-            onCancel={() => setKillOpen(false)}
-            onConfirm={onKill}
-          />
-        )}
+        position: 'relative', flexShrink: 0,
+        width: 46, height: 46, borderRadius: 14,
+        background: 'var(--cth-paper-200)',
+        boxShadow: `0 0 0 2px var(--cth-status-${agent.status})`,
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden'
+      }}>
+        <SpritePortrait character={agent.character} scale={1.25} />
+      </span>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <span style={{
+            fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 19, lineHeight: '23px',
+            letterSpacing: '-0.4px', color: 'var(--cth-ink-900)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+          }}>{agent.name}</span>
+          <PixelBadge status={typing ? 'typing' : agent.status} />
+        </div>
+        <div style={{
+          fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+        }}>{headerLine}</div>
       </div>
+
+      {agent.isGod && <CostHud compact />}
+
+      <span className="cth-iconbar" style={{ display: 'inline-flex', gap: 2, flexShrink: 0 }}>
+        {[
+          ...(agent.isGod ? [] : [{
+            key: 'edit', Glyph: EditIcon, tone: 'var(--cth-lemon)',
+            label: t('common.edit', { defaultValue: 'Edit' }), onClick: onEdit
+          }]),
+          {
+            key: 'ide', Glyph: CodeIcon, tone: 'var(--cth-sky)',
+            label: t('commandCenter.ide'),
+            // Passed EXPLICITLY: focus mode does not change the selection, so
+            // letting the IDE infer its agent would open whichever one happens
+            // to be selected in the sidebar rather than the one on screen.
+            onClick: () => useStore.getState().setIdeOpen(true, agent.id)
+          }
+        ].map((a) => (
+          <button
+            key={a.key}
+            onClick={a.onClick}
+            data-label={a.label}
+            aria-label={a.label}
+            style={{
+              width: 32, height: 32, flexShrink: 0,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              border: 'none', background: 'transparent', cursor: 'pointer',
+              borderRadius: 'var(--cth-radius-btn)',
+              color: a.tone,
+              transition: 'background 120ms ease, color 120ms ease'
+            }}
+          >
+            <a.Glyph />
+          </button>
+        ))}
+        {!agent.isGod && (
+          <button
+            className="cth-danger-hover"
+            onClick={() => setKillOpen(true)}
+            data-label={t('agentDetail.killAria', { defaultValue: 'Stop and archive this agent' })}
+            aria-label={t('agentDetail.killAria', { defaultValue: 'Stop and archive this agent' })}
+            style={{
+              width: 32, height: 32, flexShrink: 0,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              border: 'none', background: 'transparent', cursor: 'pointer',
+              borderRadius: 'var(--cth-radius-btn)',
+              color: 'var(--cth-coral-text)',
+              transition: 'background 120ms ease, color 120ms ease'
+            }}
+          >
+            <StopIcon />
+          </button>
+        )}
+      </span>
+      {killOpen && (
+        <ConfirmDialog
+          title={t('agentDetail.killConfirmTitle')}
+          body={t('agentDetail.killConfirm', { name: agent.name })}
+          confirmLabel={t('agentDetail.killConfirmAction')}
+          destructive
+          onCancel={() => setKillOpen(false)}
+          onConfirm={onKill}
+        />
+      )}
     </div>
   );
 }
