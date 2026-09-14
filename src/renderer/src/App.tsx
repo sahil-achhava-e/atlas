@@ -393,7 +393,10 @@ export function App() {
           // the one thing that never goes away, so it cannot be something an
           // overlay paints over.
           position: 'relative', zIndex: 400,
-          background: 'linear-gradient(100deg, color-mix(in srgb, var(--cth-lilac) 13%, var(--cth-paper-100)) 0%, color-mix(in srgb, #3B82F6 8%, var(--cth-paper-100)) 38%, var(--cth-paper-100) 72%)',
+          // Tokens, not hex. The blue stop was a literal #3B82F6, so the one
+          // strip that is on screen in every state of the app was also the one
+          // that did not follow a theme switch.
+          background: 'linear-gradient(100deg, color-mix(in srgb, var(--cth-lilac) 13%, var(--cth-paper-100)) 0%, color-mix(in srgb, var(--cth-indigo) 8%, var(--cth-paper-100)) 38%, var(--cth-paper-100) 72%)',
           borderBottom: 'none',
           display: 'flex',
           alignItems: 'center',
@@ -411,7 +414,10 @@ export function App() {
           aria-hidden="true"
           style={{
             position: 'absolute', left: 0, right: 0, bottom: 0, height: 3,
-            background: 'linear-gradient(90deg, #6B4BFF 0%, #5B3DF5 34%, #4A6BF5 68%, #3B82F6 100%)'
+            // The four stops were raw hex, and #5B3DF5 was literally the lilac
+            // token written out by hand. In dark mode every one of them stayed
+            // put while the rest of the bar moved underneath them.
+            background: 'linear-gradient(90deg, var(--cth-lilac) 0%, var(--cth-indigo) 62%, var(--cth-sky) 100%)'
           }}
         />
         {/* The wordmark, and nothing else. This bar held a pixel portrait, a

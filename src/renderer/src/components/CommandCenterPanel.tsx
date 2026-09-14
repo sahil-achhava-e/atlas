@@ -382,7 +382,9 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         })}
       </div>
 
-      <ErrorBoundary key={tab} label={tab}>
+      {/* The tab's NAME, not its key: this printed "human stopped" for the
+          Questions tab and "graph stopped" for Map. */}
+      <ErrorBoundary key={tab} label={t(`commandCenter.tabs.${tab}`)}>
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         {paneFor(tab)}
       </div>

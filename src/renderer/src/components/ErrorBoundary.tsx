@@ -1,4 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import i18n from '@/i18n';
+import { PixelButton } from './PixelButton';
 
 /** Catches a render crash and shows what broke.
  *
@@ -36,14 +38,17 @@ export class ErrorBoundary extends Component<
         color: 'var(--cth-ink-900)', background: 'var(--cth-cream-100)',
         boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)'
       }}>
+        {/* A class component, so no useTranslation hook — the i18n instance
+            directly. This screen is the one a person reads while something is
+            already wrong; an untranslated SHOUT was the wrong tone for it. */}
         <div style={{
-          fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
-          color: 'var(--cth-ink-700)'
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '18px',
+          color: 'var(--cth-ink-900)'
         }}>
-          {(this.props.label ?? 'this panel').toUpperCase()} STOPPED
+          {i18n.t('errorBoundary.title', { label: this.props.label ?? i18n.t('errorBoundary.fallbackLabel') })}
         </div>
-        <div style={{ fontSize: 13, lineHeight: '19px' }}>
-          Something in here threw while drawing. The rest of the app is fine.
+        <div style={{ fontSize: 13, lineHeight: '19px', color: 'var(--cth-ink-700)' }}>
+          {i18n.t('errorBoundary.body')}
         </div>
         <pre style={{
           margin: 0, maxWidth: '100%', maxHeight: 160, overflow: 'auto',
@@ -51,14 +56,10 @@ export class ErrorBoundary extends Component<
           background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
           whiteSpace: 'pre-wrap'
         }}>{error.message || String(error)}</pre>
-        <button
+        <PixelButton
+          size="sm"
           onClick={() => { this.setState({ error: null }); this.props.onReset?.(); }}
-          style={{
-            padding: '4px 12px 3px', border: 'none', cursor: 'pointer',
-            background: 'var(--cth-lilac)', color: 'var(--cth-on-accent)',
-            fontFamily: 'var(--cth-font-ui)', fontSize: 13
-          }}
-        >Try again</button>
+        >{i18n.t('errorBoundary.retry')}</PixelButton>
       </div>
     );
   }
