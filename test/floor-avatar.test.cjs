@@ -36,7 +36,10 @@ const castNames = [...castSrc.matchAll(/\{\s*name:\s*'([a-z0-9_-]+)'/g)].map((m)
 const libraryIds = [...librarySrc.matchAll(/\{\s*id:\s*'([a-z0-9_-]+)'/g)].map((m) => m[1]);
 
 test('the picker offers faces the cast does not contain', () => {
-  assert.ok(castNames.length >= 10, `expected the Office cast, got ${castNames.length}`);
+  // The cast was fifteen borrowed characters; it is Atlas alone now, and every
+  // other face a person can pick comes from the library. The gap this file
+  // guards got WIDER, not narrower.
+  assert.equal(castNames.length, 1, `the cast should be Atlas alone, got ${castNames.length}`);
   assert.ok(libraryIds.length >= 20, `expected the avatar library, got ${libraryIds.length}`);
   const outsiders = libraryIds.filter((id) => !castNames.includes(id));
   // If this ever hits zero the two vocabularies have merged and the rest of

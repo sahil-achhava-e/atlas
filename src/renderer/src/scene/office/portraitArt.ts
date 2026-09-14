@@ -1,11 +1,15 @@
-// Procedural portraits for The Office cast.
+// Procedural portraits.
 //
-// These are fully custom-drawn busts (NOT recolored LimeZu sprites): each
-// character is an explicit recipe layering skin → clothing → face → facial hair
-// → hairstyle → glasses on an 18×28 canvas. This gives real control over each
-// person's hairstyle shape, garment cut/color, and facial hair so they read as
-// the specific show character. The in-scene walking sprites still use the LimeZu
-// recolor in cast.ts; this module only powers the static portraits in the UI.
+// Fully custom-drawn busts, not recoloured sprite sheets: a face is an explicit
+// recipe layering skin → clothing → face → facial hair → hairstyle → headwear on
+// an 18×28 canvas, which gives real control over silhouette rather than a tint
+// over someone else's art. The in-scene walking sprite is composed from the same
+// recipe with legs added, so an agent on the floor matches its card exactly.
+//
+// Three sources, in order (see the resolver at the foot of this file): Atlas's
+// own recipe below, the thirty in avatarLibrary.ts, and a face generated from
+// whatever string it was handed — so an agent always has a portrait, whatever
+// it is called.
 
 import type { OfficeCharacterName } from './cast';
 import { LIBRARY_BY_ID } from './avatarLibrary';
@@ -767,27 +771,13 @@ function drawFacePaint(buf: Buf, skinCol: RGB, mouth: RGB): void {
 }
 
 const RECIPES: Record<OfficeCharacterName, Recipe> = {
-  // The crew, drawn to read at 16 px wide: hair colour and silhouette do almost
-  // all the recognising, clothing colour does the rest. Keys stay the original
-  // cast names because they are the persisted `agent.character` value.
+  // Atlas is the only built-in face. Everything else a person can pick is a
+  // library recipe (avatarLibrary.ts), and anything else at all is generated
+  // from the string itself — see the resolver at the bottom of this file.
   // Atlas: black suit, red tie, neat side part and glasses. It is the one face
   // that is not a character from anything, and it runs the floor, so it reads
   // as the person in the room who has read everything.
   michael:  { skin: 'light', hairc: [38, 34, 40], hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'suit', c1: [32, 32, 40], tie: [216, 74, 66], glasses: true, eyes: [58, 62, 92], brow: 'flat', mouth: 'neutral' },   // Atlas
-  jim:      { skin: 'tan',   hairc: [32, 26, 26],    hair: 'styleMessy',  hairargs: { length: 13 }, cloth: 'polo', c1: [198, 56, 50], c2: [156, 42, 40], hat: 'straw', brow: 'raised', mouth: 'grin', eyes: [72, 46, 32] },   // Luffy
-  pam:      { skin: 'light', hairc: [26, 22, 28],    hair: 'styleFrame',  hairargs: { length: 20, vol: 1 }, cloth: 'blouse', c1: [124, 84, 150], brow: 'soft', mouth: 'smile', lashes: true, eyes: [64, 96, 148] },   // Robin
-  dwight:   { skin: 'tan',   hairc: [92, 148, 78],   hair: 'styleShort',  hairargs: { part: 'R' }, cloth: 'sweater', c1: [54, 82, 56], brow: 'angry', mouth: 'neutral', eyes: [58, 52, 44], scar: 'left' },   // Zoro
-  kevin:    { skin: 'light', hairc: [232, 200, 168], hair: 'styleBald', cloth: 'sweater', c1: [236, 206, 72], c2: [188, 62, 54], brow: 'flat', mouth: 'neutral', eyes: [40, 38, 44] },   // Saitama
-  angela:   { skin: 'light', hairc: [30, 28, 36],    hair: 'styleFrame',  hairargs: { length: 12, vol: 1 }, cloth: 'dressshirt', c1: [60, 62, 74], tie: [178, 54, 54], brow: 'flat', mouth: 'neutral', lashes: true, eyes: [96, 102, 118] },   // Mikasa, the tie doubles as the scarf
-  oscar:    { skin: 'light', hairc: [122, 86, 54],   hair: 'styleShort',  hairargs: { part: 'R' }, cloth: 'suit', c1: [88, 74, 62], tie: [68, 56, 46], brow: 'flat', mouth: 'neutral', eyes: [104, 68, 44] },   // Light
-  stanley:  { skin: 'light', hairc: [202, 206, 214], hair: 'styleSpiky',  cloth: 'sweater', c1: [62, 78, 68], mask: true, brow: 'soft', mouth: 'neutral', eyes: [58, 58, 66] },   // Kakashi
-  phyllis:  { skin: 'light', hairc: [238, 146, 178], hair: 'styleFrame',  hairargs: { length: 16, vol: 2 }, cloth: 'blouse', c1: [196, 60, 74], brow: 'soft', mouth: 'smile', blush: true, lashes: true, eyes: [70, 130, 96] },   // Sakura
-  andy:     { skin: 'light', hairc: [234, 198, 76],  hair: 'styleSpiky',  cloth: 'polo', c1: [226, 124, 44], c2: [44, 56, 88], whiskers: true, brow: 'raised', mouth: 'grin', eyes: [70, 124, 196] },   // Naruto
-  kelly:    { skin: 'light', hairc: [240, 214, 120], hair: 'styleFrame',  hairargs: { length: 18, vol: 2 }, cloth: 'blouse', c1: [38, 36, 42], brow: 'soft', mouth: 'smile', blush: true, lashes: true, eyes: [84, 132, 190] },   // Misa
-  ryan:     { skin: 'light', hairc: [86, 62, 44],    hair: 'styleMessy',  hairargs: { length: 15 }, cloth: 'cardigan', c1: [122, 88, 58], c2: [238, 234, 224], brow: 'angry', mouth: 'neutral', eyes: [86, 122, 108] },   // Eren
-  toby:     { skin: 'light', hairc: [226, 204, 138], hair: 'styleFrame',  hairargs: { length: 14, vol: 1 }, cloth: 'cardigan', c1: [132, 110, 74], c2: [236, 232, 222], brow: 'soft', mouth: 'neutral', eyes: [92, 140, 196] },   // Armin
-  creed:    { skin: 'light', hairc: [24, 22, 30],    hair: 'styleSpiky',  cloth: 'sweater', c1: [32, 30, 38], brow: 'angry', mouth: 'grin', eyes: [226, 178, 46] },   // Ryuk
-  meredith: { skin: 'light', hairc: [232, 138, 58],  hair: 'styleFrame',  hairargs: { length: 18, vol: 2 }, cloth: 'blouse', c1: [242, 240, 236], brow: 'soft', mouth: 'smile', blush: true, lashes: true, eyes: [110, 74, 48] },   // Nami
 };
 
 /** The face/hair group (head → face → facial hair → hair → glasses), no clothing. */

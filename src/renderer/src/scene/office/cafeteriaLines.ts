@@ -1,15 +1,15 @@
 // Break-room small talk.
 //
-// An agent lingering at a coffee machine is an excuse for a one-liner, and the
-// crew (see cast.ts) are agents running an engineering floor, so the lines are
-// about builds, retries, tokens and logs. Two kinds:
+// An agent lingering at a coffee machine is an excuse for a one-liner, and these
+// are agents running an engineering floor, so the lines are about builds,
+// retries, tokens and logs. Two kinds:
 //   • solo  - one quip shown above a single agent at a break spot
 //   • pair  - a two-beat exchange between two agents at the same table
 //
-// Lines are kept short so they fit the ThoughtBubble (≈MAX_WIDTH). Character
-// keys match OfficeCharacterName, which is the ORIGINAL cast key and not the
-// crew name; anyone without bespoke lines falls back to the shared spot pool so
-// the floor never feels empty.
+// Lines are kept short so they fit the ThoughtBubble (≈MAX_WIDTH). Only Atlas
+// has bespoke lines: the fourteen other keyed sets went with the cast they were
+// written for, and a library face has no personality to write to. Everyone else
+// falls back to the shared spot pool, which is what most agents used anyway.
 
 import type { OfficeCharacterName } from './cast';
 
@@ -64,21 +64,7 @@ const SPOT_POOL: Record<BreakSpot, readonly string[]> = {
 // Keys are cast keys; the comment names the crew member they draw as.
 
 const BY_CHARACTER: Partial<Record<OfficeCharacterName, readonly string[]>> = {
-  michael:  ['status, everyone', 'who is blocked?', 'I read every log', 'good run this morning'],           // Atlas
-  jim:      ['PR is up', 'merged before lunch', 'shipping the small one first'],                            // Luffy
-  pam:      ['wrote it all down', 'the notes are in memory', 'someone will need this later'],               // Robin
-  dwight:   ['ran it twice. same result.', 'that test was flaky, not me', 'I read the whole diff'],          // Zoro
-  kevin:    ['still running', 'four hours in', 'let it finish'],                                            // Saitama
-  angela:   ['that lint rule exists for a reason', 'no direct pushes to main', 'the build was red'],        // Mikasa
-  oscar:    ['the token spend is up', 'checked the budget again', 'actually, the numbers say otherwise'],   // Light
-  stanley:  ['finished beats fast', 'been on this since morning', 'no rush'],                               // Kakashi
-  phyllis:  ['it is in the README', 'the docs answered it', 'reading the changelog'],                       // Sakura
-  andy:     ['the webhook fires now', 'connected both ends', 'one more integration'],                       // Naruto
-  kelly:    ['already replied', 'I saw it first', 'inbox is clear'],                                        // Misa
-  ryan:     ['still learning the repo', 'is this the right folder?', 'I asked before I ran it'],            // Eren
-  toby:     ['logged it', 'the audit trail is clean', 'someone has to file these'],                         // Armin
-  creed:    ['that error only happens on Tuesdays', 'nobody owns this service', 'the logs look odd'],       // Ryuk
-  meredith: ['we are out of quota', 'rate limited again', 'asked for more headroom'],                       // Nami
+  michael:  ['status, everyone', 'who is blocked?', 'I read every log', 'good run this morning'],
 };
 
 /** A solo break-room line. Character flavour ~60% of the time, else the line
@@ -131,16 +117,7 @@ const PAIR_POOL: readonly Exchange[] = [
 // Keyed off the SPEAKER so, when the right crew member sits down first, they
 // get to open with their own line.
 const KEYED_EXCHANGES: Partial<Record<OfficeCharacterName, Exchange>> = {
-  michael:  ['status, everyone.', 'all green.', 'that is what I like to hear.'],          // Atlas
-  jim:      ['question.', 'yes.', 'nothing. just checking.'],                              // Luffy
-  dwight:   ['I ran it twice.', 'and?', 'same both times. as expected.'],                  // Zoro
-  kevin:    ['still running.', 'how long?', 'do not ask.'],                                // Saitama
-  angela:   ['this build is red.', 'it is a break room, Mikasa.'],                           // Mikasa
-  oscar:    ['actually, the numbers say otherwise.', '...here we go.'],                    // Light
-  stanley:  ['is it finished?', 'no.', 'then leave it be.'],                               // Kakashi
-  andy:     ['the webhook fires now.', 'nobody asked.', 'it fires though.'],               // Naruto
-  kelly:    ['already replied.', 'to what?', 'everything.'],                               // Misa
-  creed:    ['which service is this?', 'we sit next to it every day.'],                    // Ryuk
+  michael:  ['status, everyone.', 'all green.', 'that is what I like to hear.'],
 };
 
 /** A multi-beat exchange for two agents sharing a table. Beats alternate:

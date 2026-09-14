@@ -1,24 +1,25 @@
-// The Atlas crew: roster metadata + sprite frames.
+// Atlas: roster metadata + sprite frames.
 //
-// The INTERNAL keys below are the original cast names and deliberately stay
-// that way. They are the persisted `agent.character` value, so renaming them
-// would orphan every avatar in a roster already on disk. Only `displayName` is
-// the crew name, and it is what the app shows and what name-to-avatar inference
-// matches on, so "spawn one called Orion" lands on the right sprite.
+// The cast used to be fifteen borrowed characters sitting alongside the thirty
+// in avatarLibrary.ts, which meant two vocabularies for one idea — a face — and
+// every screen had to try both. It is one entry now. Everything else a person
+// can pick is a library face.
 //
-// Both the static portraits (cards / picker) and the in-scene walking sprites are
-// now fully custom-drawn from the same per-character recipes in portraitArt.ts:
-// the scene sprite reuses the portrait's exact head/face/clothing and adds legs,
-// so an agent on the office floor looks identical to its card. The LimeZu base
-// sheets are no longer used for the cast. See assets/ATTRIBUTION.md.
+// 'michael' is the INTERNAL key and deliberately stays that way. It is the
+// persisted `agent.character` value and the god agent's id, so renaming it
+// would orphan the boss in every roster already on disk. `displayName` is what
+// the app shows.
+//
+// Both the static portrait (cards / picker) and the in-scene walking sprite are
+// drawn from the same recipe in portraitArt.ts: the scene sprite reuses the
+// portrait's exact head, face and clothing and adds legs, so the agent on the
+// office floor looks identical to its card. The LimeZu base sheets are no
+// longer used. See assets/ATTRIBUTION.md.
 
 import { Texture } from 'pixi.js';
 import { paintPortrait, sceneFrameBufs, SCENE_W, SCENE_H } from './portraitArt';
 
-export type OfficeCharacterName =
-  | 'michael' | 'jim' | 'pam' | 'dwight' | 'kevin' | 'angela'
-  | 'oscar' | 'stanley' | 'phyllis' | 'andy' | 'kelly' | 'ryan'
-  | 'toby' | 'creed' | 'meredith';
+export type OfficeCharacterName = 'michael';
 
 export interface CastMember {
   name: OfficeCharacterName;
@@ -31,21 +32,7 @@ export interface CastMember {
 
 /** Selectable roster, in display order. */
 export const OFFICE_CAST: CastMember[] = [
-  { name: 'michael',  displayName: 'Atlas',   shirt: '#F2685C', blurb: 'Runs the floor' },
-  { name: 'jim',      displayName: 'Luffy',   shirt: '#C63832', blurb: 'Ships the work' },
-  { name: 'pam',      displayName: 'Robin',   shirt: '#7C5496', blurb: 'Keeps the notes' },
-  { name: 'dwight',   displayName: 'Zoro',    shirt: '#5C944E', blurb: 'Checks everything twice' },
-  { name: 'kevin',    displayName: 'Saitama',    shirt: '#ECCE48', blurb: 'Grinds the long jobs' },
-  { name: 'angela',   displayName: 'Mikasa',  shirt: '#B23636', blurb: 'Guards the standards' },
-  { name: 'oscar',    displayName: 'Light',   shirt: '#58493E', blurb: 'Follows the numbers' },
-  { name: 'stanley',  displayName: 'Kakashi', shirt: '#CACED6', blurb: 'Steady on long runs' },
-  { name: 'phyllis',  displayName: 'Sakura',  shirt: '#EE92B2', blurb: 'Reads the docs' },
-  { name: 'andy',     displayName: 'Naruto',  shirt: '#E27C2C', blurb: 'Wires things together' },
-  { name: 'kelly',    displayName: 'Misa',    shirt: '#26242A', blurb: 'Answers first' },
-  { name: 'ryan',     displayName: 'Eren',    shirt: '#7A583A', blurb: 'Newest on the crew' },
-  { name: 'toby',     displayName: 'Armin',   shirt: '#E2CC8A', blurb: 'Handles the paperwork' },
-  { name: 'creed',    displayName: 'Ryuk',    shirt: '#201E26', blurb: 'Watches the edges' },
-  { name: 'meredith', displayName: 'Nami',    shirt: '#E88A3A', blurb: 'Chases supply' },
+  { name: 'michael', displayName: 'Atlas', shirt: '#F2685C', blurb: 'Runs the floor' },
 ];
 
 export const CAST_BY_NAME: Record<OfficeCharacterName, CastMember> =
