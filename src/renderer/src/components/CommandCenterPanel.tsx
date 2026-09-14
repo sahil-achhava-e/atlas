@@ -123,8 +123,6 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
   const secondaryTabs = visibleTabs.filter((x) => !PRIMARY.includes(x.key));
   // The one number on this panel that is about the human, not the machines.
   const openAsks = useOpenAsks();
-  /** Focus mode has no roster, so the header carries the other agents. */
-  const agents = useStore((st) => st.agents);
 
   // External tab requests (the office task board → 'tasks', the boss-room
   // calendar → 'triggers'). seq-keyed so clicking again re-opens the tab even
@@ -276,30 +274,6 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
             }}>{headerLine}</div>
           </div>
-
-          {/* In focus mode there is no roster anywhere, so the other agents
-              live here: one portrait each, the current one lit. */}
-          {fullscreen && agents.length > 1 && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-              {agents.filter((a) => a.id !== agent.id).map((a) => (
-                <button
-                  key={a.id}
-                  onClick={() => { useStore.getState().select(a.id); useStore.getState().setFullscreen(a.id); }}
-                  aria-label={a.name}
-                  data-label={a.name}
-                  style={{
-                    width: 30, height: 30, padding: 0, flexShrink: 0,
-                    border: 'none', cursor: 'pointer', borderRadius: '50%',
-                    overflow: 'hidden', display: 'inline-flex',
-                    alignItems: 'flex-end', justifyContent: 'center',
-                    background: 'var(--cth-cream-100)'
-                  }}
-                >
-                  <SpritePortrait character={a.character} scale={0.85} />
-                </button>
-              ))}
-            </span>
-          )}
 
           {/* Edit and IDE, in the corner the state pill used to hold. Icon-only
               with the tab row's hover label: two labelled buttons here cost more
