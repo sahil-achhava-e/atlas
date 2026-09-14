@@ -719,7 +719,7 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
         boxShadow: `0 0 0 2px var(--cth-status-${agent.status})`,
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden'
       }}>
-        <SpritePortrait character={agent.character} scale={1.25} />
+        <SpritePortrait character={agent.character} scale={1.5} />
       </span>
 
       <div style={{ flex: 1, minWidth: 0 }}>

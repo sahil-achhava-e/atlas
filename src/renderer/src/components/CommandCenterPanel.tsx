@@ -257,7 +257,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
             boxShadow: `0 0 0 2px var(--cth-status-${agent.status})`,
             display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden'
           }}>
-            <SpritePortrait character={agent.character} scale={1.25} />
+            <SpritePortrait character={agent.character} scale={1.5} />
           </span>
 
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -767,7 +767,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   display: 'inline-flex', alignItems: 'flex-end', justifyContent: 'center'
                 }}
               >
-                <SpritePortrait character={a.character} scale={0.85} />
+                <SpritePortrait character={a.character} scale={1} />
               </button>
 
               <div style={{ flex: 1, minWidth: 0 }}>

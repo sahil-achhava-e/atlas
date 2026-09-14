@@ -454,7 +454,7 @@ function TaskCard({ task, accent, assigneeName, assigneeCharacter, onOpen, onDis
                 display: 'inline-flex', alignItems: 'flex-end', justifyContent: 'center'
               }}>
                 {assigneeCharacter
-                  ? <SpritePortrait character={assigneeCharacter} scale={0.56} />
+                  ? <SpritePortrait character={assigneeCharacter} scale={0.5} />
                   : <span style={{
                       alignSelf: 'center', fontFamily: 'var(--cth-font-ui)',
                       fontSize: 10, fontWeight: 700, color: 'var(--cth-ink-700)'
