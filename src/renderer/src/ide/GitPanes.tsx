@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { CommitGraph } from '@/components/git/CommitGraph';
 import { Icon } from '@/components/Icon';
 import { CloseIcon } from '@/components/TabIcons';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 // Local mirrors of the main-side git shapes (renderer-local by convention —
 // importing the preload module would drag electron into the bundle).
@@ -70,6 +71,7 @@ export function HistoryPane({ gitRoot, onOpenRevDiff }: {
   const [files, setFiles] = useState<GitFileChange[] | null>(null);
   const [note, setNote] = useState('');
   const [page, setPage] = useState(1);
+  const [pendingJump, setPendingJump] = useState<GitCommitRow | null>(null);
 
   const load = useCallback(async (pages: number) => {
     setLoading(true);
@@ -96,7 +98,7 @@ export function HistoryPane({ gitRoot, onOpenRevDiff }: {
   }, [commits, gitRoot]);
 
   const jump = async (c: GitCommitRow) => {
-    if (!window.confirm(t('gitPanes.jumpConfirm', { sha: c.shortSha, subject: c.subject.slice(0, 60) }))) return;
+    setPendingJump(null);
     const res = await window.cth.gitCheckout(gitRoot, c.sha, true);
     setNote(res.ok ? t('gitPanes.nowAt', { sha: c.shortSha }) : res.error);
     if (res.ok) void load(page);
@@ -127,7 +129,7 @@ export function HistoryPane({ gitRoot, onOpenRevDiff }: {
             <span style={{
               flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
             }}>{selected.subject}</span>
-            <button style={smallBtn} onClick={() => void jump(selected)}>
+            <button style={smallBtn} onClick={() => setPendingJump(selected)}>
               <Icon name="arrow-right" /> {t('gitPanes.jumpHere')}
             </button>
             <button style={{ ...smallBtn, width: 20, justifyContent: 'center' }} onClick={() => setSelected(null)}><CloseIcon /></button>
@@ -150,6 +152,15 @@ export function HistoryPane({ gitRoot, onOpenRevDiff }: {
           </div>
         </div>
       )}
+      {pendingJump && (
+        <ConfirmDialog
+          title={t('gitPanes.jumpConfirmTitle', { sha: pendingJump.shortSha })}
+          body={t('gitPanes.jumpConfirmBody', { subject: pendingJump.subject.slice(0, 60) })}
+          confirmLabel={t('gitPanes.jumpConfirmAction')}
+          onCancel={() => setPendingJump(null)}
+          onConfirm={() => void jump(pendingJump)}
+        />
+      )}
     </div>
   );
 }
@@ -165,6 +176,7 @@ export function ComparePane({ gitRoot, onOpenRevDiff }: {
   const [base, setBase] = useState('');
   const [head, setHead] = useState('');
   const [mode, setMode] = useState<'two' | 'three'>('three');
+  const [switchOpen, setSwitchOpen] = useState(false);
   const [result, setResult] = useState<{ ahead: number; behind: number; mergeBase: string | null; files: GitFileChange[] } | null>(null);
   const [note, setNote] = useState('');
 
@@ -193,8 +205,8 @@ export function ComparePane({ gitRoot, onOpenRevDiff }: {
   }, [gitRoot, base, head, mode, t]);
 
   const switchTo = async () => {
+    setSwitchOpen(false);
     if (!head) return;
-    if (!window.confirm(t('gitPanes.switchConfirm', { head }))) return;
     const res = await window.cth.gitCheckout(gitRoot, head.replace(/^origin\//, ''), false);
     setNote(res.ok ? t('gitPanes.switchedTo', { head }) : res.error);
   };
@@ -230,7 +242,7 @@ export function ComparePane({ gitRoot, onOpenRevDiff }: {
             onClick={() => setMode((m) => (m === 'three' ? 'two' : 'three'))}
           >{mode === 'three' ? t('gitPanes.sinceCommonAncestor') : t('gitPanes.literalDifference')}</button>
           <span style={{ flex: 1 }} />
-          <button style={smallBtn} onClick={() => void switchTo()}>
+          <button style={smallBtn} onClick={() => setSwitchOpen(true)}>
             <Icon name="arrow-right" /> {t('gitPanes.switchTo', { branch: head.split('/').pop() })}
           </button>
         </div>
@@ -249,6 +261,15 @@ export function ComparePane({ gitRoot, onOpenRevDiff }: {
           />
         ))}
       </div>
+      {switchOpen && head && (
+        <ConfirmDialog
+          title={t('gitPanes.switchConfirmTitle', { head })}
+          body={t('gitPanes.switchConfirmBody')}
+          confirmLabel={t('gitPanes.switchConfirmAction')}
+          onCancel={() => setSwitchOpen(false)}
+          onConfirm={() => void switchTo()}
+        />
+      )}
     </div>
   );
 }

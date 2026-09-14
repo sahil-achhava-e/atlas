@@ -50,7 +50,13 @@ test('closing with staged changes asks first, instead of dropping them', () => {
   const i = MODAL.indexOf('const requestClose');
   const body = MODAL.slice(i, i + 300);
   assert.match(body, /dirty/, 'the guard does not check for staged changes');
-  assert.match(body, /window\.confirm/, 'the guard does not actually ask');
+  // It used to assert window.confirm. The ask is a ConfirmDialog now — the
+  // browser's alert was the one piece of UI in the app no token reached — so
+  // this pins the same INTENT against the mechanism that replaced it.
+  assert.match(body, /setUnsavedOpen\(true\)/, 'the guard does not actually ask');
+  assert.match(MODAL, /<ConfirmDialog/, 'the guard opens nothing');
+  assert.match(MODAL, /onConfirm=\{\(\) => \{ setUnsavedOpen\(false\); onClose\(\); \}\}/,
+    'confirming does not close the modal');
   // And the footer button must use it, not raw onClose.
   assert.match(MODAL, /onClick=\{requestClose\}/, 'the footer Close bypasses the guard');
 });

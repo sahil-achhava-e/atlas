@@ -358,7 +358,9 @@
     "saved": "Saved",
     "saving": "Saving…",
     "unsavedChanges": "unsaved changes",
-    "unsavedWarning": "You have unsaved settings. Close anyway and lose them?"
+    "unsavedTitle": "Close without saving?",
+    "unsavedBody": "You have changed settings and not saved them. Closing now loses those changes.",
+    "unsavedAction": "Discard changes"
   },
   "commandCenter": {
     "title": "Command center",
@@ -1494,7 +1496,6 @@
     "close": "Close"
   },
   "gitPanes": {
-    "jumpConfirm": "Jump the repo to {{sha}} (\"{{subject}}\")?\n\nThis detaches HEAD. Blocked automatically if the tree is dirty or an agent is mid-run.",
     "nowAt": "now at {{sha}} (detached HEAD)",
     "loadingHistory": "loading history…",
     "loadOlder": "load older…",
@@ -1503,7 +1504,6 @@
     "loadingFiles": "loading files…",
     "noFileChanges": "no file changes (merge?)",
     "comparing": "comparing…",
-    "switchConfirm": "Switch this repo to '{{head}}'?\n\nBlocked automatically if the tree is dirty or an agent is mid-run.",
     "switchedTo": "switched to {{head}}",
     "baseTitle": "Base. The branch you're comparing against",
     "swapTitle": "Swap base ↔ compare",
@@ -1515,7 +1515,13 @@
     "literalDifference": "literal difference",
     "switchToTitle": "Check out '{{head}}'",
     "switchTo": "switch to {{branch}}",
-    "noDifferences": "no differences"
+    "noDifferences": "no differences",
+    "jumpConfirmTitle": "Jump the repo to {{sha}}?",
+    "jumpConfirmBody": "Moves the working tree to \"{{subject}}\" and leaves HEAD detached. Blocked automatically if the tree is dirty or an agent is mid-run.",
+    "jumpConfirmAction": "Jump",
+    "switchConfirmTitle": "Switch this repo to '{{head}}'?",
+    "switchConfirmBody": "Blocked automatically if the tree is dirty or an agent is mid-run.",
+    "switchConfirmAction": "Switch"
   },
   "imagePreview": {
     "fitTitle": "Scale the image down to fit the pane",

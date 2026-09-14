@@ -1,4 +1,5 @@
 import { useState, useEffect, type CSSProperties } from 'react';
+import { ConfirmDialog } from './ConfirmDialog';
 import { useTranslation } from 'react-i18next';
 import { COMPACT_MAINTENANCE_MISSION, agentModels, type HarnessConfig } from '@/store/config';
 import { useStore } from '@/store/store';
@@ -183,6 +184,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
    *  time against the config on disk rather than staged as a whole array. */
   const [autoCompactPending, setAutoCompactPending] = useState<boolean | null>(null);
   const [saveBusy, setSaveBusy] = useState(false);
+  const [unsavedOpen, setUnsavedOpen] = useState(false);
   const [saveNote, setSaveNote] = useState('');
   /** True once a control that USED to persist on click has been changed. Only
    *  those need the close guard: the text fields always needed a Save. */
@@ -303,7 +305,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
   /** Closing with staged changes used to be impossible, because everything wrote
    *  on click. Now it is, so say so rather than dropping the edit silently. */
   const requestClose = (): void => {
-    if (dirty && !window.confirm(t('settings.unsavedWarning'))) return;
+    if (dirty) { setUnsavedOpen(true); return; }
     onClose();
   };
 
@@ -1007,6 +1009,16 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
           )}
         </PixelPanel>
       </div>
+      {unsavedOpen && (
+        <ConfirmDialog
+          title={t('settings.unsavedTitle')}
+          body={t('settings.unsavedBody')}
+          confirmLabel={t('settings.unsavedAction')}
+          destructive
+          onCancel={() => setUnsavedOpen(false)}
+          onConfirm={() => { setUnsavedOpen(false); onClose(); }}
+        />
+      )}
     </div>
   );
 }

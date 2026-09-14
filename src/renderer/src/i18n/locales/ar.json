@@ -358,7 +358,9 @@
     "saved": "حُفِظ",
     "saving": "جارٍ الحفظ…",
     "unsavedChanges": "تغييرات غير محفوظة",
-    "unsavedWarning": "لديك إعدادات غير محفوظة. أأغلق على أي حال وأفقدها؟"
+    "unsavedTitle": "الإغلاق دون حفظ؟",
+    "unsavedBody": "غيّرت الإعدادات ولم تحفظها. الإغلاق الآن يفقد تلك التغييرات.",
+    "unsavedAction": "تجاهل التغييرات"
   },
   "commandCenter": {
     "title": "مركز القيادة",
@@ -1491,7 +1493,6 @@
     "close": "إغلاق"
   },
   "gitPanes": {
-    "jumpConfirm": "نقل المستودع إلى {{sha}} (\"{{subject}}\")؟\n\nهذا يفصل HEAD. يُمنع تلقائيًا إذا كانت الشجرة غير نظيفة أو كان وكيل في منتصف عمله.",
     "nowAt": "الآن عند {{sha}} (HEAD منفصل)",
     "loadingHistory": "جارٍ تحميل السجل…",
     "loadOlder": "تحميل الأقدم…",
@@ -1500,7 +1501,6 @@
     "loadingFiles": "جارٍ تحميل الملفات…",
     "noFileChanges": "لا تغييرات في الملفات (دمج؟)",
     "comparing": "جارٍ المقارنة…",
-    "switchConfirm": "تبديل هذا المستودع إلى '{{head}}'؟\n\nيُمنع تلقائيًا إذا كانت الشجرة غير نظيفة أو كان وكيل في منتصف عمله.",
     "switchedTo": "تم التبديل إلى {{head}}",
     "baseTitle": "الأساس. الفرع الذي تقارن به",
     "swapTitle": "بدّل الأساس ↔ المقارَن",
@@ -1512,7 +1512,13 @@
     "literalDifference": "الفرق الحرفي",
     "switchToTitle": "اسحب '{{head}}'",
     "switchTo": "بدّل إلى {{branch}}",
-    "noDifferences": "لا فروقات"
+    "noDifferences": "لا فروقات",
+    "jumpConfirmTitle": "الانتقال بالمستودع إلى {{sha}}؟",
+    "jumpConfirmBody": "ينقل شجرة العمل إلى \"{{subject}}\" ويترك HEAD منفصلاً. يُمنع تلقائياً إذا كانت الشجرة غير نظيفة أو كان أحد الوكلاء قيد التشغيل.",
+    "jumpConfirmAction": "انتقال",
+    "switchConfirmTitle": "التبديل إلى '{{head}}'؟",
+    "switchConfirmBody": "يُمنع تلقائياً إذا كانت الشجرة غير نظيفة أو كان أحد الوكلاء قيد التشغيل.",
+    "switchConfirmAction": "تبديل"
   },
   "imagePreview": {
     "fitTitle": "تصغير الصورة لتناسب اللوحة",
