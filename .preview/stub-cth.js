@@ -325,7 +325,88 @@
     return (window.__skillsOff = [...cur]);
   },
   skillsLocal: async () => [{"id": "user:azure-devops", "name": "azure-devops", "description": "Azure DevOps plumbing \u2014 work item queries and updates, repro-step parsing, attachments, discussion comments, and pull requests via the az CLI and REST API. Use for any task touching ADO boards, PRs, or work items, and whenever an az command fails with an SSL certificate error. Covers the org-wide TLS interception setup that every az call depends on.", "provider": "claude", "scope": "user", "path": "/Users/mohammed.sahil/.claude/skills/azure-devops"}, {"id": "bundled:capabilities", "name": "capabilities", "description": "Your capability catalog \u2014 read this at boot. Lists the temporal date-range skills and the external integrations (reached via the loopback broker) available to you as a spawned worker, and exactly how to call each. Read-only. Consult it whenever you're unsure what tools/integrations you have or how to invoke them.", "provider": "claude", "scope": "bundled", "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/capabilities"}, {"id": "project:create-migration", "name": "create-migration", "description": "", "provider": "claude", "scope": "project", "path": "/Users/mohammed.sahil/Desktop/epicxp-events/.claude/skills/create-migration"}, {"id": "bundled:md-audit", "name": "md-audit", "description": "Read-only code quality audit \u2014 scan the current working directory for common issues (bugs, dead code, security hotspots, missing error handling) and return a prioritised findings report. No files are edited. Use when asked to \"audit the code\", \"quick audit\", \"find issues\", \"code scan\", or \"what's wrong with this codebase\". (munder-difflin)", "provider": "claude", "scope": "bundled", "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/md-audit"}, {"id": "bundled:ponytail", "name": "ponytail", "description": "Forces the laziest solution that actually works, simplest, shortest, most minimal. Channels a senior dev who has seen everything: question whether the task needs to exist at all (YAGNI), reach for the standard library before custom code, native platform features before dependencies, one line before fifty. Supports intensity levels: lite, full (default), ultra. Use on ANY coding task: writing, adding, refactoring, fixing, reviewing, or designing code, and choosing libraries or dependencies. Also use whenever the user says \"ponytail\", \"be lazy\", \"lazy mode\", \"simplest solution\", \"minimal solution\", \"yagni\", \"do less\", or \"shortest path\", or complains about over-engineering, bloat, boilerplate, or unnecessary dependencies. Do NOT use for non-coding requests (general knowledge, prose, translation, summaries, recipes).", "provider": "claude", "scope": "bundled", "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/ponytail"}, {"id": "bundled:temporal", "name": "temporal", "description": "Resolve ANY named time window \u2014 today, yesterday, thisWeek, lastWeek, last7Days, last30Days, last90Days, thisMonth, lastMonth, thisQuarter, lastQuarter, thisYear, lastYear, last12Months \u2014 or an arbitrary range (lastNdays / lastNweeks / lastNmonths) to a concrete ISO date range relative to your run time. Read-only: no writes, no network. Use whenever a task is time-scoped and you need exact start/end dates without computing them by hand.", "provider": "claude", "scope": "bundled", "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/temporal"}],
-  gitIsRepo: async () => false,
+  // ─── Messages tab ─────────────────────────────────────────────────────────
+  // The hive inbox: what other agents and Atlas have sent THIS agent. Shaped to
+  // HiveMessage in src/main/hive.ts. ThreadsPanel groups by `conversation`, so
+  // these are two threads: one Atlas opened and the agent answered, and one
+  // still waiting on a person (needs_human, which is what the bell counts).
+  hiveInbox: function (id) {
+    var iso = function (secondsAgo) { return new Date(Date.now() - secondsAgo * 1000).toISOString(); };
+    return Promise.resolve([
+      { id: 'm-8801', conversation: 'c-410', in_reply_to: null, from: 'god', to: id,
+        act: 'request', subject: 'Receipt PDF for the booking confirmation',
+        body: 'Take the receipt template and make it render as A4. The totals block is reading from the cart, which is wrong once a booking is amended. Tests first, please.',
+        hops: 1, requires_reply: true, needs_human: false, created_at: iso(5400) },
+      { id: 'm-8807', conversation: 'c-410', in_reply_to: 'm-8801', from: id, to: 'god',
+        act: 'inform', subject: 'Re: Receipt PDF for the booking confirmation',
+        body: 'Failing test is in for the VAT line. Totals now come off the order. A4 layout is next, then I will push the branch.',
+        hops: 1, requires_reply: false, needs_human: false, created_at: iso(3300) },
+      { id: 'm-8812', conversation: 'c-417', in_reply_to: null, from: 'voucher-smoke', to: id,
+        act: 'query', subject: 'Who owns the VAT rounding rule?',
+        body: 'Your branch rounds VAT per line. Mine rounds the invoice total. One of us is wrong and I cannot tell which from the ticket.',
+        hops: 2, requires_reply: true, needs_human: true, created_at: iso(600) }
+    ]);
+  },
+  hiveSend: function (msg, from) {
+    window.__hiveSent = window.__hiveSent || [];
+    window.__hiveSent.push(Object.assign({ from: from || 'human' }, msg));
+    // The panel clears its draft on ok and re-polls the inbox, which is the
+    // fixture above: a sent reply will not appear there. Nothing here persists.
+    return Promise.resolve({ ok: true });
+  },
+
+  // ─── Git tab ──────────────────────────────────────────────────────────────
+  // An agent mid-task on its own branch: something staged, something not,
+  // one untracked artefact, and an upstream it has moved away from. Shaped to
+  // GitStatus / GitCommit in src/preload/index.ts. The numbers are made up, the
+  // SHAPE is not — this is what the six calls return for a real worktree.
+  gitIsRepo: async () => true,
+  gitMainRepo: async (cwd) => cwd || '/Users/you/code/ethara-vms',
+  // What the copy button joins its relative paths onto.
+  gitRoot: async (cwd) => cwd || '/Users/you/code/ethara-vms',
+  gitBranch: async () => ({ current: 'agent/receipt-pdf', detached: false }),
+  gitAheadBehind: async () => ({ ahead: 3, behind: 1, upstream: 'origin/develop' }),
+  gitBranches: async () => ({
+    local: ['agent/receipt-pdf', 'develop', 'main'],
+    remote: ['origin/develop', 'origin/main'],
+    current: 'agent/receipt-pdf'
+  }),
+  gitStatus: async () => ({
+    staged: [
+      { path: 'src/receipts/render.ts', index: 'M', worktree: ' ' },
+      { path: 'src/receipts/a4.css', index: 'A', worktree: ' ' }
+    ],
+    unstaged: [
+      { path: 'src/receipts/template.html', index: ' ', worktree: 'M' },
+      { path: 'test/receipts.test.cjs', index: ' ', worktree: 'M' }
+    ],
+    untracked: ['src/receipts/__snapshots__/a4.pdf']
+  }),
+  gitLog: async function (_cwd, n) {
+    var now = Math.floor(Date.now() / 1000);
+    var rows = [
+      { shortSha: '4f1c9ab', subject: 'Lay the receipt out for A4, not Letter', author: 'receipt-pdf', ago: 900, refs: ['HEAD -> agent/receipt-pdf'] },
+      { shortSha: 'c07e233', subject: 'Render the totals block from the order, not the cart', author: 'receipt-pdf', ago: 3300, refs: [] },
+      { shortSha: '9ba4d10', subject: 'A failing test for the VAT line', author: 'receipt-pdf', ago: 5400, refs: [] },
+      { shortSha: '2e88f47', subject: 'Merge pull request #418 from ethara/booking-window', author: 'Mohammed Sahil', ago: 79200, refs: ['origin/develop', 'develop'] },
+      { shortSha: 'd53a016', subject: 'Booking window respects the venue timezone', author: 'Mohammed Sahil', ago: 90000, refs: [] }
+    ].slice(0, n || 50);
+    // The graph keys commits by their FULL sha, so a parent written as a short
+    // sha matches nothing and every row lays out as its own root — five commits
+    // came out as five coloured lanes. Build the full shas first, then point at
+    // them.
+    var full = rows.map(function (r) {
+      return r.shortSha + '0000000000000000000000000000000000'.slice(0, 40 - r.shortSha.length);
+    });
+    return rows.map(function (r, i) {
+      return {
+        sha: full[i], shortSha: r.shortSha,
+        parents: i + 1 < rows.length ? [full[i + 1]] : [],
+        subject: r.subject, author: r.author, time: now - r.ago, refs: r.refs
+      };
+    });
+  },
+
   // A memory file is TEXT. The generic [] answer reached `.trim()` in the
   // memory graph and took the panel down.
   hiveMemory: async () => '',
