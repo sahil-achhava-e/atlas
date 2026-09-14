@@ -112,6 +112,11 @@ export const accentLightByName: Record<AccentColorName, number> = {
   slate: colors.accent.slateLight
 };
 
+/** The accent an agent gets when it has none of its own: the default cast
+ *  shirt. The same literal was written out in three files — both agent dialogs
+ *  and the floor's selection glow — which is three places to miss if it moves. */
+export const DEFAULT_ACCENT_HEX = '#F2685C';
+
 /** An agent's accent: one of the twelve token names, or a literal '#rrggbb'
  *  the user mixed themselves. Everything that paints an accent goes through
  *  here, so a custom colour works anywhere a named one does. */

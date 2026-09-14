@@ -6,7 +6,7 @@ import { AVATAR_LIBRARY } from '@/scene/office/avatarLibrary';
 import { SpritePortrait } from './SpritePortrait';
 import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
-import { type AccentColorName } from '@/design/tokens';
+import { type AccentColorName, DEFAULT_ACCENT_HEX } from '@/design/tokens';
 import {
   type AgentProvider,
   type HarnessConfig,
@@ -286,7 +286,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                     {accent.startsWith('#') ? '\u2713' : '+'}
                     <input
                       type="color"
-                      value={accent.startsWith('#') ? accent : '#F2685C'}
+                      value={accent.startsWith('#') ? accent : DEFAULT_ACCENT_HEX}
                       onChange={(e) => setAccent(e.target.value as AccentColorName)}
                       style={{
                         position: 'absolute', inset: 0, opacity: 0,

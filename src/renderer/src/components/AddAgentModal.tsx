@@ -8,7 +8,7 @@ import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
 import { AVATAR_LIBRARY, LIBRARY_BY_ID } from '@/scene/office/avatarLibrary';
 import { OFFICE_CAST, DEFAULT_CHARACTER, type OfficeCharacterName } from '@/scene/office/cast';
-import { type AccentColorName } from '@/design/tokens';
+import { type AccentColorName, DEFAULT_ACCENT_HEX } from '@/design/tokens';
 import type { HireManifest } from '@shared/hire';
 import { hireQueueProgress } from '@shared/hireQueue';
 import { MCP_CATALOG } from '@shared/mcpCatalog';
@@ -778,7 +778,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           {accent.startsWith('#') ? '\u2713' : '+'}
                           <input
                             type="color"
-                            value={accent.startsWith('#') ? accent : '#F2685C'}
+                            value={accent.startsWith('#') ? accent : DEFAULT_ACCENT_HEX}
                             onChange={(e) => setAccent(e.target.value)}
                             style={{
                               position: 'absolute', inset: 0, opacity: 0,

@@ -19,10 +19,10 @@ function glowFor(charName: string, member?: { shirt: string }): number {
   if (member) return hexToNumber(member.shirt);
   const c1 = LIBRARY_BY_ID[charName]?.recipe?.c1;
   if (Array.isArray(c1) && c1.length >= 3) return (c1[0] << 16) | (c1[1] << 8) | c1[2];
-  return hexToNumber('#F2685C');
+  return hexToNumber(DEFAULT_ACCENT_HEX);
 }
 import { pickSoloLine, pickExchange, type BreakSpot } from './cafeteriaLines';
-import { colors, accentNumber } from '@/design/tokens';
+import { colors, accentNumber, DEFAULT_ACCENT_HEX } from '@/design/tokens';
 import { loadTheme, resolveThemeMap, themeTilesetUrls } from './themeLoader';
 import {
   installContextLossRecovery, planInitFailure, DEFAULT_MAX_INIT_RETRIES
@@ -1841,7 +1841,7 @@ function floorNote(text: string): HTMLDivElement {
   const note = document.createElement('div');
   note.style.cssText =
     'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
-    'padding:24px;color:#ffd0b5;font-family:monospace;font-size:13px;text-align:center;white-space:pre-wrap;';
+    'padding:24px;color:var(--cth-ink-700);font-family:monospace;font-size:13px;text-align:center;white-space:pre-wrap;';
   note.textContent = text;
   return note;
 }

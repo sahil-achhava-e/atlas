@@ -372,7 +372,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   borderRadius: 999,
                   background: on ? 'rgba(255,255,255,0.25)' : 'var(--cth-coral)',
-                  color: '#FFFFFF',
+                  color: 'var(--cth-on-accent)',
                   fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 10.5, lineHeight: 1,
                   fontVariantNumeric: 'tabular-nums'
                 }}>{badge}</span>

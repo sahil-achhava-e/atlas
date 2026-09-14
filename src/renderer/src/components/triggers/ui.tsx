@@ -116,7 +116,7 @@ export function Toggle({ on, onClick, onLabel, offLabel }: {
         <span style={{
           position: 'absolute', top: 2, left: on ? 16 : 2,
           width: 12, height: 12, borderRadius: 'var(--cth-radius-pill)',
-          background: '#FFFFFF', transition: 'left 120ms ease',
+          background: 'var(--cth-on-accent)', transition: 'left 120ms ease',
           boxShadow: '0 1px 2px rgba(17,20,24,0.25)'
         }} />
       </span>
@@ -146,7 +146,7 @@ export function MiniButton({ children, onClick, tone = 'plain', disabled }: {
         boxShadow: tone === 'good' && !disabled ? 'var(--cth-shadow-btn)' : 'none',
         fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600,
         color: disabled ? 'var(--cth-ink-300)'
-          : tone === 'good' ? '#FFFFFF'
+          : tone === 'good' ? 'var(--cth-on-accent)'
           : tone === 'danger' ? 'var(--cth-coral)' : 'var(--cth-ink-900)',
         transition: 'background 120ms ease, color 120ms ease'
       }}
