@@ -272,7 +272,7 @@ export function TasksKanban() {
                     marginInlineStart: 'auto',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     minWidth: 20, height: 20, padding: '0 6px',
-                    borderRadius: 'var(--cth-radius-pill)', background: 'var(--cth-cream-200)',
+                    borderRadius: 'var(--cth-radius-input)', background: 'var(--cth-cream-200)',
                     fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 600,
                     // The count sits ON the cream-200 pill: ink-500 was 4.36:1 there.
                     color: 'var(--cth-ink-700)'
@@ -334,7 +334,7 @@ export function TasksKanban() {
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   minWidth: 20, height: 20, padding: '0 6px',
-                  borderRadius: 'var(--cth-radius-pill)',
+                  borderRadius: 'var(--cth-radius-input)',
                   background: 'var(--cth-cream-100)',
                   fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 600,
                   color: 'var(--cth-ink-500)'
@@ -422,7 +422,7 @@ function TaskCard({ task, accent, assigneeName, assigneeCharacter, onOpen, onDis
           {needsYou && (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '2px 8px', borderRadius: 'var(--cth-radius-pill)',
+              padding: '2px 8px', borderRadius: 'var(--cth-radius-input)',
               background: 'color-mix(in srgb, var(--cth-status-blocked) 14%, transparent)',
               // The tint keeps the status colour; the word takes the readable
               // one. Amber on its own 14% tint measured 2.74:1.
@@ -557,7 +557,7 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
             </span>
             <span style={{
               display: 'inline-flex', alignItems: 'center',
-              padding: '4px 11px', borderRadius: 'var(--cth-radius-pill)',
+              padding: '4px 11px', borderRadius: 'var(--cth-radius-input)',
               background: `color-mix(in srgb, ${col.accent} 14%, transparent)`,
               color: col.accent,
               fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12
@@ -601,7 +601,7 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
               {assigneeName ? (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 7,
-                  padding: '3px 11px 3px 3px', borderRadius: 'var(--cth-radius-pill)',
+                  padding: '3px 11px 3px 3px', borderRadius: 'var(--cth-radius-input)',
                   background: 'var(--cth-cream-100)',
                   fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600,
                   color: 'var(--cth-ink-900)'
@@ -616,7 +616,7 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
               ) : (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '4px 11px', borderRadius: 'var(--cth-radius-pill)',
+                  padding: '4px 11px', borderRadius: 'var(--cth-radius-input)',
                   boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
                   fontFamily: 'var(--cth-font-ui)', fontSize: 12,
                   color: 'var(--cth-ink-500)'
@@ -688,7 +688,7 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
                             <span style={{
                               marginInlineStart: 'auto',
                               display: 'inline-flex', alignItems: 'center', gap: 6,
-                              padding: '3px 9px', borderRadius: 'var(--cth-radius-pill)',
+                              padding: '3px 9px', borderRadius: 'var(--cth-radius-input)',
                               background: 'color-mix(in srgb, var(--cth-status-blocked) 13%, transparent)',
                               color: 'var(--cth-status-blocked)', fontWeight: 600
                             }}>
@@ -839,7 +839,7 @@ function PriorityDots({ level }: { level: number }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
-      padding: '2px 9px', borderRadius: 'var(--cth-radius-pill)',
+      padding: '2px 9px', borderRadius: 'var(--cth-radius-input)',
       background: `color-mix(in srgb, ${band.tone} 14%, transparent)`,
       color: band.text,
       fontFamily: 'var(--cth-font-ui)', fontSize: 11, fontWeight: 600
