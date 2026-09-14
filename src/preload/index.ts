@@ -712,6 +712,9 @@ const api = {
   /** Absolute path of the MAIN working tree `cwd` belongs to — a linked worktree
    *  resolves to the original repo, not to itself. null when not a git repo. */
   gitMainRepo: (cwd: string): Promise<string | null> => ipcRenderer.invoke('git:mainRepo', cwd),
+  /** Top level of the working tree `cwd` is in — what `git status` paths are
+   *  relative to. Not gitMainRepo, which resolves a worktree to its origin. */
+  gitRoot: (cwd: string): Promise<string | null> => ipcRenderer.invoke('git:root', cwd),
   gitBranch: (cwd: string) =>
     ipcRenderer.invoke('git:branch', cwd) as Promise<{ current: string | null; detached: boolean } | { error: string }>,
   gitStatus: (cwd: string) =>

@@ -143,6 +143,16 @@ export async function isRepo(cwd: string): Promise<boolean> {
   return res.ok && res.stdout.trim() === 'true';
 }
 
+/** The top level of the working tree `cwd` sits in, or null when it is not a
+ *  repo. Deliberately NOT {@link mainRepoRoot}: that follows a linked worktree
+ *  back to the original checkout, and a file in the worktree does not live
+ *  there. `git status` reports paths relative to THIS directory, so it is the
+ *  only correct thing to join them onto. */
+export async function getRoot(cwd: string): Promise<string | null> {
+  const res = await runGit(cwd, ['rev-parse', '--show-toplevel']);
+  return res.ok && res.stdout.trim() ? res.stdout.trim() : null;
+}
+
 const MAX_DIFF_BYTES = 2 * 1024 * 1024; // 2 MB — keep the diff view responsive
 
 /** A file's two sides for a working-tree-vs-HEAD diff. `head` is the committed

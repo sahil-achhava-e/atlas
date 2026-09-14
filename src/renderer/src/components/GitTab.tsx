@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { CommitGraph } from './git/CommitGraph';
-import { PixelButton } from './PixelButton';
-import { Icon } from './Icon';
+import { GitIcon, RefreshIcon, CopyIcon } from './TabIcons';
 
 interface GitCommit {
   sha: string;
@@ -47,10 +46,13 @@ export function GitTab({ cwd }: GitTabProps) {
   const [detached, setDetached] = useState(false);
   const [status, setStatus] = useState<GitStatus | null>(null);
   const [log, setLog] = useState<GitCommit[]>([]);
-  const [branches, setBranches] = useState<{ local: string[]; remote: string[] } | null>(null);
   const [ahead, setAhead] = useState(0);
   const [behind, setBehind] = useState(0);
   const [upstream, setUpstream] = useState<string | null>(null);
+  // Absolute, because a path copied out of here is pasted into a shell that is
+  // somewhere else. `git status` reports relative to the working tree's top
+  // level, which is not necessarily this agent's cwd.
+  const [root, setRoot] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
@@ -61,18 +63,18 @@ export function GitTab({ cwd }: GitTabProps) {
       const repo = await window.cth.gitIsRepo(cwd);
       setIsRepo(repo);
       if (!repo) { setLoading(false); return; }
-      const [b, s, l, br, ab] = await Promise.all([
+      const [b, s, l, ab, rt] = await Promise.all([
         window.cth.gitBranch(cwd),
         window.cth.gitStatus(cwd),
         window.cth.gitLog(cwd, 100),
-        window.cth.gitBranches(cwd),
-        window.cth.gitAheadBehind(cwd)
+        window.cth.gitAheadBehind(cwd),
+        window.cth.gitRoot(cwd)
       ]);
+      setRoot(rt);
       if ('error' in b) setError(b.error);
       else { setBranch(b.current); setDetached(b.detached); }
       if ('error' in s) setError(prev => prev ?? s.error); else setStatus(s);
       if (Array.isArray(l)) setLog(l); else if ('error' in l) setError(prev => prev ?? l.error);
-      if ('error' in br) setError(prev => prev ?? br.error); else setBranches({ local: br.local, remote: br.remote });
       if ('error' in ab) { /* keep defaults */ } else { setAhead(ab.ahead); setBehind(ab.behind); setUpstream(ab.upstream); }
     } finally {
       setLoading(false);
@@ -100,6 +102,10 @@ export function GitTab({ cwd }: GitTabProps) {
     );
   }
 
+  const changedCount = status
+    ? status.staged.length + status.unstaged.length + status.untracked.length
+    : 0;
+
   return (
     <div style={{
       flex: 1, minWidth: 0,
@@ -107,32 +113,64 @@ export function GitTab({ cwd }: GitTabProps) {
       display: 'flex', flexDirection: 'column',
       background: 'var(--cth-paper-100)'
     }}>
-      {/* Branch + ahead/behind header */}
-      <div style={{
+      {/* The branch you are standing on, and how far it has drifted. Everything
+          else this row used to hold was a second way of saying the same thing:
+          the upstream name sat beside counts that only exist because there is
+          one, and Refresh was a labelled ghost button for a panel that already
+          re-reads itself every 4 seconds. The button stays, because a person
+          who has just committed should not have to wait out the poll, but it
+          is a 32px icon with a hover label like every other control here. */}
+      <div className="cth-iconbar" style={{
         display: 'flex', alignItems: 'center', gap: 8,
-        padding: '10px 16px',
-        background: 'var(--cth-cream-200)',
-        borderBottom: '1px solid var(--cth-ink-700)'
+        padding: '8px 8px 8px 16px',
+        background: 'var(--cth-cream-100)',
+        borderBottom: '1px solid var(--cth-ink-100)'
       }}>
         <span style={{
-          fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',
-          padding: '2px 10px',
-          background: 'var(--cth-sky-light)',
-          boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-          color: 'var(--cth-ink-900)'
+          display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0,
+          fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, lineHeight: '18px',
+          padding: '1px 10px 1px 8px',
+          background: 'var(--cth-lilac-light)',
+          boxShadow: 'inset 0 0 0 1px var(--cth-lilac)', borderRadius: 'var(--cth-radius-input)',
+          color: 'var(--cth-lilac-text)'
         }}>
-          {detached ? t('gitTab.detachedHead') : (branch ?? '—')}
+          <span style={{ display: 'inline-flex', flexShrink: 0 }}><GitIcon size={14} /></span>
+          <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {detached ? t('gitTab.detachedHead') : (branch ?? '—')}
+          </span>
         </span>
-        {upstream && (
-          <span style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>
-            ↑ {ahead} ↓ {behind} · {upstream}
+        {upstream && (ahead > 0 || behind > 0) && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'baseline', gap: 6, flexShrink: 0,
+            fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '18px',
+            color: 'var(--cth-ink-500)'
+          }}>
+            {ahead > 0 && <span style={{ color: 'var(--cth-jade-text)' }}>↑{ahead}</span>}
+            {behind > 0 && <span style={{ color: 'var(--cth-peach-text)' }}>↓{behind}</span>}
+            <span style={{
+              minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+            }}>{upstream}</span>
           </span>
         )}
-        <div style={{ marginLeft: 'auto' }}>
-          <PixelButton variant="ghost" size="sm" onClick={refresh} disabled={loading}>
-            {loading ? '...' : t('gitTab.refresh')}
-          </PixelButton>
-        </div>
+        <button
+          onClick={refresh}
+          disabled={loading}
+          data-label={t('gitTab.refresh')}
+          aria-label={t('gitTab.refresh')}
+          style={{
+            marginInlineStart: 'auto', flexShrink: 0,
+            width: 32, height: 32,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            border: 'none', background: 'transparent',
+            cursor: loading ? 'default' : 'pointer',
+            opacity: loading ? 0.5 : 1,
+            borderRadius: 'var(--cth-radius-btn)',
+            color: 'var(--cth-ink-700)',
+            transition: 'background 120ms ease, color 120ms ease'
+          }}
+        >
+          <RefreshIcon />
+        </button>
       </div>
 
       {error && (
@@ -145,15 +183,15 @@ export function GitTab({ cwd }: GitTabProps) {
         }}>{error}</div>
       )}
 
-      {/* Body — scrollable, contains status + branches + graph */}
+      {/* Body — scrollable, contains status + graph */}
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
         {/* Status */}
-        <Section title={t('gitTab.sectionStatus')}>
+        <Section title={t('gitTab.sectionStatus')} meta={changedCount ? t('gitTab.changedCount', { count: changedCount }) : undefined}>
           {status && (
             <>
-              <StatusGroup label={t('gitTab.staged')} entries={status.staged.map(e => ({ ...e, code: e.index }))} />
-              <StatusGroup label={t('gitTab.changes')} entries={status.unstaged.map(e => ({ ...e, code: e.worktree }))} />
-              <StatusGroup label={t('gitTab.untracked')} entries={status.untracked.map(p => ({ path: p, code: '?' }))} />
+              <StatusGroup label={t('gitTab.staged')} root={root} entries={status.staged.map(e => ({ ...e, code: e.index }))} />
+              <StatusGroup label={t('gitTab.changes')} root={root} entries={status.unstaged.map(e => ({ ...e, code: e.worktree }))} />
+              <StatusGroup label={t('gitTab.untracked')} root={root} entries={status.untracked.map(p => ({ path: p, code: '?' }))} />
               {status.staged.length === 0 && status.unstaged.length === 0 && status.untracked.length === 0 && (
                 <div style={{
                   padding: '4px 12px', color: 'var(--cth-ink-500)', fontSize: 13
@@ -162,34 +200,6 @@ export function GitTab({ cwd }: GitTabProps) {
             </>
           )}
         </Section>
-
-        {/* Branches */}
-        {branches && (branches.local.length > 0 || branches.remote.length > 0) && (
-          <Section title={t('gitTab.sectionBranches')}>
-            <div style={{ padding: '0 8px 8px', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {branches.local.map(b => (
-                <span key={`l-${b}`} style={{
-                  padding: '0 6px', fontSize: 13,
-                  background: b === branch ? 'var(--cth-lemon)' : 'var(--cth-cream-100)',
-                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)',
-                  color: 'var(--cth-ink-900)'
-                }}>{b}</span>
-              ))}
-              {branches.remote.map(b => (
-                <span key={`r-${b}`} style={{
-                  padding: '0 6px', fontSize: 13,
-                  background: 'var(--cth-cream-100)',
-                  boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-                  color: 'var(--cth-ink-500)',
-                  display: 'inline-flex', alignItems: 'center', gap: 4
-                }}>
-                  <span style={{ width: 6, height: 6, background: 'var(--cth-lilac)' }} />
-                  {b}
-                </span>
-              ))}
-            </div>
-          </Section>
-        )}
 
         {/* Graph */}
         <Section title={t('gitTab.sectionLog')}>
@@ -202,62 +212,109 @@ export function GitTab({ cwd }: GitTabProps) {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, meta, children }: {
+  title: string;
+  /** A count, on the right of the rule. Absent when there is nothing to say. */
+  meta?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div style={{ marginBottom: 4 }}>
       <div style={{
+        display: 'flex', alignItems: 'baseline', gap: 8,
         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
         color: 'var(--cth-ink-700)',
         padding: '12px 16px 4px',
         background: 'var(--cth-cream-50)',
         borderBottom: '1px solid var(--cth-ink-100)'
-      }}>{title}</div>
+      }}>
+        <span>{title}</span>
+        {meta && <span style={{ marginInlineStart: 'auto', fontWeight: 500, color: 'var(--cth-ink-500)' }}>{meta}</span>}
+      </div>
       {children}
     </div>
   );
 }
 
-function StatusGroup({ label, entries }: {
+function StatusGroup({ label, entries, root }: {
   label: string;
   entries: Array<{ path: string; code: string }>;
+  /** Repo top level, for the absolute path the copy button writes. */
+  root: string | null;
 }) {
-  const { t } = useTranslation();
   if (entries.length === 0) return null;
   return (
     <div style={{ padding: '4px 0' }}>
       <div style={{
-        padding: '0 12px', fontSize: 11, color: 'var(--cth-ink-500)', letterSpacing: 0
-      }}>{label}</div>
+        display: 'flex', alignItems: 'baseline', gap: 6,
+        padding: '0 12px', fontSize: 11, lineHeight: '16px', color: 'var(--cth-ink-500)'
+      }}>
+        <span>{label}</span>
+        <span style={{ fontFamily: 'var(--cth-font-mono)' }}>{entries.length}</span>
+      </div>
       {entries.map(e => (
-        <div key={`${label}-${e.path}-${e.code}`} style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '2px 12px',
-          fontSize: 13, color: 'var(--cth-ink-900)'
-        }}>
-          <span style={{
-            display: 'inline-block', width: 14, textAlign: 'center',
-            fontFamily: 'var(--cth-font-mono)',
-            color: statusColor(e.code),
-            fontWeight: 'bold' as any
-          }}>{e.code === ' ' ? '·' : e.code}</span>
-          <span style={{
-            flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-            fontFamily: 'var(--cth-font-mono)', fontSize: 13
-          }}>{e.path}</span>
-          <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>
-            {statusLabelKey(e.code) ? t(statusLabelKey(e.code)) : ''}
-          </span>
-          <button
-            onClick={() => navigator.clipboard.writeText(e.path).catch(() => {})}
-            style={{
-              padding: 0, background: 'transparent', border: 'none',
-              cursor: 'pointer', color: 'var(--cth-ink-500)'
-            }}
-          >
-            <Icon name="folder" />
-          </button>
-        </div>
+        <StatusRow key={`${label}-${e.path}-${e.code}`} path={e.path} root={root} code={e.code} />
       ))}
+    </div>
+  );
+}
+
+function StatusRow({ path, root, code }: { path: string; root: string | null; code: string }) {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+  const cut = path.lastIndexOf('/');
+  const dir = cut >= 0 ? path.slice(0, cut + 1) : '';
+  const file = cut >= 0 ? path.slice(cut + 1) : path;
+  const word = statusLabelKey(code) ? t(statusLabelKey(code)) : '';
+
+  // Say it happened. A copy button that changes nothing on screen is a button
+  // you press twice because you cannot tell whether the first one worked.
+  const copy = async () => {
+    try {
+      // Falls back to the repo-relative path when the root is not back yet or
+      // the call failed — better a short path than a wrong absolute one.
+      await navigator.clipboard.writeText(root ? `${root}/${path}` : path);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch { /* no clipboard permission — the row just does not confirm */ }
+  };
+
+  return (
+    <div className="cth-iconbar" style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '1px 8px 1px 12px',
+      fontSize: 13, color: 'var(--cth-ink-900)'
+    }}>
+      <span style={{
+        flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden',
+        textOverflow: 'ellipsis', direction: 'rtl', textAlign: 'left',
+        fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '20px'
+      }}>
+        {/* rtl + bdi: an overflowing path loses its FRONT (the shared prefix)
+            rather than its end (the file name), which is the half that tells
+            two rows apart. bdi keeps the text itself reading left to right. */}
+        <bdi><span style={{ color: 'var(--cth-ink-500)' }}>{dir}</span>{file}</bdi>
+      </span>
+      {word && (
+        <span style={{
+          flexShrink: 0, fontSize: 11, lineHeight: '16px', color: statusColor(code)
+        }}>{word}</span>
+      )}
+      <button
+        onClick={copy}
+        data-label={copied ? t('gitTab.copied') : t('gitTab.copyPath')}
+        aria-label={copied ? t('gitTab.copied') : t('gitTab.copyPath')}
+        style={{
+          flexShrink: 0, width: 22, height: 22,
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          padding: 0, background: 'transparent', border: 'none', cursor: 'pointer',
+          borderRadius: 'var(--cth-radius-btn)',
+          color: copied ? 'var(--cth-jade-text)' : 'var(--cth-ink-500)',
+          transition: 'background 120ms ease, color 120ms ease'
+        }}
+      >
+        <CopyIcon size={14} />
+      </button>
     </div>
   );
 }

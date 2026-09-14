@@ -24,8 +24,7 @@ import { normalizeWeekly, weeklyDelayMs } from '../shared/weeklySchedule';
 import {
   getBranch, getStatus, getLog, getBranches, getAheadBehind, isRepo, getDiff, mainRepoRoot,
   addWorktree, removeWorktree, worktreeHasUnintegratedWork, worktreeIsGcSafe,
-  getLogGraph, getCommitFiles, getFileAtRev, compareRefs, listWorktrees, checkoutRef
-} from './git';
+  getLogGraph, getCommitFiles, getFileAtRev, compareRefs, listWorktrees, checkoutRef, getRoot } from './git';
 import { linkWorktreeDeps, unlinkWorktreeDeps } from './worktreeDeps';
 import { HiveManager, type AgentMeta, type HiveMessage, type HiveTask } from './hive';
 import { HookServer } from './hooks';
@@ -3470,6 +3469,12 @@ ipcMain.handle('git:isRepo', (_evt, cwd: unknown) => {
 ipcMain.handle('git:mainRepo', (_evt, cwd: unknown) => {
   if (typeof cwd !== 'string' || !cwd) return null;
   return mainRepoRoot(cwd);
+});
+// The working tree's OWN top level (vs git:mainRepo, which follows a linked
+// worktree home). `git status` paths hang off this one.
+ipcMain.handle('git:root', (_evt, cwd: unknown) => {
+  if (typeof cwd !== 'string' || !cwd) return null;
+  return getRoot(cwd);
 });
 ipcMain.handle('git:branch', (_evt, cwd: unknown) => {
   if (typeof cwd !== 'string') return { error: 'invalid cwd' };

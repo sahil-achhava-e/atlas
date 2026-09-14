@@ -1143,7 +1143,6 @@
     "detachedHead": "HEAD منفصل",
     "refresh": "تحديث",
     "sectionStatus": "الحالة",
-    "sectionBranches": "الفروع",
     "sectionLog": "السجل",
     "staged": "مُدرَج",
     "changes": "تغييرات",
@@ -1155,7 +1154,10 @@
     "deleted": "محذوف",
     "renamed": "معاد التسمية",
     "unmerged": "غير مدموج",
-    "copyPath": "نسخ المسار"
+    "copyPath": "نسخ المسار",
+    "copied": "تم النسخ",
+    "changedCount_one": "ملف واحد",
+    "changedCount_other": "{{count}} ملفات"
   },
   "fullscreenTerminal": {
     "showAgentList": "أظهر قائمة الوكلاء",

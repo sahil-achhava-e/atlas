@@ -188,9 +188,9 @@ export function CommitGraph({ commits, currentBranch, onCommitClick }: CommitGra
                 overflow: 'hidden', textOverflow: 'ellipsis',
                 padding: '0 5px', fontSize: 11,
                 fontFamily: 'var(--cth-font-mono)',
-                color: isCurrent ? 'var(--cth-ink-900)' : 'var(--cth-ink-700)',
-                background: isCurrent ? 'var(--cth-lemon-light)' : 'transparent',
-                boxShadow: `inset 0 0 0 1px ${isCurrent ? 'var(--cth-lemon)' : 'var(--cth-ink-300)'}`,
+                color: isCurrent ? 'var(--cth-lilac-text)' : 'var(--cth-ink-700)',
+                background: isCurrent ? 'var(--cth-lilac-light)' : 'transparent',
+                boxShadow: `inset 0 0 0 1px ${isCurrent ? 'var(--cth-lilac)' : 'var(--cth-ink-300)'}`,
             borderRadius: 'var(--cth-radius-input)'
               }}>{head}</span>
             )}
