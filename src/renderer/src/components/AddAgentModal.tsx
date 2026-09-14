@@ -517,7 +517,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                 display: 'flex', flexDirection: 'column', gap: 2
               }}>
                 <span>
-                  📋 {tr('addAgent.hireImported')} <strong>{hireMeta.name}</strong>
+                  {tr('addAgent.hireImported')} <strong>{hireMeta.name}</strong>
                   {hireMeta.author ? <> · {tr('addAgent.byAuthor', { author: hireMeta.author })}</> : null}
                   {reviewProgress ? <> · {tr('addAgent.hireProgress', { current: reviewProgress.current, total: reviewProgress.total })}</> : null}
                 </span>

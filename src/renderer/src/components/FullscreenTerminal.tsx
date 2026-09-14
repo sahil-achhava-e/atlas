@@ -13,6 +13,7 @@ import { GitTab } from './GitTab';
 import { ThreadsPanel } from './ThreadsPanel';
 import { EditAgentModal } from './EditAgentModal';
 import { ConfirmDialog } from './ConfirmDialog';
+import { EditIcon } from './TabIcons';
 import { Icon } from './Icon';
 import { SpritePortrait } from './SpritePortrait';
 import { PORTRAIT_W } from '@/scene/office/portraitArt';
@@ -546,7 +547,7 @@ function SidebarRow({
                 boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
                 cursor: 'pointer'
               }}
-            >✎</span>
+            ><EditIcon size={13} /></span>
           </div>
           {/* WHAT this agent is, at a glance. The roster used to carry only a
               name, a portrait and a status dot — enough to tell rows apart, not

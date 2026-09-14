@@ -67,6 +67,20 @@ export const GitIcon = ({ size = 18 }: P) => (
     <path {...S} d="M6.2 7.4v5.2M14 7.4v1.6a3.4 3.4 0 01-3.4 3.4H6.2" /></svg>
 );
 
+/** The placeholder for an image the preview cannot load. */
+export const ImageIcon = ({ size = 14 }: P) => (
+  <svg {...box(size)}><rect {...S} x="2.8" y="4.2" width="14.4" height="11.6" rx="2.2" />
+    <circle {...S} cx="7.4" cy="8.4" r="1.4" />
+    <path {...S} d="M4.2 14.2l3.6-3.4 2.6 2.4 2.8-3.2 3.4 4.2" /></svg>
+);
+
+/** Dismiss. Replaces the `✕` character five places were using as a button
+ *  face: an emoji-class glyph whose weight, size and vertical centring come
+ *  from whatever font resolves it, next to icons drawn on a known grid. */
+export const CloseIcon = ({ size = 14 }: P) => (
+  <svg {...box(size)}><path {...S} d="M5.8 5.8l8.4 8.4M14.2 5.8l-8.4 8.4" /></svg>
+);
+
 /** Stop and archive: a stop square inside the ring, because this control ends
  *  a running process. Deliberately not the power mark the status pill wears —
  *  that one is a STATE, and an action that looks like a status is a misread

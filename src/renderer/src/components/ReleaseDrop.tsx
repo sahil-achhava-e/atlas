@@ -35,6 +35,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { buildDropSrcDoc } from '../../../shared/releaseDrop';
+import { CloseIcon } from './TabIcons';
 
 export interface ReleaseDropProps {
   version: string;
@@ -168,7 +169,7 @@ export function ReleaseDrop({ version, html, onDismiss }: ReleaseDropProps) {
               fontFamily: MONO, fontSize: 13, fontWeight: 700, lineHeight: 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}
-          >✕</button>
+          ><CloseIcon /></button>
         </div>
 
         {/* The frame area. Relative so the loader can sit exactly over the drop,

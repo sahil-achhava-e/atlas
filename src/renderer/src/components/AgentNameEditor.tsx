@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { isComposingKey } from '@shared/imeGuard';
+import { EditIcon } from './TabIcons';
 
 export interface AgentNameEditorProps {
   name: string;
@@ -122,7 +123,7 @@ export function AgentNameEditor({
           fontFamily: 'var(--cth-font-ui)', fontSize: 11, lineHeight: 1,
           transition: 'color 90ms linear'
         }}
-      >✎</button>
+      ><EditIcon size={11} /></button>
     </span>
   );
 }

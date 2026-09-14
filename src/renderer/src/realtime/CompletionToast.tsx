@@ -18,6 +18,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '@/components/Icon';
+import { CloseIcon } from '@/components/TabIcons';
 import { useStore } from '@/store/store';
 
 /** Mirrors the `window.cth.onRealtimeCompletion` payload (preload). `summary` is the
@@ -140,7 +141,7 @@ export function CompletionToast(): JSX.Element | null {
                 padding: 0
               }}
             >
-              ✕
+              <CloseIcon size={12} />
             </button>
           </div>
           <div

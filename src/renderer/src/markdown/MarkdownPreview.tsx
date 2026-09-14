@@ -14,6 +14,7 @@
  * (IDE tab / overlay) opens them in context; everything else is inert.
  */
 import { memo, useState } from 'react';
+import { ImageIcon } from '@/components/TabIcons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useWorkspaceImage } from '@/hooks/useWorkspaceImage';
@@ -118,7 +119,7 @@ export const MarkdownPreview = memo(function MarkdownPreview({
 function ImageChip({ alt, src, note }: { alt?: string; src?: string; note?: string }) {
   return (
     <span className="cth-md-img">
-      🖼 {alt || 'image'}{note ? ` — ${note}` : ''}
+      <ImageIcon size={13} /> {alt || 'image'}{note ? ` — ${note}` : ''}
     </span>
   );
 }

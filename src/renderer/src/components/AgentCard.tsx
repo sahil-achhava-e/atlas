@@ -4,6 +4,7 @@ import { PixelPanel } from './PixelPanel';
 import { PixelBadge, StatusKind } from './PixelBadge';
 import { useHasTerminalDraft } from './terminalPool';
 import { SpritePortrait } from './SpritePortrait';
+import { EditIcon } from './TabIcons';
 import { AccentColorName } from '@/design/tokens';
 import { OfficeCharacterName } from '@/scene/office/cast';
 
@@ -182,7 +183,7 @@ export function AgentCard({
             cursor: 'pointer'
           }}
         >
-          {doingCount > 1 ? doingCount : '✎'}
+          {doingCount > 1 ? doingCount : <EditIcon size={10} />}
         </span>
       )}
       <PixelPanel
@@ -270,7 +271,7 @@ export function AgentCard({
                 fontSize: 10, lineHeight: 1, cursor: 'pointer',
                 color: 'var(--cth-ink-500)'
               }}
-            >✎</span>
+            ><EditIcon size={11} /></span>
           )}
         </div>
       </PixelPanel>

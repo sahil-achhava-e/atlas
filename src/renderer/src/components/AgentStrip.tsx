@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { AgentCard, CARD_HEIGHT, CARD_WIDTH } from './AgentCard';
 import { PixelButton } from './PixelButton';
 import { Icon } from './Icon';
+import { CloseIcon } from './TabIcons';
 import { useStore, type Agent } from '@/store/store';
 import { type HarnessConfig } from '@/store/config';
 import { useRestoreTeam } from '@/hooks/useRestoreTeam';
@@ -222,7 +223,7 @@ export function AgentStrip({ config }: AgentStripProps) {
                         color: 'var(--cth-ink-500)', background: 'transparent',
                         border: 'none', cursor: 'pointer'
                       }}
-                    >✕</button>
+                    ><CloseIcon size={12} /></button>
                   </div>
                   {/* A textarea, not an input: the note is a bullet list (one
                       line per bullet) and the fullscreen roster renders every
@@ -352,7 +353,7 @@ export function AgentStrip({ config }: AgentStripProps) {
                     fontSize: 13, color: 'var(--cth-ink-500)',
                     background: 'transparent', border: 'none', cursor: 'pointer'
                   }}
-                >✕</button>
+                ><CloseIcon size={12} /></button>
               </span>
             ))}
             <PixelButton

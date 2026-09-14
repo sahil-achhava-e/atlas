@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CommitGraph } from '@/components/git/CommitGraph';
 import { Icon } from '@/components/Icon';
+import { CloseIcon } from '@/components/TabIcons';
 
 // Local mirrors of the main-side git shapes (renderer-local by convention —
 // importing the preload module would drag electron into the bundle).
@@ -129,7 +130,7 @@ export function HistoryPane({ gitRoot, onOpenRevDiff }: {
             <button style={smallBtn} onClick={() => void jump(selected)}>
               <Icon name="arrow-right" /> {t('gitPanes.jumpHere')}
             </button>
-            <button style={{ ...smallBtn, width: 20, justifyContent: 'center' }} onClick={() => setSelected(null)}>✕</button>
+            <button style={{ ...smallBtn, width: 20, justifyContent: 'center' }} onClick={() => setSelected(null)}><CloseIcon /></button>
           </div>
           {/* `flex: 1` is load-bearing: without it this scroller sizes to its
               CONTENT, overflows the parent's maxHeight and never reaches its own
