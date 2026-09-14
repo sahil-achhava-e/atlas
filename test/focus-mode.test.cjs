@@ -98,3 +98,27 @@ test('the restore prefers the selected agent, then falls back to any live one', 
 test('nothing live yet returns null, and the preference survives for next time', () => {
   assert.equal(restoreFocus(true, null, [], null), null);
 });
+
+// --- the bar names agents by SLUG, the store keys them by ID ----------------
+// Pressing focus with an agent selected took you to Atlas, out of focus mode:
+// App's route effect fed r.agentId (a slug like "wednesday-a1b2") straight into
+// setFullscreen, which holds an id. FullscreenTerminal then matched no agent
+// and fell through to the first one with a live PTY. Source-level, because the
+// effect is inline in the component — same approach as settings-one-save.
+
+const APP = require('node:fs').readFileSync('src/renderer/src/App.tsx', 'utf8');
+
+test('the route effect resolves the slug to an id before setting focus', () => {
+  const i = APP.indexOf('const focus = ');
+  assert.ok(i > 0, 'the focus line is gone — this test needs rewriting');
+  const line = APP.slice(i, APP.indexOf('\n', i));
+  assert.match(line, /routedAgent/, 'focus is being set from the raw route slug again');
+  assert.doesNotMatch(line, /r\.agentId/, 'focus is being set from the raw route slug again');
+});
+
+test('the IDE gets the resolved id too, not the slug', () => {
+  const i = APP.indexOf('st.setIdeOpen(ide,');
+  assert.ok(i > 0, 'the setIdeOpen call moved — this test needs rewriting');
+  const line = APP.slice(i, APP.indexOf('\n', i));
+  assert.match(line, /routedAgent/, 'the IDE is being opened on a slug');
+});

@@ -315,10 +315,20 @@ export function App() {
         deepLink.current = null;
         // Every setter is guarded on a real difference: setFullscreen persists a
         // focus-mode preference, so calling it redundantly would rewrite it.
-        const focus = r.screen === 'focus' ? r.agentId : null;
+        //
+        // `routedAgent`, NOT r.agentId. The bar names an agent by its SLUG
+        // ("wednesday-a1b2"); fullscreenAgentId holds its ID. Feeding the slug
+        // in set focus mode to something no agent matches, so FullscreenTerminal
+        // found nobody and fell through to the first agent with a live PTY —
+        // which is Atlas. Selecting an agent and pressing focus took you to the
+        // boss, out of focus mode. routedAgent is the resolved id, and this
+        // branch only runs when it is a real one.
+        const focus = r.screen === 'focus' ? (routedAgent ?? null) : null;
         if (st.fullscreenAgentId !== focus) st.setFullscreen(focus);
         const ide = r.screen === 'ide';
-        if (st.ideOpen !== ide) st.setIdeOpen(ide, ide ? (r.agentId ?? null) : null);
+        // Same slug-vs-id confusion, same fix: the IDE resolves its workspace
+        // from this id.
+        if (st.ideOpen !== ide) st.setIdeOpen(ide, ide ? (routedAgent ?? null) : null);
         if (routedAgent && st.selectedId !== routedAgent) st.select(routedAgent);
         // The tab is part of the address too, so a link opens the pane it names.
         if ((r.screen === 'agent' || r.screen === 'focus') && r.tab && st.ccTab !== r.tab) {
