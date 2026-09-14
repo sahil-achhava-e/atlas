@@ -129,14 +129,19 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
    inside carries `.cth-input-bare` so it draws no border of its own — two
    nested rectangles read as a box inside a box, which is what this looked like
    before. */
+/* 1.5px, not 1px. A composer's fill and the strip behind it are the same
+   surface in dark (paper-100 and cream-100 are both #171A20) and 1.09:1 apart
+   in light, so NOTHING but this line says where the box is — unlike a small
+   field, which sits on a panel that contrasts with it. The edge carries the
+   whole boundary here, so it is drawn to be seen rather than inferred. */
 .cth-field {
-  box-shadow: inset 0 0 0 1px var(--cth-control-edge);
+  box-shadow: inset 0 0 0 1.5px var(--cth-control-edge);
   border-radius: var(--cth-radius-input);
   transition: box-shadow 120ms ease;
 }
 .cth-field:focus-within {
   box-shadow:
-    inset 0 0 0 1px var(--cth-lilac),
+    inset 0 0 0 1.5px var(--cth-lilac),
     0 0 0 3px color-mix(in srgb, var(--cth-lilac) 18%, transparent);
 }
 .cth-input-bare { box-shadow: none; }
