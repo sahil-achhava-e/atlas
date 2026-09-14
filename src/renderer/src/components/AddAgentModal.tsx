@@ -651,8 +651,12 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                 })}
               </nav>
 
-              {/* RIGHT — the active section's fields */}
-              <div style={{ flex: 1, minWidth: 0, minHeight: 260, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* RIGHT — the active section's fields. A FIXED height, not a
+                  minimum: the four sections hold very different amounts of
+                  field, so a pane that sized to its content made the dialog
+                  jump every time you moved between steps. One box, same size
+                  on all four; a section taller than the box scrolls inside it. */}
+              <div className="cth-scrollpane" style={{ flex: 1, minWidth: 0, height: 440, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {section === 'identity' && (
                   <>
                     {/* Always editable. Picking a face fills it, and you can
