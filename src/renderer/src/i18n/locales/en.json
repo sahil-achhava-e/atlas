@@ -109,7 +109,7 @@
     "addAgent": "Add agent",
     "restoringTitle": "Your previous session's agents are being respawned with their original ids, so memory and inboxes reattach.",
     "restoreTitle": "Previous session: {{names}}",
-    "restoringTeam": "restoring your team…",
+    "restoringTeam": "Restoring your team…",
     "restoreTeam": "Restore team ({{count}}) ▴",
     "previousSession": "Previous session",
     "restorable": "{{name}}, restorable from last session",

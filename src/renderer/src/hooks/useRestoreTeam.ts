@@ -5,11 +5,13 @@ import { roleForHiveSpawn } from '@shared/agentRole';
 
 /** "Restore team" — respawn every worker from the previous session.
  *
- *  Lives here rather than inside AgentStrip because the floor strip is hidden in
- *  fullscreen, which used to mean the restore button (and the list of restorable
- *  agents) simply vanished when you went fullscreen. Both mount points share the
- *  progress state below, so a restore kicked off from one view shows as running
- *  in the other and can't be double-started. */
+ *  Lives in a hook rather than inside a component because it has had to move
+ *  twice: out of the floor strip, which was hidden in fullscreen, and then out
+ *  of the strip entirely when that stopped being rendered at all and took the
+ *  automatic restore down with it. Its mount points share the progress state
+ *  below, so a restore kicked off from one view shows as running in the other
+ *  and can't be double-started. RestoreTeamBanner mounts it from App, which is
+ *  the one place no view can unmount. */
 
 let restoring = false;
 let note: string | null = null;

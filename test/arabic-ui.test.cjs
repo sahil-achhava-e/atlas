@@ -116,7 +116,7 @@ test('content direction in components is gated, never content-sniffed', () => {
   // a block of an ENGLISH user's UI the moment an agent writes a line of
   // Arabic into it. Every site has to be behind the language gate.
   const files = [
-    'components/AddAgentModal', 'components/AgentStrip', 'components/AskMeTab',
+    'components/AddAgentModal', 'components/AskMeTab',
     'components/CommandCenterPanel', 'components/FullscreenTerminal',
     'components/MemoryPanel', 'components/MessageQueueComposer',
     'components/TasksKanban', 'components/ThreadsPanel',
@@ -135,7 +135,10 @@ test('content direction in components is gated, never content-sniffed', () => {
     }
     gated += g.length;
   }
-  assert.ok(gated >= 17, `expected the PR's dir sites to be carried over, found ${gated}`);
+  // 16, not the original 17: AgentStrip carried one and was deleted when the
+  // left panel redesign left it unrendered. The number is a floor against sites
+  // being quietly dropped, so it moves only when a FILE goes.
+  assert.ok(gated >= 16, `expected the PR's dir sites to be carried over, found ${gated}`);
 });
 
 test('the markdown auto-direction plugin only runs for an RTL language', () => {

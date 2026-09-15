@@ -18,6 +18,7 @@ import { HivePicker } from '@/components/HivePicker';
 import { QuitWarningModal, type ClosingTimeState } from '@/components/QuitWarningModal';
 import { CompletionToast } from '@/realtime/CompletionToast';
 import { UpdateToast } from '@/components/UpdateToast';
+import { RestoreTeamBanner } from '@/components/RestoreTeamBanner';
 import { useAppTheme, toggleAppTheme } from '@/design/theme';
 import { SettingsModal, type Section as SettingsSection } from '@/components/SettingsModal';
 import { PixelPanel } from '@/components/PixelPanel';
@@ -394,6 +395,13 @@ export function App() {
       {/* v0.3.4: background-update toast ("restart to update"); renders null until
           main's updater pushes a status. */}
       <UpdateToast />
+      {/* Mounted unconditionally and renders null when there is nothing to
+          restore: the AUTOMATIC restore lives inside this hook, so gating the
+          component on having something to show would stop the thing that brings
+          agents back from ever running. That is the bug this fixes — the only
+          other mount was FullscreenTerminal, so outside focus mode a dead
+          agent never came back. */}
+      <RestoreTeamBanner config={config} />
       {/* Title bar */}
       <div
         className="cth-titlebar-drag"
