@@ -19,7 +19,8 @@
  *
  * Six characters from each of five series, so no one series crowds the picker:
  * Naruto, One Piece, Fairy Tail, Attack on Titan, and That Time I Got
- * Reincarnated as a Slime.
+ * Reincarnated as a Slime. The series is data, not a label — the picker shows
+ * the character's name and nothing else.
  *
  * Four accessories exist for the ones a silhouette alone cannot carry — a straw
  * hat, a mask, a blindfold and whiskers — and they are flags on the recipe
@@ -46,7 +47,10 @@ import type { RGB, Recipe } from './portraitArt';
 export interface LibraryFace {
   id: string;
   name: string;
-  /** Which series the character is from. Shown in the picker under the name. */
+  /** Which series the character is from. NOT shown anywhere — the picker prints
+   *  the name alone. It is kept because the set is balanced six per series and
+   *  test/avatar-variety.test.cjs enforces that, which it cannot do if the only
+   *  record of where a face came from is a comment. */
   series: string;
   recipe: Recipe;
 }

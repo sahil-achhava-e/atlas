@@ -36,9 +36,9 @@ export interface EditAgentModalProps {
  * via updateAgent (engine changes apply on the next restart).
  */
 /** Atlas first, then the library — the same order Add agent shows. */
-const FACES: { id: string; name: string; note?: string }[] = [
+const FACES: { id: string; name: string }[] = [
   { id: 'michael', name: 'Atlas' },
-  ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name, note: f.series }))
+  ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name }))
 ];
 
 export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
@@ -212,7 +212,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                     const active = character === c.id;
                     return (
                       <button
-                        aria-label={c.note ? `${c.name} · ${c.note}` : c.name}
+                        aria-label={c.name}
                         key={c.id}
                         type="button"
                         onClick={() => setCharacter(c.id)}
@@ -235,9 +235,6 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                         }}>
                           <SpritePortrait character={c.id} scale={1.5} />
                         </div>
-                        {/* The tile is 46px wide, which fits a name and not a
-                            second line, so the country rides the accessible
-                            name instead of being dropped. */}
                         <span style={{
                           fontSize: 11, fontWeight: active ? 600 : 400,
                           color: active ? 'var(--cth-lilac-text)' : 'var(--cth-ink-600)',
