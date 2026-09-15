@@ -23,6 +23,8 @@ import { resolveGodName } from '../../../shared/godIdentity';
 import { acquireTerminal, resetTerminal, isTerminalAutomationSafe } from '@/components/terminalPool';
 import { canDeliverToAgent, deliverWithAcknowledgement, checkPrecondition } from './queueDelivery';
 import { OFFICE_CAST, DEFAULT_CHARACTER } from '@/scene/office/cast';
+import { LIBRARY_BY_ID } from '@/scene/office/avatarLibrary';
+import { libraryIdFor } from '@/scene/office/portraitArt';
 
 const GOD_ID = 'god';
 /** Accent palette for MAIN-spawned (voice-hired) agents — picked deterministically
@@ -1033,10 +1035,16 @@ export function useHive(config: HarnessConfig | null): void {
       // id such as `lib-neo` is in neither column, a voice-spawned agent that
       // asked for one landed on DEFAULT_CHARACTER — the boss's own face. Same
       // bug the floor had, through a different door.
+      // Resolved to a REAL face id, never kept as an arbitrary string. A voice
+      // or hive spawn can ask for anything, and an id that names no face used to
+      // be stored as-is and then drawn as an invented portrait — one the picker
+      // never offered and you could not choose again.
       const asked = rec.character?.trim();
+      const known = (q?: string) => (q && (q === 'michael' || LIBRARY_BY_ID[q]) ? q : undefined);
       const character =
-        (asked ? castMember(asked.toLowerCase()) ?? asked : undefined) ??
-        castMember((rec.name || rec.id).toLowerCase()) ??
+        known(asked ? castMember(asked.toLowerCase()) ?? asked : undefined) ??
+        known(castMember((rec.name || rec.id).toLowerCase())) ??
+        (asked ? libraryIdFor(asked) : undefined) ??
         DEFAULT_CHARACTER;
       // Accent is otherwise hashed from the worker id, which is stable but not
       // choosable. An unrecognised accent keeps the hash.

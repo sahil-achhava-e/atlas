@@ -7,6 +7,7 @@ import { Icon } from './Icon';
 import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
 import { AVATAR_LIBRARY, LIBRARY_BY_ID } from '@/scene/office/avatarLibrary';
+import { libraryIdFor } from '@/scene/office/portraitArt';
 import { OFFICE_CAST, DEFAULT_CHARACTER, type OfficeCharacterName } from '@/scene/office/cast';
 import { type AccentColorName, DEFAULT_ACCENT_HEX } from '@/design/tokens';
 import type { HireManifest } from '@shared/hire';
@@ -173,7 +174,12 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // an empty dialog shows Atlas while no agent wears it. Atlas last, not first:
   // it was overriding the typed name, so the face never followed what you were
   // typing.
-  const effectiveCharacter = character || name.trim() || (atlasFree ? 'michael' : '');
+  // The typed NAME used to be the fallback, which meant an agent hired without
+  // picking a face was stored under a character id that names no face — and
+  // then drew as one the picker never offered. It resolves to a library id now,
+  // so what gets stored is always a face you could have chosen, and the picker
+  // shows it selected.
+  const effectiveCharacter = character || (atlasFree ? 'michael' : libraryIdFor(name.trim()));
   /** Typed name first, else the persona of the face that is showing. Removing
    *  the name field would otherwise make it possible to reach Hire with nothing
    *  to call the agent, and no field on screen to fix it. */
@@ -426,9 +432,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     const agent: Agent = {
       id,
       name: effectiveName,
-      // Whatever the dialog has been showing: a picked face, Atlas while it is
-      // free, or the name drawing itself. Never store ''.
-      character: effectiveCharacter || name.trim(),
+      // Whatever the dialog has been showing, and always a real face id.
+      character: effectiveCharacter || libraryIdFor(name.trim()),
       accent,
       description: description.trim() || 'a fresh harness',
       project: basename(projectCwd),

@@ -12,7 +12,7 @@
 // it is called.
 
 import type { OfficeCharacterName } from './cast';
-import { LIBRARY_BY_ID } from './avatarLibrary';
+import { AVATAR_LIBRARY, LIBRARY_BY_ID } from './avatarLibrary';
 
 export const PORTRAIT_W = 18;
 export const PORTRAIT_H = 28;
@@ -838,72 +838,39 @@ function composeScene(r: Recipe, phase: number, back: boolean): Buf {
 const bufCache = new Map<string, Buf>();
 const sceneCache = new Map<string, SceneFrames>();
 
-/** A face for a name that is not in the cast.
+/** The library face a string lands on when it names no face at all.
  *
- *  Same name always gives the same face, because every choice is driven by a
- *  hash of the string rather than a random number. That matters more than the
- *  art: the avatar is persisted as the NAME, so a stable hash is what makes it
- *  survive a restart without storing a recipe anywhere.
+ *  Same string always gives the same face, because the choice is an FNV-1a hash
+ *  rather than a random number, and the avatar is persisted as that string — a
+ *  stable hash is what makes a face survive a restart without storing a recipe.
  *
- *  It only ever picks from the vocabulary the renderer already has, so a
- *  generated face is drawn by exactly the same code as a hand-written one.
+ *  This REPLACED a generator that invented a recipe from the hash. That was the
+ *  bug behind "why am I seeing agents other than the thirty": an unknown string
+ *  produced a face that exists nowhere in the picker. Three things produce
+ *  unknown strings — an agent hired without picking a face (the typed name
+ *  became the character), an agent persisted under an id from a library that has
+ *  since been replaced, and one restored from an old roster — so the app was
+ *  full of faces you could not choose and had never seen.
+ *
+ *  Picking from the library instead closes the set: every face anywhere in the
+ *  app is Atlas or one of the thirty, including on rosters already on disk.
  */
-function generatedRecipe(seed: string): Recipe {
-  // FNV-1a: tiny, stable across runs, and good enough to decorrelate the
-  // fields (Math.random would give a different face on every render).
+export function libraryIdFor(seed: string): string {
   let h = 0x811c9dc5;
   for (let i = 0; i < seed.length; i++) {
     h ^= seed.charCodeAt(i);
     h = Math.imul(h, 0x01000193) >>> 0;
   }
-  const roll = (n: number, salt: number): number => {
-    let x = (h ^ Math.imul(salt + 1, 0x9e3779b9)) >>> 0;
-    x = Math.imul(x ^ (x >>> 15), 0x85ebca6b) >>> 0;
-    // >>> 0 is load-bearing: XOR in JS yields a SIGNED 32-bit int, so without
-    // it this returns a negative index and every pick is undefined.
-    return ((x ^ (x >>> 13)) >>> 0) % n;
-  };
-  const pick = <T,>(arr: readonly T[], salt: number): T => arr[roll(arr.length, salt)];
-
-  const HAIRC: RGB[] = [
-    [32, 28, 30], [86, 58, 38], [126, 84, 44], [214, 178, 96], [232, 140, 52],
-    [188, 62, 62], [70, 140, 92], [72, 108, 190], [150, 92, 178], [206, 206, 214],
-  ];
-  const CLOTHC: RGB[] = [
-    [214, 92, 84], [232, 140, 60], [226, 178, 46], [122, 170, 78], [58, 158, 138],
-    [62, 132, 184], [96, 96, 176], [162, 88, 176], [206, 96, 142], [104, 116, 132],
-  ];
-  const HAIRS: HairStyle[] = [
-    'styleShort', 'styleFloppy', 'styleFrame', 'styleBun', 'styleCurly',
-    'styleMessy', 'styleRecede', 'styleSpiky', 'styleTallSpikes', 'styleBald',
-  ];
-  const CLOTHS: Cloth[] = ['dressshirt', 'polo', 'sweater', 'cardigan', 'blouse', 'suit'];
-  const SKINS = ['light', 'tan', 'brown', 'dark'] as const;
-
-  const cloth = pick(CLOTHS, 3);
-  const c1 = pick(CLOTHC, 4);
-  return {
-    skin: pick(SKINS, 0),
-    hairc: pick(HAIRC, 1),
-    hair: pick(HAIRS, 2),
-    hairargs: { part: roll(2, 8) ? 'L' : 'R', length: 12 + roll(9, 9), vol: roll(3, 10) },
-    cloth,
-    c1,
-    c2: pick(CLOTHC, 5),
-    tie: cloth === 'suit' || cloth === 'dressshirt' ? pick(CLOTHC, 6) : undefined,
-    eyes: pick([[58, 52, 44], [72, 46, 32], [64, 96, 148], [70, 130, 96], [96, 102, 118]] as RGB[], 7),
-    brow: pick(['flat', 'angry', 'raised', 'soft'] as const, 11),
-    mouth: pick(['neutral', 'smile', 'grin'] as const, 12),
-    glasses: roll(5, 13) === 0,
-    facial: roll(4, 14) === 0 ? pick(['mustache', 'stubble', 'goatee'] as const, 15) : undefined,
-    lashes: roll(2, 16) === 0,
-  };
+  return AVATAR_LIBRARY[h % AVATAR_LIBRARY.length].id;
 }
 
-/** Cast first, then the pickable library, then a face generated from the name.
- *  One resolver so the portrait, the walking sprite and every caller agree. */
+/** Atlas, then the pickable library, then the library face the string hashes
+ *  to. One resolver so the portrait, the walking sprite and every caller agree,
+ *  and a CLOSED one: there is no fourth branch that can invent a face. */
 function recipeFor(name: string): Recipe {
-  return RECIPES[name as OfficeCharacterName] ?? LIBRARY_BY_ID[name]?.recipe ?? generatedRecipe(name);
+  return RECIPES[name as OfficeCharacterName]
+    ?? LIBRARY_BY_ID[name]?.recipe
+    ?? LIBRARY_BY_ID[libraryIdFor(name)].recipe;
 }
 
 function getBuf(name: string): Buf {

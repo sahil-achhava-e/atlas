@@ -134,3 +134,39 @@ test('no recipe changes a facial feature', () => {
       `${f.name} reaches for a facial feature — the grid does not have one`);
   }
 });
+
+// --- the set is CLOSED -------------------------------------------------------
+// "Why am I seeing agents other than the thirty?" Because an unknown character
+// string used to produce a GENERATED face: a recipe invented from a hash, drawn
+// by the same code but present in no picker. Three doors made unknown strings —
+// hiring without choosing a face stored the typed name, an agent persisted under
+// an id from a library since replaced, and a hive or voice spawn could ask for
+// anything. Every one of them now resolves to a real id.
+
+const ART = readFileSync(
+  join(__dirname, '..', 'src/renderer/src/scene/office/portraitArt.ts'), 'utf8');
+
+test('the resolver cannot invent a face', () => {
+  assert.doesNotMatch(ART, /function generatedRecipe/,
+    'the recipe generator is back — every unknown string will draw a face nobody can pick');
+  const body = /function recipeFor\(name: string\): Recipe \{([\s\S]*?)\n\}/.exec(ART);
+  assert.ok(body, 'recipeFor moved — this test needs rewriting');
+  assert.match(body[1], /LIBRARY_BY_ID\[libraryIdFor\(name\)\]/,
+    'the last branch should land in the library, not somewhere new');
+});
+
+test('an unknown name lands on a real library id, and lands there every time', () => {
+  const pick = /export function libraryIdFor\(seed: string\): string \{([\s\S]*?)\n\}/.exec(ART);
+  assert.ok(pick, 'libraryIdFor moved — this test needs rewriting');
+  assert.match(pick[1], /AVATAR_LIBRARY\[h % AVATAR_LIBRARY\.length\]\.id/,
+    'it must index the library itself, so the set cannot drift from what is pickable');
+  assert.doesNotMatch(pick[1], /Math\.random/,
+    'the pick has to be stable: the avatar is persisted as the string, not the recipe');
+});
+
+test('hiring without choosing a face stores an id, not the typed name', () => {
+  const MODAL = readFileSync(
+    join(__dirname, '..', 'src/renderer/src/components/AddAgentModal.tsx'), 'utf8');
+  assert.match(MODAL, /const effectiveCharacter = character \|\| \(atlasFree \? 'michael' : libraryIdFor\(/,
+    'the typed name is the fallback again — that is how unpickable faces got onto the floor');
+});
