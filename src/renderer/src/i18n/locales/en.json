@@ -102,20 +102,8 @@
   },
   "agentStrip": {
     "privateNote": "Private note · {{name}}",
-    "done": "Done",
-    "closeNoteEditor": "Close note editor",
     "notePlaceholder": "One line per bullet…",
-    "oneLineOneBullet": "one line = one bullet · esc to close",
     "addAgent": "Add agent",
-    "restoringTitle": "Your previous session's agents are being respawned with their original ids, so memory and inboxes reattach.",
-    "restoreTitle": "Previous session: {{names}}",
-    "restoringTeam": "Restoring your team…",
-    "restoreTeam": "Restore team ({{count}}) ▴",
-    "previousSession": "Previous session",
-    "restorable": "{{name}}, restorable from last session",
-    "dismiss": "Dismiss {{name}}. Remove permanently from the restore list",
-    "dismissAria": "Dismiss {{name}}",
-    "restoreAll": "Restore all ({{count}})",
     "privateNoteShort": "Private note"
   },
   "sidebar": {

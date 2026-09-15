@@ -102,20 +102,8 @@
   },
   "agentStrip": {
     "privateNote": "ملاحظة خاصة · {{name}}",
-    "done": "تم",
-    "closeNoteEditor": "أغلق محرّر الملاحظات",
     "notePlaceholder": "سطر واحد لكل نقطة…",
-    "oneLineOneBullet": "سطر واحد = نقطة واحدة · esc للإغلاق",
     "addAgent": "إضافة وكيل",
-    "restoringTitle": "يُعاد إنشاء وكلاء جلستك السابقة بمعرّفاتهم الأصلية، لتعود الذاكرة وصناديق الوارد إليهم.",
-    "restoreTitle": "الجلسة السابقة: {{names}}",
-    "restoringTeam": "جارٍ استعادة فريقك…",
-    "restoreTeam": "استعادة الفريق ({{count}}) ▴",
-    "previousSession": "الجلسة السابقة",
-    "restorable": "{{name}}. قابل للاستعادة من الجلسة الماضية",
-    "dismiss": "تجاهل {{name}}. أزِله نهائيًا من قائمة الاستعادة",
-    "dismissAria": "تجاهل {{name}}",
-    "restoreAll": "استعادة الكل ({{count}})",
     "privateNoteShort": "ملاحظة خاصة"
   },
   "sidebar": {
