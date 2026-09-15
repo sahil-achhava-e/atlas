@@ -187,9 +187,9 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     // Locked: it is the orchestrator's own face. Shown rather than hidden, so
     // "where is Atlas" has a visible answer.
     { id: 'michael', name: 'Atlas', note: tr('addAgent.faceReserved'), locked: true },
-    // The country goes in the note slot: it is what the face is WEARING, so it
-    // explains the picker rather than decorating it.
-    ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name, note: f.country })),
+    // The series goes in the note slot: "Zoro" means nothing on its own to
+    // someone who has not watched it, and the picker has the room.
+    ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name, note: f.series })),
   ];
   const faceId = effectiveCharacter;
   /** Step 1 is done when a face has been PICKED and a name typed. `character`

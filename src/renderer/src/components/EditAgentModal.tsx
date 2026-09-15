@@ -38,7 +38,7 @@ export interface EditAgentModalProps {
 /** Atlas first, then the library — the same order Add agent shows. */
 const FACES: { id: string; name: string; note?: string }[] = [
   { id: 'michael', name: 'Atlas' },
-  ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name, note: f.country }))
+  ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name, note: f.series }))
 ];
 
 export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {

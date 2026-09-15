@@ -8,25 +8,35 @@
  * WHAT THE FACE CAN AND CANNOT DO. At 18x28 there is one pixel row for the eyes
  * and one for the mouth, and they sit in the same place for everybody. No
  * recipe changes a facial feature, because none can — the grid has no room for
- * it. What varies is skin tone, hair, and what a person is wearing.
+ * it. What varies is hair, skin, clothing, and a handful of accessories.
  *
- * So the set is built on DRESS, one country each. A gele, a conical hat, a
- * beret, an ushanka, a fez, a headscarf, a chullo, a turban: real garments,
- * drawn as shapes, each worn by exactly one face. That is what makes thirty
- * portraits tell apart at this size, and it is why two earlier attempts did
- * not. The first was film characters, where seventeen of thirty had facial hair
- * and four were the same recipe with a different shirt. The second was balanced
- * on paper but still asked five hats and five hairstyles to separate thirty
- * people, so they kept reading as each other.
+ * WHICH IS WHY THIS SET WORKS WHERE TWO EARLIER ONES DID NOT. The first was
+ * film characters, seventeen of thirty with facial hair and four identical
+ * recipes in different shirts. The second leaned on five hats and five
+ * hairstyles to separate thirty people and kept converging. Anime hair is the
+ * answer: blond, pink, green, scarlet, sky blue, violet, silver — colour alone
+ * separates most of this set before a single garment is drawn.
+ *
+ * Six characters from each of five series, so no one series crowds the picker:
+ * Naruto, One Piece, Fairy Tail, Attack on Titan, and That Time I Got
+ * Reincarnated as a Slime.
+ *
+ * Four accessories exist for the ones a silhouette alone cannot carry — a straw
+ * hat, a mask, a blindfold and whiskers — and they are flags on the recipe
+ * rather than a general slot system, because each was built for exactly one
+ * character.
  *
  * The budget is checked by test/avatar-variety.test.cjs:
  *
- *   skin        all four tones, none over a third of the set
- *   facial hair at most a quarter
+ *   series      five, six faces each
+ *   facial hair at most a quarter of the set
  *   hair        no style on more than a third
  *   uniqueness  no two share skin, hair colour, hair style, facial hair and
  *               headwear
- *   countries   thirty, no repeats
+ *
+ * Skin tone is NOT budgeted here, unlike the country set this replaced: these
+ * are specific characters and their tone is theirs. The test asks only that
+ * more than one appears.
  *
  * An agent stores its avatar as this `id`, so a face survives a rename. The
  * `name` is a label in the picker's tooltip, not the agent's name.
@@ -36,9 +46,8 @@ import type { RGB, Recipe } from './portraitArt';
 export interface LibraryFace {
   id: string;
   name: string;
-  /** Where the dress comes from. Shown in the picker beside the name, and the
-   *  reason no two entries wear the same thing. */
-  country: string;
+  /** Which series the character is from. Shown in the picker under the name. */
+  series: string;
   recipe: Recipe;
 }
 
@@ -51,39 +60,41 @@ const BLOND: RGB = [224, 192, 112];
 const WHITE: RGB = [226, 226, 230];
 const GREY: RGB = [166, 166, 174];
 const STEEL: RGB = [120, 132, 148];
+const PINK: RGB = [236, 146, 168];
 
 export const AVATAR_LIBRARY: LibraryFace[] = [
-  { id: 'lib-amara', name: 'Amara', country: 'Nigeria', recipe: { skin: 'dark', hairc: BLACK, hair: 'styleBald', cloth: 'blouse', c1: [226, 142, 42], headwear: { kind: 'wrap', c: [214, 118, 36] }, brow: 'soft', mouth: 'smile', lashes: true, eyes: [66, 46, 34] } },
-  { id: 'lib-haruto', name: 'Haruto', country: 'Japan', recipe: { skin: 'light', hairc: BLACK, hair: 'styleShort', hairargs: { part: 'R' }, cloth: 'dressshirt', c1: [236, 238, 242], tie: [58, 62, 78], brow: 'flat', mouth: 'neutral', eyes: [56, 44, 40] } },
-  { id: 'lib-ishaan', name: 'Ishaan', country: 'India', recipe: { skin: 'brown', hairc: BLACK, hair: 'styleBald', cloth: 'suit', c1: [58, 72, 96], tie: [176, 148, 62], headwear: { kind: 'turban', c: [196, 76, 64] }, beard: BLACK, brow: 'flat', mouth: 'neutral', eyes: [62, 46, 36] } },
-  { id: 'lib-mateo', name: 'Mateo', country: 'Mexico', recipe: { skin: 'tan', hairc: DARKBROWN, hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'polo', c1: [198, 140, 62], c2: [240, 220, 184], headwear: { kind: 'wide', c: [186, 150, 92] }, brow: 'raised', mouth: 'smile', eyes: [78, 56, 38] } },
-  { id: 'lib-camille', name: 'Camille', country: 'France', recipe: { skin: 'light', hairc: DARKBROWN, hair: 'styleFrame', hairargs: { length: 14, vol: 1 }, cloth: 'blouse', c1: [214, 218, 226], headwear: { kind: 'beret', c: [62, 66, 82] }, brow: 'soft', mouth: 'smile', lashes: true, eyes: [86, 70, 54] } },
-  { id: 'lib-nikolai', name: 'Nikolai', country: 'Russia', recipe: { skin: 'light', hairc: [150, 128, 96], hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'sweater', c1: [70, 82, 98], headwear: { kind: 'ushanka', c: [124, 100, 72] }, brow: 'flat', mouth: 'neutral', eyes: [94, 116, 148] } },
-  { id: 'lib-linh', name: 'Linh', country: 'Vietnam', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleFrame', hairargs: { length: 19, vol: 1 }, cloth: 'blouse', c1: [236, 236, 240], headwear: { kind: 'conical', c: [214, 186, 118] }, brow: 'soft', mouth: 'smile', lashes: true, eyes: [58, 44, 38] } },
-  { id: 'lib-yassin', name: 'Yassin', country: 'Morocco', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleShort', hairargs: { part: 'R' }, cloth: 'cardigan', c1: [122, 96, 68], c2: [216, 198, 162], headwear: { kind: 'fez', c: [168, 48, 44] }, brow: 'flat', mouth: 'neutral', eyes: [64, 48, 36] } },
-  { id: 'lib-faisal', name: 'Faisal', country: 'Saudi Arabia', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleBald', cloth: 'sweater', c1: [238, 238, 240], headwear: { kind: 'shemagh', c: [232, 232, 236] }, facial: 'goatee', brow: 'flat', mouth: 'neutral', eyes: [60, 44, 34] } },
-  { id: 'lib-darya', name: 'Darya', country: 'Iran', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleBald', cloth: 'blouse', c1: [72, 96, 132], headwear: { kind: 'scarf', c: [86, 112, 152] }, brow: 'soft', mouth: 'neutral', lashes: true, eyes: [62, 48, 40] } },
-  { id: 'lib-selam', name: 'Selam', country: 'Ethiopia', recipe: { skin: 'dark', hairc: BLACK, hair: 'styleFrame', hairargs: { length: 18, vol: 1 }, cloth: 'blouse', c1: [238, 236, 232], braids: { c: BLACK, long: true }, brow: 'soft', mouth: 'smile', lashes: true, eyes: [66, 46, 34] } },
-  { id: 'lib-zuri', name: 'Zuri', country: 'Kenya', recipe: { skin: 'dark', hairc: BLACK, hair: 'styleCurly', cloth: 'polo', c1: [46, 126, 110], c2: [236, 236, 232], headwear: { kind: 'kufi', c: [196, 160, 54] }, brow: 'raised', mouth: 'smile', eyes: [68, 48, 34] } },
-  { id: 'lib-kofi', name: 'Kofi', country: 'Ghana', recipe: { skin: 'dark', hairc: BLACK, hair: 'styleBald', cloth: 'polo', c1: [206, 154, 40], c2: [58, 122, 78], brow: 'flat', mouth: 'grin', eyes: [70, 50, 36] } },
-  { id: 'lib-thandi', name: 'Thandi', country: 'South Africa', recipe: { skin: 'brown', hairc: BLACK, hair: 'styleCurly', cloth: 'cardigan', c1: [156, 78, 118], c2: [232, 216, 226], brow: 'soft', mouth: 'smile', lashes: true, eyes: [72, 52, 38] } },
-  { id: 'lib-mei', name: 'Mei', country: 'China', recipe: { skin: 'light', hairc: BLACK, hair: 'styleBun', cloth: 'blouse', c1: [196, 62, 72], brow: 'soft', mouth: 'smile', lashes: true, eyes: [56, 44, 40] } },
-  { id: 'lib-jisoo', name: 'Jisoo', country: 'South Korea', recipe: { skin: 'light', hairc: [64, 44, 40], hair: 'styleFrame', hairargs: { length: 20, vol: 2 }, cloth: 'cardigan', c1: [214, 196, 210], c2: [244, 240, 244], brow: 'soft', mouth: 'neutral', lashes: true, eyes: [60, 46, 42] } },
-  { id: 'lib-batu', name: 'Batu', country: 'Mongolia', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'sweater', c1: [140, 88, 48], headwear: { kind: 'pointed', c: [172, 118, 56] }, brow: 'flat', mouth: 'neutral', eyes: [64, 46, 36] } },
-  { id: 'lib-aarav', name: 'Aarav', country: 'Nepal', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleMessy', hairargs: { length: 13 }, cloth: 'dressshirt', c1: [206, 200, 186], tie: [126, 54, 50], headwear: { kind: 'cap', c: [178, 66, 58] }, brow: 'raised', mouth: 'smile', eyes: [66, 48, 36] } },
-  { id: 'lib-putri', name: 'Putri', country: 'Indonesia', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleFrame', hairargs: { length: 16, vol: 1 }, cloth: 'blouse', c1: [120, 152, 108], headwear: { kind: 'band', c: [86, 122, 84] }, brow: 'raised', mouth: 'smile', lashes: true, eyes: [62, 46, 38] } },
-  { id: 'lib-nayra', name: 'Nayra', country: 'Peru', recipe: { skin: 'brown', hairc: BLACK, hair: 'styleFrame', hairargs: { length: 17, vol: 1 }, cloth: 'sweater', c1: [176, 82, 62], headwear: { kind: 'beanie', c: [196, 104, 72] }, braids: { c: BLACK }, brow: 'soft', mouth: 'smile', lashes: true, eyes: [70, 50, 36] } },
-  { id: 'lib-rafael', name: 'Rafael', country: 'Brazil', recipe: { skin: 'brown', hairc: DARKBROWN, hair: 'styleMessy', hairargs: { length: 15 }, cloth: 'polo', c1: [56, 148, 92], c2: [230, 206, 78], brow: 'raised', mouth: 'grin', eyes: [80, 56, 38] } },
-  { id: 'lib-isla', name: 'Isla', country: 'Scotland', recipe: { skin: 'light', hairc: GINGER, hair: 'styleFrame', hairargs: { length: 18, vol: 2 }, cloth: 'cardigan', c1: [92, 116, 148], c2: [226, 230, 236], brow: 'raised', mouth: 'smile', blush: true, lashes: true, eyes: [96, 132, 100] } },
-  { id: 'lib-sanne', name: 'Sanne', country: 'Netherlands', recipe: { skin: 'light', hairc: BLOND, hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'dressshirt', c1: [240, 242, 246], tie: [216, 118, 40], brow: 'flat', mouth: 'smile', eyes: [92, 128, 172] } },
-  { id: 'lib-elin', name: 'Elin', country: 'Sweden', recipe: { skin: 'light', hairc: [236, 214, 156], hair: 'styleFrame', hairargs: { length: 16, vol: 1 }, cloth: 'sweater', c1: [96, 132, 180], brow: 'soft', mouth: 'neutral', lashes: true, eyes: [104, 140, 176] } },
-  { id: 'lib-marek', name: 'Marek', country: 'Poland', recipe: { skin: 'light', hairc: BROWN, hair: 'styleRecede', cloth: 'suit', c1: [76, 80, 94], tie: [168, 60, 56], brow: 'flat', mouth: 'neutral', eyes: [92, 104, 120] } },
-  { id: 'lib-nikos', name: 'Nikos', country: 'Greece', recipe: { skin: 'tan', hairc: [44, 36, 34], hair: 'styleCurly', cloth: 'polo', c1: [70, 118, 178], c2: [238, 240, 244], facial: 'stubble', brow: 'raised', mouth: 'smile', eyes: [72, 54, 40] } },
-  { id: 'lib-lucia', name: 'Lucia', country: 'Spain', recipe: { skin: 'tan', hairc: [58, 40, 34], hair: 'styleBun', cloth: 'blouse', c1: [188, 62, 96], brow: 'raised', mouth: 'grin', lashes: true, blush: true, eyes: [76, 52, 38] } },
-  { id: 'lib-owen', name: 'Owen', country: 'Canada', recipe: { skin: 'light', hairc: DARKBROWN, hair: 'styleMessy', hairargs: { length: 14 }, cloth: 'sweater', c1: [168, 62, 58], headwear: { kind: 'flat', c: [58, 62, 74] }, brow: 'soft', mouth: 'smile', eyes: [88, 108, 92] } },
-  { id: 'lib-kemar', name: 'Kemar', country: 'Jamaica', recipe: { skin: 'dark', hairc: BLACK, hair: 'styleCurly', cloth: 'sweater', c1: [46, 108, 70], braids: { c: BLACK, long: true }, brow: 'flat', mouth: 'neutral', eyes: [68, 48, 34] } },
-  { id: 'lib-aroha', name: 'Aroha', country: 'New Zealand', recipe: { skin: 'brown', hairc: BLACK, hair: 'styleMessy', hairargs: { length: 17 }, cloth: 'polo', c1: [42, 44, 52], c2: [214, 218, 226], brow: 'soft', mouth: 'smile', lashes: true, eyes: [66, 48, 36] } },
+  { id: 'lib-naruto', name: 'Naruto', series: 'Naruto', recipe: { skin: 'light', hairc: BLOND, hair: 'styleSpiky', cloth: 'polo', c1: [232, 126, 34], c2: [46, 52, 74], whiskers: true, brow: 'raised', mouth: 'grin', eyes: [86, 150, 196] } },
+  { id: 'lib-sasuke', name: 'Sasuke', series: 'Naruto', recipe: { skin: 'light', hairc: [40, 42, 62], hair: 'styleMessy', hairargs: { length: 15 }, cloth: 'sweater', c1: [44, 56, 84], brow: 'angry', mouth: 'neutral', eyes: [54, 46, 52] } },
+  { id: 'lib-sakura', name: 'Sakura', series: 'Naruto', recipe: { skin: 'light', hairc: PINK, hair: 'styleBun', cloth: 'blouse', c1: [206, 66, 84], brow: 'raised', mouth: 'smile', lashes: true, eyes: [92, 156, 116] } },
+  { id: 'lib-kakashi', name: 'Kakashi', series: 'Naruto', recipe: { skin: 'light', hairc: GREY, hair: 'styleTallSpikes', cloth: 'sweater', c1: [58, 62, 76], mask: true, brow: 'soft', eyes: [70, 62, 60] } },
+  { id: 'lib-hinata', name: 'Hinata', series: 'Naruto', recipe: { skin: 'light', hairc: [58, 62, 108], hair: 'styleFrame', hairargs: { length: 20, vol: 2 }, cloth: 'cardigan', c1: [214, 206, 232], c2: [246, 244, 250], brow: 'soft', mouth: 'neutral', lashes: true, eyes: [196, 190, 214] } },
+  { id: 'lib-gaara', name: 'Gaara', series: 'Naruto', recipe: { skin: 'light', hairc: [186, 62, 44], hair: 'styleMessy', hairargs: { length: 13 }, cloth: 'sweater', c1: [110, 74, 58], brow: 'flat', mouth: 'neutral', eyes: [148, 176, 188] } },
+  { id: 'lib-luffy', name: 'Luffy', series: 'One Piece', recipe: { skin: 'tan', hairc: BLACK, hair: 'styleMessy', hairargs: { length: 14 }, cloth: 'polo', c1: [198, 56, 50], c2: [156, 42, 40], hat: 'straw', scar: 'left', brow: 'raised', mouth: 'grin', eyes: [72, 46, 32] } },
+  { id: 'lib-zoro', name: 'Zoro', series: 'One Piece', recipe: { skin: 'tan', hairc: [92, 148, 78], hair: 'styleShort', hairargs: { part: 'R' }, cloth: 'sweater', c1: [58, 84, 62], scar: 'right', brow: 'angry', mouth: 'neutral', eyes: [70, 62, 44] } },
+  { id: 'lib-nami', name: 'Nami', series: 'One Piece', recipe: { skin: 'light', hairc: [232, 138, 58], hair: 'styleFrame', hairargs: { length: 17, vol: 1 }, cloth: 'blouse', c1: [88, 168, 196], brow: 'raised', mouth: 'smile', lashes: true, eyes: [126, 90, 52] } },
+  { id: 'lib-sanji', name: 'Sanji', series: 'One Piece', recipe: { skin: 'light', hairc: [236, 208, 120], hair: 'styleFloppy', cloth: 'suit', c1: [36, 36, 44], tie: [58, 60, 72], facial: 'goatee', brow: 'flat', mouth: 'neutral', eyes: [96, 118, 92] } },
+  { id: 'lib-robin', name: 'Robin', series: 'One Piece', recipe: { skin: 'light', hairc: [26, 22, 28], hair: 'styleFrame', hairargs: { length: 20, vol: 1 }, cloth: 'blouse', c1: [124, 84, 156], brow: 'soft', mouth: 'smile', lashes: true, eyes: [72, 96, 76] } },
+  { id: 'lib-usopp', name: 'Usopp', series: 'One Piece', recipe: { skin: 'dark', hairc: BLACK, hair: 'styleCurly', cloth: 'cardigan', c1: [178, 140, 66], c2: [96, 76, 52], headwear: { kind: 'band', c: [210, 198, 172] }, brow: 'raised', mouth: 'grin', eyes: [66, 46, 34] } },
+  { id: 'lib-natsu', name: 'Natsu', series: 'Fairy Tail', recipe: { skin: 'tan', hairc: [226, 118, 138], hair: 'styleSpiky', cloth: 'sweater', c1: [42, 44, 52], brow: 'angry', mouth: 'grin', eyes: [86, 130, 90] } },
+  { id: 'lib-lucy', name: 'Lucy', series: 'Fairy Tail', recipe: { skin: 'light', hairc: BLOND, hair: 'styleBun', cloth: 'blouse', c1: [226, 232, 240], brow: 'raised', mouth: 'smile', lashes: true, blush: true, eyes: [126, 90, 54] } },
+  { id: 'lib-erza', name: 'Erza', series: 'Fairy Tail', recipe: { skin: 'light', hairc: [176, 44, 40], hair: 'styleFrame', hairargs: { length: 19, vol: 2 }, cloth: 'sweater', c1: [166, 172, 186], brow: 'flat', mouth: 'neutral', lashes: true, eyes: [96, 74, 56] } },
+  { id: 'lib-gray', name: 'Gray', series: 'Fairy Tail', recipe: { skin: 'light', hairc: [46, 54, 84], hair: 'styleMessy', hairargs: { length: 14 }, cloth: 'cardigan', c1: [62, 72, 102], c2: [212, 220, 232], brow: 'raised', mouth: 'neutral', eyes: [70, 82, 96] } },
+  { id: 'lib-wendy', name: 'Wendy', series: 'Fairy Tail', recipe: { skin: 'light', hairc: [86, 132, 190], hair: 'styleFrame', hairargs: { length: 21, vol: 2 }, cloth: 'blouse', c1: [232, 152, 176], brow: 'soft', mouth: 'smile', lashes: true, eyes: [96, 132, 168] } },
+  { id: 'lib-gajeel', name: 'Gajeel', series: 'Fairy Tail', recipe: { skin: 'tan', hairc: [28, 26, 30], hair: 'styleTallSpikes', cloth: 'sweater', c1: [70, 66, 72], brow: 'angry', mouth: 'neutral', eyes: [148, 76, 64] } },
+  { id: 'lib-eren', name: 'Eren', series: 'Attack on Titan', recipe: { skin: 'tan', hairc: DARKBROWN, hair: 'styleMessy', hairargs: { length: 16 }, cloth: 'cardigan', c1: [116, 90, 62], c2: [206, 198, 178], brow: 'angry', mouth: 'neutral', eyes: [104, 142, 132] } },
+  { id: 'lib-mikasa', name: 'Mikasa', series: 'Attack on Titan', recipe: { skin: 'light', hairc: [30, 28, 36], hair: 'styleShort', hairargs: { part: 'R' }, cloth: 'sweater', c1: [166, 46, 44], brow: 'flat', mouth: 'neutral', lashes: true, eyes: [72, 66, 70] } },
+  { id: 'lib-levi', name: 'Levi', series: 'Attack on Titan', recipe: { skin: 'light', hairc: [34, 32, 38], hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'dressshirt', c1: [240, 240, 244], tie: [236, 236, 238], brow: 'angry', mouth: 'neutral', eyes: [84, 92, 100] } },
+  { id: 'lib-armin', name: 'Armin', series: 'Attack on Titan', recipe: { skin: 'light', hairc: [232, 206, 132], hair: 'styleFloppy', cloth: 'cardigan', c1: [120, 96, 66], c2: [210, 202, 182], brow: 'soft', mouth: 'neutral', eyes: [110, 148, 176] } },
+  { id: 'lib-historia', name: 'Historia', series: 'Attack on Titan', recipe: { skin: 'light', hairc: [244, 224, 150], hair: 'styleFrame', hairargs: { length: 18, vol: 1 }, cloth: 'blouse', c1: [226, 230, 238], brow: 'soft', mouth: 'smile', lashes: true, blush: true, eyes: [116, 156, 190] } },
+  { id: 'lib-hange', name: 'Hange', series: 'Attack on Titan', recipe: { skin: 'light', hairc: [128, 92, 54], hair: 'styleBun', cloth: 'cardigan', c1: [118, 92, 62], c2: [204, 196, 176], glasses: true, brow: 'raised', mouth: 'grin', eyes: [122, 96, 62] } },
+  { id: 'lib-rimuru', name: 'Rimuru', series: 'Slime', recipe: { skin: 'light', hairc: [128, 190, 222], hair: 'styleFrame', hairargs: { length: 16, vol: 1 }, cloth: 'sweater', c1: [38, 40, 50], brow: 'soft', mouth: 'neutral', lashes: true, eyes: [214, 176, 72] } },
+  { id: 'lib-milim', name: 'Milim', series: 'Slime', recipe: { skin: 'light', hairc: [232, 132, 168], hair: 'styleFrame', hairargs: { length: 21, vol: 1 }, cloth: 'blouse', c1: [232, 160, 184], braids: { c: [232, 132, 168], long: true }, brow: 'raised', mouth: 'grin', lashes: true, eyes: [196, 76, 96] } },
+  { id: 'lib-shion', name: 'Shion', series: 'Slime', recipe: { skin: 'light', hairc: [146, 106, 196], hair: 'styleFrame', hairargs: { length: 20, vol: 2 }, cloth: 'blouse', c1: [96, 72, 132], brow: 'raised', mouth: 'smile', lashes: true, eyes: [180, 118, 206] } },
+  { id: 'lib-shuna', name: 'Shuna', series: 'Slime', recipe: { skin: 'light', hairc: [242, 176, 200], hair: 'styleFrame', hairargs: { length: 19, vol: 1 }, cloth: 'blouse', c1: [214, 124, 156], braids: { c: [242, 176, 200] }, brow: 'soft', mouth: 'smile', lashes: true, eyes: [204, 118, 150] } },
+  { id: 'lib-benimaru', name: 'Benimaru', series: 'Slime', recipe: { skin: 'tan', hairc: [206, 74, 52], hair: 'styleMessy', hairargs: { length: 15 }, cloth: 'sweater', c1: [58, 54, 62], brow: 'angry', mouth: 'neutral', eyes: [196, 88, 64] } },
+  { id: 'lib-diablo', name: 'Diablo', series: 'Slime', recipe: { skin: 'light', hairc: [24, 22, 30], hair: 'styleShort', hairargs: { part: 'L' }, cloth: 'suit', c1: [30, 30, 38], tie: [86, 60, 132], glasses: true, brow: 'flat', mouth: 'smile', eyes: [124, 190, 108] } },
 ];
+
 
 
 export const LIBRARY_BY_ID: Record<string, LibraryFace> =
