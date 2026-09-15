@@ -7,7 +7,7 @@ import { Icon } from './Icon';
 import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
 import { AVATAR_LIBRARY, LIBRARY_BY_ID } from '@/scene/office/avatarLibrary';
-import { freeLibraryIdFor, MAX_AGENTS } from '@/scene/office/portraitArt';
+import { MAX_AGENTS } from '@/scene/office/portraitArt';
 import { OFFICE_CAST, DEFAULT_CHARACTER, type OfficeCharacterName } from '@/scene/office/cast';
 import { type AccentColorName, DEFAULT_ACCENT_HEX } from '@/design/tokens';
 import type { HireManifest } from '@shared/hire';
@@ -174,13 +174,12 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // an empty dialog shows Atlas while no agent wears it. Atlas last, not first:
   // it was overriding the typed name, so the face never followed what you were
   // typing.
-  // The typed NAME used to be the fallback, which meant an agent hired without
-  // picking a face was stored under a character id that names no face — and
-  // then drew as one the picker never offered. It resolves to a library id now,
-  // so what gets stored is always a face you could have chosen, and the picker
-  // shows it selected.
-  const effectiveCharacter = character
-    || (atlasFree ? 'michael' : freeLibraryIdFor(name.trim(), takenCharacters));
+  // NO FALLBACK. Choosing a face is a step, not a default: anything automatic
+  // here has to pick for you, and every version of that has gone wrong — the
+  // typed name became a character id that named no face, then a hash landed on
+  // faces already on the floor. Empty until you choose, and the dialog will not
+  // move on. (Atlas is the one exception, and only while nothing is wearing it.)
+  const effectiveCharacter = character || (atlasFree ? 'michael' : '');
   /** Typed name first, else the persona of the face that is showing. Removing
    *  the name field would otherwise make it possible to reach Hire with nothing
    *  to call the agent, and no field on screen to fix it. */
@@ -374,6 +373,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     // as on the tiles: a face can be taken between opening this dialog and
     // pressing Hire, and the auto-assigned one would then silently duplicate.
     if (takenCharacters.size >= MAX_AGENTS) { setError(tr('addAgent.floorFull', { max: MAX_AGENTS })); return; }
+    if (!effectiveCharacter) { setError(tr('addAgent.pickFirst')); setSection('identity'); return; }
     if (takenCharacters.has(effectiveCharacter)) {
       setError(tr('addAgent.faceTaken')); setSection('identity'); return;
     }
@@ -441,7 +441,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
       id,
       name: effectiveName,
       // Whatever the dialog has been showing, and always a real face id.
-      character: effectiveCharacter || freeLibraryIdFor(name.trim(), takenCharacters),
+      character: effectiveCharacter,
       accent,
       description: description.trim() || 'a fresh harness',
       project: basename(projectCwd),
@@ -629,14 +629,20 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                   return (
                     <button
                       key={s.key}
+                      // The rail was a way around the Next button's gate: jump
+                      // straight to Briefing and Hire was reachable with no face
+                      // chosen at all.
+                      disabled={s.key !== 'identity' && !identityReady}
                       onClick={() => setSection(s.key)}
                       style={{
-                        textAlign: 'left', padding: '10px 12px', border: 'none', cursor: 'pointer',
+                        textAlign: 'left', padding: '10px 12px', border: 'none',
+                        cursor: s.key !== 'identity' && !identityReady ? 'not-allowed' : 'pointer',
+                        opacity: s.key !== 'identity' && !identityReady ? 0.45 : 1,
                         borderRadius: 'var(--cth-radius-btn)',
                         background: active ? 'var(--cth-lilac-light)' : 'var(--cth-cream-100)',
                         boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none',
                         display: 'flex', flexDirection: 'column', gap: 3,
-                        transition: 'background 120ms ease, box-shadow 120ms ease'
+                        transition: 'background 120ms ease, box-shadow 120ms ease, opacity 120ms ease'
                       }}
                     >
                       <span style={{

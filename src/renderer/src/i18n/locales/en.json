@@ -1542,7 +1542,8 @@
     "openTeam": "Open {{tab}}",
     "save": "Save changes",
     "saveAndRestart": "Save and restart",
-    "engineNoteRestart": "Restarting keeps the session: the agent picks up where it left off, on the new model."
+    "engineNoteRestart": "Restarting keeps the session: the agent picks up where it left off, on the new model.",
+    "faceFixed": "A face belongs to one agent and cannot be changed."
   },
   "errorBoundary": {
     "title": "{{label}} stopped",

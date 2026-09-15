@@ -3,7 +3,6 @@ import { Icon } from './Icon';
 import { useTranslation } from 'react-i18next';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
-import { AVATAR_LIBRARY } from '@/scene/office/avatarLibrary';
 import { SpritePortrait } from './SpritePortrait';
 import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
@@ -35,11 +34,6 @@ export interface EditAgentModalProps {
  * Agent fields that matter after spawn; save only patches the durable roster
  * via updateAgent (engine changes apply on the next restart).
  */
-/** Atlas first, then the library — the same order Add agent shows. */
-const FACES: { id: string; name: string }[] = [
-  { id: 'michael', name: 'Atlas' },
-  ...AVATAR_LIBRARY.map((f) => ({ id: f.id, name: f.name }))
-];
 
 export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
   const { t } = useTranslation();
@@ -48,14 +42,9 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
    *  routes and every string that says "Atlas" follow it. */
   const fixedIdentity = !!agent.isGod;
   const updateAgent = useStore((s) => s.updateAgent);
-  /** Faces worn by SOMEBODY ELSE. This agent's own face is not taken from it. */
-  const takenByOthers = useStore(
-    (s) => new Set(s.agents.filter((a) => a.id !== agent.id).map((a) => a.character))
-  );
   const [config, setConfig] = useState<HarnessConfig | null>(null);
 
   const [name, setName] = useState(agent.name);
-  const [character, setCharacter] = useState<string>(agent.character);
   const [accent, setAccent] = useState<string>(agent.accent);
   const [provider, setProvider] = useState<AgentProvider>(
     inferAgentProvider(agent.command, agent.provider)
@@ -71,7 +60,6 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
   // Keep form in sync when the selected agent changes while the modal is open.
   useEffect(() => {
     setName(agent.name);
-    setCharacter(agent.character);
     setAccent(agent.accent);
     setProvider(inferAgentProvider(agent.command, agent.provider));
     setModel(agent.model);
@@ -105,7 +93,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
       // these can only hold what it already had — but a save must never be the
       // thing that renames Atlas.
       name: fixedIdentity ? agent.name : trimmedName,
-      character: fixedIdentity ? agent.character : character,
+      character: agent.character,
       accent,
       provider,
       model,
@@ -179,84 +167,29 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                 )}
               </Row>
 
-              {fixedIdentity ? (
-                <Row label="Character">
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: 10,
-                    borderRadius: 'var(--cth-radius-card)', background: 'var(--cth-cream-100)'
-                  }}>
-                    <span style={{
-                      width: 44, height: 52, display: 'flex', alignItems: 'flex-end',
-                      justifyContent: 'center', overflow: 'hidden',
-                      borderRadius: 'var(--cth-radius-btn)', background: 'var(--cth-paper-100)'
-                    }}>
-                      <SpritePortrait character={agent.character} scale={1.5} />
-                    </span>
-                    <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
-                      {fixedNote}
-                    </span>
-                  </div>
-                </Row>
-              ) : (
+              {/* READ ONLY, for every agent. A face belongs to one agent and
+                  cannot move: this dialog used to offer the full picker, which
+                  meant an agent could be edited onto a face another was already
+                  wearing — two identical agents by a different door than hiring.
+                  Name, colour and goal are what this dialog changes. */}
               <Row label="Character">
-                {/* The faces live in their own trough: a bare scrolling list cut
-                    a row in half against the dialog's white and read as clipped. */}
-                <div className="cth-scrollpane" style={{
-                  display: 'flex', gap: 8, flexWrap: 'wrap',
-                  maxHeight: 196, overflowY: 'auto',
-                  padding: 8, background: 'var(--cth-cream-100)',
-                  borderRadius: 'var(--cth-radius-card)'
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: 10,
+                  borderRadius: 'var(--cth-radius-card)', background: 'var(--cth-cream-100)'
                 }}>
-                  {/* The SAME thirty faces Add agent offers, plus Atlas — the two
-                      panels used to draw from different libraries, so an agent
-                      hired with one face could only be re-faced from the other.
-                      Picking here changes the face and nothing else: the name
-                      stays whatever you called it. */}
-                  {FACES.map((c) => {
-                    const active = character === c.id;
-                    // One face per agent, the same rule Add agent enforces. This
-                    // dialog did not, so an agent could be edited onto a face
-                    // another agent was already wearing — two identical agents,
-                    // by a different door than hiring.
-                    const taken = !active && takenByOthers.has(c.id);
-                    return (
-                      <button
-                        aria-label={taken ? `${c.name} — ${t('addAgent.faceInUse')}` : c.name}
-                        key={c.id}
-                        type="button"
-                        disabled={taken}
-                        onClick={() => setCharacter(c.id)}
-                        style={{
-                          padding: 4,
-                          borderRadius: 'var(--cth-radius-btn)',
-                          background: active ? 'var(--cth-lilac-light)' : 'var(--cth-cream-100)',
-                          boxShadow: active
-                            ? 'inset 0 0 0 2px var(--cth-lilac)'
-                            : 'inset 0 0 0 1px var(--cth-ink-100)',
-                          opacity: taken ? 0.4 : 1,
-                          cursor: taken ? 'not-allowed' : 'pointer', border: 'none', width: 52,
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                          transition: 'background 120ms ease, box-shadow 120ms ease'
-                        }}
-                      >
-                        <div style={{
-                          width: 40, height: 48,
-                          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-                          overflow: 'hidden'
-                        }}>
-                          <SpritePortrait character={c.id} scale={1.5} />
-                        </div>
-                        <span style={{
-                          fontSize: 11, fontWeight: active ? 600 : 400,
-                          color: active ? 'var(--cth-lilac-text)' : 'var(--cth-ink-600)',
-                          maxWidth: 46, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                        }}>{c.name}</span>
-                      </button>
-                    );
-                  })}
+                  <span style={{
+                    width: 44, height: 52, display: 'flex', alignItems: 'flex-end',
+                    justifyContent: 'center', overflow: 'hidden',
+                    borderRadius: 'var(--cth-radius-btn)', background: 'var(--cth-paper-100)'
+                  }}>
+                    <SpritePortrait character={agent.character} scale={1.5} />
+                  </span>
+                  <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
+                    {fixedIdentity ? fixedNote : t('editAgent.faceFixed')}
+                  </span>
                 </div>
               </Row>
-              )}
+
 
               <Row label="Color">
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>

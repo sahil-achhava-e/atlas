@@ -185,18 +185,26 @@ test('the floor holds one agent per face, and no more', () => {
     'nothing stops a hire landing on a face that is already taken');
 });
 
-test('hiring without choosing a face stores a FREE id, not the typed name', () => {
+test('a face must be CHOSEN — there is no automatic one', () => {
   const MODAL = readFileSync(
     join(__dirname, '..', 'src/renderer/src/components/AddAgentModal.tsx'), 'utf8');
-  assert.match(MODAL, /freeLibraryIdFor\(name\.trim\(\), takenCharacters\)/,
-    'the fallback must avoid faces already on the floor');
-  assert.doesNotMatch(MODAL, /character \|\| name\.trim\(\)/,
-    'the typed name is the fallback again — that is how unpickable faces got onto the floor');
+  // Every automatic fallback has gone wrong in turn: the typed name became a
+  // character id naming no face, then a hash landed on faces already hired.
+  // Picking is the step now.
+  assert.match(MODAL, /const effectiveCharacter = character \|\| \(atlasFree \? 'michael' : ''\);/,
+    'an automatic face is back — picking has to stay a deliberate act');
+  assert.doesNotMatch(MODAL, /freeLibraryIdFor|libraryIdFor/,
+    'the hire path resolves a face for you again');
+  assert.match(MODAL, /if \(!effectiveCharacter\) \{ setError/, 'Hire does not refuse an unchosen face');
+  // Next is gated on identityReady, and so is the rail — the rail was the way
+  // round it.
+  assert.match(MODAL, /disabled=\{s\.key !== 'identity' && !identityReady\}/,
+    'the section rail lets you jump past choosing a face');
 });
 
-test('editing an agent cannot take a face off another one', () => {
+test('editing an agent cannot change its face at all', () => {
   const EDIT = readFileSync(
     join(__dirname, '..', 'src/renderer/src/components/EditAgentModal.tsx'), 'utf8');
-  assert.match(EDIT, /takenByOthers/, 'the edit picker does not know what is taken');
-  assert.match(EDIT, /disabled=\{taken\}/, 'a taken face is still clickable here');
+  assert.doesNotMatch(EDIT, /setCharacter/, 'the face is editable again');
+  assert.match(EDIT, /character: agent\.character,/, 'the save should carry the face through untouched');
 });
