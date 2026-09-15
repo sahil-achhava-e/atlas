@@ -2803,6 +2803,10 @@ async function spawnAgentCore(opts: AgentSpawnOptions, owner: Electron.WebConten
         {
           semanticMemory: memory.active(),
           knowledgeGraph: knowledge.active(),
+          // "Explain things simply" — the onboarding audience question, which the
+          // Settings switch also writes. Read per spawn, so a flip reaches every
+          // agent started after it.
+          plainLanguage: readConfig().audience === 'non-technical',
           // Bake the ABSOLUTE KG CLI path into the agent's prompt. The prompt used
           // to spell it `$KG_CLI`, which is POSIX-only: under cmd.exe/PowerShell it
           // expands to nothing, so every knowledge-graph instruction was dead on a
@@ -3293,7 +3297,8 @@ ipcMain.handle('config:update', (_evt, patch: Partial<HarnessConfig>) => {
   // relaunch, so bootstrap here on the null → set transition. Gated on the
   // transition so ordinary config writes never re-enter it.
   const hiveWasEnabled = hive.enabled();
-  const wasOnboarded = readConfig().onboardingComplete;
+  const prior = readConfig();
+  const wasOnboarded = prior.onboardingComplete;
   const next = writeConfig(patch);
   // Live opt-in/out from Settings → Privacy (TELEMETRY.md).
   if (typeof patch?.telemetryEnabled === 'boolean') analytics.setEnabled(patch.telemetryEnabled);
@@ -3307,6 +3312,24 @@ ipcMain.handle('config:update', (_evt, patch: Partial<HarnessConfig>) => {
   // config per tick so it gates immediately; this is for the PROMPT, which is
   // built per spawn, so flipping the toggle reaches god the next time he starts.
   if (typeof patch?.orchestratorMaySpawn === 'boolean') hive.setOrchestratorMaySpawn(patch.orchestratorMaySpawn);
+  // "Explain things simply" flipped in Settings. The register is baked into each
+  // agent's system prompt at spawn, so on its own this would reach nobody already
+  // running — the switch would look dead to anyone who flips it mid-session, which
+  // is the bug. Tell the floor over the inbox, the channel that exists for exactly
+  // this (volatile context never goes in the cached prefix). Agents started after
+  // this get it in their prompt instead, so both halves of the floor agree.
+  if (typeof patch?.audience === 'string' && patch.audience !== prior.audience && hive.enabled()) {
+    try {
+      hive.send({
+        to: 'broadcast',
+        act: 'inform',
+        subject: 'How to write for the human',
+        body: patch.audience === 'non-technical'
+          ? 'The human has switched ON "Explain things simply". From now on, everything you write FOR THEM — status updates, questions, humanQA asks, task results, Slack replies — is in plain language: ordinary words, what happened and what it means for their work, no jargon, flags, model ids, command lines, stack traces, or code unless they ask to see it. This changes only how you talk to the human; messages to other agents and the code you write are unchanged.'
+          : 'The human has switched OFF "Explain things simply". Write for them the way you would for an engineer again: exact paths, commands, flags, model ids and code are welcome, and you no longer need to translate them out.'
+      }, 'system');
+    } catch (e) { console.error('[hive] audience broadcast:', e); }
+  }
   if (!hiveWasEnabled && hive.enabled()) {
     console.log('[hive] harnessHome configured — bootstrapping hive services');
     try { bootstrapHiveServices(); } catch (e) { console.error('[hive] bootstrap after onboarding:', e); }

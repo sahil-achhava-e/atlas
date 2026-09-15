@@ -679,6 +679,12 @@ export class HiveManager {
     opts: {
       semanticMemory?: boolean;
       knowledgeGraph?: boolean;
+      /** The human picked "Explain things simply" (config `audience` ===
+       *  'non-technical'). Adds one line to the prompt telling the agent which
+       *  register to address the HUMAN in. Read per spawn, so flipping the
+       *  Settings switch reaches an agent the next time it starts; live agents
+       *  are told over the inbox instead (config:update in index.ts). */
+      plainLanguage?: boolean;
       /** ABSOLUTE path to the Knowledge-Graph CLI (`knowledge.env().KG_CLI`), baked
        *  into the agent's prompt instead of a `$KG_CLI` shell reference — `$VAR` is
        *  POSIX-only and expands to nothing under cmd.exe/PowerShell, so the KG
@@ -817,7 +823,7 @@ export class HiveManager {
     if (!isHiveAwareProvider(meta.provider)) {
       const preset = providerPreset(meta.provider ?? 'claude');
       const flag = preset.initialPromptFlag;
-      const prompt = this.injectedPrompt(meta, dir, root, opts.semanticMemory ?? false, opts.knowledgeGraph ?? false, opts.kgCliPath);
+      const prompt = this.injectedPrompt(meta, dir, root, opts.semanticMemory ?? false, opts.knowledgeGraph ?? false, opts.kgCliPath, opts.plainLanguage ?? false);
       // agy, codex, and grok expose a Claude-style lifecycle-hook surface, so each
       // gets the SAME live status + Stop→inbox-drain Claude does — selected by the
       // preset's `hookBridge`. agy needs a translating shim (its hook stdin/stdout
@@ -961,7 +967,7 @@ export class HiveManager {
     const args: string[] = [];
     if (!claudeProvider) return { args, env };
 
-    args.push('--append-system-prompt', this.injectedPrompt(meta, dir, root, opts.semanticMemory ?? false, opts.knowledgeGraph ?? false, opts.kgCliPath));
+    args.push('--append-system-prompt', this.injectedPrompt(meta, dir, root, opts.semanticMemory ?? false, opts.knowledgeGraph ?? false, opts.kgCliPath, opts.plainLanguage ?? false));
 
     // Phase 1 — autonomy: attach lifecycle hooks via --settings (no edits to the
     // user's repo) so the agent reports activity and drains its inbox on Stop.
@@ -1495,7 +1501,8 @@ export class HiveManager {
     root: string,
     semanticMemory: boolean,
     knowledgeGraph: boolean,
-    kgCliPath?: string
+    kgCliPath?: string,
+    plainLanguage = false
   ): string {
     // Native-separator path helpers — see the 🪟 note above.
     const inDir = (...parts: string[]): string => join(dir, ...parts);
@@ -1554,6 +1561,13 @@ export class HiveManager {
     // How every agent on this floor builds, orchestrator included. Static text:
     // no volatile values, so the prompt-cache invariant above still holds.
     const craftLine = 'HOW YOU BUILD: take the simplest thing that works. Reuse what this codebase already has before writing anything new; prefer the standard library and native platform features over a new dependency; one line over fifty. No speculative abstraction, no scaffolding "for later", no interface with one implementation. Deletion beats addition and boring beats clever. Fix the ROOT CAUSE, not the symptom: before you edit, check every caller of what you are changing, because one guard in the shared function is a smaller diff than a guard in each caller. NEVER simplify away input validation at a trust boundary, error handling that prevents data loss, security, accessibility, or anything the human explicitly asked for. Non-trivial logic leaves ONE runnable check behind: the smallest thing that fails if the logic breaks. Understanding is never what you shorten — read the whole flow first, then write the small version.';
+    // "Explain things simply" (Settings → General, and the first onboarding
+    // screen). Scoped to what the agent says to the HUMAN: the code it writes and
+    // the messages it sends other agents are unaffected, because the register is a
+    // reading preference, not a change of job.
+    const registerLine = plainLanguage
+      ? 'PLAIN LANGUAGE: the human you report to has asked to be spoken to in plain language. When you write FOR THEM — a status update, a question, a humanQA ask, a task result, a Slack reply — use ordinary words and say what happened and what it means for their work. No jargon, no flags, no model ids, no command lines, no stack traces, and no code unless they ask to see it. Name a file or a tool only when they need it to answer you. This changes how you TALK to the human, nothing else: messages to other agents, and the code and commits you write, stay exactly as they were.'
+      : '';
     const craftGodLine = meta.isGod
       ? 'SCOPE DISCIPLINE: the same restraint applies to what you HAND OUT. Do not commission work nobody asked for, do not turn a bug fix into a refactor, and do not spawn an agent when one already on the floor fits. Ask whether the task needs to exist before deciding who owns it.'
       : '';
@@ -1571,6 +1585,7 @@ export class HiveManager {
       '4. At the END of a task, append what you learned to memory.md so future-you remembers.',
       craftLine,
       craftGodLine,
+      registerLine,
       guardrailsLine,
       memoryLine,
       knowledgeLine,
