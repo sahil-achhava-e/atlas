@@ -104,7 +104,10 @@
     "blockingCount_one": "يعطّل مهمة واحدة",
     "blockingCount_other": "يعطّل {{count}} مهام",
     "summary_one": "وكيل واحد بانتظارك",
-    "summary_other": "{{count}} وكلاء بانتظارك"
+    "summary_other": "{{count}} وكلاء بانتظارك",
+    "asks": "{{name}} يسأل",
+    "anAgent": "أحد الوكلاء",
+    "openTask": "فتح المهمة"
   },
   "agentStrip": {
     "privateNote": "ملاحظة خاصة · {{name}}",

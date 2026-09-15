@@ -104,7 +104,10 @@
     "blockingCount_one": "blocking 1 task",
     "blockingCount_other": "blocking {{count}} tasks",
     "summary_one": "1 agent is waiting on you",
-    "summary_other": "{{count}} agents are waiting on you"
+    "summary_other": "{{count}} agents are waiting on you",
+    "asks": "{{name}} is asking",
+    "anAgent": "An agent",
+    "openTask": "Open task"
   },
   "agentStrip": {
     "privateNote": "Private note · {{name}}",

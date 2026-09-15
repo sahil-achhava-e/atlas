@@ -340,26 +340,23 @@ export function AskMeTab() {
                 </span>
               )}
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <button
-                  onClick={() => openTaskDetail(t.id)}
-                  style={{
-                    border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, textAlign: 'left',
-                    fontFamily: 'var(--cth-font-ui)', fontSize: 14, fontWeight: 600,
-                    letterSpacing: '-0.1px', color: 'var(--cth-ink-900)',
-                    minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                  }}
-                >
-                  {t.title}
-                </button>
+                {/* The PERSON leads. The task title used to sit here in bold,
+                    directly above the question, and the two read as a heading
+                    and its subtitle — when they are different things: a task you
+                    own, and something an agent is asking about it. Two
+                    questions stacked ("Delete the legacy voucher endpoint?" over
+                    "Which of these should I do?") is the shape of the problem. */}
+                <span style={{
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 14, fontWeight: 600,
+                  letterSpacing: '-0.1px', color: 'var(--cth-ink-900)',
+                  minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                }}>
+                  {translate('askMe.asks', { name: nameFor(t.assignee) ?? translate('askMe.anAgent') })}
+                </span>
                 <span style={{
                   display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
                   fontSize: 11.5, lineHeight: '16px', color: 'var(--cth-ink-500)'
                 }}>
-                  {nameFor(t.assignee) && (
-                    <strong style={{ fontWeight: 600, color: accentCss(asker?.accent ?? 'lilac') }}>
-                      {nameFor(t.assignee)}
-                    </strong>
-                  )}
                   {age && <span>{translate('askMe.waiting', { age })}</span>}
                   {stuck.length > 0 && (
                     <span style={{
@@ -401,11 +398,43 @@ export function AskMeTab() {
                   this card's mono face and turns a single newline into a break, so
                   a question with no markdown in it looks exactly as it did. */}
               <div dir={rtl ? 'auto' : undefined} style={{
-                fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '20px',
-                color: 'var(--cth-ink-700)'
+                padding: '11px 13px',
+                borderRadius: 'var(--cth-radius-card)',
+                background: accentFillCss(asker?.accent ?? 'lilac'),
+                fontFamily: 'var(--cth-font-ui)', fontSize: 13.5, lineHeight: '21px',
+                color: 'var(--cth-ink-900)'
               }}>
                 <MarkdownPreview source={open.q} variant="card" />
               </div>
+
+              {/* The task this is about, as a task: its id, its title, and a way
+                  in. It was the card's heading, which made it compete with the
+                  question instead of grounding it. */}
+              <button
+                onClick={() => openTaskDetail(t.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                  padding: '7px 10px', textAlign: 'left',
+                  border: 'none', cursor: 'pointer',
+                  borderRadius: 'var(--cth-radius-btn)',
+                  background: 'var(--cth-cream-100)',
+                  fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, lineHeight: '18px',
+                  color: 'var(--cth-ink-700)'
+                }}
+              >
+                <span style={{
+                  flexShrink: 0, fontFamily: 'var(--cth-font-mono)', fontSize: 11,
+                  padding: '0 6px', borderRadius: 'var(--cth-radius-input)',
+                  background: 'var(--cth-paper-100)', color: 'var(--cth-ink-500)'
+                }}>{t.id}</span>
+                <span style={{
+                  flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  color: 'var(--cth-ink-900)'
+                }}>{t.title}</span>
+                <span style={{ flexShrink: 0, color: 'var(--cth-ink-500)', fontSize: 11.5 }}>
+                  {translate('askMe.openTask')}
+                </span>
+              </button>
 
               {/* Choices, when the agent offered them. Radio for one, checkbox
                   for several, and the text box stays underneath: the useful
