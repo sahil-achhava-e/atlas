@@ -24,7 +24,7 @@ import { acquireTerminal, resetTerminal, isTerminalAutomationSafe } from '@/comp
 import { canDeliverToAgent, deliverWithAcknowledgement, checkPrecondition } from './queueDelivery';
 import { OFFICE_CAST, DEFAULT_CHARACTER } from '@/scene/office/cast';
 import { LIBRARY_BY_ID } from '@/scene/office/avatarLibrary';
-import { libraryIdFor } from '@/scene/office/portraitArt';
+import { freeLibraryIdFor } from '@/scene/office/portraitArt';
 
 const GOD_ID = 'god';
 /** Accent palette for MAIN-spawned (voice-hired) agents — picked deterministically
@@ -1040,12 +1040,16 @@ export function useHive(config: HarnessConfig | null): void {
       // be stored as-is and then drawn as an invented portrait — one the picker
       // never offered and you could not choose again.
       const asked = rec.character?.trim();
-      const known = (q?: string) => (q && (q === 'michael' || LIBRARY_BY_ID[q]) ? q : undefined);
+      // FREE faces only. Atlas can hire on its own, and without this two
+      // workers spawned in the same breath both hashed to the same face and
+      // walked onto the floor as twins.
+      const takenFaces = new Set(useStore.getState().agents.map((a) => a.character));
+      const known = (q?: string) =>
+        (q && (q === 'michael' || LIBRARY_BY_ID[q]) && !takenFaces.has(q) ? q : undefined);
       const character =
         known(asked ? castMember(asked.toLowerCase()) ?? asked : undefined) ??
         known(castMember((rec.name || rec.id).toLowerCase())) ??
-        (asked ? libraryIdFor(asked) : undefined) ??
-        DEFAULT_CHARACTER;
+        freeLibraryIdFor(asked || rec.name || rec.id, takenFaces);
       // Accent is otherwise hashed from the worker id, which is stable but not
       // choosable. An unrecognised accent keeps the hash.
       const askedAccent = SPAWN_ACCENTS.find((a) => a === rec.accent?.trim().toLowerCase());

@@ -856,13 +856,41 @@ const sceneCache = new Map<string, SceneFrames>();
  *  app is Atlas or one of the thirty, including on rosters already on disk.
  */
 export function libraryIdFor(seed: string): string {
+  return AVATAR_LIBRARY[hashIndex(seed)].id;
+}
+
+function hashIndex(seed: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < seed.length; i++) {
     h ^= seed.charCodeAt(i);
     h = Math.imul(h, 0x01000193) >>> 0;
   }
-  return AVATAR_LIBRARY[h % AVATAR_LIBRARY.length].id;
+  return h % AVATAR_LIBRARY.length;
 }
+
+/** The same pick, skipping faces already on the floor.
+ *
+ *  A hash alone gives thirty agents a one-in-thirty chance of collision EACH
+ *  time, which is how two agents ended up wearing the same face. Walking from
+ *  the hashed position to the first free one keeps the choice stable for a given
+ *  name while the floor is unchanged, and makes a duplicate impossible until
+ *  every face is taken.
+ *
+ *  Falls back to the hashed id when the whole library is in use, which the
+ *  callers treat as "the floor is full" rather than letting it through.
+ */
+export function freeLibraryIdFor(seed: string, taken: ReadonlySet<string>): string {
+  const start = hashIndex(seed);
+  for (let i = 0; i < AVATAR_LIBRARY.length; i++) {
+    const face = AVATAR_LIBRARY[(start + i) % AVATAR_LIBRARY.length];
+    if (!taken.has(face.id)) return face.id;
+  }
+  return AVATAR_LIBRARY[start].id;
+}
+
+/** Atlas plus the library: the most agents that can exist at once, because a
+ *  face is never shared. */
+export const MAX_AGENTS = AVATAR_LIBRARY.length + 1;
 
 /** Atlas, then the pickable library, then the library face the string hashes
  *  to. One resolver so the portrait, the walking sprite and every caller agree,

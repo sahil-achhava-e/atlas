@@ -48,6 +48,10 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
    *  routes and every string that says "Atlas" follow it. */
   const fixedIdentity = !!agent.isGod;
   const updateAgent = useStore((s) => s.updateAgent);
+  /** Faces worn by SOMEBODY ELSE. This agent's own face is not taken from it. */
+  const takenByOthers = useStore(
+    (s) => new Set(s.agents.filter((a) => a.id !== agent.id).map((a) => a.character))
+  );
   const [config, setConfig] = useState<HarnessConfig | null>(null);
 
   const [name, setName] = useState(agent.name);
@@ -210,11 +214,17 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                       stays whatever you called it. */}
                   {FACES.map((c) => {
                     const active = character === c.id;
+                    // One face per agent, the same rule Add agent enforces. This
+                    // dialog did not, so an agent could be edited onto a face
+                    // another agent was already wearing — two identical agents,
+                    // by a different door than hiring.
+                    const taken = !active && takenByOthers.has(c.id);
                     return (
                       <button
-                        aria-label={c.name}
+                        aria-label={taken ? `${c.name} — ${t('addAgent.faceInUse')}` : c.name}
                         key={c.id}
                         type="button"
+                        disabled={taken}
                         onClick={() => setCharacter(c.id)}
                         style={{
                           padding: 4,
@@ -223,7 +233,8 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                           boxShadow: active
                             ? 'inset 0 0 0 2px var(--cth-lilac)'
                             : 'inset 0 0 0 1px var(--cth-ink-100)',
-                          cursor: 'pointer', border: 'none', width: 52,
+                          opacity: taken ? 0.4 : 1,
+                          cursor: taken ? 'not-allowed' : 'pointer', border: 'none', width: 52,
                           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
                           transition: 'background 120ms ease, box-shadow 120ms ease'
                         }}

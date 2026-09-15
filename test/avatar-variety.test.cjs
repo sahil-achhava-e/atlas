@@ -156,17 +156,47 @@ test('the resolver cannot invent a face', () => {
 });
 
 test('an unknown name lands on a real library id, and lands there every time', () => {
-  const pick = /export function libraryIdFor\(seed: string\): string \{([\s\S]*?)\n\}/.exec(ART);
-  assert.ok(pick, 'libraryIdFor moved — this test needs rewriting');
-  assert.match(pick[1], /AVATAR_LIBRARY\[h % AVATAR_LIBRARY\.length\]\.id/,
+  const pick = /function hashIndex\(seed: string\): number \{([\s\S]*?)\n\}/.exec(ART);
+  assert.ok(pick, 'hashIndex moved — this test needs rewriting');
+  assert.match(pick[1], /AVATAR_LIBRARY\.length/,
     'it must index the library itself, so the set cannot drift from what is pickable');
   assert.doesNotMatch(pick[1], /Math\.random/,
     'the pick has to be stable: the avatar is persisted as the string, not the recipe');
 });
 
-test('hiring without choosing a face stores an id, not the typed name', () => {
+test('the auto-assigned face is one nobody is wearing', () => {
+  // A hash alone gives every hire a one-in-thirty chance of landing on a face
+  // that is already on the floor, which is how duplicate agents appeared. The
+  // walk makes a collision impossible until the library is exhausted.
+  const fn = /export function freeLibraryIdFor\(seed: string, taken: ReadonlySet<string>\): string \{([\s\S]*?)\n\}/.exec(ART);
+  assert.ok(fn, 'freeLibraryIdFor moved — this test needs rewriting');
+  assert.match(fn[1], /!taken\.has\(face\.id\)/, 'it does not actually skip taken faces');
+  assert.match(fn[1], /for \(let i = 0; i < AVATAR_LIBRARY\.length; i\+\+\)/,
+    'it must walk the whole library before giving up');
+});
+
+test('the floor holds one agent per face, and no more', () => {
+  assert.match(ART, /export const MAX_AGENTS = AVATAR_LIBRARY\.length \+ 1;/,
+    'the cap should be derived from the library, not typed as a number');
   const MODAL = readFileSync(
     join(__dirname, '..', 'src/renderer/src/components/AddAgentModal.tsx'), 'utf8');
-  assert.match(MODAL, /const effectiveCharacter = character \|\| \(atlasFree \? 'michael' : libraryIdFor\(/,
+  assert.match(MODAL, /takenCharacters\.size >= MAX_AGENTS/, 'hiring is not capped');
+  assert.match(MODAL, /takenCharacters\.has\(effectiveCharacter\)/,
+    'nothing stops a hire landing on a face that is already taken');
+});
+
+test('hiring without choosing a face stores a FREE id, not the typed name', () => {
+  const MODAL = readFileSync(
+    join(__dirname, '..', 'src/renderer/src/components/AddAgentModal.tsx'), 'utf8');
+  assert.match(MODAL, /freeLibraryIdFor\(name\.trim\(\), takenCharacters\)/,
+    'the fallback must avoid faces already on the floor');
+  assert.doesNotMatch(MODAL, /character \|\| name\.trim\(\)/,
     'the typed name is the fallback again — that is how unpickable faces got onto the floor');
+});
+
+test('editing an agent cannot take a face off another one', () => {
+  const EDIT = readFileSync(
+    join(__dirname, '..', 'src/renderer/src/components/EditAgentModal.tsx'), 'utf8');
+  assert.match(EDIT, /takenByOthers/, 'the edit picker does not know what is taken');
+  assert.match(EDIT, /disabled=\{taken\}/, 'a taken face is still clickable here');
 });

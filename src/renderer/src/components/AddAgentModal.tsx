@@ -7,7 +7,7 @@ import { Icon } from './Icon';
 import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
 import { AVATAR_LIBRARY, LIBRARY_BY_ID } from '@/scene/office/avatarLibrary';
-import { libraryIdFor } from '@/scene/office/portraitArt';
+import { freeLibraryIdFor, MAX_AGENTS } from '@/scene/office/portraitArt';
 import { OFFICE_CAST, DEFAULT_CHARACTER, type OfficeCharacterName } from '@/scene/office/cast';
 import { type AccentColorName, DEFAULT_ACCENT_HEX } from '@/design/tokens';
 import type { HireManifest } from '@shared/hire';
@@ -179,7 +179,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // then drew as one the picker never offered. It resolves to a library id now,
   // so what gets stored is always a face you could have chosen, and the picker
   // shows it selected.
-  const effectiveCharacter = character || (atlasFree ? 'michael' : libraryIdFor(name.trim()));
+  const effectiveCharacter = character
+    || (atlasFree ? 'michael' : freeLibraryIdFor(name.trim(), takenCharacters));
   /** Typed name first, else the persona of the face that is showing. Removing
    *  the name field would otherwise make it possible to reach Hire with nothing
    *  to call the agent, and no field on screen to fix it. */
@@ -369,6 +370,13 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
   const submit = async () => {
     setError(undefined);
+    // One face per agent, so the library IS the headcount. Checked here as well
+    // as on the tiles: a face can be taken between opening this dialog and
+    // pressing Hire, and the auto-assigned one would then silently duplicate.
+    if (takenCharacters.size >= MAX_AGENTS) { setError(tr('addAgent.floorFull', { max: MAX_AGENTS })); return; }
+    if (takenCharacters.has(effectiveCharacter)) {
+      setError(tr('addAgent.faceTaken')); setSection('identity'); return;
+    }
     // A required field can live in a section the user hasn't opened, so jump to
     // the offending section as we surface the error — the field is never hidden.
     if (!effectiveName) { setError(tr('addAgent.errName')); setSection('identity'); return; }
@@ -433,7 +441,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
       id,
       name: effectiveName,
       // Whatever the dialog has been showing, and always a real face id.
-      character: effectiveCharacter || libraryIdFor(name.trim()),
+      character: effectiveCharacter || freeLibraryIdFor(name.trim(), takenCharacters),
       accent,
       description: description.trim() || 'a fresh harness',
       project: basename(projectCwd),

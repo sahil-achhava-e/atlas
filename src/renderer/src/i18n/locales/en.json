@@ -562,7 +562,7 @@
     "quickApply": "Add",
     "quickNamePlaceholder": "Call it anything",
     "chooseFace": "Choose a face",
-    "faceInUse": "in use",
+    "faceInUse": "Hired",
     "faceFree": "free",
     "faceBuiltIn": "built in",
     "facesFree": "free",
@@ -588,7 +588,9 @@
     "autoDesc": "The agent works on its own and only stops for what you told it to ask about. Off: it asks before it changes a file or runs a command.",
     "autoNotSupported": "This engine has no auto mode, so it always asks.",
     "commandShown": "Command",
-    "commandHire": "Command from the import — check it before you hire."
+    "commandHire": "Command from the import — check it before you hire.",
+    "floorFull": "Every face is hired. The floor holds {{max}} agents, one per face.",
+    "faceTaken": "That face is already hired. Pick another."
   },
   "onboarding": {
     "titles": {
