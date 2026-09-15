@@ -98,7 +98,13 @@
     "more": "… +{{count}} more",
     "searchPlaceholder": "Search questions",
     "clearSearch": "Clear search",
-    "noMatches": "No question matches “{{query}}”."
+    "noMatches": "No question matches “{{query}}”.",
+    "waiting": "waiting {{age}}",
+    "justNow": "just now",
+    "blockingCount_one": "blocking 1 task",
+    "blockingCount_other": "blocking {{count}} tasks",
+    "summary_one": "1 agent is waiting on you",
+    "summary_other": "{{count}} agents are waiting on you"
   },
   "agentStrip": {
     "privateNote": "Private note · {{name}}",

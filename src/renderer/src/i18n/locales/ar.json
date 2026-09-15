@@ -98,7 +98,13 @@
     "more": "… +{{count}} أخرى",
     "searchPlaceholder": "ابحث في الأسئلة",
     "clearSearch": "مسح البحث",
-    "noMatches": "لا سؤال يطابق «{{query}}»."
+    "noMatches": "لا سؤال يطابق «{{query}}».",
+    "waiting": "بانتظارك منذ {{age}}",
+    "justNow": "الآن",
+    "blockingCount_one": "يعطّل مهمة واحدة",
+    "blockingCount_other": "يعطّل {{count}} مهام",
+    "summary_one": "وكيل واحد بانتظارك",
+    "summary_other": "{{count}} وكلاء بانتظارك"
   },
   "agentStrip": {
     "privateNote": "ملاحظة خاصة · {{name}}",

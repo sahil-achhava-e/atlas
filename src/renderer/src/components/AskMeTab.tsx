@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PixelButton } from './PixelButton';
-import { PixelBadge } from './PixelBadge';
 import { useStore } from '@/store/store';
 import { MarkdownPreview } from '@/markdown/MarkdownPreview';
 import { type HiveTask, type HumanQA, openQuestion, waitsOnHuman } from './TasksKanban';
 import { compareByNewestAsk } from './askMeOrder';
 import { StatusGlyph } from './StatusGlyph';
+import { SpritePortrait } from './SpritePortrait';
+import { accentCss, accentFillCss } from '@/design/tokens';
 import { isComposingKey } from '@shared/imeGuard';
 import { useRtl } from '@/i18n/useDirection';
 
@@ -68,6 +69,22 @@ export function AskMeTab() {
     timer.current = setInterval(refresh, POLL_MS);
     return () => { if (timer.current) clearInterval(timer.current); };
   }, [refresh]);
+
+  /** The agent behind an ask, for its face and its colour. A question is from
+   *  SOMEBODY, and a board of identical white cards was hiding that. */
+  const agentFor = (id?: string) =>
+    id ? agents.find((a) => a.id === id) ?? restorable.find((a) => a.id === id) : undefined;
+
+  /** How long this has been sitting on you. A blocked agent is idle time, and
+   *  nothing on the card said how much. */
+  const waited = (iso?: string): string | null => {
+    if (!iso) return null;
+    const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+    if (!Number.isFinite(mins) || mins < 1) return translate('askMe.justNow');
+    if (mins < 60) return `${mins}m`;
+    if (mins < 1440) return `${Math.floor(mins / 60)}h`;
+    return `${Math.floor(mins / 1440)}d`;
+  };
 
   const nameFor = (id?: string): string | undefined =>
     id ? (agents.find((a) => a.id === id)?.name ?? restorable.find((a) => a.id === id)?.name ?? id) : undefined;
@@ -222,6 +239,43 @@ export function AskMeTab() {
         </div>
       )}
 
+      {allWaiting.length > 0 && (
+        // The tab badge counts, but a count is not a state. This says what is
+        // actually true: somebody is standing still until you answer.
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+          padding: '10px 14px', flexShrink: 0,
+          background: 'var(--cth-peach-light)',
+          borderRadius: 'var(--cth-radius-card)',
+          fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '18px',
+          color: 'var(--cth-ink-900)'
+        }}>
+          <span style={{ display: 'inline-flex', color: 'var(--cth-peach-text)', flexShrink: 0 }}>
+            <StatusGlyph status="blocked" size={18} />
+          </span>
+          <strong style={{ fontWeight: 600 }}>
+            {translate('askMe.summary', { count: allWaiting.length })}
+          </strong>
+          <span style={{ display: 'inline-flex', flexShrink: 0 }}>
+            {[...new Set(allWaiting.map((x) => x.assignee))]
+              .map((id) => agentFor(id))
+              .filter((a): a is NonNullable<typeof a> => !!a)
+              .slice(0, 6)
+              .map((a) => (
+                <span key={a.id} title={a.name} style={{
+                  width: 24, height: 24, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
+                  marginInlineEnd: 2,
+                  background: accentFillCss(a.accent),
+                  boxShadow: `0 0 0 1.5px ${accentCss(a.accent)}`,
+                  display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
+                }}>
+                  <SpritePortrait character={a.character} scale={0.5} />
+                </span>
+              ))}
+          </span>
+        </div>
+      )}
+
       {waiting.length === 0 && allWaiting.length > 0 && (
         <div style={{
           textAlign: 'center', padding: '28px 16px',
@@ -255,31 +309,67 @@ export function AskMeTab() {
       {waiting.map((t) => {
         const open = openQuestion(t)!;
         const stuck = dependentsTree(t.id, tasks);
+        const asker = agentFor(t.assignee);
+        const age = waited(open.askedAt);
         return (
+          // The asker's own colour down the left edge. Thirty identical white
+          // cards is a list you have to READ to navigate; a colour you already
+          // associate with an agent is one you can scan.
           <div key={t.id} style={{
             background: 'var(--cth-paper-100)',
             borderRadius: 'var(--cth-radius-card)',
-            boxShadow: '0 0 0 1px var(--cth-ink-100), var(--cth-shadow-card)',
+            boxShadow: `inset 4px 0 0 0 ${accentCss(asker?.accent ?? 'lilac')}, 0 0 0 1px var(--cth-ink-100), var(--cth-shadow-card)`,
             display: 'flex', flexDirection: 'column', flexShrink: 0, overflow: 'hidden'
           }}>
-            {/* Header: the task, who is stuck on it. A lilac band with a hard
-                dark rule under it made every card look like a dialog; a card
-                only needs one surface and a title that reads as a title. */}
+            {/* Header: WHO is stuck, on what, and for how long. It used to be a
+                title and a badge on a white card, thirty of which look the same
+                — nothing said a question came from a particular agent who has
+                been standing still since it was asked. */}
             <div style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px 8px'
+              display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px 10px'
             }}>
-              <button
-                onClick={() => openTaskDetail(t.id)}
-                style={{
-                  border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, textAlign: 'left',
-                  fontFamily: 'var(--cth-font-ui)', fontSize: 14, fontWeight: 600,
-                  letterSpacing: '-0.1px', color: 'var(--cth-ink-900)',
-                  flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                }}
-              >
-                {t.title}
-              </button>
-              {nameFor(t.assignee) && <PixelBadge status="blocked" label={nameFor(t.assignee)!} />}
+              {asker && (
+                <span style={{
+                  position: 'relative', flexShrink: 0,
+                  width: 40, height: 40, borderRadius: 12, overflow: 'hidden',
+                  background: accentFillCss(asker.accent),
+                  boxShadow: `0 0 0 2px ${accentCss(asker.accent)}`,
+                  display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
+                }}>
+                  <SpritePortrait character={asker.character} scale={1} />
+                </span>
+              )}
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <button
+                  onClick={() => openTaskDetail(t.id)}
+                  style={{
+                    border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, textAlign: 'left',
+                    fontFamily: 'var(--cth-font-ui)', fontSize: 14, fontWeight: 600,
+                    letterSpacing: '-0.1px', color: 'var(--cth-ink-900)',
+                    minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                  }}
+                >
+                  {t.title}
+                </button>
+                <span style={{
+                  display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
+                  fontSize: 11.5, lineHeight: '16px', color: 'var(--cth-ink-500)'
+                }}>
+                  {nameFor(t.assignee) && (
+                    <strong style={{ fontWeight: 600, color: accentCss(asker?.accent ?? 'lilac') }}>
+                      {nameFor(t.assignee)}
+                    </strong>
+                  )}
+                  {age && <span>{translate('askMe.waiting', { age })}</span>}
+                  {stuck.length > 0 && (
+                    <span style={{
+                      padding: '0 7px', borderRadius: 'var(--cth-radius-input)',
+                      background: 'var(--cth-coral-light)', color: 'var(--cth-coral-text)',
+                      fontWeight: 600
+                    }}>{translate('askMe.blockingCount', { count: stuck.length })}</span>
+                  )}
+                </span>
+              </div>
               {/* Dismiss — clears this ask off the board without answering it.
                   The card's Q&A history is preserved (the question stays on the
                   card, just marked dismissed). */}
