@@ -7,7 +7,7 @@
 
 ## 1. Goal
 
-Give Michael (god) a single glance answer to: *who is talking to whom, and what does the hive collectively know?*
+Give Atlas (god) a single glance answer to: *who is talking to whom, and what does the hive collectively know?*
 
 The graph is a new **`graph` tab** in the Command Center (`CommandCenterPanel.tsx`) that draws the hive as a network — agents as nodes, the messages between them as edges, and (optionally) the topics each agent's memory file covers as a second layer. It is a read + navigate surface: click a node to jump into that agent's memory; hover to preview without leaving the graph.
 

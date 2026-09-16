@@ -12,7 +12,7 @@ additive, so no past release changes behaviour.
 Put HTML between two markers anywhere in the GitHub release body:
 
 ```markdown
-## What's new in 0.5.0
+## What's new in 1.1.0
 
 Regular markdown, for people reading this on github.com.
 
@@ -74,7 +74,7 @@ combination lets the frame remove its own sandbox.
 The update path only runs in packaged builds, so dev has a simulate hook:
 
 ```js
-await window.cth.updateSimulate({ version: '0.5.0', notes: '<paste the body>' })
+await window.cth.updateSimulate({ version: '1.1.0', notes: '<paste the body>' })
 ```
 
 Run it in DevTools (⌥⌘I → Console). Dev-only — hard-gated on `!app.isPackaged`.

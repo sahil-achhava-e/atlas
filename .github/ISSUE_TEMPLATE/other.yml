@@ -24,6 +24,6 @@ body:
     id: version
     attributes:
       label: Atlas version (if relevant)
-      placeholder: "0.4.6"
+      placeholder: "1.0.0"
     validations:
       required: false

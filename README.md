@@ -5,7 +5,7 @@ on your machine, each pinned to a project folder, coordinated by an orchestrator
 called **Atlas**. You give Atlas the job. It splits the work, hands pieces to the
 right agent, and comes back only for the calls that are yours to make.
 
-Built on [atlas](https://github.com/sahilethara/atlas) and
+Built on [munder-difflin](https://github.com/chaitanyagiri/munder-difflin) and
 reworked: an audience question at setup, a mode for people who do not code, and a
 skill for Office files. MIT, same licence as upstream.
 
@@ -105,7 +105,8 @@ here.
 
 Three engines: `claude`, `codex`, `gemini`. Setup checks which are installed and
 offers to install the one you pick. After the persona question the steps are
-welcome, engine, folders, away, home. Home is last, because the folder is easier to
+welcome, engine, folders, permissions, away, home — five in simple mode, which skips
+permissions. Home is last, because the folder is easier to
 choose once you know what goes in it. It suggests `~/Atlas-data`.
 
 Folders are not repos. A project is any folder with files in it.
@@ -183,3 +184,15 @@ so variants never stack, and uncommitted edits to those two files are discarded.
 | `src/shared/` | code both sides use: providers, engine availability, identity |
 | `resources/skills/` | skills copied into every agent on spawn |
 | `.preview/` | the browser preview harness (this fork only) |
+
+## Acknowledgements
+
+- Office tilesets and Tiled maps: **Modern Interiors — RPG Tileset [16x16]** by
+  [LimeZu](https://limezu.itch.io/), used under the Complete Version licence. Crediting
+  LimeZu is a condition of that licence.
+- Floor scene code (`CharacterSprite`, `ToolBubble`, `SpriteAdapter`) is ported from
+  [shahar061/the-office](https://github.com/shahar061/the-office) (ISC).
+- The app itself is built on [munder-difflin](https://github.com/chaitanyagiri/munder-difflin), MIT.
+
+Character portraits and walking sprites are drawn procedurally in `portraitArt.ts` and carry
+no third-party licence. See `src/renderer/src/assets/ATTRIBUTION.md` for the full accounting.

@@ -19,7 +19,7 @@ The three bundled tilesets are `interiors.png`, `office-tileset.png` and
 `a5-office-floors-walls.png`. Each one is imported by `scene/office/themeRegistry.ts` and actually
 drawn on the office floor. Nothing else in this directory is LimeZu art.
 
-## The Office cast is *not* LimeZu art
+## The characters are *not* LimeZu art
 
 Every character, meaning the card portraits and the walking sprites on the office floor, is drawn
 procedurally in [`scene/office/portraitArt.ts`](../scene/office/portraitArt.ts) from per-character

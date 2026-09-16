@@ -68,7 +68,7 @@ body:
     attributes:
       label: Atlas version
       description: Settings → the version is on the hero card. Or `Atlas → About`.
-      placeholder: e.g. 0.4.5
+      placeholder: e.g. 1.0.0
     validations:
       required: true
   - type: input

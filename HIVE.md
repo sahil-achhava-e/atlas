@@ -42,12 +42,12 @@ stream, retrieval, reflection, and planning.
    `agents/<id>/` directory. Cross-agent delivery happens by the **router**
    (main process) moving messages from a sender's `outbox/` into a recipient's
    `inbox/`. No file is ever written by two processes.
-3. **God-mode autonomy, native HITL.** A privileged **god agent** (lives in
-   Michael's room) adjudicates cross-agent traffic. Routine requests
+3. **God-mode autonomy, native HITL.** A privileged **god agent** (Atlas, seated in
+   the corner room) adjudicates cross-agent traffic. Routine requests
    (clarifications, data asks, plan tweaks) it resolves itself and the system
    keeps running fully autonomously. **Critical** items (destructive ops, spend,
    scope changes, unresolvable conflicts) route to the god, who surfaces them to
-   the human natively in his own Claude Code session — there is no separate
+   the human natively in its own Claude Code session — there is no separate
    approval queue. Tool-permission prompts are the HITL gate, and they're
    approvable remotely from a phone via `/remote-control`.
 4. **Memory: markdown first.** Per-agent `memory.md` + shared blackboard, with a
@@ -148,8 +148,11 @@ an agent to the right station (replacing today's `mockEvents.ts` / PTY-scraping)
 
 ## 6. The god agent (orchestrator)
 
-A fixed, always-on agent seated at `desk-ceo` (Michael's room), `character:
-michael`, flagged `isGod`. It is an ordinary `claude` process — the *intelligence*
+A fixed, always-on agent named Atlas by default, seated at `desk-ceo`, flagged
+`isGod`. Its `character` key is `michael` and deliberately stays that way: the
+key is persisted on every roster already on disk, so renaming it would orphan
+the boss. The displayed name comes from `DEFAULT_GOD_NAME` in
+`src/shared/godIdentity.ts`. It is an ordinary `claude` process — the *intelligence*
 — while the main process is the *mechanism* (git, sockets, routing). It owns:
 
 - **Roster & routing** (`registry.json`): who exists, their capabilities, status.
@@ -175,7 +178,7 @@ is the primary control surface — tune the prompt, not the code.
   agent via `--settings`) + `Stop`-loop so agents drain their inbox automatically
   and keep running (guarded by `stop_hook_active` + cursor); hook events stream to
   the renderer to drive avatars.
-- **Phase 2 — God mode** ✅: the god agent auto-spawns into Michael's room
+- **Phase 2 — God mode** ✅: the god agent auto-spawns into the corner room
   (`desk-ceo` reserved) and, on a fresh spawn, is started with `/remote-control`
   (best-effort) plus an orientation prompt so it begins running the floor on its
   own. The router routes `to:"human"` traffic to the god (the human's proxy);

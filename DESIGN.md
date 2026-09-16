@@ -344,26 +344,19 @@ Slide in from top-right, snap (no easing past first frame).
 Auto-dismiss only for non-blocking. Blocking notifications wait for user.
 ```
 
-### 7.8 `<RoomLabel>` (signpost over each project room)
+### 7.8 `<SettingsModal>` / `<EditAgentModal>` / `<AddAgentModal>`
 
 ```
-Signpost: 8 px wood post + plank.
-Plank: cream-200 fill, ink-900 outline, display-sm text.
-Reads "project: <basename>". Positioned at top-left of each room.
-Functionally a pixel sprite, not HTML.
+Configuration is a modal, not a drawer: it is a decision you finish, not a panel you live beside.
+PixelPanel dialog variant, centered, hard 4/4 shadow, backdrop ink-900 @ 60% with NO blur.
+Sections are labelled and hinted (`<Section label hint>`), rows are label + control (`<Row>`).
+Add agent is the only stepped one: Identity → Workspace → Engine → Briefing, with a rail down
+the left. A step opens once every step before it is answered — the rail and the Next button
+read the same answer (`addAgentGate.ts`), so they can never disagree.
+Save lives in the footer, and its confirmation says what happened, not that it was attempted.
 ```
 
-### 7.9 `<ConfigDrawer>`
-
-```
-Slides in from right (240 ms snap, no easing).
-Width: 480 px.
-Title bar: display-md + close button.
-Sections (collapsible): Identity, Goal, Runtime, Skills, MCP, Hooks.
-Each section header: ink-900 + 2px underline + accent dot.
-```
-
-### 7.10 `<Modal>`
+### 7.9 `<Modal>`
 
 ```
 PixelPanel dialog variant.
@@ -374,149 +367,74 @@ Always has close button top-right and at least one action button bottom-right.
 
 ---
 
-## 8. Avatar sprites
+## 8. Faces
 
-The whole product hinges on these. Spec is exact.
+Faces are drawn in code. `scene/office/portraitArt.ts` paints an explicit recipe — skin → clothing
+→ face → facial hair → hairstyle → headwear — rather than recolouring someone else's sprite sheet,
+which is what gives real control over silhouette.
 
-### 8.1 Grid
+### 8.1 Two sizes, one recipe
 
-- **24 × 24 px** sprite cell.
-- Walk cycle: **4 frames** (idle, step-A, idle, step-B). Each frame 24 × 24.
-- Animation: 8 fps (125 ms per frame).
-- Directions: **4 cardinal** (down, up, left, right). Diagonals are computed at runtime by selecting the dominant axis.
-
-### 8.2 Anatomy
-
-```
-0123456789012345678901234   (x)
-        ▓▓▓▓▓▓▓▓             row 4-5: hair
-      ▓░░░░░░░░░▓            row 6-9: head, skin
-      ▓░██░░░██░▓            row 8: eyes
-      ▓░░░░░░░░░▓            row 10: mouth/cheeks
-        ▓▓▓▓▓▓▓▓             row 11: jaw
-       ▓░░░░░░░▓             row 12-17: torso, outfit
-       ▓░██░██░▓             outfit detail
-       ▓░██░██░▓
-       ▓░░░░░░░▓
-        ▓░░░░░▓              row 18-22: legs
-        ▓░░ ░░▓              walk: alternating
-         ▓▓  ▓▓              feet
-```
-
-### 8.3 Per-avatar palette (4 colors max)
-
-Each avatar uses **exactly 4 sprite colors** (plus `ink-900` outline = 5 total slots):
-
-| Slot | Role |
-|---|---|
-| `skin` | face, hands |
-| `hair` | top of head |
-| `primary` | main outfit color |
-| `accent` | outfit detail (collar, belt) |
-
-The agent's **accent palette token** (from §3.3) drives `primary`.
-
-### 8.4 Starter character archetypes
-
-Built-in sprite presets. Each has its own outfit pattern.
-
-| Archetype | Vibe | Outfit notes |
+| Use | Canvas | Where |
 |---|---|---|
-| `scientist` | Lab researcher | White coat panel down center, square glasses (2px black on row 8) |
-| `wizard` | Magic mode | Pointed hat (rows 2-5 above head), star on chest (row 14) |
-| `astronaut` | Explorer | Helmet (3px ring around head), antenna pixel on top |
-| `cat-villager` | Animal Crossing | Triangle ears (rows 3-4), tail visible behind torso |
-| `hacker` | Hoodie | Hood drape down sides of head, headphones (2px black on rows 6-7 sides) |
-| `ninja` | Stealth | Mask covering lower face, ninja headband |
+| Portrait (cards, picker, bubbles) | 18 × 28 | `PORTRAIT_W/H` |
+| Scene sprite (walking on the floor) | 18 × 32 | `SCENE_W/H` — the portrait plus legs |
 
-### 8.5 Walk cycle
+The scene sprite reuses the portrait's exact head, face and clothing, so an agent on the floor
+matches its card. Characters render at `CHAR_SCALE` 1.08 so heads read clearly at floor zoom.
 
-Frame 0 (idle): feet aligned, slight droop (y+0)
-Frame 1 (step-A): left foot raised 1 px (y-1), right foot planted (y+0)
-Frame 2 (idle): same as frame 0
-Frame 3 (step-B): right foot raised 1 px, left foot planted
+### 8.2 Where a face comes from
 
-Walking adds a sin-wave bob to the whole sprite: ±1 px on y, sampled at 8 fps phased with the foot cycle. This is the Stardew Valley walk feel.
+Three sources, resolved in order:
 
-### 8.6 Status overlays
+1. Atlas's own recipe.
+2. The thirty in `avatarLibrary.ts` — six each from Naruto, One Piece, Attack on Titan, Fairy Tail
+   and Slime. A library face belongs to one agent at a time.
+3. Anything else: the name is hashed into a generated recipe, so an agent always has a face.
 
-Drawn above sprite, 8 × 8 px:
+`agent.character` persists the cast key, not the drawing. `michael` is the god agent's key and
+stays that way whatever the orchestrator is renamed to — see the note at the top of `cast.ts`.
 
-| State | Overlay |
+### 8.3 Animation
+
+`ANIM_FRAMES` in `CharacterSprite.ts`:
+
+| State | Frames |
 |---|---|
-| `thinking` | 3 dots cycling (`...`) at +2 above head |
-| `blocked` | Pulsing `!` mark (coral), 2-frame blink |
-| `success` | Sparkle (4-frame star burst) |
-| `attention` | Wave hand (drawn into right-arm slot, 2-frame loop) |
-| `ghost` | Sprite opacity 50%, no overlay |
+| `walk` | 0, 1, 2, 1 |
+| `type` | 0, 1, 2, 1 |
+| `read` | 0, 1, 2, 1 |
+| `idle` | 0 |
 
-### 8.7 Movement
+Four directions; `left` is `right` mirrored on x. Walking speed is 48 px/sec on a 16 px tile grid,
+with A* pathfinding (`pathfinding.ts`).
 
-- Speed: 80 px / sec when walking.
-- Pathing: A* on a 32 × 32 px tile grid. For MVP: simple lerp toward target tile center.
-- Bob: `y += sin(t * 8π) * 1` while walking; `0` while standing.
+### 8.4 Accent colour
 
-### 8.8 Carrying artifacts
-
-When walking back from a station after a tool result, the avatar carries a **token** above its hands:
-
-| Tool | Token |
-|---|---|
-| `Read` / `Edit` / `Write` | 6 × 8 px folded paper (cream-50 + ink-700 outline) |
-| `Bash` | 6 × 6 px terminal `>_` (ink-900 fill) |
-| `WebFetch` / `WebSearch` | 6 × 6 px globe (sky + mint) |
-| `Grep` / `Glob` | 6 × 6 px magnifier (ink-900 + cream-50) |
-| MCP tool | 6 × 6 px diamond in MCP server's color |
-| `TodoWrite` | 6 × 8 px checklist sprite |
-
-Token is dropped onto desk on arrival (3-frame fade).
+Each agent carries one accent from §3.3 — the strip badge, the chat selection highlight, the
+nameplate. There are twelve, so a large crew shares.
 
 ---
 
-## 9. Stations (the workshop)
+## 9. The floor
 
-Stations are 64 × 64 px structures placed inside each room.
+The floor is a **Tiled map**, not a set of hand-placed structures. `TiledMapRenderer.ts` draws it
+and `themeRegistry.ts` holds the themes: `office` and `brooklyn99`, each a `.tmj` map in
+`assets/maps/` plus its tilesets.
 
-### 9.1 Catalog
+### 9.1 What is on it
 
-| Station | Purpose | Visual |
-|---|---|---|
-| **Desk** | Per-avatar home | 32 × 32 wooden desk with mini laptop, chair |
-| **File shelf** | Read/Edit/Write | 64 × 48 bookshelf, 3 rows of 4 books each in random palette |
-| **Terminal station** | Bash | 32 × 48 CRT monitor on a table, blinking caret |
-| **Web portal** | WebFetch/Search | 48 × 48 archway, lilac swirl gradient (animated) |
-| **MCP corner** | Any `mcp__*` | 48 × 48 modular shelf; mini-icon per MCP server placed on it |
-| **Task board** | TodoWrite | 32 × 48 corkboard with sticky notes (3-color rotation) |
-| **Mailbox** | Notification | 16 × 24 pole mailbox; flag UP when notification pending |
+| Element | Behaviour |
+|---|---|
+| **Desk** | One per seated agent, assigned by `SeatPool.ts` |
+| **Monitor** | `DeskScreen.ts` overlays the lit variant of the desk PC while its agent is seated, with scrolling lines and a blinking cursor. Hidden, the map's switched-off art shows through |
+| **Break spots** | Idle agents walk off and trade one-liners about builds, retries and tokens (`cafeteriaLines.ts`) — solo quips and two-beat pair exchanges |
+| **Thought bubble** | `ThoughtBubble.ts` — a cream cloud with what the agent said, prefixed by an icon for the tool it called |
 
-### 9.2 Station states
+### 9.2 Camera
 
-Each station has 3 states:
-
-1. **Idle** — static sprite
-2. **In use** — 2-frame animation, +sparkle particles around it
-3. **Highlighted** — when hovered or when its avatar is approaching (1 px white outline added)
-
-### 9.3 Placement
-
-Within a room (a project), stations are arranged in a fixed pattern:
-
-```
-┌───── project: <name> ──────────────┐
-│  [shelf]    [terminal]    [web]    │
-│                                     │
-│              · · · ·                │ ← pathways (path color tiles)
-│                                     │
-│  [desks of agents in this project]  │
-│                                     │
-│  [board]    [mailbox]    [mcp]     │
-└────────────────────────────────────┘
-```
-
-Room min size: 480 × 320 px. Room grows to fit number of agents (extra desk row every 4 agents).
-
----
-
+`Camera.ts` follows the selected agent and clamps to the map bounds. The floor is a real
+continuously-animating scene, which is why it is Pixi and the rest of the app is not.
 ## 10. Iconography
 
 16 × 16 px pixel icons. 2 colors max (ink + accent). All icons hand-crafted.

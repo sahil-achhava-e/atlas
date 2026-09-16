@@ -56,7 +56,7 @@ The front of an agent's MD queue is delivered only when **all** of these hold:
 | `isTerminalAutomationSafe(ptyId)` | the user owns the prompt — see below |
 | 4.5 s since the last delivery to this agent | back-to-back sends jam the TUI |
 
-**Manual release (v0.3.5).** While floor-wide auto-delivery is paused, every queued row
+**Manual release.** While floor-wide auto-delivery is paused, every queued row
 shows a **send now** link. Clicking it sets `manual: true` on that message and moves it
 to the front of its queue. The drain then bypasses **only the pause check** for that
 message — every other condition in this table still applies, so a manually released
