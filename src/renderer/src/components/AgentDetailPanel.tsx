@@ -10,6 +10,7 @@ import { MessageQueueComposer } from './MessageQueueComposer';
 import { CommandCenterPanel } from './CommandCenterPanel';
 import { disposeTerminal } from './terminalPool';
 import { SidebarTabs } from './SidebarTabs';
+import { TechnicalLog } from './TechnicalLog';
 import { ThreadsPanel } from './ThreadsPanel';
 import { AgentControlStrip } from './AgentControlStrip';
 import { EditAgentModal } from './EditAgentModal';
@@ -35,6 +36,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
      treatment the boss's header uses — so there is no breakpoint to observe and
      no second layout to keep honest. */
   const headerRef = useRef<HTMLDivElement | null>(null);
+  const simpleMode = useStore(s => s.simpleMode);
   const archiveAgent = useStore(s => s.archiveAgent);
   const updateAgent = useStore(s => s.updateAgent);
   const renameAgent = useStore(s => s.renameAgent);
@@ -127,9 +129,10 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
               onClick: () => setEditOpen(true), disabled: false },
             // v0.3.4: the IDE lives at agent level (replaces the old files tab)
             // — the full-window Monaco editor rooted at this agent's workspace.
-            { key: 'ide', Glyph: CodeIcon, tone: 'var(--cth-sky)',
+            // Hidden in simple mode, like every other door onto a code editor.
+            ...(simpleMode ? [] : [{ key: 'ide', Glyph: CodeIcon, tone: 'var(--cth-sky)',
               label: t('agentDetail.openIde'),
-              onClick: () => useStore.getState().setIdeOpen(true, agent.id), disabled: false }
+              onClick: () => useStore.getState().setIdeOpen(true, agent.id), disabled: false }])
           ].map((a) => (
             <button
               key={a.key}
@@ -191,6 +194,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
             ) : (
             <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
               <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+                <TechnicalLog agent={agent}>
                 <PtyTerminalView
                   key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}
                   ptyId={agent.ptyId}
@@ -206,6 +210,7 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
                   fullscreen={false}
                   embedded
                 />
+                </TechnicalLog>
               </div>
               <MessageQueueComposer agent={agent} />
             </div>

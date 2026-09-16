@@ -1,14 +1,14 @@
 {
-  "name": "munder-difflin",
-  "version": "0.4.6",
+  "name": "atlas",
+  "version": "1.0.0",
   "private": true,
   "description": "Clones for you and your team, working 24/7 — a free, local-first multi-agent harness that turns the CLI coding agent you already run into a clone of you, coordinating an office of agents on your machine.",
   "main": "out/main/index.js",
-  "author": "Chaitanya Giri",
-  "homepage": "https://munderdiffl.in/",
+  "author": "Mohammad Sahil Achhava",
+  "homepage": "https://github.com/sahilethara/atlas/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chaitanyagiri/munder-difflin.git"
+    "url": "https://github.com/sahilethara/atlas.git"
   },
   "scripts": {
     "dev": "electron-vite dev",

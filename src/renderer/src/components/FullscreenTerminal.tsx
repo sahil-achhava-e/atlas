@@ -5,6 +5,7 @@ import { PixelBadge } from './PixelBadge';
 import { PtyTerminalView } from './PtyTerminalView';
 import { terminalInstanceKey } from './terminalRecovery';
 import { MessageQueueComposer } from './MessageQueueComposer';
+import { TechnicalLog } from './TechnicalLog';
 import { CommandCenterPanel } from './CommandCenterPanel';
 import { SidebarTabs } from './SidebarTabs';
 import { GitTab } from './GitTab';
@@ -340,6 +341,7 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
                 {sidebarTab === 'terminal' && (
                   <>
                     <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+                      <TechnicalLog agent={agent}>
                       <PtyTerminalView
                         key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}
                         ptyId={agent.ptyId}
@@ -354,6 +356,7 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
                         onToggleFullscreen={() => setFullscreen(null)}
                         fullscreen
                       />
+                      </TechnicalLog>
                     </div>
                     <MessageQueueComposer agent={agent} />
                   </>
@@ -676,6 +679,7 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
   const { t } = useTranslation();
   const typing = useHasTerminalDraft(agent.ptyId);
   const archiveAgent = useStore((st) => st.archiveAgent);
+  const simpleMode = useStore((st) => st.simpleMode);
   const [killOpen, setKillOpen] = useState(false);
 
   /** Kill + archive, mirroring AgentDetailPanel. Confirmed, because it ends a
@@ -745,14 +749,15 @@ function Header({ agent, onEdit }: { agent: Agent; onEdit: () => void }) {
             key: 'edit', Glyph: EditIcon, tone: 'var(--cth-lemon)',
             label: t('common.edit', { defaultValue: 'Edit' }), onClick: onEdit
           }]),
-          {
+          // Hidden in simple mode, like every other door onto a code editor.
+          ...(simpleMode ? [] : [{
             key: 'ide', Glyph: CodeIcon, tone: 'var(--cth-sky)',
             label: t('commandCenter.ide'),
             // Passed EXPLICITLY: focus mode does not change the selection, so
             // letting the IDE infer its agent would open whichever one happens
             // to be selected in the sidebar rather than the one on screen.
             onClick: () => useStore.getState().setIdeOpen(true, agent.id)
-          }
+          }])
         ].map((a) => (
           <button
             key={a.key}

@@ -430,7 +430,7 @@ export class HiveManager {
     if (!root) return null;
     if (process.platform === 'win32') {
       const id = createHash('sha1').update(root).digest('hex').slice(0, 12);
-      return `\\\\.\\pipe\\munder-difflin-${id}`;
+      return `\\\\.\\pipe\\atlas-${id}`;
     }
     return join(root, 'hooks.sock');
   }
@@ -1237,7 +1237,7 @@ export class HiveManager {
   /**
    * W3 — build the per-agent `mcpServers` map from the default catalog. Includes a
    * server only when it's enabled (catalog ∩ consent), scopes filesystem/git to the
-   * agent cwd (never whole-disk), and namespaces every id `munder-<id>` so a server
+   * agent cwd (never whole-disk), and namespaces every id `atlas-<id>` so a server
    * of the same name in the user's own ~/.claude is never clobbered. A write/secret
    * server is included ONLY on an explicit `enabled:true` consent — never via a
    * default — so a malformed/partial config can't silently arm a keyed server.
@@ -1266,7 +1266,7 @@ export class HiveManager {
         for (const c of dbConns) {
           if (!c.url) continue;
           if (c.cwd && !(cwd === c.cwd || cwd.startsWith(c.cwd.endsWith('/') ? c.cwd : c.cwd + '/'))) continue;
-          out[`munder-db-${c.id}`] = {
+          out[`atlas-db-${c.id}`] = {
             command: e.spec.command,
             args: e.spec.args.map((a) => (a === '<cwd>' ? cwd : a)),
             env: { DATABASE_URL: c.url }
@@ -1283,7 +1283,7 @@ export class HiveManager {
         console.warn('[mcp] skipping', e.id, '— no value for', missing.join(', '));
         continue;
       }
-      out[`munder-${e.id}`] = {
+      out[`atlas-${e.id}`] = {
         command: e.spec.command,
         args,
         ...(Object.keys(env).length ? { env } : {})
@@ -1538,7 +1538,7 @@ export class HiveManager {
     // us) was invisible to every investigation.
     const rt = this.runtimeInfo();
     const runtimeLine = rt
-      ? `RUNNING BUILD: Munder Difflin v${rt.version}, ${rt.packaged ? 'packaged app' : 'local dev build'}${rt.appPath ? `, from ${rt.appPath}` : ''}. Say this version if asked which one is running, and do not assume behaviour from an older one. A local dev build inherits the launching shell's environment (umask included) where a packaged app does not, so file modes and inherited env can legitimately differ between the two. \`log.jsonl\` records an \`app-start\` event on every launch, which is how you spot a restart or a build switch.`
+      ? `RUNNING BUILD: Atlas v${rt.version}, ${rt.packaged ? 'packaged app' : 'local dev build'}${rt.appPath ? `, from ${rt.appPath}` : ''}. Say this version if asked which one is running, and do not assume behaviour from an older one. A local dev build inherits the launching shell's environment (umask included) where a packaged app does not, so file modes and inherited env can legitimately differ between the two. \`log.jsonl\` records an \`app-start\` event on every launch, which is how you spot a restart or a build switch.`
       : '';
     // Item 11: god could not find the spawn queue. The mechanism has worked since
     // v0.4.4, but nothing told him it existed — the prompt said "spawn" without
@@ -2032,7 +2032,7 @@ export class HiveManager {
     try { return readdirSync(dir).filter((f) => f.endsWith('.json')).length; } catch { return 0; }
   }
   /** Install the Antigravity (`agy`) lifecycle-hook bridge: write the normalizer
-   *  shim and merge a `munder-hive` hook group into agy's global hooks.json so a
+   *  shim and merge an `atlas-hive` hook group into agy's global hooks.json so a
    *  Gemini worker reports PreToolUse/PostToolUse/Stop/PreInvocation/PostInvocation
    *  to this HookServer (live status + guarded idle delivery), reusing the Claude pipeline.
    *
@@ -2075,7 +2075,7 @@ export class HiveManager {
         if (existsSync(p)) {
           try { existing = JSON.parse(readFileSync(p, 'utf8')) as Record<string, unknown>; } catch { existing = {}; }
         }
-        existing['munder-hive'] = group;
+        existing['atlas-hive'] = group;
         writeFileSync(p, JSON.stringify(existing, null, 2), 'utf8');
       } catch { /* best-effort per file */ }
     }
@@ -2099,7 +2099,7 @@ export class HiveManager {
         ...(matcher ? { matcher } : {}),
         sequential: true,
         hooks: [{
-          name: `munder-hive-${name}`,
+          name: `atlas-hive-${name}`,
           type: 'command',
           command: process.platform === 'win32'
             ? this.nodeRunUnquoted(shim)
@@ -2206,7 +2206,7 @@ export class HiveManager {
         const command = process.platform === 'win32'
           ? this.nodeRunUnquoted(shim)
           : this.nodeRun(shim);
-        config += '\n# --- munder-hive lifecycle hooks (auto-generated; do not edit) ---\n';
+        config += '\n# --- atlas-hive lifecycle hooks (auto-generated; do not edit) ---\n';
         for (const ev of events) {
           config += `\n[[hooks.${ev}]]\n[[hooks.${ev}.hooks]]\ntype = "command"\ncommand = ${JSON.stringify(command)}\ntimeout = 30\n`;
         }
@@ -2250,7 +2250,7 @@ export class HiveManager {
       throw new Error(`invalid agent id: ${agentId}`);
     }
     const source = join(home, kind);
-    const scanRoot = join(userHome, kind, 'munder-difflin');
+    const scanRoot = join(userHome, kind, 'atlas');
     const hiveId = createHash('sha1').update(root).digest('hex').slice(0, 12);
     const target = join(scanRoot, hiveId, agentId);
 
@@ -2313,7 +2313,7 @@ export class HiveManager {
         try {
           if (!lstatSync(source).isSymbolicLink()) continue;
           const target = realpathSync(source);
-          const scanRoot = realpathSync(join(userHome, kind, 'munder-difflin'));
+          const scanRoot = realpathSync(join(userHome, kind, 'atlas'));
           const rel = relative(scanRoot, target);
           const scope = dirname(rel);
           if (!rel || rel.startsWith('..') || isAbsolute(rel)
@@ -2350,7 +2350,7 @@ export class HiveManager {
       writeFileSync(join(extDir, 'hive-bridge.js'), PI_EXTENSION, 'utf8');
       // A manifest so Pi auto-loads the extension on start (best-effort; harmless if
       // Pi ignores it). Kept minimal and hive-authored.
-      const manifest = { name: 'munder-hive-bridge', version: '0.3.1', main: 'extensions/hive-bridge.js', auto: true };
+      const manifest = { name: 'atlas-hive-bridge', version: '0.3.1', main: 'extensions/hive-bridge.js', auto: true };
       writeFileSync(join(home, 'extensions.json'), JSON.stringify(manifest, null, 2), 'utf8');
 
       const userPiDir = join(homedir(), '.pi', 'agent');
@@ -2490,7 +2490,7 @@ export class HiveManager {
       const hookDir = join(homedir(), '.grok', 'hooks');
       mkdirSync(hookDir, { recursive: true });
       writeFileSync(
-        join(hookDir, 'munder-hive.json'),
+        join(hookDir, 'atlas-hive.json'),
         JSON.stringify({ hooks }, null, 2),
         'utf8'
       );
@@ -3508,7 +3508,7 @@ process.stdin.on('end', () => {
 // payload is camelCase and uses snake_case event values. Normalize the input for
 // HookServer and translate its Claude-style permission denial into Grok's direct
 // decision form. Scoped by AGENT_ID so the trusted global hook is inert outside
-// Munder-spawned workers.
+// Atlas-spawned workers.
 const GROK_HOOK_SHIM = `#!/usr/bin/env node
 'use strict';
 const net = require('net');

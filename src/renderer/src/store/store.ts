@@ -15,6 +15,7 @@ import {
 import { DEFAULT_ORG_TRIGGER, type OrgTriggerConfig, type WebhookTrigger } from '@shared/triggers';
 import { isCompactionCommand } from '@shared/providerAutomation';
 import { preferredAgentRole } from '@shared/agentRole';
+import { coerceTabsForSimpleMode } from './simpleMode';
 import { isInboxNudge } from '@shared/hiveNudge';
 import { refocusAfterRemoval, focusOnLoad, restoreFocus } from './focusMode';
 import { chooseRosterSource } from './rosterSource';
@@ -267,6 +268,17 @@ interface State {
    *  composer) doesn't eat what the user was typing. */
   drafts: Record<string, string>;
   setDraft: (agentId: string, text: string) => void;
+  /** Mirror of `config.audience === 'non-technical'` — the "Explain things simply"
+   *  switch. SIMPLE MODE: the app hides the surfaces that only mean something to
+   *  someone who codes (the terminal, git, skills, model ids) and re-defaults what
+   *  is left. Set by App on config load and after onboarding, and by Settings on
+   *  save — the same contract as the mirrors below it.
+   *
+   *  A mirror rather than a prop because the surfaces that read it are spread
+   *  across the tree (sidebar, panel, settings, agent detail) and nothing in
+   *  between has any other reason to know. */
+  simpleMode: boolean;
+  setSimpleMode: (on: boolean) => void;
   /** Mirror of config.freeflowEnabled so the composer can show/hide the Free Flow
    *  mic button reactively (set by App on config load and by Settings on save). */
   freeflowEnabled: boolean;
@@ -890,6 +902,22 @@ export const useStore = create<State>((set, get) => ({
   drafts: {},
   setDraft: (agentId, text) =>
     set((s) => ({ drafts: { ...s.drafts, [agentId]: text } })),
+  simpleMode: false,
+  setSimpleMode: (on) => set((st) => {
+    if (!on) return { simpleMode: false };
+    // Turning the mode on can strand the user on a tab that is about to stop
+    // being rendered — both tab choices are persisted, so "git" from last week
+    // would come back as a blank pane with no tab lit. Coerce here, once, rather
+    // than guarding at each of the surfaces that read them.
+    const next = coerceTabsForSimpleMode(st.ccTab, st.sidebarTab);
+    const ccTab = next.ccTab;
+    const sidebarTab = next.sidebarTab as SidebarTab;
+    try {
+      if (ccTab !== st.ccTab) window.localStorage.setItem('cth.ccTab', ccTab);
+      if (sidebarTab !== st.sidebarTab) window.localStorage.setItem(LS_SIDEBAR_TAB, sidebarTab);
+    } catch { /* private window — the coercion still holds for this session */ }
+    return { simpleMode: true, ccTab, sidebarTab };
+  }),
   freeflowEnabled: false,
   setFreeflowEnabled: (on) => set({ freeflowEnabled: on }),
   hasGroqKey: false,

@@ -4,6 +4,7 @@ import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { SpritePortrait } from './SpritePortrait';
 import { Icon } from './Icon';
+import { canOpenSection, sectionsFor, type SectionKey } from './addAgentGate';
 import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
 import { AVATAR_LIBRARY, LIBRARY_BY_ID } from '@/scene/office/avatarLibrary';
@@ -17,8 +18,7 @@ import {
   OSS_LOCAL_PICKS,
   OSS_PROVIDER_PICKS,
   localSlugFor,
-  hasOssQuickPicks,
-  OSS_BLOG_LINKS
+  hasOssQuickPicks
 } from '@shared/ossModels';
 import {
   type AgentProvider,
@@ -62,7 +62,6 @@ const ossGroupHead: CSSProperties = {
   fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11.5, lineHeight: '14px',
   color: 'var(--cth-ink-500)', marginBottom: 6
 };
-const ossLink: CSSProperties = { color: 'var(--cth-ink-900)', textDecoration: 'underline', cursor: 'pointer' };
 
 // One-click briefing templates — fill Description + Goal with a sharp, ready-to-run
 // role so a user isn't staring at a blank field (item 7). The template BRIEFINGS
@@ -78,7 +77,6 @@ const ossLink: CSSProperties = { color: 'var(--cth-ink-900)', textDecoration: 'u
 // Command (it's the spawn command assembled from provider+model+flags); Workspace
 // clusters Folder + Git isolation + Resume (all "where/how it runs"). Capabilities
 // isn't a field here — it rides an imported hire manifest (the pinned banner).
-type SectionKey = 'identity' | 'workspace' | 'engine' | 'briefing';
 const SECTIONS: { key: SectionKey; labelKey: string; hintKey: string }[] = [
   { key: 'identity',  labelKey: 'addAgent.sections.identity.label',  hintKey: 'addAgent.sections.identity.hint' },
   { key: 'workspace', labelKey: 'addAgent.sections.workspace.label', hintKey: 'addAgent.sections.workspace.hint' },
@@ -205,6 +203,33 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // Local mirror of the registered projects so one added from here shows as a
   // quick-pick immediately (the `config` prop is a snapshot taken at open time).
   const [repos, setRepos] = useState<string[]>(config.registeredRepos);
+  /** Does the chosen folder have git in it? A folder that is not a repository
+   *  has no branch to work on, and main already degrades `isolate` to "work in
+   *  place" for one (spawnAgentCore gates the worktree on isRepo). So the
+   *  checkbox below was promising an own copy and an own branch that the spawn
+   *  quietly dropped — the ordinary case for a folder of documents. null while
+   *  unknown (nothing picked, or the probe has not answered), which reads as
+   *  "allowed" so the control never flickers shut on a slow answer. */
+  const [cwdIsRepo, setCwdIsRepo] = useState<boolean | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const path = cwd.trim();
+    if (!path) { setCwdIsRepo(null); return; }
+    void window.cth.gitIsRepo(path).then(
+      (ok) => { if (!cancelled) setCwdIsRepo(ok); },
+      () => { if (!cancelled) setCwdIsRepo(null); }
+    );
+    return () => { cancelled = true; };
+  }, [cwd]);
+  /** Isolation is only a real offer when there is a repo to branch from. */
+  const canIsolate = cwdIsRepo !== false;
+
+  /** Step 2 is done when a folder is chosen. Without this the Next button waved
+   *  you past an empty picker — on a workspace with no projects registered, the
+   *  step showed "No projects yet", let you walk all the way to Hire, and only
+   *  then bounced you back here with "Pick a folder first". The gate belongs on
+   *  the step that owns the answer. */
+  const workspaceReady = cwd.trim().length > 0;
   const [provider, setProvider] = useState<AgentProvider>(pendingHire?.provider ?? initialProvider);
   const [model, setModel] = useState<string | undefined>(
     pendingHire ? pendingHire.model : initialModel
@@ -259,7 +284,30 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   const [busy, setBusy] = useState(false);
   // Which config section the left sidebar index is showing.
   const [section, setSection] = useState<SectionKey>('identity');
-  const sectionIndex = Math.max(0, SECTIONS.findIndex((x) => x.key === section));
+  // SIMPLE MODE — the Engine step (provider, model id, spawn command, auto flag)
+  // is four answers the workspace already gave at setup. Its state is still
+  // seeded from those, so what actually spawns is unchanged.
+  const simpleMode = useStore((s) => s.simpleMode);
+  const visibleSections = SECTIONS.filter((x) => sectionsFor(simpleMode).includes(x.key));
+  /** What each section must have before the one after it opens. Engine and
+   *  briefing ask for nothing: the command is prefilled from the provider and
+   *  validated on submit, and a briefing is optional. */
+  const sectionReady: Record<SectionKey, boolean> = {
+    identity: identityReady,
+    workspace: workspaceReady,
+    engine: true,
+    briefing: true
+  };
+  /** May this section be opened? Only once every section before it is answered.
+   *  The rail used to be a way around the Next button's gate; now both read this. */
+  const canOpen = (key: SectionKey): boolean => canOpenSection(sectionReady, key, visibleSections.map((x) => x.key));
+  /** Why Next is refusing, in the words of the step that is refusing. */
+  const blockedReason = (key: SectionKey): string | undefined =>
+    sectionReady[key] ? undefined
+      : key === 'identity' ? tr('addAgent.pickFirst')
+      : key === 'workspace' ? tr('addAgent.errFolder')
+      : undefined;
+  const sectionIndex = Math.max(0, visibleSections.findIndex((x) => x.key === section));
   // "Generate a hire with AI" helper — reveals a copy-paste prompt (item 7).
 
   // Close only the modal on Esc. Capture prevents the fullscreen terminal's
@@ -307,12 +355,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
       onConfigChange?.(updated);
     } catch { /* best-effort persist */ }
   };
-
-  /** Drop `path` from the project quick-picks.
-   *
-   *  Removes it from the LISTING only. The folder on disk is never touched, which
-   *  is the whole point: a project you are done with should stop cluttering the
-   *  picker without anything being deleted. */
 
   /** Pick a brand-new folder and register it as a project in one step. */
   const addProject = async () => {
@@ -401,7 +443,9 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
       // When set, the main process spawns this agent in its own git worktree.
       // Forced OFF when resuming a session — `--resume` needs the real cwd's
       // transcript, not a fresh worktree with a different (empty) project dir.
-      isolate: resuming ? false : isolate,
+      // Never ask for a worktree main cannot make: a non-repo folder gets
+      // "work in place", which is what the checkbox above now says too.
+      isolate: resuming || !canIsolate || simpleMode ? false : isolate,
       // #2 — continue an existing Claude session in this agent's cwd.
       resumeSessionId: resuming ? resumeSessionId.trim() : undefined,
       // Provision this agent in the hive (memory + mailbox + identity/protocol).
@@ -624,20 +668,20 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               {/* LEFT — section index. Capabilities isn't a nav item: it isn't a
                   user field, it rides the imported hire manifest (banner above). */}
               <nav style={{ width: 186, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {SECTIONS.map((s, i) => {
+                {visibleSections.map((s, i) => {
                   const active = section === s.key;
                   return (
                     <button
                       key={s.key}
                       // The rail was a way around the Next button's gate: jump
                       // straight to Briefing and Hire was reachable with no face
-                      // chosen at all.
-                      disabled={s.key !== 'identity' && !identityReady}
+                      // chosen at all. Both now read one readiness table.
+                      disabled={!canOpen(s.key)}
                       onClick={() => setSection(s.key)}
                       style={{
                         textAlign: 'left', padding: '10px 12px', border: 'none',
-                        cursor: s.key !== 'identity' && !identityReady ? 'not-allowed' : 'pointer',
-                        opacity: s.key !== 'identity' && !identityReady ? 0.45 : 1,
+                        cursor: canOpen(s.key) ? 'pointer' : 'not-allowed',
+                        opacity: canOpen(s.key) ? 1 : 0.45,
                         borderRadius: 'var(--cth-radius-btn)',
                         background: active ? 'var(--cth-lilac-light)' : 'var(--cth-cream-100)',
                         boxShadow: active ? 'inset 0 0 0 1.5px var(--cth-lilac)' : 'none',
@@ -813,11 +857,24 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
                 {section === 'workspace' && (
                   <>
-                    <Row label={tr('addAgent.project')}>
-                      {/* Just the projects registered to this workspace, listed
-                          by name. The free-text path box and its folder picker
-                          are gone: an agent's folder should be one of the
-                          projects you set up, not any directory on the disk. */}
+                    <Row
+                      label={tr('addAgent.project')}
+                      action={(
+                        <PixelButton
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => { void addProject(); }}
+                          title={tr('addAgent.addProjectTitle')}
+                        >
+                          <Icon name="folder" /> {tr('addAgent.addProject')}
+                        </PixelButton>
+                      )}
+                    >
+                      {/* The projects registered to this workspace, listed by
+                          name, plus one button to add a folder that is not on
+                          the list yet. The free-text path box is still gone: a
+                          folder is CHOSEN from the OS picker and registered, so
+                          a typo cannot become an agent's working directory. */}
                       {repos.length === 0 ? (
                         <div style={{
                           padding: '16px 12px', fontSize: 13, textAlign: 'center',
@@ -871,29 +928,35 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           })}
                         </div>
                       )}
-
                     </Row>
 
                     {/* Not a checkbox in a row of checkboxes. This is the
                         setting that decides whether you can run four agents at
-                        once, so it gets the room to say so. */}
+                        once, so it gets the room to say so.
+
+                        Gone in simple mode: a worktree and a branch cannot be
+                        explained to someone who does not use git, and the
+                        folders that mode is built for — documents, not repos —
+                        cannot have one anyway. `isolate` stays false there. */}
+                    {!simpleMode && (
                     <label style={{
                       display: 'flex', gap: 12, alignItems: 'flex-start', padding: 14,
-                      cursor: resuming ? 'not-allowed' : 'pointer', opacity: resuming ? 0.5 : 1,
+                      cursor: resuming || !canIsolate ? 'not-allowed' : 'pointer',
+                      opacity: resuming || !canIsolate ? 0.5 : 1,
                       borderRadius: 'var(--cth-radius-card)',
-                      background: isolate && !resuming ? 'var(--cth-mint-light)' : 'var(--cth-cream-100)',
-                      boxShadow: isolate && !resuming ? 'inset 0 0 0 2px var(--cth-mint)' : 'none',
+                      background: isolate && !resuming && canIsolate ? 'var(--cth-mint-light)' : 'var(--cth-cream-100)',
+                      boxShadow: isolate && !resuming && canIsolate ? 'inset 0 0 0 2px var(--cth-mint)' : 'none',
                       transition: 'background 120ms ease, box-shadow 120ms ease'
                     }}>
                       <input
                         type="checkbox"
-                        checked={resuming ? false : isolate}
-                        disabled={resuming}
+                        checked={resuming || !canIsolate ? false : isolate}
+                        disabled={resuming || !canIsolate}
                         onChange={(e) => setIsolate(e.target.checked)}
                         style={{
                           width: 17, height: 17, marginTop: 2, flexShrink: 0,
                           accentColor: 'var(--cth-mint)',
-                          cursor: resuming ? 'not-allowed' : 'pointer'
+                          cursor: resuming || !canIsolate ? 'not-allowed' : 'pointer'
                         }}
                       />
                       <span style={{ minWidth: 0 }}>
@@ -907,9 +970,12 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                         <span style={{
                           display: 'block', fontSize: 13, lineHeight: '18px', marginTop: 6,
                           color: 'var(--cth-ink-500)'
-                        }}>{isolate ? tr('addAgent.gitIsolationOn') : tr('addAgent.gitIsolationOff')}</span>
+                        }}>{!canIsolate
+                          ? tr('addAgent.gitIsolationNoRepo')
+                          : isolate ? tr('addAgent.gitIsolationOn') : tr('addAgent.gitIsolationOff')}</span>
                       </span>
                     </label>
+                    )}
                   </>
                 )}
 
@@ -1024,18 +1090,6 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                     {(provider === 'opencode' || provider === 'crush' || provider === 'pi' || provider === 'qwen') && (
                       <div style={{ fontSize: 13, color: 'var(--cth-ink-500)', lineHeight: '16px', margin: '2px 0 6px' }}>
                         {tr('addAgent.byokNote')}
-                        {' '}
-                        <a
-                          href={OSS_BLOG_LINKS.openModels}
-                          onClick={(e) => { e.preventDefault(); void window.cth.openExternal(OSS_BLOG_LINKS.openModels); }}
-                          style={ossLink}
-                        >{tr('addAgent.runOnOpenModels')}</a>
-                        {' '}
-                        <a
-                          href={OSS_BLOG_LINKS.macMini}
-                          onClick={(e) => { e.preventDefault(); void window.cth.openExternal(OSS_BLOG_LINKS.macMini); }}
-                          style={ossLink}
-                        >{tr('addAgent.setUpMacMini')}</a>.
                       </div>
                     )}
 
@@ -1172,18 +1226,18 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               )}
               <PixelButton variant="secondary" size="md" onClick={onClose} disabled={busy}>{tr('common.cancel')}</PixelButton>
               {sectionIndex > 0 && (
-                <PixelButton variant="secondary" size="md" onClick={() => setSection(SECTIONS[sectionIndex - 1].key)} disabled={busy}>
+                <PixelButton variant="secondary" size="md" onClick={() => setSection(visibleSections[sectionIndex - 1].key)} disabled={busy}>
                   {tr('common.back')}
                 </PixelButton>
               )}
-              {sectionIndex < SECTIONS.length - 1 ? (
+              {sectionIndex < visibleSections.length - 1 ? (
                 <PixelButton
                   variant="primary"
                   size="md"
                   style={{ minWidth: 110 }}
-                  onClick={() => setSection(SECTIONS[sectionIndex + 1].key)}
-                  disabled={busy || (section === 'identity' && !identityReady)}
-                  title={section === 'identity' && !identityReady ? tr('addAgent.pickFirst') : undefined}
+                  onClick={() => setSection(visibleSections[sectionIndex + 1].key)}
+                  disabled={busy || !sectionReady[section]}
+                  title={blockedReason(section)}
                 >
                   {tr('addAgent.next')}
                 </PixelButton>
@@ -1234,15 +1288,37 @@ function Question({ q, hint, children }: { q: string; hint: string; children: Re
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+/** A labelled field. `action` puts one control on the label's own line, right
+ *  side — for the row whose action is about the list rather than about any one
+ *  item in it. A row with an action is a <div>, not a <label>: a button inside a
+ *  label is activated by every click on the label, which is not what a control
+ *  sitting beside the title should do. */
+function Row({ label, action, children }: {
+  label: string; action?: React.ReactNode; children: React.ReactNode
+}) {
+  const head = (
+    <span style={{
+      fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
+      fontSize: 12, lineHeight: '14px',
+      color: 'var(--cth-ink-600)',
+    }}>{label}</span>
+  );
+  if (!action) {
+    return (
+      <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {head}
+        {children}
+      </label>
+    );
+  }
   return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <span style={{
-        fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-        fontSize: 12, lineHeight: '14px',
-        color: 'var(--cth-ink-600)',
-      }}>{label}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 26 }}>
+        {head}
+        <span style={{ flex: 1 }} />
+        {action}
+      </div>
       {children}
-    </label>
+    </div>
   );
 }

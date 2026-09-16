@@ -129,6 +129,9 @@ export function App() {
       // Mirror the active office theme so OfficeFloor renders it (gated on the
       // tvShowOffices flag; off = always the office). Settings keeps this synced.
       useStore.getState().setOfficeTheme(c.tvShowOffices ? (c.officeTheme ?? 'office') : 'office');
+      // Mirror "Explain things simply" so the surfaces that hide in simple mode
+      // can read one boolean instead of each reaching for the config.
+      useStore.getState().setSimpleMode((c as HarnessConfig).audience === 'non-technical');
       // Mirror the triggers so Settings → Connections and the Command Center's
       // Triggers tab read one list, not two copies that drift — whichever surface
       // saves calls these same setters and the other repaints. No extra IPC: main
@@ -159,7 +162,7 @@ export function App() {
   // Quit warning subscription
   useEffect(() => window.cth.onCloseRequested((info) => setQuitWarn(info)), []);
 
-  // Shareable hires: a validated manifest arriving via the munderdifflin://
+  // Shareable hires: a validated manifest arriving via the atlas://
   // deep link (or file import) pre-fills the Add-Agent modal. Never spawns by itself.
   const enqueuePendingHires = useStore(s => s.enqueuePendingHires);
   const closeAddAgentReview = () => {
@@ -373,7 +376,13 @@ export function App() {
 
   if (!config.onboardingComplete) {
     // Just-onboarded users go straight into the hive they set up — skip the picker.
-    return <OnboardingWizard onComplete={(next) => { setConfig(next); setHiveOpened(true); }} />;
+    return <OnboardingWizard onComplete={(next) => {
+      setConfig(next);
+      // The wizard's own audience answer, without waiting for a relaunch: the
+      // initial-load mirror above ran before onboarding existed.
+      useStore.getState().setSimpleMode(next.audience === 'non-technical');
+      setHiveOpened(true);
+    }} />;
   }
 
   // Launch-time hive picker: on reopen, let the user open their current hive,

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { type SidebarTab } from '@/store/store';
+import { useStore, type SidebarTab } from '@/store/store';
+import { SIMPLE_MODE_SIDEBAR_TABS, visibleTabs } from '@/store/simpleMode';
 import { TerminalIcon, GitIcon, BellIcon } from './TabIcons';
 
 // v0.3.4: the files tab is gone — the per-agent IDE button (header) opens the
@@ -44,6 +45,9 @@ export interface SidebarTabsProps {
  */
 export function SidebarTabs({ current, fullscreen = false, onChange }: SidebarTabsProps) {
   const { t } = useTranslation();
+  // SIMPLE MODE — git goes; the policy and the reason live in store/simpleMode.
+  const simpleMode = useStore((s) => s.simpleMode);
+  const tabs = visibleTabs(TABS, SIMPLE_MODE_SIDEBAR_TABS, simpleMode);
   return (
     <div className="cth-tabbar cth-iconbar" style={{
       display: 'flex',
@@ -53,7 +57,7 @@ export function SidebarTabs({ current, fullscreen = false, onChange }: SidebarTa
       borderBottom: '1px solid var(--cth-ink-100)',
       flexShrink: 0
     }}>
-      {TABS.map(tab => {
+      {tabs.map(tab => {
         const active = current === tab.key;
         return (
           <button

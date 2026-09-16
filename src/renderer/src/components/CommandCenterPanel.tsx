@@ -30,6 +30,7 @@ import { useFleetTelemetry } from '@/hooks/useTelemetry';
 import { COMMAND_GROUPS } from '@shared/claudeCommands';
 import { roleForHiveSpawn } from '@shared/agentRole';
 import { useStore, type Agent } from '@/store/store';
+import { SIMPLE_MODE_CC_TABS, visibleTabs } from '@/store/simpleMode';
 import { usePtyParser } from '@/hooks/usePtyParser';
 import {
   buildSpawnCommand,
@@ -47,6 +48,7 @@ import {
 import { canReceiveInbox } from '@shared/agentProvider';
 import { isComposingKey } from '@shared/imeGuard';
 import { useRtl } from '@/i18n/useDirection';
+import { TechnicalLog } from './TechnicalLog';
 
 /** Michael's control surface. Shown instead of the plain terminal/files panel
  *  when the god agent is selected: terminal + queue, the floor roster (with
@@ -66,7 +68,6 @@ const DEFAULT_TOKEN_CAP = 1_000_000;
 
 /** A GitHub issue as returned by `window.cth.githubIssues` (labels/assignees flattened). */
 
-const fmtK = (n: number): string => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : `${Math.round(n / 1000)}k`);
 
 /** Tab order is FREQUENCY, not category.
  *
@@ -80,8 +81,6 @@ const fmtK = (n: number): string => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed
  *  carries a one-line hint on hover, because a two-word tab cannot explain
  *  itself and a first-time reader should not have to click all eleven to learn
  *  the app. */
-const PRIMARY: CCTab[] = ['terminal', 'human', 'tasks', 'floor'];
-
 const TABS: {
   key: CCTab; labelKey: string; hintKey: string;
   Glyph: (p: { size?: number }) => JSX.Element;
@@ -111,16 +110,16 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
   // The open tab lives in the store: the address bar names it, and a reload
   // has to land on the same one.
   const tab = useStore((st) => st.ccTab) as CCTab;
+  // SIMPLE MODE — five of the ten tabs are about how the crew is wired rather
+  // than what it is doing. The store coerces a stranded selection when the mode
+  // flips, so `tab` is always one of these by the time we render.
+  const simpleMode = useStore((st) => st.simpleMode);
+  const tabs = visibleTabs(TABS, SIMPLE_MODE_CC_TABS, simpleMode);
   const setTab = (next: CCTab): void => useStore.getState().setCcTab(next);
   // Atlas had no way to be edited: AgentDetailPanel hands god straight to this
   // panel and never reaches the Edit button every other agent gets, so his
   // name, one-liner and standing goal were unreachable from the app.
   const [editOpen, setEditOpen] = useState(false);
-  // Every tab is visible now: the one config-gated tab was the trigger ledger,
-  // and it went with the webhooks whose arrivals it listed.
-  const visibleTabs = TABS;
-  const primaryTabs = visibleTabs.filter((x) => PRIMARY.includes(x.key));
-  const secondaryTabs = visibleTabs.filter((x) => !PRIMARY.includes(x.key));
   // The one number on this panel that is about the human, not the machines.
   const openAsks = useOpenAsks();
 
@@ -155,8 +154,6 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
   const headerLine = (agent.status !== 'idle' && agent.action)
     ? agent.action
     : (agent.description?.trim() || (agent.isGod ? t('commandCenter.roleGod') : t('commandCenter.roleWorker')));
-  // Context as a number, not a bar: in a header the useful question is how much
-  // room is left before a compaction, and a 4px rail cannot answer it.
   // What is actually running in the terminal below, in the words the picker
   // used when it was chosen — not the raw model id, and not the pty handle the
   // header used to print.
@@ -170,14 +167,6 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
 
   // Below 1k there is nothing to report and the rounding says "0k", which reads
   // as a broken gauge rather than as a session that has barely started.
-  const contextLimit = agent.contextLimit ?? (/1m/i.test(agent.model ?? '') ? 1_000_000 : 200_000);
-  const contextPct = (agent.contextTokens ?? 0) >= 1000
-    ? Math.min(100, Math.round(((agent.contextTokens as number) / contextLimit) * 100))
-    : null;
-  const contextLine = (agent.contextTokens ?? 0) >= 1000
-    ? `${fmtK(agent.contextTokens as number)}/${fmtK(agent.contextLimit ?? (/1m/i.test(agent.model ?? '') ? 1_000_000 : 200_000))}`
-    : '';
-
   /** One pane, by key. Pulled out of the tab switch so focus mode can render
    *  several at once: at 1700px the panel was showing one column and hiding
    *  nine, which is a tab bar earning its keep in a 420px sidebar and wasting
@@ -190,6 +179,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                 ) : agent.ptyId ? (
                   <>
                     <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
+                      <TechnicalLog agent={agent}>
                       <PtyTerminalView
                         key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}
                         ptyId={agent.ptyId}
@@ -206,6 +196,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                         fullscreen={fullscreen}
                         embedded={!fullscreen}
                       />
+                      </TechnicalLog>
                     </div>
                     <MessageQueueComposer agent={agent} />
                   </>
@@ -283,9 +274,12 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
               { key: 'edit', Glyph: EditIcon, tone: 'var(--cth-lemon)',
                 label: t('common.edit', { defaultValue: 'Edit' }),
                 onClick: () => setEditOpen(true) },
-              { key: 'ide', Glyph: CodeIcon, tone: 'var(--cth-sky)',
+              // The IDE is Monaco, a file tree and a diff view — the same reason
+              // git goes from the tab bar in simple mode applies to the button
+              // that opens an editor.
+              ...(simpleMode ? [] : [{ key: 'ide', Glyph: CodeIcon, tone: 'var(--cth-sky)',
                 label: t('commandCenter.ide'),
-                onClick: () => { const st = useStore.getState(); st.setIdeOpen(true, st.selectedId); } }
+                onClick: () => { const st = useStore.getState(); st.setIdeOpen(true, st.selectedId); } }])
             ].map((a) => (
               <button
                 key={a.key}
@@ -321,7 +315,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
         padding: '10px 10px', flexShrink: 0,
         borderBottom: '1px solid var(--cth-ink-100)'
       }}>
-        {TABS.map((d) => {
+        {tabs.map((d) => {
           const on = d.key === tab;
           const badge = d.key === 'human' ? openAsks : 0;
           return (

@@ -12,7 +12,7 @@ nothing spawns until you press Spawn. Contract: `src/shared/hire.ts`.
 
 The 20 manifests that shipped with the upstream project, restored **unchanged**
 for comparison. They are not ours and are not meant to be run as they are: the
-names, characters and `"author": "Agent Gallery"` all belong to munder-difflin.
+names, characters and `"author": "Agent Gallery"` all belong to atlas.
 
 They are here because the goals are worth reading. Each is 850-1800 characters
 of real instruction, not a one-line role, and several encode good habits worth

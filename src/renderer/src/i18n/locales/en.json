@@ -120,6 +120,12 @@
     "git": "Git",
     "messages": "Messages"
   },
+  "simpleMode": {
+    "showLog": "Show the technical log",
+    "hideLog": "Hide the technical log",
+    "lastMessage": "{{name}} last said",
+    "nothingYet": "Nothing yet. Write below to give them something to do."
+  },
   "agentDetail": {
     "err": "err",
     "inFullscreen": "In focus mode",
@@ -208,7 +214,7 @@
       "keepAwake": "Keep Mac awake while agents run",
       "keepAwakeDesc": "Blocks display sleep so schedules and terminals keep firing on time. Costs battery, best on AC.",
       "simpleMode": "Explain things simply",
-      "simpleModeDesc": "Agents brief you in plain language instead of engineering shorthand.",
+      "simpleModeDesc": "Plain language instead of engineering shorthand, and an app without the terminal, git, model ids or skills. Agents work on their own in this mode, because the questions they would ask are asked in the terminal.",
       "notifications": "Notifications",
       "desktopNotifications": "Desktop notifications",
       "desktopNotificationsDesc": "Native toasts when an agent finishes or needs your input.",
@@ -523,8 +529,6 @@
     "ossLocalTitle": "{{slug}} · needs ~{{ram}} RAM. Pull it with: ollama pull {{tag}}",
     "ossByokTitle": "{{slug}} · set {{keyEnv}} in Settings → AI Engines",
     "byokNote": "BYOK keys & local endpoints for this engine live in Settings → AI Engines. New to local models? Read run on open models or set up on a Mac Mini. Live end-to-end is pending real model calls (verify on-device).",
-    "runOnOpenModels": "Run on open models",
-    "setUpMacMini": "set up on a Mac Mini",
     "command": "Command",
     "commandAuto": "Command (auto mode on)",
     "templates": "Templates",
@@ -587,6 +591,7 @@
     "gitIsolationDesc": "Gives this agent its own copy of the project folder and its own git branch. It never touches the files you have open, so several agents can work on the same project at the same time, and so can you.",
     "gitIsolationOn": "On: it works at its own desk. You review its branch when it is done.",
     "gitIsolationOff": "Off: it edits your checkout directly. You see every change live, but only one agent can work here at a time.",
+    "gitIsolationNoRepo": "This folder is not a git project, so there is no branch to give it. The agent works on the files directly.",
     "providerFixed": "This workspace's engine",
     "jobLabel": "What does it do?",
     "jobHint": "The work it repeats, not one task. Added to every prompt it ever gets.",
@@ -623,7 +628,8 @@
       "technicalTitle": "I'm technical",
       "technicalDesc": "Terminal, flags, model ids. Skip the explanations.",
       "nonTechnicalTitle": "I'm non-technical",
-      "nonTechnicalDesc": "Plain language. No jargon, no command line."
+      "nonTechnicalDesc": "Plain language. No jargon, no command line.",
+      "later": "You can change this later in Settings."
     },
     "welcome": {
       "headline": "Your crew and the floor they run",

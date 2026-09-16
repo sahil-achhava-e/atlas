@@ -93,11 +93,11 @@ test("the 'What's new' section wins over the release template's preamble", () =>
   // taking "the first lines" of the body would digest the boilerplate the user
   // has already read instead of the release's news.
   const body = [
-    '# Munder Difflin v0.4.4',
+    '# Atlas v0.4.4',
     '',
     '**A local hive of agents that run themselves** — the product tagline.',
     '',
-    '### → [**munderdiffl.in**](https://munderdiffl.in/) — see it in action',
+    '### → [**github.com/sahilethara/atlas**](https://github.com/sahilethara/atlas/) — see it in action',
     '',
     '---',
     '',
@@ -247,7 +247,7 @@ const RENDERED_ATOM_HTML = [
   '  * { box-sizing: border-box; }',
   '  .md-body { margin: 0; padding: 0; }',
   '</style>',
-  '<h1>Munder Difflin v0.4.6</h1>',
+  '<h1>Atlas v0.4.6</h1>',
   '<p>A local hive of agents that run themselves.</p>',
   '<h2>What&#39;s new in 0.4.6</h2>',
   '<ul>',
@@ -282,7 +282,7 @@ test('rendered HTML yields the actual news, not the preamble or the downloads', 
   assert.match(digest[2], /^Fonts ship inside the app\./);
   // `<h2>What&#39;s new` has to be recognised through the entity, or the
   // section marker is missed and the <h1>/<p> preamble leads instead.
-  assert.ok(!digest.some((l) => /A local hive|Munder Difflin v/.test(l)));
+  assert.ok(!digest.some((l) => /A local hive|Atlas v/.test(l)));
   // The section has to END at the next <h2>, exactly as it does at `##`.
   assert.ok(!digest.some((l) => /Downloads|Apple silicon/.test(l)));
 });

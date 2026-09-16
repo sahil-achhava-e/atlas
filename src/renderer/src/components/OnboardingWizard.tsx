@@ -5,6 +5,7 @@ import { PixelButton } from './PixelButton';
 import { Icon, type IconName } from './Icon';
 import { SpritePortrait } from './SpritePortrait';
 import { AtlasMark } from './AtlasMark';
+import { stepsFor, nextStep, prevStep, type Audience, type Step } from '@/store/onboardingSteps';
 import { Dropdown } from './Dropdown';
 import { Switch } from './Switch';
 import { ProviderLogo } from './ProviderLogo';
@@ -21,31 +22,12 @@ export interface OnboardingWizardProps {
   onComplete: (config: HarnessConfig) => void;
 }
 
-type Audience = 'technical' | 'non-technical';
-type Step = 'persona' | 'welcome' | 'home' | 'orchestrator' | 'repos' | 'permissions' | 'away' | 'done';
 
 /** The setup's two nav buttons. The display face and a little tracking so a
  *  one-word label still reads as a control, not as a caption; the primary keeps
  *  a floor width so "Continue" and "Finish setup" do not resize the footer. */
 const NAV_LABEL = { fontFamily: 'var(--cth-font-ui)', fontWeight: 600 } as const;
 const NAV_PRIMARY = { ...NAV_LABEL, minWidth: 148 } as const;
-
-/** Every step the rail shows, in order. 'done' is the finish screen, not a step
- *  you sit on, so it is not in here.
- *
- *  This array is the ONLY place the order lives: next/prev walk it by index and
- *  the footer asks it which step is last. It used to be duplicated in three
- *  hand-written chains and two `step === 'permissions'` checks, so moving a step
- *  meant editing five places and the fifth was always a Finish button on the
- *  wrong screen.
- *
- *  Home sits last on purpose: the folder is the one answer that is easier to
- *  give once you know what is going into it. */
-// 'away' is its own step. What an agent may do on its own and what keeps the
-// machine awake are two different decisions; stacked on one screen, the second
-// half was never read.
-const STEP_ORDER: Step[] = ['persona', 'welcome', 'orchestrator', 'repos', 'permissions', 'away', 'home'];
-const LAST_STEP: Step = STEP_ORDER[STEP_ORDER.length - 1];
 
 // First-run showcase "— the highest-value features a brand-new user should grasp
 // before any setup. Labels and copy live in i18n (two registers: `desc` for the
@@ -131,26 +113,31 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const { t } = useTranslation();
   // Onboarding runs before god exists in the store, so read the persisted name.
   const godName = useResolvedGodName();
-  const [step, setStep] = useState<Step>('persona');
+  const [step, setStep] = useState<Step>('welcome');
+
+  // Self-identified audience. Undefined until the dialog below is answered; it
+  // decides both the copy register (`plain`) and which steps exist at all.
+  const [audience, setAudience] = useState<Audience | undefined>();
+  const plain = audience === 'non-technical';
+  const steps = stepsFor(audience ?? 'technical');
+  const lastStep = steps[steps.length - 1];
 
   // Setup names its step in the address bar (#/setup/repos), and back and
-  // forward walk the steps. Only a name in STEP_ORDER is honoured, so a typed
-  // hash cannot land you on a screen the wizard holds no state for.
+  // forward walk the steps. Only a name in THIS audience's list is honoured, so
+  // neither a typed hash nor a hash left over from the other audience's setup
+  // can land you on a screen this one does not have.
   useEffect(() => {
     const apply = (): void => {
       const r = parseRoute();
       const next = r?.screen === 'setup' ? r.step : undefined;
-      if (next && (STEP_ORDER as string[]).includes(next)) setStep(next as Step);
+      if (next && (steps as string[]).includes(next)) setStep(next as Step);
     };
     apply();
     window.addEventListener('hashchange', apply);
     return () => window.removeEventListener('hashchange', apply);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audience]);
   useEffect(() => { if (step !== 'done') go({ screen: 'setup', step }); }, [step]);
-  // Self-identified audience (item 1). Undefined until chosen on the first screen;
-  // the rest of the wizard reads `plain` to swap copy registers.
-  const [audience, setAudience] = useState<Audience | undefined>();
-  const plain = audience === 'non-technical';
 
   const [home, setHome] = useState<string>('');
   const [repos, setRepos] = useState<string[]>([]);
@@ -287,7 +274,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
       audience: audience ?? 'technical',
       harnessHome, // the same trimmed value we just mkdir'd, not the raw field
       registeredRepos: repos,
-      autoMode,
+      // Simple mode has no terminal to answer a permission prompt in, so it runs
+      // with autonomy on and the 'permissions' step is not in its list at all.
+      // Write what that mode needs, not the untouched default of a screen this
+      // audience never saw.
+      autoMode: plain ? true : autoMode,
       godProvider,
       godModel,
       telemetryEnabled: shareStats
@@ -297,15 +288,23 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   };
 
   const stepTitle =
-    step === 'persona' ? t('onboarding.titles.persona')
-    : step === 'welcome' ? t('onboarding.titles.welcome')
+    step === 'welcome' ? t('onboarding.titles.welcome')
     : step === 'home' ? (plain ? t('onboarding.titles.homePlain') : t('onboarding.titles.home'))
     : step === 'orchestrator' ? (plain ? t('onboarding.titles.orchestratorPlain') : t('onboarding.titles.orchestrator'))
     : step === 'repos' ? (plain ? t('onboarding.titles.reposPlain') : t('onboarding.titles.repos'))
     : step === 'permissions' ? t('onboarding.titles.permissions')
     : step === 'away' ? t('onboarding.titles.away')
     : t('onboarding.titles.done');
-  const stepIndex = Math.max(0, STEP_ORDER.indexOf(step));
+  const stepIndex = Math.max(0, steps.indexOf(step));
+
+  // THE QUESTION BEFORE THE SETUP. It is asked in its own dialog, on its own,
+  // because the answer decides which setup you get — a screen that changes the
+  // other screens does not belong in the rail beside them. Picking is the
+  // answer: one click, no Continue to hunt for, and Settings can change it
+  // afterwards, which is what the line under the cards says.
+  if (!audience) {
+    return <PersonaDialog onPick={(a) => { setAudience(a); setError(undefined); }} />;
+  }
 
   return (
     <div className="cth-ground" style={{
@@ -353,7 +352,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           <span style={{
             fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600,
             fontVariantNumeric: 'tabular-nums', color: 'var(--cth-ink-500)'
-          }}>{t('onboarding.setup.counter', { n: stepIndex + 1, total: STEP_ORDER.length })}</span>
+          }}>{t('onboarding.setup.counter', { n: stepIndex + 1, total: steps.length })}</span>
         </div>
 
         <div style={{ display: 'flex', minHeight: 0, flex: 1 }}>
@@ -368,7 +367,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             display: 'flex', flexDirection: 'column',
             position: 'relative'
           }}>
-            {STEP_ORDER.map((s, i) => (
+            {steps.map((s, i) => (
               <RailStep
                 key={s}
                 n={i + 1}
@@ -393,54 +392,6 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               padding: '16px 28px 24px', display: 'flex', flexDirection: 'column', gap: 18,
               overflowY: 'auto', flex: 1, minHeight: 0
             }}>
-
-            {step === 'persona' && (
-              <>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <div style={{
-                    width: 52, height: 52, flexShrink: 0,
-                    background: 'var(--cth-cream-100)',
-                    borderRadius: 'var(--cth-radius-card)',
-                    display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden'
-                  }}>
-                    <SpritePortrait character="michael" scale={2} />
-                  </div>
-                  <div>
-                    <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 16, lineHeight: '23px' }}>
-                      {t('onboarding.persona.headline')}
-                    </div>
-                    <div style={{ fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: '21px' }}>
-                      {t('onboarding.persona.body')}
-                      <span style={{ color: 'var(--cth-ink-500)' }}>{t('onboarding.persona.bodyLocal')}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, color: 'var(--cth-ink-900)' }}>
-                  {t('onboarding.persona.ask')}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <PersonaCard
-                    icon="code"
-                    tone="var(--cth-sky)"
-                    tint="var(--cth-sky-light)"
-                    title={t('onboarding.persona.technicalTitle')}
-                    desc={t('onboarding.persona.technicalDesc')}
-                    selected={audience === 'technical'}
-                    onClick={() => { setAudience('technical'); setError(undefined); }}
-                  />
-                  <PersonaCard
-                    icon="sparkle"
-                    tone="var(--cth-peach)"
-                    tint="var(--cth-peach-light)"
-                    title={t('onboarding.persona.nonTechnicalTitle')}
-                    desc={t('onboarding.persona.nonTechnicalDesc')}
-                    selected={audience === 'non-technical'}
-                    onClick={() => { setAudience('non-technical'); setError(undefined); }}
-                  />
-                </div>
-              </>
-            )}
 
             {step === 'welcome' && (
               <>
@@ -736,7 +687,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     </div>
                   </div>
                 )}
-                {!engineBlocked && (
+                {/* The model picker is hidden for a non-technical setup: it is a
+                    list of model ids, and `godModel` already holds the engine's
+                    recommended one. Nothing is chosen for them that they would
+                    have chosen differently — the marked option IS the default. */}
+                {!engineBlocked && !plain && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <FieldLabel>{t('onboarding.orchestrator.modelLabel')}</FieldLabel>
                   <Dropdown
@@ -1008,7 +963,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <div style={{
                   // The step you are ON counts as progress: a trough that reads empty on
                   // step 1 looks like a bar that failed to load, not like a start.
-                  width: `${((stepIndex + 1) / STEP_ORDER.length) * 100}%`, height: '100%',
+                  width: `${((stepIndex + 1) / steps.length) * 100}%`, height: '100%',
                   background: 'var(--cth-lilac)',
                   transition: 'width 160ms steps(6, end)'
                 }} />
@@ -1017,11 +972,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 {/* Two branches used to say this, one of them spelling out the
                     step it goes back to. prevStep already knows. */}
                 {stepIndex > 0 && (
-                  <PixelButton variant="secondary" size="lg" style={NAV_LABEL} onClick={() => setStep(prevStep(step))} disabled={busy}>
+                  <PixelButton variant="secondary" size="lg" style={NAV_LABEL} onClick={() => setStep(prevStep(steps, step))} disabled={busy}>
                     {t('common.back')}
                   </PixelButton>
                 )}
-                {step !== LAST_STEP && (
+                {step !== lastStep && (
                   <PixelButton
                     variant="primary"
                     size="lg"
@@ -1042,14 +997,14 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         return;
                       }
                       setError(undefined);
-                      setStep(nextStep(step));
+                      setStep(nextStep(steps, step));
                     }}
-                    disabled={(step === 'persona' && !audience) || (step === 'orchestrator' && engineBlocked)}
+                    disabled={step === 'orchestrator' && engineBlocked}
                   >
                     {step === 'welcome' ? t('onboarding.permissions.setItUp') : t('common.next')}
                   </PixelButton>
                 )}
-                {step === LAST_STEP && (
+                {step === lastStep && (
                   <PixelButton variant="primary" size="lg" style={NAV_PRIMARY} onClick={finish} disabled={busy}>
                     {busy ? t('common.saving') : t('common.finish')}
                   </PixelButton>
@@ -1231,13 +1186,106 @@ function RailStep({ n, label, state }: {
   );
 }
 
-function nextStep(s: Step): Step {
-  const i = STEP_ORDER.indexOf(s);
-  return i < 0 || i === STEP_ORDER.length - 1 ? 'done' : STEP_ORDER[i + 1];
-}
-function prevStep(s: Step): Step {
-  const i = STEP_ORDER.indexOf(s);
-  return i <= 0 ? STEP_ORDER[0] : STEP_ORDER[i - 1];
+/**
+ * The audience question, as its own dialog.
+ *
+ * Narrower than the wizard and with no rail, no counter and no Back: it is one
+ * question with two answers, and dressing it as step 1 of 7 made the setup look
+ * longer than it is while the rail counted a screen that decides the rest.
+ *
+ * Clicking a card IS the answer — there is no second confirm, because there is
+ * nothing to review and the choice is reversible in Settings later, which the
+ * line under the cards says out loud.
+ */
+function PersonaDialog({ onPick }: { onPick: (audience: Audience) => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="cth-ground" style={{
+      position: 'fixed', inset: 0,
+      display: 'flex', overflowY: 'auto',
+      zIndex: 200, padding: 32
+    }}>
+      {/* Same auto-margin centering as the wizard: centered while it fits,
+          scrollable the moment it does not. */}
+      <div style={{
+        width: 560, maxWidth: '94vw', margin: 'auto',
+        display: 'flex', flexDirection: 'column',
+        background: 'var(--cth-cream-50)',
+        boxShadow: `inset 0 0 0 1px var(--cth-ink-100),
+                    0 1px 2px rgba(17, 20, 24, 0.06),
+                    0 24px 60px -12px rgba(17, 20, 24, 0.28)`,
+        borderRadius: 'var(--cth-radius-card)'
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0,
+          padding: '16px 20px',
+          background: 'var(--cth-cream-100)',
+          boxShadow: 'inset 0 -1px 0 var(--cth-ink-100)'
+        }}>
+          <AtlasMark size={30} />
+          <span style={{
+            fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 15,
+            letterSpacing: '-0.2px', color: 'var(--cth-ink-900)'
+          }}>{t('onboarding.setup.name')}</span>
+        </div>
+
+        <div style={{ padding: '22px 28px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <h2 style={{
+            margin: 0,
+            fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 19,
+            lineHeight: '26px', letterSpacing: '-0.3px', color: 'var(--cth-ink-900)'
+          }}>{t('onboarding.titles.persona')}</h2>
+
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <div style={{
+              width: 52, height: 52, flexShrink: 0,
+              background: 'var(--cth-cream-100)',
+              borderRadius: 'var(--cth-radius-card)',
+              display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden'
+            }}>
+              <SpritePortrait character="michael" scale={2} />
+            </div>
+            <div>
+              <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 16, lineHeight: '23px' }}>
+                {t('onboarding.persona.headline')}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: '21px' }}>
+                {t('onboarding.persona.body')}
+                <span style={{ color: 'var(--cth-ink-500)' }}>{t('onboarding.persona.bodyLocal')}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13, color: 'var(--cth-ink-900)' }}>
+            {t('onboarding.persona.ask')}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <PersonaCard
+              icon="code"
+              tone="var(--cth-sky)"
+              tint="var(--cth-sky-light)"
+              title={t('onboarding.persona.technicalTitle')}
+              desc={t('onboarding.persona.technicalDesc')}
+              selected={false}
+              onClick={() => onPick('technical')}
+            />
+            <PersonaCard
+              icon="sparkle"
+              tone="var(--cth-peach)"
+              tint="var(--cth-peach-light)"
+              title={t('onboarding.persona.nonTechnicalTitle')}
+              desc={t('onboarding.persona.nonTechnicalDesc')}
+              selected={false}
+              onClick={() => onPick('non-technical')}
+            />
+          </div>
+          <div style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
+            {t('onboarding.persona.later')}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // Edge and focus ring come from `.cth-input` — the elements below carry the

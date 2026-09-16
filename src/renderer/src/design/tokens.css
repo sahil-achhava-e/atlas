@@ -163,6 +163,13 @@
      boxed every surface in thick chrome; structure now comes from surface
      contrast, not outlines. Dialogs keep one slightly stronger line. */
   --cth-panel-border:          inset 0 0 0 1px var(--cth-ink-300);
+  /* The outer edge of the two big raised surfaces — the console panel and the
+     office floor. In light mode the elevation does the work: a near-black
+     hairline at 6% plus the diffuse shadows under it read as a card lifted off
+     the page. On a dark ground BOTH are invisible, black on black, so the panel
+     dissolved into the floor behind it and the app read as one slab. The dark
+     value draws the edge instead, in the token documented for borders. */
+  --cth-surface-edge:          0 0 0 1px rgba(17, 20, 24, 0.06);
   /* Text that sits ON an accent fill (a primary button, a filled chip). The
      accents are saturated fills in BOTH themes, so this is white in both —
      ink-900 would invert with the theme and go near-black on lilac. */
@@ -253,6 +260,9 @@
      FOREGROUND flips instead: near-black here is 5.23:1. */
   --cth-on-accent: #111418;
   --cth-panel-gloss: rgba(255, 255, 255, 0.05);
+  /* See the light value: the shadows that separate these surfaces from what is
+     behind them do not exist on a dark ground, so the edge is drawn, not implied. */
+  --cth-surface-edge: 0 0 0 1px var(--cth-ink-300);
   /* Brand accent, one step along for hover. On dark that step goes UP. */
   --cth-lilac-hover: #A492FF;
 

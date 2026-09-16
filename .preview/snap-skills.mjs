@@ -26,7 +26,7 @@ const scan = (dir, scope) => {
   return out;
 };
 
-const cfgPath = join(homedir(), 'Library/Application Support/munder-difflin/config.json');
+const cfgPath = join(homedir(), 'Library/Application Support/atlas/config.json');
 const repos = existsSync(cfgPath) ? (JSON.parse(readFileSync(cfgPath, 'utf8')).registeredRepos ?? []) : [];
 const cwds = [...new Set([...repos, process.cwd(), join(homedir(), 'Desktop/epicxp-events')])];
 

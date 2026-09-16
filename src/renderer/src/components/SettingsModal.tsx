@@ -198,18 +198,42 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
     setKeepAwake(next);
     stage({ strongKeepalive: next } as Partial<HarnessConfig>);
   };
-  const [simpleMode, setSimpleMode] = useState<boolean>(cfgX.audience === 'non-technical');
-  const toggleSimpleMode = async () => {
-    const next = !simpleMode;
-    setSimpleMode(next);
-    stage({ audience: next ? 'non-technical' : 'technical' } as Partial<HarnessConfig>);
-  };
   const [autoModeOn, setAutoModeOn] = useState<boolean>(cfgX.autoMode !== false);
   const toggleAutoMode = async () => {
     const next = !autoModeOn;
     setAutoModeOn(next);
     stage({ autoMode: next } as Partial<HarnessConfig>);
   };
+  const [simpleMode, setSimpleMode] = useState<boolean>(cfgX.audience === 'non-technical');
+  const toggleSimpleMode = async () => {
+    const next = !simpleMode;
+    setSimpleMode(next);
+    // Turning the mode ON also turns autonomy on, and the switch for it is in the
+    // section this mode hides. That is not a liberty: a permission prompt is
+    // answered by typing into the agent's terminal, and simple mode folds the
+    // terminal away — leave autonomy off and the first prompt parks the agent
+    // forever behind a question the user cannot see. The mode's own description
+    // says this happens. Turning it OFF leaves autonomy where it is: the setting
+    // is visible again, so it is theirs to change.
+    stage(next
+      ? { audience: 'non-technical', autoMode: true } as Partial<HarnessConfig>
+      // Put autonomy back to whatever the (now visible again) switch shows, so
+      // flipping this mode on and off before saving does not leave the forced
+      // `true` staged behind.
+      : { audience: 'technical', autoMode: autoModeOn } as Partial<HarnessConfig>);
+  };
+  // SIMPLE MODE — "Agents & Models" is model ids, max turns, autonomy and
+  // who-may-hire: four settings that need you to know what an agent costs and
+  // what a tool call is. General keeps the switch that turns this mode back off,
+  // so the door out is never hidden. Reads the STAGED value above, not the store
+  // mirror, so the nav answers the switch immediately rather than on save.
+  // Connections is a Slack signing secret, a bot token, a channel id and a port;
+  // Voice is two API keys and is inert without one. Both are setup work for
+  // someone who has an editor open, and neither can be completed from here by
+  // the person this mode is for. General keeps the switch back out.
+  const SIMPLE_NAV: Section[] = ['General'];
+  const navSections = simpleMode ? NAV_SECTIONS.filter((x) => SIMPLE_NAV.includes(x)) : NAV_SECTIONS;
+  const section = navSections.includes(activeSection) ? activeSection : 'General';
   // Default OFF, so an absent value must read as off. Note this is `=== true`,
   // the mirror image of autoMode's `!== false` above, because the two defaults
   // are opposite.
@@ -293,6 +317,11 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
           : [...missions, { ...COMPACT_MAINTENANCE_MISSION, enabled: autoCompactPending }];
       }
       await window.cth.updateConfig(patch);
+      // Mirror the mode for the surfaces that hide in it (sidebar, panel, this
+      // dialog's own nav). Same contract as the theme mirror App sets on load.
+      if (typeof patch.audience === 'string') {
+        useStore.getState().setSimpleMode(patch.audience === 'non-technical');
+      }
       setPending({});
       setAutoCompactPending(null);
       setSaveNote(t('settings.saved'));
@@ -600,13 +629,13 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                   padding: 12,
                   background: 'var(--cth-cream-100)'
                 }}>
-                  {NAV_SECTIONS.map((section) => {
-                    const active = activeSection === section;
+                  {navSections.map((navSection) => {
+                    const active = section === navSection;
                     return (
                       <button
-                        key={section}
+                        key={navSection}
                         type="button"
-                        onClick={() => setActiveSection(section)}
+                        onClick={() => setActiveSection(navSection)}
                         style={{
                           display: 'block', width: '100%', textAlign: 'left',
                           padding: '9px 12px', border: 'none',
@@ -620,7 +649,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           transition: 'background 120ms ease, color 120ms ease'
                         }}
                       >
-                        {t(NAV_SECTION_KEYS[section])}
+                        {t(NAV_SECTION_KEYS[navSection])}
                       </button>
                     );
                   })}
@@ -636,7 +665,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                 }}>
 
                   {/* GENERAL */}
-                  {activeSection === 'General' && (
+                  {section === 'General' && (
                     <>
                       {/* The hero card is gone: it advertised the upstream
                           project's paid plan, its Discord and its founders'
@@ -644,7 +673,11 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           opens on the question people actually came to answer. */}
                       {/* No Updates block: the updater reads the upstream
                           project's releases, which are not this fork's. */}
-                      {/* Home folder */}
+                      {/* Home folder. Hidden in simple mode: an absolute path in
+                          a mono face, and a Change that moves the app's own
+                          storage. Setup already says of this folder, in the
+                          plain register, "nothing you need to open". */}
+                      {!simpleMode && (
                       <div style={groupCard}>
                         <div style={sectionHead}>
                           {t('settings.general.homeFolder')}
@@ -657,6 +690,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           <PixelButton variant="secondary" size="sm" onClick={pickNewHome}>{t('settings.change')}</PixelButton>
                         </div>
                       </div>
+                      )}
 
 
                       {/* Environment — settings that used to be trapped in onboarding */}
@@ -728,7 +762,13 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                       </div>
 
 
-                      {/* Scheduled auto-compact (compact-maintenance mission) */}
+                      {/* Scheduled auto-compact (compact-maintenance mission).
+                          Hidden in simple mode: the row is about queueing
+                          /compact so an agent's context window does not
+                          overflow, and it sends you to the Triggers tab for the
+                          interval — a tab that mode does not have. It stays off
+                          by default either way. */}
+                      {!simpleMode && (
                       <div style={groupCard}>
                         <div style={sectionHead}>
                           {t('settings.general.maintenance')}
@@ -749,6 +789,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             either — this build ships without an analytics key,
                             so the switch governed nothing. */}
                       </div>
+                      )}
 
                       {/* No office-theme picker: four of its six themes were
                           never built, and the floor is being redesigned. */}
@@ -761,7 +802,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                       which was the wrong home: it is machine-wide state, not
                       something about the agent whose terminal you are reading. */}
 
-                  {activeSection === 'Agents & Models' && (
+                  {section === 'Agents & Models' && (
                     <>
                       {/* The engine and prerequisite checks used to be their own
                           Prerequisites tab. They belong beside the model settings:
@@ -847,7 +888,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                   )}
 
                   {/* CONNECTIONS — the MCP servers every new agent is given */}
-                  {activeSection === 'Connections' && (
+                  {section === 'Connections' && (
                     <>
                       <McpDefaultsSettings config={config} />
                     </>
@@ -860,7 +901,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                       exist, and its copy still named the upstream project. */}
 
                   {/* VOICE — Free Flow dictation + Realtime Michael (v0.3.4: its own tab) */}
-                  {activeSection === 'Voice' && (
+                  {section === 'Voice' && (
                     <>
                       {/* No Free Flow: dictation went through Groq Whisper and
                           needed its own key for something macOS Dictation does
@@ -973,7 +1014,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                   )}
 
                   {/* Danger — a red row at the bottom of General (was its own tab) */}
-                  {activeSection === 'General' && (
+                  {section === 'General' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                       <div style={{
                         fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '14px',

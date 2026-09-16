@@ -196,10 +196,13 @@ test('a face must be CHOSEN — there is no automatic one', () => {
   assert.doesNotMatch(MODAL, /freeLibraryIdFor|libraryIdFor/,
     'the hire path resolves a face for you again');
   assert.match(MODAL, /if \(!effectiveCharacter\) \{ setError/, 'Hire does not refuse an unchosen face');
-  // Next is gated on identityReady, and so is the rail — the rail was the way
-  // round it.
-  assert.match(MODAL, /disabled=\{s\.key !== 'identity' && !identityReady\}/,
+  // Next is gated on the step's readiness, and so is the rail — the rail was the
+  // way round it. Both now go through canOpenSection (see add-agent-gate.test),
+  // and identity is what the first entry of that table holds.
+  assert.match(MODAL, /disabled=\{!canOpen\(s\.key\)\}/,
     'the section rail lets you jump past choosing a face');
+  assert.match(MODAL, /identity: identityReady,/,
+    'the readiness table stopped asking whether a face was chosen');
 });
 
 test('editing an agent cannot change its face at all', () => {

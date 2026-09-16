@@ -42,6 +42,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
    *  routes and every string that says "Atlas" follow it. */
   const fixedIdentity = !!agent.isGod;
   const updateAgent = useStore((s) => s.updateAgent);
+  const simpleMode = useStore((s) => s.simpleMode);
   const [config, setConfig] = useState<HarnessConfig | null>(null);
 
   const [name, setName] = useState(agent.name);
@@ -272,7 +273,13 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
             </div>
 
             {/* Engine spans the dialog: nine model pills in a half-width column
-                wrapped into four ragged rows. */}
+                wrapped into four ragged rows.
+
+                Gone in simple mode, like the same step in Add agent: a provider
+                and a model id are the workspace's answers, given once at setup.
+                The agent keeps whatever it was given — nothing here is cleared,
+                it is only not asked about. */}
+            {!simpleMode && (
             <Section label="Engine" hint="Model, on next restart">
               {/* One engine per workspace: the row states which, it does not
                   offer a choice. Re-pointing a single agent at a CLI this
@@ -353,6 +360,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                 >{t('editAgent.openTeam', { tab: t('commandCenter.tabs.floor') })}</button>
               </span>
             </Section>
+            )}
 
 
             {/* The footer is a floor, not another row: a rule above it and its
