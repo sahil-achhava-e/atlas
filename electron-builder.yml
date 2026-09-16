@@ -3,9 +3,9 @@ productName: Atlas
 copyright: Copyright © 2026 Chaitanya Giri
 
 # Where electron-updater looks for new versions (latest*.yml + assets on GitHub
-# releases). The release workflow still uploads assets itself (--publish never);
-# this block only stamps app-update.yml into the packaged app so the updater
-# knows which repo to poll.
+# releases). Releases are built and uploaded by hand — there is no CI. This block
+# only stamps app-update.yml into the packaged app so the updater knows which repo
+# to poll.
 publish:
   provider: github
   owner: sahilethara
@@ -27,7 +27,8 @@ publish:
 # client on every old version already reads.
 #
 # Keep this file short and free of HTML. It is sized for a 340px toast (5
-# bullets, 280 chars total), NOT for the release page, which stays RELEASE.md.
+# bullets, 280 chars total), not for the GitHub release page. Because the notes
+# ride in latest*.yml, the toast is right even when the release body is empty.
 releaseInfo:
   releaseNotesFile: build/release-notes.md
 

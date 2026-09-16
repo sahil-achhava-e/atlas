@@ -36,22 +36,24 @@ npm run dist:mac
 Keep these out of git — `.env.signing`, `*.p12`, and `*.p8` are gitignored.
 Source them from a local `.env.signing` if you like.
 
-## CI (tagged release) setup
+## Publishing a signed release
 
-`.github/workflows/release.yml` reads the secrets below and passes them to
-electron-builder on the macOS runner. Add them under **Settings → Secrets and
-variables → Actions** (all optional; omit them to keep releases unsigned):
+There is no CI in this repo. Build on a machine where `electron-builder` can run,
+with the credentials above in the environment:
 
-| GitHub secret                  | Value                                              |
-| ------------------------------ | -------------------------------------------------- |
-| `APPLE_CERTIFICATE_P12`        | `base64 -i DeveloperIDApplication.p12` (one line)  |
-| `APPLE_CERTIFICATE_PASSWORD`   | the .p12 export password                           |
-| `APPLE_ID`                     | your Apple ID email                                |
-| `APPLE_APP_SPECIFIC_PASSWORD`  | the app-specific password from above               |
-| `APPLE_TEAM_ID`                | your 10-char Team ID                               |
+```sh
+export CSC_LINK=/absolute/path/DeveloperIDApplication.p12
+export CSC_KEY_PASSWORD=...
+export APPLE_ID=... APPLE_APP_SPECIFIC_PASSWORD=... APPLE_TEAM_ID=...
+npm run dist:mac
+```
 
-Then push a `v*` tag as usual; the produced `.dmg` will be signed, notarized,
-and stapled.
+`build/notarize.cjs` runs after signing and no-ops when the `APPLE_*` variables are
+absent, so a build without credentials still succeeds — unsigned.
+
+Then create the GitHub release and upload the installers **plus `latest*.yml` and the
+`.blockmap` files**. Those channel files are what electron-updater polls; without
+them an existing install never sees the update.
 
 ## Verify a build is properly signed
 

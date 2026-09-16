@@ -129,10 +129,17 @@ Needs Node 18+, a C/C++ toolchain for `node-pty`, and at least one agent CLI on
 
 **Packaging does not run on a ThreatLocker machine.** `electron-builder` shells out
 to `app-builder`, a downloaded binary, and it is killed on launch (exit 137). The
-same policy kills Electron itself, so `npm run dev` does not run either. Build on CI
-instead, which is where signing and notarization want to live anyway. Without a
-Developer ID certificate the output is unsigned, and an unsigned app will not open on
-a managed Mac.
+same policy kills Electron itself, so `npm run dev` does not run either. Releases are
+built on an unmanaged Mac, by hand — there is no CI in this repo. Without a Developer
+ID certificate the output is unsigned, and an unsigned app will not open on a managed
+Mac.
+
+Publishing a release is three steps: bump `version` in `package.json`, run
+`npm run dist:mac` (and `dist:win` / `dist:linux` where you can), then upload the
+installers **together with `latest*.yml` and the `.blockmap` files** to a GitHub
+release on `sahilethara/atlas`. The updater reads those channel files, not the
+release body — the toast's "what's new" comes from `build/release-notes.md`, baked
+into `latest*.yml` at package time.
 
 ## Previewing the UI without Electron
 

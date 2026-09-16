@@ -5,11 +5,9 @@
 
 * @sahilethara
 
-# Release, signing and CI plumbing. Breaking these breaks shipping for everyone.
-/.github/workflows/    @sahilethara
+# Release and signing plumbing. Breaking these breaks shipping.
 /electron-builder.yml  @sahilethara
-/RELEASE.md            @sahilethara
-/RELEASE-CHECKLIST.md  @sahilethara
+/build/                @sahilethara
 
 # Licensing and attribution. Changes here have legal weight.
 /LICENSE                                  @sahilethara
@@ -17,5 +15,4 @@
 /src/renderer/src/assets/ATTRIBUTION.md    @sahilethara
 
 # Security and privacy surface.
-/SECURITY.md   @sahilethara
 /TELEMETRY.md  @sahilethara

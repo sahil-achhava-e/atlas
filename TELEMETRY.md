@@ -98,9 +98,10 @@ Any one of these fully disables telemetry:
    anonymous usage stats" during onboarding). Takes effect immediately.
 2. Set the standard [`DO_NOT_TRACK`](https://consoledonottrack.com)
    environment variable (any value other than `0`). Respected unconditionally.
-3. **Build from source.** The PostHog key is injected only in official release
-   CI; a local or forked build compiles without one and the analytics module
-   is a no-op — forks never send events anywhere.
+3. **Build from source.** The PostHog key is injected from the `POSTHOG_KEY`
+   env var at build time, and nothing in this repo sets it — every build here
+   compiles without one, so the analytics module is a no-op and no event is
+   ever sent.
 
 ## Self-hosting note
 
