@@ -6,9 +6,15 @@
 // keychain + the env vars below, the produced .app/.dmg is signed, notarized,
 // and stapled, so end users get a single one-time macOS access prompt.
 //
-// Credentials (set whichever pair you use):
+// Credentials (set whichever ONE you use):
+//   Keychain profile:       APPLE_KEYCHAIN_PROFILE  (from `xcrun notarytool store-credentials`)
 //   App-specific password:  APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID
 //   App Store Connect key:  APPLE_API_KEY (path to .p8), APPLE_API_KEY_ID, APPLE_API_ISSUER
+//
+// The profile is first because it is the only one that keeps the secret OUT of the
+// build environment: notarytool stores it in the keychain once, and every build
+// after that names it. An env var holding an app-specific password ends up in
+// shell history, `ps`, and any CI log that echoes its environment.
 const { execFileSync } = require('node:child_process');
 const path = require('node:path');
 
@@ -17,13 +23,15 @@ exports.default = async function notarizing(context) {
   if (electronPlatformName !== 'darwin') return; // mac only
 
   const {
+    APPLE_KEYCHAIN_PROFILE,
     APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID,
     APPLE_API_KEY, APPLE_API_KEY_ID, APPLE_API_ISSUER
   } = process.env;
 
+  const hasProfile = !!APPLE_KEYCHAIN_PROFILE;
   const hasPassword = !!(APPLE_ID && APPLE_APP_SPECIFIC_PASSWORD && APPLE_TEAM_ID);
   const hasApiKey = !!(APPLE_API_KEY && APPLE_API_KEY_ID && APPLE_API_ISSUER);
-  if (!hasPassword && !hasApiKey) {
+  if (!hasProfile && !hasPassword && !hasApiKey) {
     console.log('[notarize] no APPLE_* credentials in env — skipping notarization (build stays unsigned).');
     return;
   }
@@ -39,9 +47,11 @@ exports.default = async function notarizing(context) {
   const appName = context.packager.appInfo.productFilename;
   const appPath = path.join(appOutDir, `${appName}.app`);
 
-  const creds = hasApiKey
-    ? { appleApiKey: APPLE_API_KEY, appleApiKeyId: APPLE_API_KEY_ID, appleApiIssuer: APPLE_API_ISSUER }
-    : { appleId: APPLE_ID, appleIdPassword: APPLE_APP_SPECIFIC_PASSWORD, teamId: APPLE_TEAM_ID };
+  const creds = hasProfile
+    ? { keychainProfile: APPLE_KEYCHAIN_PROFILE }
+    : hasApiKey
+      ? { appleApiKey: APPLE_API_KEY, appleApiKeyId: APPLE_API_KEY_ID, appleApiIssuer: APPLE_API_ISSUER }
+      : { appleId: APPLE_ID, appleIdPassword: APPLE_APP_SPECIFIC_PASSWORD, teamId: APPLE_TEAM_ID };
 
   console.log(`[notarize] submitting ${appName}.app to Apple via notarytool (this can take a few minutes)…`);
   try {
@@ -59,7 +69,7 @@ exports.default = async function notarizing(context) {
     // once the credentials are valid, the next release notarizes with no code change.
     // Un-notarized = users may need a one-time right-click → Open on first launch.
     console.warn('[notarize] ⚠️  NOTARIZATION FAILED — shipping a signed-but-unnotarized build.');
-    console.warn('[notarize] Fix the APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID secrets to enable it.');
+    console.warn('[notarize] Check APPLE_KEYCHAIN_PROFILE (or the APPLE_ID / APPLE_API_KEY credentials) to enable it.');
     console.warn(`[notarize] notarytool said:\n${err && err.message ? err.message : err}`);
   }
 };

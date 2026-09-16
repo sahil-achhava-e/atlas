@@ -22,16 +22,41 @@ only need the steps below to ship a *signed* release.
 
 ## Local signed build
 
+With the certificate already in your login keychain (the normal case — you made
+the CSR on this Mac and double-clicked the `.cer`), electron-builder finds the
+identity on its own. Store the notarization credentials in the keychain once:
+
 ```sh
-# Export the cert from Keychain Access → My Certificates → "Developer ID
-# Application: …" → right-click → Export → .p12 (set an export password).
-export CSC_LINK="$(base64 -i DeveloperIDApplication.p12)"   # or a file path
-export CSC_KEY_PASSWORD="<the .p12 export password>"
-export APPLE_ID="you@example.com"
-export APPLE_APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
-export APPLE_TEAM_ID="XXXXXXXXXX"
+xcrun notarytool store-credentials atlas-notarize \
+  --apple-id "you@example.com" --team-id "XXXXXXXXXX"      # prompts for the password
+```
+
+then every build is two lines with no secret in the environment:
+
+```sh
+export APPLE_KEYCHAIN_PROFILE=atlas-notarize
 npm run dist:mac
 ```
+
+On a machine where the certificate is NOT in the keychain (a fresh build box),
+point electron-builder at the exported `.p12` instead:
+
+```sh
+export CSC_LINK="/absolute/path/DeveloperIDApplication.p12"  # or base64 of it
+export CSC_KEY_PASSWORD="<the .p12 export password>"
+```
+
+`notarize.cjs` takes whichever ONE of these it finds, in this order:
+
+| Credential | Variables |
+| --- | --- |
+| Keychain profile (preferred) | `APPLE_KEYCHAIN_PROFILE` |
+| App-specific password | `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID` |
+| App Store Connect key | `APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER` |
+
+The app-specific password route needs your Apple ID to be a member of the team;
+the API key does not, which is what makes it the right one for a certificate
+borrowed from someone else's account.
 
 Keep these out of git — `.env.signing`, `*.p12`, and `*.p8` are gitignored.
 Source them from a local `.env.signing` if you like.
@@ -44,7 +69,7 @@ with the credentials above in the environment:
 ```sh
 export CSC_LINK=/absolute/path/DeveloperIDApplication.p12
 export CSC_KEY_PASSWORD=...
-export APPLE_ID=... APPLE_APP_SPECIFIC_PASSWORD=... APPLE_TEAM_ID=...
+export APPLE_KEYCHAIN_PROFILE=atlas-notarize   # or the APPLE_ID / APPLE_API_KEY trio
 npm run dist:mac
 ```
 
