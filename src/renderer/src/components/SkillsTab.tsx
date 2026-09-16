@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PixelButton } from './PixelButton';
 import type { LocalSkill } from '../../../preload';
+import { useNativeDialog } from '@/hooks/useNativeDialog';
 
 
 /** A switch, not a checkbox: it flips a thing that is already running rather
@@ -73,7 +74,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
 
   /** Add a skill you already have on disk. A skill runs inside an agent holding
    *  your keys, so the only route in is a folder you chose and can read. */
-  const addSkill = async () => {
+  const [addSkillPending, addSkill] = useNativeDialog(async () => {
     setAddNote('');
     const picked = await window.cth.chooseFolder();
     const dir = Array.isArray(picked) ? picked[0] : picked;
@@ -86,7 +87,7 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
     } catch (e) {
       setAddNote(e instanceof Error ? e.message : String(e));
     } finally { setAdding(false); }
-  };
+  });
 
   const [query, setQuery] = useState('');
   const [local, setLocal] = useState<LocalSkill[] | null>(null);
@@ -233,11 +234,11 @@ export function SkillsTab({ agentCwd }: { agentCwd?: string }) {
           {pane === 'yours' && (
             <button
               onClick={() => void addSkill()}
-              disabled={adding}
+              disabled={adding || addSkillPending}
               style={{
                 height: 30, padding: '0 14px', flexShrink: 0, border: 'none',
                 display: 'inline-flex', alignItems: 'center', gap: 6,
-                cursor: adding ? 'default' : 'pointer', opacity: adding ? 0.6 : 1,
+                cursor: adding || addSkillPending ? 'default' : 'pointer', opacity: adding || addSkillPending ? 0.6 : 1,
                 fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
                 color: 'var(--cth-on-accent)', background: 'var(--cth-lilac)',
                 borderRadius: 'var(--cth-radius-btn)', boxShadow: 'var(--cth-shadow-sm)'

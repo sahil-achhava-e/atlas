@@ -32,6 +32,7 @@ import {
   isClaudeProvider
 } from '@/store/config';
 import { useRtl } from '@/i18n/useDirection';
+import { useNativeDialog } from '@/hooks/useNativeDialog';
 
 // Twelve, in hue order, so the row reads as a spectrum rather than a bag of
 // colours. Six was not enough to tell a dozen agents apart on the floor.
@@ -357,12 +358,12 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   };
 
   /** Pick a brand-new folder and register it as a project in one step. */
-  const addProject = async () => {
+  const [addingProject, addProject] = useNativeDialog(async () => {
     setError(undefined);
     const res = await window.cth.chooseFolder();
     if (res.ok) await registerProject(res.path);
     else if (res.error !== 'cancelled') setError(res.error);
-  };
+  });
 
   /** Apply an imported manifest to every form field (file import path). The
    *  command is rebuilt locally from the provider preset + validated flags — a
@@ -864,6 +865,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                           variant="secondary"
                           size="sm"
                           onClick={() => { void addProject(); }}
+                          disabled={addingProject}
                           title={tr('addAgent.addProjectTitle')}
                         >
                           <Icon name="folder" /> {tr('addAgent.addProject')}

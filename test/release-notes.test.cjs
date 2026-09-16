@@ -213,12 +213,11 @@ test('code fences, comments and quoted callouts are handled', () => {
   for (const line of digest) assert.doesNotMatch(line, /npm install/);
 });
 
-// The realism check against this fork's own RELEASE.md is gone with the file:
-// bb519aa dropped the upstream docs, and the Updates UI went with it because the
-// updater reads the upstream project's releases. The fixtures above still cover
-// the digest itself, which UpdateToast uses. NOTE: .github/workflows/release.yml
-// still points body_path at RELEASE.md, so a release run would fail on the
-// missing file — that is the fork owner's call, not a test's.
+// The realism check against a real RELEASE.md is gone with the file: bb519aa
+// dropped the upstream docs. The fixtures above still cover the digest itself,
+// which UpdateToast uses. Nothing here reads a release body at package time
+// either — electron-builder bakes build/release-notes.md into latest*.yml via
+// `releaseInfo`, so the toast is right even when the GitHub release body is empty.
 
 test('options are honoured so a roomier surface can ask for more', () => {
   const body = `## Changes\n${Array.from({ length: 10 }, (_, i) => `- Change ${i}`).join('\n')}`;

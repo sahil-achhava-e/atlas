@@ -25,6 +25,7 @@ import { REALTIME_MODEL } from '@shared/realtimePricing';
 import { RealtimeDevicePicker } from '@/realtime/DevicePicker';
 import { isComposingKey } from '@shared/imeGuard';
 import { LANGUAGES, setLanguage } from '@/i18n';
+import { useNativeDialog } from '@/hooks/useNativeDialog';
 
 export interface SettingsModalProps {
   config: HarnessConfig;
@@ -436,13 +437,13 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
 
   // --- Change home folder ---
   /** Pick a new folder, then open the move-vs-fresh sub-modal. */
-  const pickNewHome = async () => {
+  const [pickingHome, pickNewHome] = useNativeDialog(async () => {
     setChangeErr('');
     const res = await window.cth.chooseFolder();
     if (!res.ok) return; // cancelled - no-op
     setChangeMode('move'); // recommended default
     setChangeHome(res.path);
-  };
+  });
 
   /** Apply the home-folder change. On success the app relaunches (never resolves);
    *  on failure we surface the error and the existing home keeps running. */
@@ -687,7 +688,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             flex: 1, color: 'var(--cth-ink-900)', wordBreak: 'break-all',
                             fontFamily: 'var(--cth-font-mono, monospace)'
                           }}>{config.harnessHome ?? '—'}</span>
-                          <PixelButton variant="secondary" size="sm" onClick={pickNewHome}>{t('settings.change')}</PixelButton>
+                          <PixelButton variant="secondary" size="sm" onClick={pickNewHome} disabled={pickingHome}>{t('settings.change')}</PixelButton>
                         </div>
                       </div>
                       )}

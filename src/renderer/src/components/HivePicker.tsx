@@ -4,6 +4,7 @@ import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { Icon } from './Icon';
 import type { HarnessConfig } from '@/store/config';
+import { useNativeDialog } from '@/hooks/useNativeDialog';
 
 export interface HivePickerProps {
   config: HarnessConfig;
@@ -64,12 +65,12 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
     }
   };
 
-  const browse = async () => {
+  const [browsing, browse] = useNativeDialog(async () => {
     setError(undefined);
     const res = await window.cth.chooseFolder();
     if (res.ok) void openHive(res.path);
     else if (res.error !== 'cancelled') setError(res.error);
-  };
+  });
 
   return (
     <div className="cth-ground" style={{
@@ -178,12 +179,12 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             {/* OPEN / CREATE — both browse to a folder; "fresh" mode re-points at it
                 (bootstrapping an empty one, or reusing existing hive data in place). */}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              <PixelButton variant="secondary" size="md" onClick={browse} disabled={!!busy}>
+              <PixelButton variant="secondary" size="md" onClick={browse} disabled={!!busy || browsing}>
                 <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                   <Icon name="folder" /> {t('hivePicker.openAnother')}
                 </span>
               </PixelButton>
-              <PixelButton variant="secondary" size="md" onClick={browse} disabled={!!busy}>
+              <PixelButton variant="secondary" size="md" onClick={browse} disabled={!!busy || browsing}>
                 <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                   <Icon name="plus" /> {t('hivePicker.newWorkspace')}
                 </span>

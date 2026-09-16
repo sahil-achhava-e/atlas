@@ -12,6 +12,7 @@ import { useTerminalFontSize } from './terminalFontSize';
 import { isComposingKey } from '@shared/imeGuard';
 import { useRtl } from '@/i18n/useDirection';
 import { isInboxNudge, inboxNudgeIds } from '@shared/hiveNudge';
+import { useNativeDialog } from '@/hooks/useNativeDialog';
 
 const EMPTY_QUEUE: QueuedMessage[] = [];
 
@@ -77,7 +78,13 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
     setAttachments((prev) => prev.filter((a) => a.path !== path));
 
   // '+' button → OS picker (images group + all files).
-  const pickFiles = async () => {
+  //
+  // The native dialog takes a beat to appear, and a button that looks untouched
+  // for that beat reads as a click that missed — so people click it again, which
+  // is how you end up with two dialogs queued behind each other. Hold the pressed
+  // state until the picker closes: the button answers immediately, and the second
+  // click cannot land.
+  const [picking, pickFiles] = useNativeDialog(async () => {
     try {
       const res = await window.cth.attachFiles();
       if (res.ok) { setAttachError(null); addAttachments(res.files); }
@@ -85,7 +92,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
     } catch (e) {
       setAttachError(e instanceof Error ? e.message : String(e));
     }
-  };
+  });
 
   // Drop files onto the composer → resolve each to its absolute path.
   const onDrop = (e: DragEvent<HTMLDivElement>) => {
@@ -398,14 +405,18 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
           </span>
           <button
             onClick={pickFiles}
+            disabled={picking}
             aria-label={t('queueComposer.files')}
+            aria-busy={picking}
             className="cth-iconbar"
             data-label={t('queueComposer.files')}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 30, height: 30, padding: 0, border: 'none', cursor: 'pointer', flexShrink: 0,
+              width: 30, height: 30, padding: 0, border: 'none',
+              cursor: picking ? 'default' : 'pointer', flexShrink: 0,
               borderRadius: 'var(--cth-radius-btn)',
-              background: 'transparent', color: 'var(--cth-mint-text)',
+              background: picking ? 'var(--cth-mint-light)' : 'transparent',
+              color: 'var(--cth-mint-text)',
               transition: 'background 120ms ease'
             }}
           ><Icon name="plus" /></button>

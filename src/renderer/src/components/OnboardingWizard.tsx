@@ -17,6 +17,7 @@ import {
 import type { ToolStatus } from '@shared/toolCatalog';
 import { useResolvedGodName } from '@/hooks/useResolvedGodName';
 import { go, parseRoute } from '@/routes';
+import { useNativeDialog } from '@/hooks/useNativeDialog';
 
 export interface OnboardingWizardProps {
   onComplete: (config: HarnessConfig) => void;
@@ -227,14 +228,14 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const pickHome = async () => {
+  const [pickingHome, pickHome] = useNativeDialog(async () => {
     setError(undefined);
     const res = await window.cth.chooseFolder();
     if (res.ok) setHome(res.path);
     else if (res.error !== 'cancelled') setError(res.error);
-  };
+  });
 
-  const pickRepo = async () => {
+  const [pickingRepo, pickRepo] = useNativeDialog(async () => {
     setError(undefined);
     // Multi-select: adding four projects used to mean opening the picker four
     // times. Dedupe against what is already listed, and against itself, so a
@@ -247,7 +248,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     } else if (res.error !== 'cancelled') {
       setError(res.error);
     }
-  };
+  });
 
   const removeRepo = (path: string) => setRepos(repos.filter(r => r !== path));
 
@@ -468,7 +469,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     className="cth-input"
                     style={inputStyle}
                   />
-                  <PixelButton variant="secondary" size="lg" onClick={pickHome}>
+                  <PixelButton variant="secondary" size="lg" onClick={pickHome} disabled={pickingHome}>
                     <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                       <Icon name="folder" /> {plain ? t('onboarding.home.createPick') : t('onboarding.home.pick')}
                     </span>
@@ -816,7 +817,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   })}
                 </div>
 
-                <PixelButton variant="secondary" size="lg" fullWidth onClick={pickRepo}>
+                <PixelButton variant="secondary" size="lg" fullWidth onClick={pickRepo} disabled={pickingRepo}>
                   <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                     <Icon name="plus" /> {plain ? t('onboarding.repos.addProject') : t('onboarding.repos.addRepo')}
                   </span>
