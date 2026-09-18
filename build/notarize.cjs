@@ -53,9 +53,30 @@ exports.default = async function notarizing(context) {
       ? { appleApiKey: APPLE_API_KEY, appleApiKeyId: APPLE_API_KEY_ID, appleApiIssuer: APPLE_API_ISSUER }
       : { appleId: APPLE_ID, appleIdPassword: APPLE_APP_SPECIFIC_PASSWORD, teamId: APPLE_TEAM_ID };
 
-  console.log(`[notarize] submitting ${appName}.app to Apple via notarytool (this can take a few minutes)…`);
+  // A CAP ON THE WAIT.
+  //
+  // `notarytool --wait` polls Apple until it gets an answer, and has no timeout
+  // of its own. During an App Store Connect upload incident that meant one build
+  // sat for two hours and then died on a dropped connection, and the next was
+  // still waiting at fifty minutes — burning runner time to end up exactly where
+  // giving up early would have: a signed, un-notarized build.
+  //
+  // So: lose the race and ship. The app is already signed at this point, which is
+  // what gives macOS the stable identity it remembers folder permissions by; the
+  // ticket can be added by re-running the job when Apple is healthy.
+  const TIMEOUT_MS = Number(process.env.NOTARIZE_TIMEOUT_MS || 15 * 60_000);
+  const timeout = (ms) => new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(
+      `gave up after ${Math.round(ms / 60_000)} min — Apple did not answer. Check `
+      + 'https://developer.apple.com/system-status/ and re-run the job.')), ms).unref());
+
+  console.log(`[notarize] submitting ${appName}.app to Apple via notarytool `
+    + `(giving up after ${Math.round(TIMEOUT_MS / 60_000)} min)…`);
   try {
-    await notarize({ tool: 'notarytool', appPath, ...creds });
+    await Promise.race([
+      notarize({ tool: 'notarytool', appPath, ...creds }),
+      timeout(TIMEOUT_MS)
+    ]);
     console.log('[notarize] stapling ticket to the app…');
     execFileSync('xcrun', ['stapler', 'staple', appPath], { stdio: 'inherit' });
     console.log('[notarize] done — app is signed, notarized, and stapled.');
