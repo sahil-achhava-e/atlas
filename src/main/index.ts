@@ -1,3 +1,4 @@
+import { interruptedWork, restartBrief, briefSignature } from './restartBrief';
 import { mcpSecretRef, mcpSecretEnvKeys, dbSecretRef } from '../shared/mcpCatalog';
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, net, powerMonitor, powerSaveBlocker, protocol, screen, shell, Notification } from 'electron';
 import { spawn } from 'node:child_process';
@@ -5221,6 +5222,7 @@ function bootstrapHiveServices(): void {
   control.replaceAutoDeliveryPauses(readConfig().autoDeliveryPausedAgents ?? []);
   archiveOrphanedAgents(); // #57/#58: archive stale archived:false entries with no live PTY
   hive.startRouter();
+  postRestartBrief();      // tell god what was mid-task when we last stopped
   startEphemeralWorkerWatcher(); // poll HIVE_ROOT/spawn-requests → ephemeral workers
   // Phase 2: the loopback secret broker. Bind it BEFORE workers spawn so each spawn can
   // be granted a capability token + the broker URL in its env. Loopback-only, idempotent.
@@ -5413,6 +5415,56 @@ function onSystemResume(reason: string): void {
     resumeHealthTimer = null;
     healthCheckPtys(reason, awayMs);
   }, 15_000);
+}
+
+/**
+ * One message to god when the app comes back with work left in flight.
+ *
+ * The restore path brings the crew back and `--resume` gives each one its own
+ * thread, but nothing tells an interrupted agent to carry on: the wake watchdog
+ * only fires on undrained inbox mail, and an agent killed mid-turn has none. The
+ * hourly ops standup would eventually notice — "review every agent … re-engage
+ * anyone stalled" is already its brief — but a restart does not happen on the
+ * hour, so the floor can stand still for up to sixty minutes.
+ *
+ * So: read the ledger, and if any card is still "doing", post ONE message to god
+ * naming them. Judgement stays where it belongs — god is the sole writer of
+ * tasks.json and the only one who can tell a finished-but-unmarked card from an
+ * interrupted one.
+ *
+ * Silent when the floor was quiet, which is most restarts: a message after every
+ * launch saying nothing happened is how a channel gets ignored. Deduped by
+ * content, so an update that installs and relaunches does not post the same brief
+ * twice before god has drained the first.
+ */
+const RESTART_BRIEF_KEY = 'hive.restartBriefSignature';
+
+function postRestartBrief(): void {
+  try {
+    if (!hive.enabled()) return;
+    const reg = hive.registry();
+    const agents = Object.entries(reg.agents ?? {}).map(([id, a]) => ({
+      id,
+      name: (a as { name?: string }).name,
+      isGod: (a as { isGod?: boolean }).isGod,
+      archived: (a as { archived?: boolean }).archived
+    }));
+    const items = interruptedWork(hive.tasks(), agents);
+    const body = restartBrief(items);
+    if (!body) { persist.setKv(RESTART_BRIEF_KEY, ''); return; }
+
+    const signature = briefSignature(items);
+    if (persist.getKv<string>(RESTART_BRIEF_KEY) === signature) {
+      console.log('[restart-brief] same interrupted work as last start — not re-posting');
+      return;
+    }
+    hive.send({ to: 'god', act: 'inform', body }, 'system');
+    persist.setKv(RESTART_BRIEF_KEY, signature);
+    console.log(`[restart-brief] told god about ${items.length} interrupted task(s)`);
+  } catch (e) {
+    // Never block boot on a courtesy message.
+    console.error('[restart-brief] failed:', e);
+  }
 }
 
 app.whenReady().then(() => {

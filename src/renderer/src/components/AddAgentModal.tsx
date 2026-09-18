@@ -5,6 +5,8 @@ import { PixelButton } from './PixelButton';
 import { SpritePortrait } from './SpritePortrait';
 import { Icon } from './Icon';
 import { canOpenSection, sectionsFor, type SectionKey } from './addAgentGate';
+import { DeskPicker } from './DeskPicker';
+import { DESK_MAP } from '@/scene/office/deskDirectory';
 import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
 import { AVATAR_LIBRARY, LIBRARY_BY_ID } from '@/scene/office/avatarLibrary';
@@ -82,7 +84,8 @@ const SECTIONS: { key: SectionKey; labelKey: string; hintKey: string }[] = [
   { key: 'identity',  labelKey: 'addAgent.sections.identity.label',  hintKey: 'addAgent.sections.identity.hint' },
   { key: 'workspace', labelKey: 'addAgent.sections.workspace.label', hintKey: 'addAgent.sections.workspace.hint' },
   { key: 'engine',    labelKey: 'addAgent.sections.engine.label',    hintKey: 'addAgent.sections.engine.hint' },
-  { key: 'briefing',  labelKey: 'addAgent.sections.briefing.label',  hintKey: 'addAgent.sections.briefing.hint' }
+  { key: 'briefing',  labelKey: 'addAgent.sections.briefing.label',  hintKey: 'addAgent.sections.briefing.hint' },
+  { key: 'desk',      labelKey: 'addAgent.sections.desk.label',      hintKey: 'addAgent.sections.desk.hint' }
 ];
 
 function basename(path: string): string {
@@ -246,6 +249,19 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     setCommand(buildSpawnCommand({ ...config, autoMode: next }, model, provider));
   };
   const [description, setDescription] = useState(pendingHire?.description ?? '');
+  /** Who already has which desk, so the picker can grey them and the default can
+   *  skip them. */
+  const deskOccupants = useStore((s) => {
+    const out: Record<string, string> = {};
+    for (const a of s.agents) if (a.seat) out[a.seat] = a.name;
+    return out;
+  });
+  /** Pre-selected: the first desk nobody is sitting at. The step still lets you
+   *  change it, but "wherever there is room" is what most agents want and this
+   *  shows WHERE that is instead of leaving it a surprise. */
+  const [seat, setSeat] = useState(
+    () => DESK_MAP.desks.find((d) => !deskOccupants[d.name])?.name ?? ''
+  );
   const [hireMeta, setHireMeta] = useState<HireManifest | null>(pendingHire);
 
   // Picking a model rebuilds the command; the command field stays editable for
@@ -297,7 +313,17 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     identity: identityReady,
     workspace: workspaceReady,
     engine: true,
-    briefing: true
+    // An agent with no description is a face; one with no job waits to be told
+    // everything. Both, or Next refuses — this is the step that decides whether
+    // the agent can work unattended.
+    //
+    // The job is read from whichever field is on screen: an imported hire edits
+    // its goal verbatim (`rawGoal`), everyone else answers "what is its job"
+    // (`jobText`) and the goal is composed from it. Checking rawGoal alone —
+    // which is what this did first — blocked Next for every agent added by hand.
+    briefing: description.trim().length > 0
+      && (pendingHire ? rawGoal.trim().length > 0 : jobText.trim().length > 0),
+    desk: true
   };
   /** May this section be opened? Only once every section before it is answered.
    *  The rail used to be a way around the Next button's gate; now both read this. */
@@ -307,6 +333,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     sectionReady[key] ? undefined
       : key === 'identity' ? tr('addAgent.pickFirst')
       : key === 'workspace' ? tr('addAgent.errFolder')
+      : key === 'briefing' ? tr('addAgent.errBriefing')
       : undefined;
   const sectionIndex = Math.max(0, visibleSections.findIndex((x) => x.key === section));
   // "Generate a hire with AI" helper — reveals a copy-paste prompt (item 7).
@@ -488,6 +515,10 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
       // Whatever the dialog has been showing, and always a real face id.
       character: effectiveCharacter,
       accent,
+      // The desk chosen on the last step. Free-seating (an empty value) keeps the
+      // old behaviour, and a desk taken since this dialog opened falls back the
+      // same way rather than double-seating.
+      seat: seat || undefined,
       description: description.trim() || 'a fresh harness',
       project: basename(projectCwd),
       tmuxTarget: '',
@@ -1199,6 +1230,12 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
 
                   </>
                 )}
+
+                {section === 'desk' && (
+                  <Question q={tr('addAgent.deskQ')} hint={tr('addAgent.deskHint')}>
+                    <DeskPicker value={seat} occupants={deskOccupants} onChange={setSeat} scale={14} />
+                  </Question>
+                )}
               </div>
             </div>
 
@@ -1215,8 +1252,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
               </div>
             )}
 
-            {/* The four sections are a sequence, so the footer walks it: Back and
-                Next until the last one, then Hire. The rail stays clickable, so
+            {/* The sections are a sequence, so the footer walks it: Back and Next
+                until the last one — the desk — and Hire only there. The rail stays clickable, so
                 an imported hire (every field already filled) can still be sent
                 straight from section 1 by jumping to Briefing. */}
             <div style={{

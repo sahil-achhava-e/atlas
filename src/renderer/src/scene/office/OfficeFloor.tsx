@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Application, Container, Graphics, Ticker, Texture } from 'pixi.js';
 // PixiJS uses new Function() internally, blocked by Electron CSP — this patches it.
 import 'pixi.js/unsafe-eval';
+import { resolvePalette, paletteIsNoop, swapTable, applySwap } from './tilePalette';
+import { LEAD_SEAT_NAMES, nextLeadSlot } from './leadSeats';
 import { useStore, type Agent } from '@/store/store';
 import { TiledMapRenderer } from './TiledMapRenderer';
 import { Camera } from './Camera';
@@ -59,6 +61,13 @@ interface ErrandRun {
   idx: number; // into ERRAND_SPOTS
 }
 
+/** A standup in the boardroom: everyone Atlas just briefed, around the table. */
+interface Meeting {
+  phase: 'walking' | 'seated';
+  timer: number;
+  tile: Tile;
+}
+
 /** One leg of the coffee economy: fetch a clean mug from the sideboard, brew
  *  at the counter machine, (later) wash at the sink and rack the mug again. */
 interface CoffeeRun {
@@ -83,6 +92,21 @@ interface Runtime {
   cupCarryHome?: boolean;
   err?: ErrandRun;
   run?: CoffeeRun;
+  mtg?: Meeting;
+  /** Atlas is mid walk-in, routing via his own door. applyState must not call
+   *  sitAtDesk while this is set: that re-paths him straight to the desk, which
+   *  is one step shorter THROUGH THE BOARDROOM and undoes the waypoint. */
+  walkingIn?: boolean;
+  /** Everyone walks in, goes to their own desk and turns the screen on before
+   *  they are allowed to do anything else. While this is in the future the idle
+   *  directors leave the agent alone — otherwise a newly arrived agent was sent
+   *  wandering (or to the café) without ever having sat down. */
+  settleUntil?: number;
+  /** While this is in the future the arrival greeting owns the bubble — the idle
+   *  branch fires within a frame of spawning and used to erase the hello. */
+  greetUntil?: number;
+  /** Standing at the boss's desk for a quick word. */
+  visit?: { timer: number; tile: Tile };
   /** When the current busy stretch (working/thinking/compacting) began. */
   busySince?: number;
 }
@@ -95,6 +119,26 @@ const CHEER_MIN_BUSY_MS = 60_000;
 
 /** What an avatar mutters per errand, picked at random. i18n keys into
  *  `office.errand.*`. */
+/** What gets muttered around the boardroom table. i18n keys into `office.meeting.*`. */
+const MEETING_LINES: readonly string[] = [
+  'office.meeting.0', 'office.meeting.1', 'office.meeting.2', 'office.meeting.3'
+];
+
+/** Said by an agent with nothing on. i18n keys into `office.free.*`. */
+const FREE_LINES: readonly string[] = [
+  'office.free.0', 'office.free.1', 'office.free.2', 'office.free.3'
+];
+
+/** Said on walking through the office door. i18n keys into `office.arrive.*`. */
+const ARRIVE_LINES: readonly string[] = [
+  'office.arrive.0', 'office.arrive.1', 'office.arrive.2', 'office.arrive.3'
+];
+
+/** Muttered while standing at the boss's desk. i18n keys into `office.visit.*`. */
+const VISIT_LINES: readonly string[] = [
+  'office.visit.0', 'office.visit.1', 'office.visit.2', 'office.visit.3'
+];
+
 const ERRAND_THOUGHTS: Record<ErrandKind, readonly string[]> = {
   water:     ['office.errand.water.0', 'office.errand.water.1', 'office.errand.water.2'],
   window:    ['office.errand.window.0', 'office.errand.window.1', 'office.errand.window.2'],
@@ -142,11 +186,13 @@ const CHEER_KEYS = [
 /** Load a texture via an <img> element. Unlike Pixi's Assets.load(), this
  *  handles extension-less data: URLs (Vite inlines small assets like the a5
  *  tileset as base64), which the Assets resolver fails to type-detect. */
-function loadTexture(url: string): Promise<Texture> {
+function loadTexture(url: string, swap?: Map<number, [number, number, number]>): Promise<Texture> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
-      const tex = Texture.from(img);
+      // No palette: hand Pixi the decoded image as before. The canvas pass below
+      // is skipped entirely, so the original art costs exactly what it always did.
+      const tex = !swap || swap.size === 0 ? Texture.from(img) : Texture.from(recolour(img, swap));
       tex.source.scaleMode = 'nearest';
       resolve(tex);
     };
@@ -155,13 +201,40 @@ function loadTexture(url: string): Promise<Texture> {
   });
 }
 
+/** Repaint a tileset through a canvas. Falls back to the untouched image if the
+ *  2D context is unavailable (it is not, in practice) — a floor with the original
+ *  colours beats no floor. */
+function recolour(img: HTMLImageElement, swap: Map<number, [number, number, number]>): HTMLCanvasElement | HTMLImageElement {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d', { willReadFrequently: false });
+    if (!ctx) return img;
+    ctx.drawImage(img, 0, 0);
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    applySwap(data.data, swap);
+    ctx.putImageData(data, 0, 0);
+    return canvas;
+  } catch {
+    return img;
+  }
+}
+
 /** What the agent is doing right now, for the thought cloud. Prefer the live
  *  `action` (e.g. "edit App.tsx", "bash npm test"), fall back to the prompt we
  *  gave it, then to a caller-supplied generic. Returns '' for the working state
  *  with nothing concrete yet — the bubble renders an animated "…" for that. */
+/** Actions that are bookkeeping, not activity, and must never reach a bubble.
+ *  'starting up' is written on every spawn and restore; 'idle' is written by the
+ *  hive whenever an agent goes quiet. Narrating either one puts a word over an
+ *  agent's head that says nothing — the floor already shows idleness by the
+ *  agent standing up and wandering off. */
+const BOOT_ACTIONS = new Set(['starting up', 'idle']);
+
 function liveActivity(agent: Agent, fallback = ''): string {
   const action = (agent.action || '').trim();
-  if (action) return action;
+  if (action && !BOOT_ACTIONS.has(action.toLowerCase())) return action;
   return firstWords(agent.lastPrompt) || fallback;
 }
 
@@ -214,6 +287,9 @@ export function OfficeFloor() {
   // The active office theme (store mirror of config.officeTheme). Changing it
   // tears down and rebuilds the whole scene on the new map/cast (see deps below).
   const officeTheme = useStore((s) => s.officeTheme);
+  // Which colours the office is painted in (store mirror of config.tilePalette).
+  // 'original' swaps nothing, so it is both the default and the way back.
+  const tilePalette = useStore((s) => s.tilePalette);
 
   // Is the floor actually on screen? A fullscreen terminal or file editor covers
   // it completely, and a hidden window shows nothing at all — but the Pixi ticker
@@ -277,8 +353,12 @@ export function OfficeFloor() {
     const init = async () => {
       // Load the active theme bundle (falls back to 'office' on a bad/absent bundle).
       const theme = await loadTheme(officeTheme);
+      const palette = resolvePalette(tilePalette);
+      const swap = paletteIsNoop(palette) ? undefined : swapTable(palette);
       await app.init({
-        background: canvasClearColor(theme.palette.background),
+        // A repainted room needs its surround repainted too, or the floor reads as
+        // a picture pasted onto a cream page.
+        background: palette.background ?? canvasClearColor(theme.palette.background),
         antialias: false,
         roundPixels: true,
         // resolution: 1 let the OS/browser upscale the canvas on scaled and
@@ -311,7 +391,7 @@ export function OfficeFloor() {
 
       // Load tilesets in theme order (texture[i] lines up with map tilesets[i]).
       const tilesetTextures = await Promise.all(
-        themeTilesetUrls(theme).map(loadTexture),
+        themeTilesetUrls(theme).map((u) => loadTexture(u, swap)),
       );
       if (mountIdRef.current !== mountId) { safeDestroy(app); return; }
 
@@ -374,7 +454,15 @@ export function OfficeFloor() {
         seatSeen.add(k);
         seatTiles.push({ x: t.x, y: t.y });
       };
-      for (const name of theme.primarySeatNames) addSeat(mapRenderer.getSpawnPoint(name));
+      // Remember which seat index each named spawn point ended up at, so the
+      // leaders' offices can be found by name rather than by position.
+      const seatNameIndex = new Map<string, number>();
+      for (const name of theme.primarySeatNames) {
+        const before = seatTiles.length;
+        addSeat(mapRenderer.getSpawnPoint(name));
+        if (seatTiles.length > before) seatNameIndex.set(name, before);
+      }
+      const boardroomSeatIdx: number[] = [];
       const addZoneSeats = (zone: string) => {
         const z = mapRenderer.getZone(zone);
         if (!z) return;
@@ -384,7 +472,11 @@ export function OfficeFloor() {
           }
         }
       };
-      addZoneSeats('boardroom');       // conference room overflow
+      {
+        const before = seatTiles.length;
+        addZoneSeats('boardroom');     // conference room overflow
+        for (let i = before; i < seatTiles.length; i++) boardroomSeatIdx.push(i);
+      }
       // The bottom-right open area is the cafeteria (break room) — see the
       // coffee-break director below. It is deliberately NOT added as overflow
       // desk seating, so the café tables stay free for breaks.
@@ -411,9 +503,81 @@ export function OfficeFloor() {
       // Seat 0 is desk-ceo — "Michael's room" — reserved for the god agent.
       // All other workers claim seats from 1 onward.
       const GOD_SEAT = 0;
+
+      // Atlas's cabin, from the map's own `boss` zone.
+      //
+      // This used to flood-fill outward from his desk, which quietly did nothing:
+      // the room opens east toward the boardroom, so the fill escaped into the
+      // whole floor, tripped its guard and returned an empty set — no fence for
+      // roamers, no door waypoint for him. A zone drawn in the map cannot leak.
+      const godRoomTiles: Set<string> = (() => {
+        const out = new Set<string>();
+        const z = mapRenderer.getZone('boss');
+        if (!z) return out;
+        for (let y = z.y; y < z.y + z.height; y++) {
+          for (let x = z.x; x < z.x + z.width; x++) {
+            if (mapRenderer.isWalkable(x, y)) out.add(`${x},${y}`);
+          }
+        }
+        return out;
+      })();
+
+      /** The corridor tile immediately outside Atlas's door — the near approach,
+       *  so his walk-in is the short way rather than a tour of the boardroom. */
+      const godDoorApproach: Tile | null = (() => {
+        if (godRoomTiles.size === 0) return null;
+        const inside = [...godRoomTiles].map((k) => {
+          const [x, y] = k.split(',').map(Number);
+          return { x, y };
+        });
+        const lowestY = inside.reduce((a, b) => (b.y > a.y ? b : a)).y;
+        // Prefer a door onto the MAIN OFFICE (straight down from the room) over
+        // the side opening, which is the long way round through the boardroom.
+        for (const tl of inside.filter((t) => t.y === lowestY)) {
+          const below = { x: tl.x, y: tl.y + 1 };
+          if (mapRenderer.isWalkable(below.x, below.y) && !godRoomTiles.has(`${below.x},${below.y}`)) {
+            return below;
+          }
+        }
+        return null;
+      })();
+
+      // The two side rooms are the leaders' offices: four desks, filled a room at
+      // a time (see leadSeats.ts). A leader past the fourth sits at the boardroom
+      // table rather than on the open floor — still not a worker's desk.
+      const leadSeatIdx: number[] = LEAD_SEAT_NAMES
+        .map((name) => seatNameIndex.get(name))
+        .filter((i): i is number => typeof i === 'number');
+      const leadSlotsTaken = new Set<number>();
+
       const claimSeat = (agent: Agent): number | null => {
         if (agent.isGod) { seatClaims.add(GOD_SEAT); return GOD_SEAT; }
+        // An assigned desk wins — when it is free. Taken (two agents, one desk,
+        // or a map that moved) falls through to the normal rules rather than
+        // leaving the agent standing in the doorway.
+        if (agent.seat) {
+          const idx = seatNameIndex.get(agent.seat);
+          if (idx !== undefined && idx !== GOD_SEAT && !seatClaims.has(idx)) {
+            seatClaims.add(idx);
+            if (leadSeatIdx.includes(idx)) leadSlotsTaken.add(leadSeatIdx.indexOf(idx));
+            return idx;
+          }
+        }
+        if (agent.isLead) {
+          const slot = nextLeadSlot(leadSlotsTaken);
+          if (slot !== null && leadSeatIdx[slot] !== undefined && !seatClaims.has(leadSeatIdx[slot])) {
+            leadSlotsTaken.add(slot);
+            seatClaims.add(leadSeatIdx[slot]);
+            return leadSeatIdx[slot];
+          }
+          // Offices full: the boardroom, which is otherwise standup-only seating.
+          for (const i of boardroomSeatIdx) {
+            if (!seatClaims.has(i)) { seatClaims.add(i); return i; }
+          }
+        }
         for (let i = 1; i < seatTiles.length; i++) {
+          // A worker never takes a leader's office while it is free.
+          if (leadSeatIdx.includes(i) && leadSlotsTaken.size < leadSeatIdx.length) continue;
           if (!seatClaims.has(i)) { seatClaims.add(i); return i; }
         }
         return null;
@@ -702,8 +866,14 @@ export function OfficeFloor() {
         releaseBreak(rt);
         rt.character.hideThought();
         const agent = agentById(id);
-        if (agent?.isGod) { rt.character.sitAtDesk(true); return; }
         const c = rt.character;
+        if (agent?.isGod) {
+          // Same mug economy as everyone else — he is not exempt from washing up
+          // — but he returns to desk-ceo instead of wandering.
+          if (c.isCarryingCup()) { rt.cupCarryHome = true; c.sitAtDesk(false); }
+          else c.sitAtDesk(true);
+          return;
+        }
         if (!arrived) {
           // Never made it to the café (watchdog) — a held mug still goes home.
           if (c.isCarryingCup()) { rt.cupCarryHome = true; c.sitAtDesk(false); }
@@ -760,8 +930,20 @@ export function OfficeFloor() {
       };
 
       const breakEligible = (agent: Agent, rt: Runtime): boolean => {
-        if (agent.isGod || rt.brk || rt.err || rt.run || rt.cupCarryHome) return false;
+        if (rt.brk || rt.err || rt.run || rt.mtg || rt.visit || rt.cupCarryHome) return false;
+        // Nobody wanders off during the morning: not while Atlas is still walking
+        // to his desk, and not while the rest of the floor is still filing in.
+        // The boss going for coffee before he had sat down was the first thing
+        // you saw on every load.
+        if (rt.walkingIn || !floorSettled()) return false;
+        if (rt.settleUntil && Date.now() < rt.settleUntil) return false;
         if (agent.status !== 'idle' && agent.status !== 'success') return false;
+        // The boss goes for coffee too, from his desk — and the floor notices:
+        // gossip only runs out of his earshot (emitQuip), so a table stops
+        // talking about him the moment he sits down. Rarer than a worker's
+        // break, and the sitting check does not apply because he is seated
+        // whenever he is idle.
+        if (agent.isGod) return Math.random() < 0.25;
         return !rt.character.isSitting();   // already parked at a desk → leave it
       };
 
@@ -1455,7 +1637,31 @@ export function OfficeFloor() {
           onClick: (id) => useStore.getState().select(id),
         });
         character.show(charLayer);
-        const rt: Runtime = { character, seatIndex, waitTile, charName };
+        // A hello on the way in. Deliberately not tied to the clock: the floor
+        // does not know what time your agents think it is, and "good morning" at
+        // 9pm is worse than no greeting at all.
+        character.showThought(t(ARRIVE_LINES[Math.floor(Math.random() * ARRIVE_LINES.length)]));
+        // Everyone but Atlas stays out of his cabin while roaming.
+        if (!agent.isGod) character.setNoWanderTiles(godRoomTiles);
+        const rt: Runtime = {
+          character, seatIndex, waitTile, charName,
+          greetUntil: Date.now() + 4000,
+          // Long enough to cross the floor and be seen at the desk. Idle
+          // behaviour resumes after it; work interrupts it immediately.
+          settleUntil: Date.now() + 12_000
+        };
+        // Straight to your desk, screen on. Everyone, every time.
+        if (!agent.isGod) character.sitAtDesk(false);
+        if (agent.isGod && godDoorApproach) {
+          // Walk to the corridor outside his own door, THEN to the desk. Both
+          // routes are 31 steps — the difference is that the shortest-path tie
+          // goes through the boardroom, and his room has a door of its own.
+          rt.walkingIn = true;
+          character.walkToAndThen(godDoorApproach, () => {
+            rt.walkingIn = false;
+            character.sitAtDesk(false);
+          });
+        }
         // Standard desks paint the 2×2 PC monitor two rows above the seat —
         // give those a DeskScreen (lights up while seated) and a cup spot
         // beside the monitor, exactly where the tileset's baked-in mug used
@@ -1593,8 +1799,9 @@ export function OfficeFloor() {
             break;
           case 'success':
             c.setStatusGlyph('success');
-            if (agent.isGod) { c.hideThought(); c.sitAtDesk(true); break; }
-            c.startWandering();
+            if (agent.isGod) { c.hideThought(); if (!rt.walkingIn) c.sitAtDesk(true); break; }
+            if (rt.settleUntil && Date.now() < rt.settleUntil) c.sitAtDesk(false);
+            else c.startWandering();
             if (finishedWork) {
               c.cheer();
               c.showThought(t(CHEER_KEYS[Math.floor(Math.random() * CHEER_KEYS.length)]));
@@ -1611,16 +1818,113 @@ export function OfficeFloor() {
           default:
             c.setStatusGlyph('none');
             // The god runs the floor from its desk; everyone else wanders when idle.
-            if (agent.isGod) { c.sitAtDesk(true); c.showThought(liveActivity(agent, t('office.activity.runningFloor'))); }
+            if (agent.isGod) {
+              if (!rt.walkingIn) c.sitAtDesk(true);
+              c.showThought(liveActivity(agent, t('office.activity.runningFloor')));
+            }
             else if (finishedWork) {
               // Task done → a quick cheer on the spot, then back to roaming.
               c.startWandering();
               c.cheer();
               c.showThought(t(CHEER_KEYS[Math.floor(Math.random() * CHEER_KEYS.length)]));
             }
-            else { c.startWandering(); c.showThought(liveActivity(agent, t('office.activity.idle'))); }
+            else if (rt.settleUntil && Date.now() < rt.settleUntil) {
+              // Just arrived: sit at your own desk first.
+              c.sitAtDesk(false);
+            }
+            else {
+              c.startWandering();
+              // An idle agent used to say "idle", which is the floor telling you
+              // what you can already see — it is standing up and wandering off.
+              // Say something a person would say instead, and never in the first
+              // seconds: that is the hello it just gave walking through the door.
+              if (Date.now() >= (rt.greetUntil ?? 0)) {
+                c.showThought(liveActivity(agent, t(FREE_LINES[Math.floor(Math.random() * FREE_LINES.length)])));
+              }
+            }
             break;
         }
+      };
+
+      // ─── Arrivals: the boss opens the office, then everyone files in ───────
+      // On a cold load every restored agent used to pop onto the floor at once,
+      // which read as a glitch rather than a morning. Now Atlas walks in and
+      // sits first; two seconds after he is at his desk the rest come through
+      // the door one at a time — team leads before workers, a second apart.
+      // Nothing about the agents' PROCESSES changes; this is the arrival on the
+      // floor only, so an agent is working long before its avatar sits down.
+      const ARRIVAL_GAP_S = 2;
+      const DOORS_OPEN_AFTER_S = 2;
+      const arriving = new Set<string>();      // addCharacter in flight
+      let godSeatedFor = -1;                   // seconds since Atlas first sat, or -1
+      let doorsOpen = false;                   // latched: he sat once, the office is open
+      let sinceLastArrival = 0;
+
+      /** True once the office has opened AND everyone expected has walked in.
+       *  Breaks, errands and visits all wait for it. */
+      const floorSettled = (): boolean => {
+        if (!doorsOpen) return false;
+        if (arriving.size > 0) return false;
+        return !useStore.getState().agents.some((a) => !runtimes.has(a.id));
+      };
+
+      /** Leads first, then everyone else; stable within each group so the order
+       *  does not shuffle between frames. */
+      const arrivalOrder = (agents: Agent[]): Agent[] => [
+        ...agents.filter((a) => a.isLead),
+        ...agents.filter((a) => !a.isLead)
+      ];
+
+      /**
+       * Let a settled agent get up.
+       *
+       * `applyState` only fires when an agent's state CHANGES, so the sit-down on
+       * arrival was the last thing that ever happened to an idle one: it stayed
+       * at its desk forever, and since `breakEligible` skips anyone already
+       * sitting, it was never picked for coffee or an errand either. Atlas was
+       * the only avatar moving because his own sitting check does not apply.
+       *
+       * So this is the other half of the arrival: once the settle window passes,
+       * an idle agent stands up and rejoins the floor's normal life.
+       */
+      const releaseSettled = (): void => {
+        const now = Date.now();
+        for (const [id, rt] of runtimes) {
+          if (!rt.settleUntil || now < rt.settleUntil) continue;
+          rt.settleUntil = undefined;
+          const agent = agentById(id);
+          if (!agent || agent.isGod) continue;                  // the boss works from his desk
+          if (agent.status !== 'idle' && agent.status !== 'success') continue;
+          if (rt.brk || rt.err || rt.run || rt.mtg || rt.visit) continue;
+          rt.character.startWandering();
+        }
+      };
+
+      const updateArrivals = (dt: number): void => {
+        releaseSettled();
+        const agents = useStore.getState().agents;
+        const god = agents.find((a) => a.isGod);
+        const grt = god ? runtimes.get(god.id) : undefined;
+
+        // No boss yet, or he has not reached his desk: nobody else comes in. Once
+        // he HAS sat, the latch stays open — he goes for coffee like anyone else,
+        // and that must not turn the queue back at the door.
+        if (!doorsOpen) {
+          if (!grt || !grt.character.isSitting()) { godSeatedFor = -1; return; }
+          godSeatedFor = godSeatedFor < 0 ? 0 : godSeatedFor + dt;
+          if (godSeatedFor < DOORS_OPEN_AFTER_S) return;
+          doorsOpen = true;
+        }
+
+        sinceLastArrival += dt;
+        if (sinceLastArrival < ARRIVAL_GAP_S) return;
+
+        const next = arrivalOrder(agents)
+          .find((a) => !a.isGod && !runtimes.has(a.id) && !arriving.has(a.id));
+        if (!next) return;
+        sinceLastArrival = 0;
+        arriving.add(next.id);
+        void addCharacter(next).finally(() => arriving.delete(next.id));
       };
 
       const syncAgents = () => {
@@ -1631,7 +1935,9 @@ export function OfficeFloor() {
         }
         for (const agent of agents) {
           const rt = runtimes.get(agent.id);
-          if (!rt) void addCharacter(agent);
+          // Atlas is not queued — he IS the gate. Everyone else waits for
+          // updateArrivals to let them through the door.
+          if (!rt) { if (agent.isGod) void addCharacter(agent); }
           else applyState(agent, rt);
         }
       };
@@ -1674,12 +1980,185 @@ export function OfficeFloor() {
         envelopes.push(env);
       };
 
+      // ─── Desk visits: an agent walks over to Atlas rather than just mailing ─
+      // A worker sending god a message is someone with a question about a task.
+      // On the floor that reads better as walking to the boss's cabin and
+      // standing there for a moment than as an envelope sailing across the room
+      // (the envelope still flies — this is the sender's half of it). Standing,
+      // never seated: it is a quick word, not a meeting.
+      let visitCooldown = 0;
+      const VISIT_HOLD_S = 8;
+      const startDeskVisit = (fromId: string): void => {
+        if (visitCooldown > 0 || !floorSettled()) return;
+        const god = useStore.getState().agents.find((a) => a.isGod);
+        const grt = god ? runtimes.get(god.id) : undefined;
+        const rt = runtimes.get(fromId);
+        const agent = agentById(fromId);
+        if (!god || !grt || !rt || !agent || agent.isGod) return;
+        // Only an agent with nothing in flight, and only while the boss is at his
+        // desk — walking to an empty cabin is just walking.
+        if (rt.brk || rt.err || rt.run || rt.mtg || rt.visit || rt.cupCarryHome) return;
+        if (agent.status !== 'idle' && agent.status !== 'success') return;
+        if (grt.brk || grt.err || grt.run || grt.mtg || !grt.character.isSitting()) return;
+
+        const godSeat = seatTiles[GOD_SEAT];
+        const spot = [
+          { x: godSeat.x + 1, y: godSeat.y + 1 },
+          { x: godSeat.x - 1, y: godSeat.y + 1 },
+          { x: godSeat.x, y: godSeat.y + 2 }
+        ].find((tl) => mapRenderer.isWalkable(tl.x, tl.y) && !visitSpots.has(`${tl.x},${tl.y}`));
+        if (!spot) return;
+
+        visitCooldown = 25;
+        visitSpots.add(`${spot.x},${spot.y}`);
+        rt.visit = { timer: 0, tile: spot };
+        rt.character.walkToAndThen(spot, () => {
+          if (!rt.visit) return;
+          rt.character.faceDirection('up');
+          rt.character.showThought(t(VISIT_LINES[Math.floor(Math.random() * VISIT_LINES.length)]));
+        });
+      };
+
+      const endDeskVisit = (id: string, rt: Runtime): void => {
+        if (!rt.visit) return;
+        visitSpots.delete(`${rt.visit.tile.x},${rt.visit.tile.y}`);
+        rt.visit = undefined;
+        rt.character.hideThought();
+        rt.character.startWandering();
+      };
+
+      const updateVisits = (dt: number): void => {
+        if (visitCooldown > 0) visitCooldown -= dt;
+        for (const [id, rt] of runtimes) {
+          if (!rt.visit) continue;
+          const agent = agentById(id);
+          if (agent && agent.status !== 'idle' && agent.status !== 'success') { endDeskVisit(id, rt); continue; }
+          rt.visit.timer += dt;
+          if (rt.visit.timer > VISIT_HOLD_S + 20) endDeskVisit(id, rt);
+        }
+      };
+
+      // ─── Standups: when Atlas briefs the floor, the floor meets ────────────
+      // The boardroom was overflow desk seating and nothing else — a table with
+      // chairs nobody used. It has an obvious trigger already: god sending ONE
+      // message to several agents at once is a briefing, so the people briefed
+      // walk in, sit for a bit, and go back to work. No new event, no timer
+      // inventing meetings that did not happen.
+      const meetingTiles: Tile[] = (() => {
+        const z = mapRenderer.getZone('boardroom');
+        const out: Tile[] = [];
+        if (!z) return out;
+        for (let y = z.y; y < z.y + z.height; y++) {
+          for (let x = z.x; x < z.x + z.width; x++) {
+            if (mapRenderer.isWalkable(x, y)) out.push({ x, y });
+          }
+        }
+        return out;
+      })();
+      const meetingTaken: (string | null)[] = new Array(meetingTiles.length).fill(null);
+      const visitSpots = new Set<string>();
+      /** Seconds before another briefing can pull the floor in again — a god that
+       *  dispatches five cards in a row is one standup, not five. */
+      let meetingCooldown = 0;
+      const MEETING_HOLD_S = 20;
+
+      const endMeeting = (id: string, rt: Runtime): void => {
+        const m = rt.mtg;
+        if (!m) return;
+        const idx = meetingTiles.findIndex((tl) => tl.x === m.tile.x && tl.y === m.tile.y);
+        if (idx >= 0 && meetingTaken[idx] === id) meetingTaken[idx] = null;
+        rt.mtg = undefined;
+        rt.character.hideThought();
+        const agent = agentById(id);
+        if (agent?.isGod) rt.character.sitAtDesk(true);
+        else rt.character.startWandering();
+      };
+
+      /**
+       * Whoever was just addressed together goes to the table.
+       *
+       * Two ways in, and the room does not care which: Atlas briefing several
+       * agents (a standup), or a worker addressing two or more peers (three
+       * people talking, which is a meeting whether or not the boss called it).
+       * The caller always attends — a meeting without whoever called it is just
+       * agents standing around — and everyone else has to be free.
+       */
+      const startMeeting = (callerId: string, attendees: string[]): void => {
+        if (meetingCooldown > 0 || meetingTiles.length === 0 || !floorSettled()) return;
+        const caller = agentById(callerId);
+        const crt = runtimes.get(callerId);
+        if (!caller || !crt || crt.brk || crt.err || crt.run || crt.mtg) return;
+        // A worker calling the meeting must itself be free; the boss is seated
+        // whenever he is idle, so his own status is checked the same way.
+        if (caller.status !== 'idle' && caller.status !== 'success') return;
+
+        const free = meetingTiles
+          .map((tl, i) => [tl, i] as const)
+          .filter(([, i]) => !meetingTaken[i]);
+        if (free.length < 2) return;
+
+        const going: Array<[string, Runtime]> = [[callerId, crt]];
+        for (const id of attendees) {
+          if (going.length >= free.length) break;
+          const rt = runtimes.get(id);
+          const agent = agentById(id);
+          // Only agents with nothing in flight. A briefing is not worth
+          // interrupting the work the briefing is about.
+          if (!rt || !agent || id === callerId) continue;
+          if (rt.brk || rt.err || rt.run || rt.mtg || rt.cupCarryHome) continue;
+          if (agent.status !== 'idle' && agent.status !== 'success') continue;
+          going.push([id, rt]);
+        }
+        // Three or it does not happen. The boss walking to the table for a
+        // one-on-one — or, worse, arriving to an empty room because everyone he
+        // addressed turned out to be busy — is why this floor had a boardroom
+        // nobody used and a boss who kept leaving his desk for nothing.
+        if (going.length < 3) return;
+
+        meetingCooldown = 90;
+        going.forEach(([id, rt], n) => {
+          const [tile, idx] = free[n];
+          meetingTaken[idx] = id;
+          rt.mtg = { phase: 'walking', timer: 0, tile };
+          rt.character.walkToAndThen(tile, () => {
+            if (!rt.mtg) return;
+            rt.mtg.phase = 'seated';
+            rt.mtg.timer = 0;
+            rt.character.showThought(t(MEETING_LINES[Math.floor(Math.random() * MEETING_LINES.length)]));
+          });
+        });
+      };
+
+      const updateMeetings = (dt: number): void => {
+        if (meetingCooldown > 0) meetingCooldown -= dt;
+        for (const [id, rt] of runtimes) {
+          const m = rt.mtg;
+          if (!m) continue;
+          const agent = agentById(id);
+          // Real work outranks the standup, always.
+          if (agent && agent.status !== 'idle' && agent.status !== 'success') { endMeeting(id, rt); continue; }
+          m.timer += dt;
+          if (m.phase === 'walking' && m.timer > 20) { endMeeting(id, rt); continue; }  // never arrived
+          if (m.phase === 'seated' && m.timer > MEETING_HOLD_S) { endMeeting(id, rt); continue; }
+          // Work pulled the others away: nobody sits at that table alone.
+          let others = 0;
+          for (const [otherId, ort] of runtimes) if (otherId !== id && ort.mtg) others++;
+          if (others === 0) endMeeting(id, rt);
+        }
+      };
+
       // Real path: the main-process router emits one event per routed message.
       // Guarded so a stale preload bridge (e.g. before a dev-server restart adds
       // this method) degrades to "no envelopes" rather than crashing the floor.
       const offMessage = window.cth.onHiveMessage
         ? window.cth.onHiveMessage((e) => {
             for (const target of e.targets) spawnHandoff(e.from, target, e.act, e.needsHuman);
+            // One message to several agents is a briefing (from Atlas) or a
+            // three-way (from a worker). Either fills the boardroom.
+            if (e.targets.length >= 2) startMeeting(e.from, e.targets);
+            // One agent → the boss: a question about a task. Walk it over.
+            const boss = useStore.getState().agents.find((a) => a.isGod);
+            if (boss && e.targets.length === 1 && e.targets[0] === boss.id) startDeskVisit(e.from);
           })
         : () => { /* onHiveMessage unavailable — real handoffs disabled this session */ };
       // Demo path: with no live hive, the mock loop dispatches synthetic handoffs
@@ -1739,6 +2218,9 @@ export function OfficeFloor() {
           rt.character.update(dt);
         }
         updateCafeteria(dt);
+        updateMeetings(dt);
+        updateVisits(dt);
+        updateArrivals(dt);
         updateCoffeeRuns(dt);
         updateErrands(dt);
         updateBossAura(dt);
@@ -1819,7 +2301,7 @@ export function OfficeFloor() {
       appRef.current = null;
       while (host.firstChild) host.removeChild(host.firstChild);
     };
-  }, [officeTheme, glGeneration, i18n.language]);
+  }, [officeTheme, tilePalette, glGeneration, i18n.language]);
 
   return (
     <div

@@ -11,13 +11,17 @@
  * this takes the readiness of each, not the index of one.
  */
 
-export type SectionKey = 'identity' | 'workspace' | 'engine' | 'briefing';
+export type SectionKey = 'identity' | 'workspace' | 'engine' | 'briefing' | 'desk';
 
 /** Step order. The modal owns the labels; this owns the sequence. */
-export const SECTION_ORDER: SectionKey[] = ['identity', 'workspace', 'engine', 'briefing'];
+export const SECTION_ORDER: SectionKey[] = ['identity', 'workspace', 'engine', 'briefing', 'desk'];
 
 /**
  * The steps this audience gets.
+ *
+ * 'desk' is last and is never blocking: the modal pre-selects the first free
+ * desk, so the step is a confirmation with a plan to look at, not a question.
+ * Hiring happens there, which is why briefing had to stop being the last step.
  *
  * Simple mode drops 'engine'. That step is a provider, a model id, the raw
  * spawn command and an auto-mode flag — four answers the workspace already gave

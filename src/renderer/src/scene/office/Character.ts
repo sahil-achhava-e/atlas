@@ -321,6 +321,21 @@ export class Character {
     }
   }
 
+  /**
+   * Tiles this character will not WANDER into, though it may still be sent there
+   * deliberately (a desk visit, a seat, an errand).
+   *
+   * Exists for one case: Atlas's cabin. Roaming agents drifting through the boss's
+   * office made a private room read as a corridor — and the floor already treats
+   * his room as his (workers avoid straying near him, gossip only happens out of
+   * earshot). Deliberate walks are unaffected: `moveTo` and `walkToAndThen` do not
+   * consult this.
+   */
+  private noWander: ReadonlySet<string> = new Set();
+  setNoWanderTiles(tiles: ReadonlySet<string>): void {
+    this.noWander = tiles;
+  }
+
   /** Walk to an arbitrary tile (e.g. the waiting area when blocked); stands on arrival. */
   walkToTile(tile: { x: number; y: number }): void {
     this.idleLoop = false;
@@ -861,6 +876,7 @@ export class Character {
     for (let attempt = 0; attempt < 14; attempt++) {
       const tx = cur.x + Math.floor(Math.random() * range * 2) - range;
       const ty = cur.y + Math.floor(Math.random() * range * 2) - range;
+      if (this.noWander.has(`${tx},${ty}`)) continue;   // the boss's room is not a corridor
       if ((tx !== cur.x || ty !== cur.y) && this.mapRenderer.isWalkable(tx, ty)) {
         const wasWandering = this.wandering;
         this.moveTo({ x: tx, y: ty });   // moveTo() leaves state='walk'

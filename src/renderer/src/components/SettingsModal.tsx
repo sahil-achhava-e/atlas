@@ -1,7 +1,10 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import { ConfirmDialog } from './ConfirmDialog';
+import { workingAgents, nameList } from './restartWarning';
 import { useTranslation } from 'react-i18next';
 import { COMPACT_MAINTENANCE_MISSION, agentModels, type HarnessConfig } from '@/store/config';
+import { TILE_PALETTES, type PaletteId } from '@/scene/office/tilePalette';
+import type { UpdateStatus } from '@shared/updateState';
 import { useStore } from '@/store/store';
 import {
   CLONE_NODE_BLURB,
@@ -126,6 +129,22 @@ const NAV_SECTION_KEYS: Record<Section, string> = {
   'Connections': 'settings.nav.connections',
   'Voice': 'settings.nav.voice'
 };
+
+/** One line of plain status for the Updates row, from whatever main last said. */
+function describeUpdate(st: UpdateStatus | null | undefined, t: (k: string, o?: Record<string, unknown>) => string): string {
+  switch (st?.state) {
+    case 'checking': return t('settings.general.checking');
+    case 'not-available': return t('settings.general.upToDate');
+    case 'available': return t('settings.general.updateAvailable', { version: st.version });
+    case 'downloading': return t('settings.general.updateDownloading', { percent: st.percent });
+    case 'downloaded': return t('settings.general.updateReady', { version: st.version });
+    case 'available-manual': return t('settings.general.updateManual', { version: st.version });
+    case 'error': return st.message;
+    // 'idle' (nothing checked yet this session) and anything unrecognised: the
+    // honest thing to show is the steady state, not an empty row.
+    default: return t('settings.general.upToDate');
+  }
+}
 
 export function SettingsModal({ config, onClose, initialSection }: SettingsModalProps) {
   const { t, i18n } = useTranslation();
@@ -360,6 +379,47 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
   // --- Free Flow (voice dictation → message queue) ---
   // Talk (Realtime Michael) is gated on the OpenAI key — read the live presence
   // boolean so the Realtime Michael section can show its enabled/disabled status.
+  /** Updates. `autoUpdate` governs the 6-hourly background check; the button is
+   *  the same check on demand. The note under it reports what the updater last
+   *  said, because a button that looks identical before and after a click is a
+   *  button people press twice. */
+  const [autoUpdateOn, setAutoUpdateOn] = useState(true);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateNote, setUpdateNote] = useState('');
+  /** A downloaded update waiting for a restart. Settings offers that restart even
+   *  while agents are working — going to Settings is a decision; the update
+   *  dialog interrupting you is not. */
+  const [updateStaged, setUpdateStaged] = useState(false);
+  const [confirmRestart, setConfirmRestart] = useState(false);
+  const workingNow = workingAgents(useStore.getState().agents);
+  useEffect(() => {
+    void window.cth.getConfig().then((c) => setAutoUpdateOn(c.autoUpdate !== false));
+    // Whatever main already knows. 'idle' and 'not-available' both mean "nothing
+    // is pending", which is worth SAYING — a blank line reads as a broken row.
+    void window.cth.updateCurrent?.().then((st) => {
+      setUpdateNote(describeUpdate(st, t));
+      setUpdateStaged(st?.state === 'downloaded');
+    });
+    return window.cth.onUpdateStatus?.((st) => {
+      setUpdateNote(describeUpdate(st, t));
+      setUpdateStaged(st.state === 'downloaded');
+      if (st.state !== 'checking') setCheckingUpdate(false);
+    });
+  }, [t]);
+  const toggleAutoUpdate = () => {
+    const next = !autoUpdateOn;
+    setAutoUpdateOn(next);
+    stage({ autoUpdate: next } as Partial<HarnessConfig>);
+  };
+  const checkForUpdates = () => {
+    setCheckingUpdate(true);
+    setUpdateNote(t('settings.general.checking'));
+    void window.cth.updateCheckNow?.().then((res) => {
+      if (!res?.ok) { setCheckingUpdate(false); setUpdateNote(res?.error ?? t('settings.general.checkFailed')); }
+    }).catch(() => { setCheckingUpdate(false); setUpdateNote(t('settings.general.checkFailed')); });
+  };
+  const tilePalette = useStore((s) => s.tilePalette);
+  const setTilePalette = useStore((s) => s.setTilePalette);
   const hasOpenAiKey = useStore((s) => s.hasOpenAiKey);
   // Voice-tab entry for the SAME broker slot Agents & Models writes (apikey:openai).
   // Mirroring presence into the store on save is what makes the Talk button light up
@@ -672,8 +732,73 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           project's paid plan, its Discord and its founders'
                           wall, none of which belong in this fork. General now
                           opens on the question people actually came to answer. */}
-                      {/* No Updates block: the updater reads the upstream
-                          project's releases, which are not this fork's. */}
+                      {/* Updates. The block came back when the updater started
+                          pointing at THIS repo's releases instead of the upstream
+                          project's — the auto-check runs every 6h, and this is
+                          the "now, please" version of it plus the switch that
+                          governs both. */}
+                      <div style={groupCard}>
+                        <div style={sectionHead}>
+                          {t('settings.general.updates')}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <span style={{ fontSize: 13.5, lineHeight: '20px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>
+                              {t('settings.general.autoUpdate')}
+                            </span>
+                            <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
+                              {t('settings.general.autoUpdateDesc')}
+                            </span>
+                          </div>
+                          <Switch on={autoUpdateOn} label={t('settings.general.autoUpdate')} onChange={toggleAutoUpdate} />
+                        </div>
+                        <div style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          gap: 12, marginTop: 14, paddingTop: 14,
+                          borderTop: '1px solid var(--cth-ink-100)'
+                        }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                            {/* What you are running, in the mono face the rest of
+                                the app uses for identifiers. The status under it
+                                answers the question the button is about to ask. */}
+                            <span style={{
+                              fontFamily: 'var(--cth-font-mono)', fontSize: 13, lineHeight: '18px',
+                              color: 'var(--cth-ink-900)', fontWeight: 600
+                            }}>
+                              {t('settings.general.currentVersion', { version: window.cth.version })}
+                            </span>
+                            <span style={{
+                              fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)',
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                            }}>
+                              {updateNote}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                            {updateStaged && (
+                              <PixelButton
+                                variant="primary"
+                                size="md"
+                                onClick={() => setConfirmRestart(true)}
+                              >
+                                {t('updateToast.restartToUpdate')}
+                              </PixelButton>
+                            )}
+                            <PixelButton
+                              variant="secondary"
+                              size="md"
+                              onClick={checkForUpdates}
+                              disabled={checkingUpdate}
+                            >
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                                <Icon name="sparkle" />
+                                {checkingUpdate ? t('settings.general.checking') : t('settings.general.checkNow')}
+                              </span>
+                            </PixelButton>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Home folder. Hidden in simple mode: an absolute path in
                           a mono face, and a Change that moves the app's own
                           storage. Setup already says of this folder, in the
@@ -738,6 +863,36 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                             options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
                             onChange={setLanguage}
                             ariaLabel={t('settings.general.language')}
+                            width={200}
+                          />
+                        </div>
+                      </div>
+
+
+                      {/* Office theme — the colours the floor tiles are painted in.
+                          One dropdown, not a family of switches: "Original" is the
+                          art as shipped and the way back from anything else. */}
+                      <div style={groupCard}>
+                        <div style={sectionHead}>
+                          {t('settings.general.officeTheme')}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
+                              {t('settings.general.officeThemeDesc')}
+                            </span>
+                          </div>
+                          <Dropdown
+                            value={tilePalette}
+                            options={TILE_PALETTES.map((p) => ({
+                              value: p.id,
+                              label: t(`settings.general.officeThemes.${p.id}`, p.label)
+                            }))}
+                            onChange={(v) => {
+                              setTilePalette(v as PaletteId);
+                              stage({ tilePalette: v as PaletteId } as Partial<HarnessConfig>);
+                            }}
+                            ariaLabel={t('settings.general.officeTheme')}
                             width={200}
                           />
                         </div>
@@ -1065,6 +1220,21 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
           destructive
           onCancel={() => setUnsavedOpen(false)}
           onConfirm={() => { setUnsavedOpen(false); onClose(); }}
+        />
+      )}
+      {confirmRestart && (
+        // The same warning the update dialog shows, from the same module, so the
+        // two surfaces cannot tell the user different stories about what a
+        // restart costs.
+        <ConfirmDialog
+          title={t('updateToast.confirmTitle')}
+          body={workingNow.length
+            ? t('updateToast.confirmBodyWorking', { names: nameList(workingNow, t('updateToast.and')) })
+            : t('updateToast.confirmBodyIdle')}
+          confirmLabel={t('updateToast.restartToUpdate')}
+          destructive
+          onCancel={() => setConfirmRestart(false)}
+          onConfirm={() => { setConfirmRestart(false); void window.cth.updateRestartAndInstall?.(); }}
         />
       )}
     </div>

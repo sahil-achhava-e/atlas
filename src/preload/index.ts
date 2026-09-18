@@ -54,6 +54,9 @@ export interface HiveAgentMeta {
   isGod?: boolean;
   /** Michael's prep assistant — send-only; enriches prompts and forwards them. */
   isAssistant?: boolean;
+  /** Marked by the human as a project's team lead: gets the lead brief on spawn
+   *  and one of the two side offices on the floor. */
+  isLead?: boolean;
 }
 
 export interface HiveMessage {
@@ -323,6 +326,8 @@ export interface HarnessConfig {
   tvShowOffices?: boolean;
   /** Active office map/cast theme (honored only when tvShowOffices is on). */
   officeTheme?: 'office' | 'friends' | 'brooklyn99' | 'siliconvalley' | 'got' | 'hogwarts';
+  /** Colours the office tiles are painted in. 'original' is the art as shipped. */
+  tilePalette?: 'original' | 'night';
   /** Per-CLI-provider local/self-hosted base URL (Ollama/LM Studio/vLLM, …) for the
    *  OpenCode/Crush/pi/qwen engines; applied at spawn. API KEYS are NOT stored here —
    *  they live write-only in the secret broker. */

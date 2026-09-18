@@ -101,7 +101,84 @@
    *  right: the app re-spawns whatever is missing. */
   var ptys = {};
 
+  /** Auto-update, scripted.
+   *
+   *  The real pipeline lives in main, which the browser preview does not have, so
+   *  this drives the SAME renderer states main would emit: available → downloading
+   *  with real percentages → downloaded. The toast, the badge, the notes digest and
+   *  the restart button are the app's own, not a mock — only the source of the
+   *  status is fake. `window.cth.updateSimulate()` from the console starts it. */
+  var updateCbs = [];
+  var updateStatus = { state: 'idle' };
+  var pushUpdate = function (next) {
+    updateStatus = next;
+    updateCbs.forEach(function (cb) { try { cb(next); } catch (e) { /* a dead listener */ } });
+  };
+  var DEMO_NOTES = [
+    "## What's new in 1.1.0",
+    '',
+    '- Memory search works with no install: agents can search each other\'s notes.',
+    '- The + button in the composer answers the click while the file picker opens.',
+    '- Office theme: Night. Settings → General.',
+    '- Signed and notarized, so macOS stops asking every time.'
+  ].join('\n');
+
   var OVERRIDES = {
+    // A VALUE, not a call: the Proxy below hands back a function for anything it
+    // does not know, so `window.cth.version` would render as "Version function".
+    version: '0.8.1',
+    platform: 'darwin',
+    arch: 'arm64',
+    onUpdateStatus: function (cb) {
+      updateCbs.push(cb);
+      return function () { updateCbs = updateCbs.filter(function (x) { return x !== cb; }); };
+    },
+    updateCurrent: function () { return Promise.resolve(updateStatus); },
+    updateCheckNow: function () {
+      pushUpdate({ state: 'checking' });
+      setTimeout(function () { pushUpdate({ state: 'not-available' }); }, 900);
+      return Promise.resolve({ ok: true });
+    },
+    updateRestartAndInstall: function () {
+      pushUpdate({ state: 'idle' });
+      // eslint-disable-next-line no-alert
+      setTimeout(function () { alert('The real app would quit and relaunch on the new version here.'); }, 50);
+      return Promise.resolve({ ok: true });
+    },
+    updateOpenRelease: function (url) {
+      // Main opens the OS browser. In a browser preview the honest equivalent is
+      // a new tab — resolving {ok:true} and doing nothing made the button look
+      // broken, which is exactly the bug this stub is supposed to avoid.
+      try { window.open(url || 'https://github.com/sahilethara/atlas/releases/latest', '_blank', 'noopener'); }
+      catch (e) { /* popup blocker */ }
+      return Promise.resolve({ ok: true });
+    },
+    updateDownload: function () { return OVERRIDES.updateSimulate({ from: 'available' }); },
+    updateSimulate: function (opts) {
+      opts = opts || {};
+      var version = opts.version || '1.1.0';
+      var notes = opts.notes || DEMO_NOTES;
+      if (opts.state === 'downloaded') { pushUpdate({ state: 'downloaded', version: version, notes: notes }); return Promise.resolve({ ok: true }); }
+      if (opts.state === 'available-manual') {
+        pushUpdate({ state: 'available-manual', version: version, url: 'https://github.com/sahilethara/atlas/releases', notes: notes });
+        return Promise.resolve({ ok: true });
+      }
+      // The full ride: checking → available → download progress → staged.
+      pushUpdate({ state: 'checking' });
+      setTimeout(function () { pushUpdate({ state: 'available', version: version, notes: notes }); }, 700);
+      var pct = 0;
+      var tick = setInterval(function () {
+        pct += 7 + Math.random() * 11;
+        if (pct >= 100) {
+          clearInterval(tick);
+          pushUpdate({ state: 'downloaded', version: version, notes: notes });
+        } else {
+          pushUpdate({ state: 'downloading', version: version, percent: Math.round(pct) });
+        }
+      }, 320);
+      return Promise.resolve({ ok: true });
+    },
+
     getConfig: function () { return Promise.resolve(Object.assign({}, config)); },
     updateConfig: function (patch) {
       Object.assign(config, patch || {});

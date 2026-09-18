@@ -114,6 +114,10 @@ export function Dropdown({
             position: 'absolute', insetInlineStart: 0,
             ...(align === 'bottom' ? { bottom: 'calc(100% + 6px)' } : { top: 'calc(100% + 6px)' }),
             minWidth: '100%', zIndex: 50,
+            // A long list (every desk on the floor) ran off the top of the modal
+            // and the options above the fold were simply unreachable. Cap it and
+            // scroll instead — the menu is a list, not a poster.
+            maxHeight: 260, overflowY: 'auto',
             padding: 4, borderRadius: 'var(--cth-radius-input)',
             background: 'var(--cth-paper-100)',
             boxShadow: '0 0 0 1px var(--cth-ink-100), var(--cth-shadow-hover)'

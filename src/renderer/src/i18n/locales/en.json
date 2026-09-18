@@ -221,8 +221,8 @@
       "maintenance": "Maintenance",
       "autoCompact": "Scheduled auto-compact",
       "autoCompactDesc": "Queue /compact for every agent on a schedule (hourly by default; interval in the Triggers tab). Off by default. Long-running agents may overflow their context without it.",
-      "autoUpdate": "Auto-update",
-      "autoUpdateDesc": "Check GitHub releases and download updates in the background; you choose when to restart. Never restarts on its own.",
+      "autoUpdate": "Update automatically",
+      "autoUpdateDesc": "Checks every six hours and downloads in the background. Nothing installs until you restart.",
       "telemetry": "Anonymous usage stats",
       "telemetryDesc": "A handful of anonymous events (app opened, agent spawned, feature used). Never prompts, code, paths, or agent output. Full list in TELEMETRY.md.",
       "language": "Language",
@@ -232,7 +232,23 @@
       "resetStartOver": "Reset & start over",
       "arabicTerminal": "Arabic / RTL text in terminals",
       "arabicTerminalDesc": "Renders terminals with the browser's text engine so Arabic joins and reads right-to-left (xterm has no bidi of its own). Off is the GPU renderer: faster, but RTL-blind. Applies to open terminals and new ones alike.",
-      "arabicTerminalFollowsLanguage": "Following your app language. Switch it here to override that either way. The choice sticks even if you change language again."
+      "arabicTerminalFollowsLanguage": "Following your app language. Switch it here to override that either way. The choice sticks even if you change language again.",
+      "officeTheme": "Office theme",
+      "officeThemeDesc": "The colours the office is painted in. \"Original\" is the art as it ships.",
+      "officeThemes": {
+        "original": "Original",
+        "night": "Night"
+      },
+      "updates": "Updates",
+      "checkNow": "Check now",
+      "checking": "Checking…",
+      "upToDate": "Up to date.",
+      "checkFailed": "Could not check. Try again later.",
+      "updateAvailable": "v{{version}} available — downloading.",
+      "updateDownloading": "Downloading… {{percent}}%",
+      "updateReady": "v{{version}} ready. Restart to apply.",
+      "updateManual": "v{{version}} must be downloaded by hand.",
+      "currentVersion": "Version {{version}}"
     },
     "agentsModels": {
       "defaultModel": "Default agent model",
@@ -496,6 +512,10 @@
       "briefing": {
         "label": "Briefing",
         "hint": "What it does"
+      },
+      "desk": {
+        "label": "Desk",
+        "hint": "Where they sit"
       }
     },
     "name": "Name",
@@ -604,7 +624,10 @@
     "commandShown": "Command",
     "commandHire": "Command from the import — check it before you hire.",
     "floorFull": "Every face is hired. The floor holds {{max}} agents, one per face.",
-    "faceTaken": "That face is already hired. Pick another."
+    "faceTaken": "That face is already hired. Pick another.",
+    "deskQ": "Where does this agent sit?",
+    "deskHint": "Already pointed at the first free desk. Change it if you want them somewhere particular.",
+    "errBriefing": "Write what it does and what it should achieve."
   },
   "onboarding": {
     "titles": {
@@ -849,6 +872,30 @@
       "looping": "looping: breaker armed",
       "runningFloor": "running the floor",
       "idle": "idle"
+    },
+    "meeting": {
+      "0": "so, where are we?",
+      "1": "that one is blocked on the human.",
+      "2": "I can take that card.",
+      "3": "quick one — then back to it."
+    },
+    "visit": {
+      "0": "quick one about the card…",
+      "1": "blocked on this, need a call.",
+      "2": "done — what next?",
+      "3": "that dependency is not landing."
+    },
+    "arrive": {
+      "0": "morning",
+      "1": "morning all",
+      "2": "right — what have we got?",
+      "3": "back at it"
+    },
+    "free": {
+      "0": "free if anyone needs me",
+      "1": "anything for me?",
+      "2": "all clear here",
+      "3": "ready when you are"
     }
   },
   "setupPanel": {
@@ -1614,6 +1661,26 @@
     "manualOnly": "This install cannot update itself. Grab the new build from the releases page.",
     "whatsNew": "What’s new",
     "readMore": "Read more",
-    "starOnGitHub": "Star us on GitHub"
+    "later": "Later",
+    "restarting": "Restarting…",
+    "restartToUpdate": "Restart to update",
+    "downloadVersion": "Download {{version}}",
+    "openReleases": "Open releases",
+    "downloadedTitle": "Update downloaded",
+    "availableTitle": "Update available",
+    "and": "and",
+    "agentsWorking": "{{names}} are mid-task. Restarting kills the turn they are in — restart from Settings → Updates when the floor is quiet.",
+    "confirmTitle": "Restart to update?",
+    "confirmBodyWorking": "{{names}} are working right now. Restarting quits Atlas and kills every agent process: notes, tasks and messages on disk survive, and the crew comes back on the new version resuming their own threads — but whatever they are part-way through is lost.",
+    "confirmBodyIdle": "Atlas quits and reopens on the new version. Your agents are respawned afterwards and resume their own threads; nothing on disk is affected."
+  },
+  "deskPicker": {
+    "label": "Desk",
+    "anywhere": "Wherever there is room",
+    "anywhereHint": "Seated first-free when the floor fills.",
+    "chosen": "Sits at {{label}}.",
+    "mapLabel": "Office floor, with the chosen desk marked",
+    "clickHint": "Or click a desk on the plan.",
+    "impliedHint": "Would sit at {{label}} — the first desk free right now."
   }
 }

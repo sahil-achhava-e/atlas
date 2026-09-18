@@ -23,20 +23,30 @@
  *      structure yields an empty digest and the toast renders EXACTLY as it did
  *      before — no orphan heading, no shifted buttons. Most bodies are like
  *      that, so this is the common path, not the edge case.
- *   2. Bounded height. The digest is capped in releaseNotes.ts AND clamped with
- *      a scroll here, because a toast that grows with the release notes is a
- *      dialog that covers the app.
- *   3. The star ask is shown AT MOST ONCE EVER, not once per release. A repeated
- *      ask is the kind of nagging that gets a notification muted, which would
- *      cost the updater its only channel. See STAR_ASK_KEY below.
+ *   2. The notes are shown in full. They used to be clamped to a 96px scroller
+ *      because this was a corner toast, which meant the first bullet was cut in
+ *      half and the rest hidden behind a scrollbar nobody noticed. A dialog has
+ *      the room, so the digest — already capped at ~280 chars — is simply shown.
  *
- * No new IPC and no new network call: "read more" reuses `updateOpenRelease`
- * (the same bridge the manual state's button has always used) and the star link
- * goes through the existing `openExternal` opener.
+ * ─── A dialog, not a corner toast ───────────────────────────────────────────
+ * An update is one of the two things this app asks for that cannot be answered
+ * later by guessing (the other is a permission prompt): it restarts the app
+ * under you. A 340px card in the corner, in the system font, with rounded
+ * buttons, read as a browser notification — easy to ignore and not obviously
+ * ours. It is centred now, over a dimmed floor, built from PixelPanel and
+ * PixelButton so it is made of the same parts as every other dialog here.
+ *
+ * No new IPC and no new network call: "read more" reuses `updateOpenRelease`,
+ * the same bridge the manual state's button has always used.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '@/components/Icon';
+import { PixelPanel } from '@/components/PixelPanel';
+import { PixelButton } from '@/components/PixelButton';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useStore } from '@/store/store';
+import { workingAgents, nameList, offerRestartInDialog } from '@/components/restartWarning';
 import { summarizeReleaseNotes } from '@shared/releaseNotes';
 import { extractDropHtml } from '@shared/releaseDrop';
 import { ReleaseDrop } from '@/components/ReleaseDrop';
@@ -56,41 +66,15 @@ const GITHUB_REPO_URL = 'https://github.com/sahilethara/atlas';
  *  resolves `undefined` to this same page in main. */
 const GITHUB_RELEASES_URL = `${GITHUB_REPO_URL}/releases/latest`;
 
-/** One-time flag for the star ask. `cth.`-prefixed localStorage is this app's
- *  convention for renderer-only UI memory (see App.tsx's skipHivePickerOnce and
- *  design/theme.ts) — and SettingsModal's "reset & start over" clears every
- *  `cth.` key, which is right: a wiped install is a new user who has not been
- *  asked yet. It is deliberately NOT a HarnessConfig key; that file is the
- *  agent runtime's contract, hand-mirrored across main/preload/renderer, and a
- *  cosmetic nudge does not belong in it. */
-const STAR_ASK_KEY = 'cth.updateStarAsked';
-
-function starAskPending(): boolean {
-  try {
-    return window.localStorage.getItem(STAR_ASK_KEY) !== '1';
-  } catch {
-    // Storage unavailable means we cannot honour "at most once, ever" — so ask
-    // zero times rather than risk asking on every single update.
-    return false;
-  }
-}
-
-function markStarAsked(): void {
-  try { window.localStorage.setItem(STAR_ASK_KEY, '1'); } catch { /* nothing to do */ }
-}
-
 export function UpdateToast() {
   const { t } = useTranslation();
   const [status, setStatus] = useState<ToastStatus | null>(null);
   const [busy, setBusy] = useState(false);
-  // Read once per window, so persisting the flag below cannot make the link
-  // vanish from under the cursor of the person currently looking at it.
-  const [starAsk] = useState(starAskPending);
-  /** The version the ask was spent on. A version rather than a boolean because
-   *  flipping a boolean the moment we persist would yank the link out from
-   *  under the cursor of the person looking at it — this keeps it on the toast
-   *  that is showing it, and withholds it from any later one. */
-  const [starSpentOn, setStarSpentOn] = useState<string | null>(null);
+  /** The confirmation in front of the restart. Restarting kills every agent, so
+   *  it is never one click away from a dialog the user did not open. */
+  const [confirming, setConfirming] = useState(false);
+  const agents = useStore((s) => s.agents);
+  const working = workingAgents(agents);
 
   useEffect(() => window.cth.onUpdateStatus?.((next) => {
     const t = toastable(next);
@@ -139,23 +123,6 @@ export function UpdateToast() {
    *  the digest path stays the default, not a fallback nobody exercises. */
   const dropHtml = useMemo(() => extractDropHtml(status?.notes), [status?.notes]);
   const version = status?.version ?? null;
-  // Shown = spent. Not "clicked" — an ask the user read and ignored is an
-  // answer too, and asking again next release is exactly what rule 3 forbids.
-  // `notes.length > 0` was standing in for "this toast has something to show".
-  // A drop-only release body digests to zero bullets while being the richest
-  // release page we ship, so it has to count too — otherwise the star ask
-  // silently disappears on exactly the releases most worth starring.
-  // A drop no longer counts. The star ask is a BUTTON, the drop has none, and
-  // spending a once-ever ask on a surface that cannot show it burns it for
-  // nothing — a drop release that wants a star authors the link in its own HTML.
-  const showStar = starAsk && notes.length > 0
-    && (starSpentOn === null || starSpentOn === version);
-  useEffect(() => {
-    if (showStar && version && starSpentOn === null) {
-      setStarSpentOn(version);
-      markStarAsked();
-    }
-  }, [showStar, version, starSpentOn]);
 
   if (!status) return null;
 
@@ -206,108 +173,155 @@ export function UpdateToast() {
   // Freshly updated with nothing authored for this release: nothing to say.
   if (status.state === 'just-updated') return null;
 
-  const buttonStyle: React.CSSProperties = {
-    padding: '3px 16px 1px',
-    background: 'var(--cth-mint-light)',
-    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-    fontFamily: 'var(--cth-font-ui)', fontSize: 13,
-    color: 'var(--cth-ink-900)', cursor: 'pointer', border: 'none'
-  };
-
-  const linkStyle: React.CSSProperties = {
-    fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-900)',
-    textDecoration: 'underline', cursor: 'pointer'
-  };
-
   return (
-    <div style={{
-      position: 'fixed', right: 16, bottom: 16, zIndex: 400,
-      maxWidth: 340,
-      background: 'var(--cth-cream-50)',
-      // Same pre-redesign pixel shadow the restore menu wore. In dark mode the
-      // ring came out white around a toast that floats over everything.
-      boxShadow: 'inset 0 0 0 1px var(--cth-ink-100), var(--cth-shadow-card)',
-      borderRadius: 'var(--cth-radius-card)',
-      padding: '16px 12px',
-      display: 'flex', flexDirection: 'column', gap: 8,
-      fontFamily: 'var(--cth-font-ui)'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Icon name="sparkle" />
-        <span style={{ fontSize: 13, color: 'var(--cth-ink-900)', fontWeight: 600 }}>
-          {status.state === 'downloaded'
-            ? `Update v${status.version} downloaded`
-            : `v${status.version} is available`}
-        </span>
-      </div>
-      <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-700)' }}>
-        {status.state === 'downloaded'
-          ? t('updateToast.restartWhenever')
-          : t('updateToast.manualOnly')}
-      </span>
-
-      {notes.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{
-            fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, lineHeight: '12px',
-            color: 'var(--cth-ink-500)'
-          }}>
-            {t('updateToast.whatsNew')}
-          </div>
-          {/* The digest is already capped at ~280 chars; the clamp is the second
-              belt, for the day a release body defeats the parser. */}
-          <ul style={{
-            listStyle: 'none', margin: 0, padding: '0 0 0 2px',
-            maxHeight: 96, overflowY: 'auto',
-            display: 'flex', flexDirection: 'column', gap: 4
-          }}>
-            {notes.map((line, i) => (
-              <li key={i} style={{
-                display: 'flex', gap: 8,
-                fontSize: 13, lineHeight: '16px', color: 'var(--cth-ink-700)'
-              }}>
-                <span aria-hidden style={{ color: 'var(--cth-ink-400)' }}>•</span>
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <a
-              href={status.state === 'available-manual' ? status.url : GITHUB_RELEASES_URL}
-              onClick={(e) => { e.preventDefault(); openRelease(); }}
-              style={linkStyle}
-            >{t('updateToast.readMore')}</a>
-            {showStar && (
-              <a
-                href={GITHUB_REPO_URL}
-                onClick={(e) => { e.preventDefault(); void window.cth.openExternal(GITHUB_REPO_URL); }}
-                style={linkStyle}
-              >{t('updateToast.starOnGitHub')}</a>
-            )}
-          </div>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={status.state === 'downloaded'
+        ? `Update v${status.version} downloaded`
+        : `Version ${status.version} is available`}
+      onClick={(e) => { if (e.target === e.currentTarget) setStatus(null); }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 400,
+        display: 'grid', placeItems: 'center',
+        // DESIGN.md §7.9: ink-900 at 60%, and NO blur. The floor stays legible
+        // behind it, which is the point — this interrupts, it does not replace.
+        background: 'color-mix(in srgb, var(--cth-ink-900) 60%, transparent)',
+        padding: 24
+      }}
+    >
+      <PixelPanel
+        variant="dialog"
+        style={{
+          width: 'min(560px, 100%)',
+          // Tall enough for a real set of notes; beyond that the dialog itself
+          // scrolls, so nothing is ever cut off mid-bullet.
+          maxHeight: 'min(72vh, 680px)',
+          overflowY: 'auto',
+          padding: 20,
+          display: 'flex', flexDirection: 'column', gap: 12,
+          fontFamily: 'var(--cth-font-ui)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <Icon name="sparkle" />
+          <span style={{ fontSize: 16, lineHeight: '22px', color: 'var(--cth-ink-900)', fontWeight: 700 }}>
+            {status.state === 'downloaded'
+              ? t('updateToast.downloadedTitle')
+              : t('updateToast.availableTitle')}
+          </span>
+          {/* The version as a chip in the mono face: an identifier, not prose. */}
+          <span style={{
+            fontFamily: 'var(--cth-font-mono)', fontSize: 12, lineHeight: '16px',
+            color: 'var(--cth-ink-700)',
+            background: 'var(--cth-mint-light)',
+            boxShadow: 'inset 0 0 0 1px var(--cth-ink-200)',
+            borderRadius: 'var(--cth-radius-input)',
+            padding: '2px 7px'
+          }}>v{status.version}</span>
         </div>
-      )}
+        <span style={{ fontSize: 13.5, lineHeight: '20px', color: 'var(--cth-ink-700)' }}>
+          {status.state === 'downloaded'
+            ? t('updateToast.restartWhenever')
+            : t('updateToast.manualOnly')}
+        </span>
 
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-        <button
-          onClick={() => setStatus(null)}
-          style={{ ...buttonStyle, background: 'var(--cth-cream-100)' }}
-        >
-          later
-        </button>
-        {status.state === 'downloaded' ? (
-          <button onClick={restart} disabled={busy} style={buttonStyle}>
-            {busy ? 'restarting…' : 'restart to update'}
-          </button>
-        ) : (
-          <button
-            onClick={openRelease}
-            style={buttonStyle}
-          >
-            {hasDownload ? `download ${status.version}` : 'open releases'}
-          </button>
+        {notes.length > 0 && (
+          // The notes are the reason this dialog exists, so they get a panel of
+          // their own rather than sitting loose under the paragraph: a tinted
+          // ground, a hairline ring, and a heading that reads as a label. The
+          // markers are flex-shrink: 0 — without it a long line pushed the ▸ onto
+          // its own row and every bullet looked like two.
+          <div style={{
+            background: 'var(--cth-cream-100)',
+            boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+            borderRadius: 'var(--cth-radius-card)',
+            padding: '12px 14px',
+            display: 'flex', flexDirection: 'column', gap: 10
+          }}>
+            <div style={{
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 11, lineHeight: '12px',
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+              color: 'var(--cth-ink-500)'
+            }}>
+              {t('updateToast.whatsNew')}
+            </div>
+            <ul style={{
+              listStyle: 'none', margin: 0, padding: 0,
+              display: 'flex', flexDirection: 'column', gap: 8
+            }}>
+              {notes.map((line, i) => (
+                <li key={i} style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 9,
+                  fontSize: 13.5, lineHeight: '20px', color: 'var(--cth-ink-900)'
+                }}>
+                  <span aria-hidden style={{
+                    flexShrink: 0, marginTop: 6,
+                    width: 6, height: 6,
+                    background: 'var(--cth-mint)',
+                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                  }} />
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
-      </div>
+
+        {status.state === 'downloaded' && !offerRestartInDialog(agents) && (
+          <div style={{
+            fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-700)',
+            background: 'var(--cth-lemon-light)',
+            boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
+            borderRadius: 'var(--cth-radius-input)',
+            padding: '8px 10px'
+          }}>
+            {t('updateToast.agentsWorking', { names: nameList(working, t('updateToast.and')) })}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
+          {/* Read more was an underlined word in a paragraph and read as prose.
+              It is a button now, on the far side of the footer from the actions
+              that change something, because it only opens a page. */}
+          <PixelButton variant="ghost" size="md" onClick={openRelease}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Icon name="web" />
+              {t('updateToast.readMore')}
+            </span>
+          </PixelButton>
+          <span style={{ flex: 1 }} />
+          <PixelButton variant="secondary" size="md" onClick={() => setStatus(null)}>
+            {t('updateToast.later')}
+          </PixelButton>
+          {status.state === 'downloaded' ? (
+            offerRestartInDialog(agents) ? (
+              <PixelButton variant="primary" size="md" onClick={() => setConfirming(true)} disabled={busy}>
+                {busy ? t('updateToast.restarting') : t('updateToast.restartToUpdate')}
+              </PixelButton>
+            ) : null
+          ) : (
+            <PixelButton variant="primary" size="md" onClick={openRelease}>
+              {hasDownload
+                ? t('updateToast.downloadVersion', { version: status.version })
+                : t('updateToast.openReleases')}
+            </PixelButton>
+          )}
+        </div>
+      </PixelPanel>
+
+      {confirming && (
+        <ConfirmDialog
+          title={t('updateToast.confirmTitle')}
+          body={working.length
+            ? t('updateToast.confirmBodyWorking', { names: nameList(working, t('updateToast.and')) })
+            : t('updateToast.confirmBodyIdle')}
+          confirmLabel={t('updateToast.restartToUpdate')}
+          destructive
+          onCancel={() => setConfirming(false)}
+          onConfirm={() => { setConfirming(false); void restart(); }}
+        />
+      )}
     </div>
   );
 }

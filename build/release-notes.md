@@ -1,5 +1,4 @@
-- **The interface speaks Chinese and Arabic.** Set it in Settings.
-- **Updates install themselves.** Download, restart, done.
-- **Fonts ship inside the app.** No Google Fonts fetch on launch.
-- **Hardened how engine commands launch.**
-- **Settings has one Save button.** Connections get their own tab.
+- **Agents search each other's notes.** Memory, with nothing to install.
+- **A desk each**, assigned or first free — the floor plan shows which.
+- **Team leads** get the side offices and a brief of their own.
+- **Restart says what it costs** before it stops a working agent.

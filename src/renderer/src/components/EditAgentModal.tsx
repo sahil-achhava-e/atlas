@@ -5,6 +5,8 @@ import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { SpritePortrait } from './SpritePortrait';
 import { ProviderLogo } from './ProviderLogo';
+import { Switch } from './Switch';
+import { DeskPicker } from './DeskPicker';
 import { useStore, type Agent } from '@/store/store';
 import { type AccentColorName, DEFAULT_ACCENT_HEX } from '@/design/tokens';
 import {
@@ -42,6 +44,15 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
    *  routes and every string that says "Atlas" follow it. */
   const fixedIdentity = !!agent.isGod;
   const updateAgent = useStore((s) => s.updateAgent);
+  const [isLead, setIsLead] = useState(!!agent.isLead);
+  const [seat, setSeat] = useState(agent.seat ?? '');
+  /** Who already has which desk — everyone but this agent, so its own desk does
+   *  not show as taken by itself. */
+  const deskOccupants = useStore((s) => {
+    const out: Record<string, string> = {};
+    for (const a of s.agents) if (a.seat && a.id !== agent.id) out[a.seat] = a.name;
+    return out;
+  });
   const simpleMode = useStore((s) => s.simpleMode);
   const [config, setConfig] = useState<HarnessConfig | null>(null);
 
@@ -90,6 +101,8 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
       : agent.command;
 
     updateAgent(agent.id, {
+      isLead,
+      seat: seat || undefined,
       // Belt and braces: the fields are not rendered for the orchestrator, so
       // these can only hold what it already had — but a save must never be the
       // thing that renames Atlas.
@@ -243,6 +256,21 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                   </label>
                 </div>
               </Row>
+
+              {/* Desk. Hidden for Atlas: his cabin is reserved by the floor
+                  (GOD_SEAT) and the arrival, errand and no-wander rules are all
+                  written around it, so offering a choice would be offering
+                  something nothing else honours. */}
+              {!fixedIdentity && (
+                <Row label="Desk">
+                  <DeskPicker
+                    value={seat}
+                    occupants={deskOccupants}
+                    onChange={setSeat}
+                  />
+                </Row>
+              )}
+
             </Section>
 
               </div>
@@ -257,6 +285,20 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                   style={inputStyle}
                 />
               </Row>
+
+              {/* Team lead. Organisational, not hierarchical: it decides where the
+                  agent SITS — the two side rooms are the leaders' offices, filled
+                  a room at a time — and nothing about how work is routed. */}
+              {!fixedIdentity && (
+                <Row label="Team lead">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                    <Switch on={isLead} label="Team lead" onChange={() => setIsLead((v) => !v)} />
+                    <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
+                      Sits in one of the two side offices. Four leads fill both; after that they take the boardroom.
+                    </span>
+                  </label>
+                </Row>
+              )}
 
               <Row label="Goal (optional)">
                 <textarea

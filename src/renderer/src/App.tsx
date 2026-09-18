@@ -129,6 +129,7 @@ export function App() {
       // Mirror the active office theme so OfficeFloor renders it (gated on the
       // tvShowOffices flag; off = always the office). Settings keeps this synced.
       useStore.getState().setOfficeTheme(c.tvShowOffices ? (c.officeTheme ?? 'office') : 'office');
+      useStore.getState().setTilePalette(c.tilePalette ?? 'original');
       // Mirror "Explain things simply" so the surfaces that hide in simple mode
       // can read one boolean instead of each reaching for the config.
       useStore.getState().setSimpleMode((c as HarnessConfig).audience === 'non-technical');

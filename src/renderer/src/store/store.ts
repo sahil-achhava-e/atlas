@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { AccentColorName } from '@/design/tokens';
 import type { OfficeCharacterName } from '@/scene/office/cast';
 import type { ThemeId } from '@/scene/office/themeRegistry';
+import type { PaletteId } from '@/scene/office/tilePalette';
 import type { StatusKind } from '@/components/PixelBadge';
 import type { AgentProvider } from '@shared/agentProvider';
 import type { HireManifest } from '@shared/hire';
@@ -91,6 +92,15 @@ export interface Agent {
   /** Michael's prep assistant — send-only; enriches prompts and forwards them to
    *  the god. Excluded from broadcast fan-out and from the restorable-dead sweep. */
   isAssistant?: boolean;
+  /** A desk the human assigned, by spawn-point name (see deskDirectory.ts).
+   *  Unset = the floor seats them first-free, which is the old behaviour. An
+   *  assigned desk that is already taken falls back the same way. */
+  seat?: string;
+  /** Marked by the human as this project's team leader. Leaders take the two
+   *  side rooms (two seats each) before anyone takes a floor desk; past four
+   *  leaders the rest sit in the boardroom. Purely organisational — routing is
+   *  still flat, Atlas dispatches to whoever fits. */
+  isLead?: boolean;
   /** The human has this agent 1:1 and Michael has been told to leave it alone.
    *  Mirrors `RegistryAgent.onHold`; main owns the record, this is the copy the
    *  title bar renders from. */
@@ -299,6 +309,10 @@ interface State {
    *  on switch). OfficeFloor depends on this and rebuilds the scene on change. */
   officeTheme: ThemeId;
   setOfficeTheme: (theme: ThemeId) => void;
+  /** Mirror of config.tilePalette — the colours the office tiles are painted in.
+   *  'original' is the art as shipped and what an unknown value resolves to. */
+  tilePalette: PaletteId;
+  setTilePalette: (id: PaletteId) => void;
   /** Mirror of config.webhookTriggers — the inbound HTTP endpoints. Webhooks are
    *  editable from BOTH Settings → Connections and the Triggers tab, so neither
    *  surface keeps its own copy: both render off this list and both call the
@@ -926,6 +940,8 @@ export const useStore = create<State>((set, get) => ({
   setHasOpenAiKey: (has) => set({ hasOpenAiKey: has }),
   officeTheme: 'office',
   setOfficeTheme: (theme) => set({ officeTheme: theme }),
+  tilePalette: 'original',
+  setTilePalette: (id) => set({ tilePalette: id }),
   webhookTriggers: [],
   setWebhookTriggers: (list) => set({ webhookTriggers: list }),
   // A copy, not the shared DEFAULT_ORG_TRIGGER instance — main takes the same

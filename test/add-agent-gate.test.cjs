@@ -47,8 +47,8 @@ test('an unknown step is not openable', () => {
 
 // --- what simple mode asks for -----------------------------------------------
 
-test('a technical setup still has all four steps', () => {
-  assert.deepEqual(sectionsFor(false), ['identity', 'workspace', 'engine', 'briefing']);
+test('a technical setup has all five steps, with the desk last', () => {
+  assert.deepEqual(sectionsFor(false), ['identity', 'workspace', 'engine', 'briefing', 'desk']);
 });
 
 test('simple mode does not ask for an engine, a model or a command', () => {
@@ -56,7 +56,7 @@ test('simple mode does not ask for an engine, a model or a command', () => {
   // them — what spawns is the same either way, it is just not asked about here.
   const sections = sectionsFor(true);
   assert.ok(!sections.includes('engine'));
-  assert.deepEqual(sections, ['identity', 'workspace', 'briefing']);
+  assert.deepEqual(sections, ['identity', 'workspace', 'briefing', 'desk']);
 });
 
 test('the gate walks whichever list it is given', () => {
