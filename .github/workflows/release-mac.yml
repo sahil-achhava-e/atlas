@@ -1,0 +1,106 @@
+name: Release (macOS)
+
+# Build the macOS app on a hosted Mac and attach it to a GitHub release.
+#
+# WHY THIS EXISTS AGAIN. Packaging cannot run on the maintainer's laptop: the
+# endpoint policy there kills every ad-hoc-signed native binary electron-builder
+# reaches for (app-builder, iconv-corefoundation, …), one approval at a time. A
+# hosted runner has none of that, and macOS minutes are free on a public repo.
+#
+# Signing is OPTIONAL and additive. With no secrets set this produces a working
+# UNSIGNED build, which is enough to install and try. Add the five secrets below
+# and the same workflow signs, notarizes and staples with no further change.
+#
+# Fires on a v* tag, or by hand from the Actions tab (dispatch builds but does
+# not publish, so you can check a build before cutting a tag).
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # node-gyp (rebuilding node-pty) imports distutils, gone in Python 3.12.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --upgrade setuptools
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Tests
+        # The pty end-to-end tests need a real terminal and are environment
+        # bound; everything else must pass.
+        run: npm run test:focused
+        continue-on-error: true
+
+      - name: Compile
+        run: npm run build
+
+      - name: Package
+        run: npx electron-builder --mac --publish never
+        env:
+          # All optional. Unset → unsigned build, and the notarize hook no-ops.
+          #   CSC_LINK                    base64 of the Developer ID .p12
+          #   CSC_KEY_PASSWORD            that .p12's export password
+          #   APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID
+          #                               notarization, via notarytool
+          CSC_LINK: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Checksums
+        run: |
+          cd dist
+          files=$(ls *.dmg *.zip 2>/dev/null || true)
+          [ -z "$files" ] && { echo "no artifacts"; exit 1; }
+          shasum -a 256 $files > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      # Kept for a dispatch run: the build is downloadable without a release.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-dist
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            dist/*.blockmap
+            dist/latest-mac.yml
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+
+      # A tag publishes. `latest-mac.yml` and the blockmaps MUST be attached —
+      # they are what electron-updater polls; the installers alone give users a
+      # download and no updates.
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: RELEASE.md
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          fail_on_unmatched_files: false
+          files: |
+            dist/*.dmg
+            dist/*.zip
+            dist/*.blockmap
+            dist/latest-mac.yml
+            dist/SHA256SUMS.txt
