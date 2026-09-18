@@ -1,15 +1,19 @@
-name: Release (macOS)
+name: Release
 
-# Build the macOS app on a hosted Mac and attach it to a GitHub release.
+# Build the app for macOS and Windows on hosted runners and attach both to a
+# GitHub release.
 #
 # WHY THIS EXISTS AGAIN. Packaging cannot run on the maintainer's laptop: the
 # endpoint policy there kills every ad-hoc-signed native binary electron-builder
 # reaches for (app-builder, iconv-corefoundation, …), one approval at a time. A
 # hosted runner has none of that, and macOS minutes are free on a public repo.
 #
-# Signing is OPTIONAL and additive. With no secrets set this produces a working
-# UNSIGNED build, which is enough to install and try. Add the five secrets below
-# and the same workflow signs, notarizes and staples with no further change.
+# Signing is OPTIONAL and additive, and mac-only: with no secrets set this
+# produces a working UNSIGNED build, which is enough to install and try, and the
+# five APPLE_*/CSC_* secrets make the same file sign, notarize and staple.
+# Windows is never signed here — that needs its own certificate, bought
+# separately from Apple's, so the installer shows a SmartScreen warning on first
+# run until you have one.
 #
 # Fires on a v* tag, or by hand from the Actions tab (dispatch builds but does
 # not publish, so you can check a build before cutting a tag).
@@ -24,7 +28,17 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-latest
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # A Windows failure must not throw away a good mac build, or vice versa.
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            args: --mac
+          - os: windows-2022
+            args: --win
     steps:
       - uses: actions/checkout@v4
 
@@ -55,7 +69,7 @@ jobs:
         run: npm run build
 
       - name: Package
-        run: npx electron-builder --mac --publish never
+        run: npx electron-builder ${{ matrix.args }} --publish never
         env:
           # All optional. Unset → unsigned build, and the notarize hook no-ops.
           #   CSC_LINK                    base64 of the Developer ID .p12
@@ -69,28 +83,35 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Checksums
+        shell: bash
         run: |
           cd dist
-          files=$(ls *.dmg *.zip 2>/dev/null || true)
+          files=$(ls *.dmg *.zip *.exe 2>/dev/null || true)
           [ -z "$files" ] && { echo "no artifacts"; exit 1; }
-          shasum -a 256 $files > SHA256SUMS.txt
-          cat SHA256SUMS.txt
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum $files > "SHA256SUMS-${{ matrix.os }}.txt"
+          else
+            shasum -a 256 $files > "SHA256SUMS-${{ matrix.os }}.txt"
+          fi
+          cat "SHA256SUMS-${{ matrix.os }}.txt"
 
       # Kept for a dispatch run: the build is downloadable without a release.
       - uses: actions/upload-artifact@v4
         with:
-          name: mac-dist
+          name: ${{ matrix.os }}-dist
           path: |
             dist/*.dmg
             dist/*.zip
+            dist/*.exe
             dist/*.blockmap
-            dist/latest-mac.yml
-            dist/SHA256SUMS.txt
+            dist/latest*.yml
+            dist/SHA256SUMS-*.txt
           if-no-files-found: error
 
-      # A tag publishes. `latest-mac.yml` and the blockmaps MUST be attached —
-      # they are what electron-updater polls; the installers alone give users a
-      # download and no updates.
+      # A tag publishes. `latest-mac.yml` / `latest.yml` and the blockmaps MUST be
+      # attached — they are what electron-updater polls; the installers alone give
+      # users a download and no updates. Each runner uploads its own files to the
+      # same release, which action-gh-release handles idempotently.
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
@@ -101,6 +122,7 @@ jobs:
           files: |
             dist/*.dmg
             dist/*.zip
+            dist/*.exe
             dist/*.blockmap
-            dist/latest-mac.yml
-            dist/SHA256SUMS.txt
+            dist/latest*.yml
+            dist/SHA256SUMS-*.txt
