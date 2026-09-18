@@ -69,7 +69,19 @@ jobs:
         run: npm run build
 
       - name: Package
-        run: npx electron-builder ${{ matrix.args }} --publish never
+        shell: bash
+        # An UNSET secret still arrives as an empty string, and electron-builder
+        # reads an empty CSC_LINK as a path — which is how an unsigned build died
+        # with "/Users/runner/work/atlas/atlas not a file". So clear the signing
+        # variables when there is no certificate and tell it not to go hunting
+        # for one in the keychain either.
+        run: |
+          if [ -z "${CSC_LINK:-}" ]; then
+            echo "no Developer ID certificate in secrets — building unsigned"
+            unset CSC_LINK CSC_KEY_PASSWORD
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+          fi
+          npx electron-builder ${{ matrix.args }} --publish never
         env:
           # All optional. Unset → unsigned build, and the notarize hook no-ops.
           #   CSC_LINK                    base64 of the Developer ID .p12
