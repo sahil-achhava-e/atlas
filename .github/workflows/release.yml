@@ -35,7 +35,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest
+          # PINNED, not `macos-latest`. electron-builder 25.1.8 fails the macOS
+          # signing dance on the newest runner image: it creates a temporary
+          # keychain, imports the .p12, then calls
+          #   security set-key-partition-list -S apple-tool:,apple: -s -k <pw>
+          # which returns "SecKeychainUnlock: the user name or passphrase you
+          # entered is not correct" for a certificate whose password verifies
+          # fine locally (openssl says MAC verified OK). The password is not the
+          # problem; the image is. macos-14 is the last one this version signs on.
+          - os: macos-14
             args: --mac
           - os: windows-2022
             args: --win
@@ -93,11 +101,11 @@ jobs:
           #   CSC_KEY_PASSWORD            that .p12's export password
           #   APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID
           #                               notarization, via notarytool
-          CSC_LINK: ${{ matrix.os == 'macos-latest' && secrets.APPLE_CERTIFICATE_P12 || '' }}
-          CSC_KEY_PASSWORD: ${{ matrix.os == 'macos-latest' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
-          APPLE_ID: ${{ matrix.os == 'macos-latest' && secrets.APPLE_ID || '' }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ matrix.os == 'macos-latest' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
-          APPLE_TEAM_ID: ${{ matrix.os == 'macos-latest' && secrets.APPLE_TEAM_ID || '' }}
+          CSC_LINK: ${{ matrix.os == 'macos-14' && secrets.APPLE_CERTIFICATE_P12 || '' }}
+          CSC_KEY_PASSWORD: ${{ matrix.os == 'macos-14' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+          APPLE_ID: ${{ matrix.os == 'macos-14' && secrets.APPLE_ID || '' }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ matrix.os == 'macos-14' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ matrix.os == 'macos-14' && secrets.APPLE_TEAM_ID || '' }}
 
       - name: Checksums
         shell: bash
