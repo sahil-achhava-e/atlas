@@ -22,6 +22,21 @@ exports.default = async function notarizing(context) {
   const { electronPlatformName, appOutDir } = context;
   if (electronPlatformName !== 'darwin') return; // mac only
 
+  // A UNIVERSAL BUILD PACKS THREE TIMES.
+  //
+  // electron-builder produces `mac-universal-x64-temp`, then
+  // `mac-universal-arm64-temp`, then merges them into `mac-universal` — and
+  // afterSign fires on all three. So the same app was submitted to Apple three
+  // times over, each submission waiting its own timeout: a 68 minute Package
+  // step doing one release's work three times, and the only submission that
+  // matters is the last one, because the temp directories are thrown away.
+  //
+  // Only the merged app ships, so only the merged app is notarized.
+  if (/-temp\/?$/.test(appOutDir)) {
+    console.log(`[notarize] skipping ${appOutDir} — per-arch temp build, not the app we ship.`);
+    return;
+  }
+
   const {
     APPLE_KEYCHAIN_PROFILE,
     APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID,
