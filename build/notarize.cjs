@@ -15,97 +15,101 @@
 // build environment: notarytool stores it in the keychain once, and every build
 // after that names it. An env var holding an app-specific password ends up in
 // shell history, `ps`, and any CI log that echoes its environment.
-const { execFileSync } = require('node:child_process');
+//
+// ─── Why this calls notarytool directly ─────────────────────────────────────
+// It used to go through @electron/notarize, which spawns `xcrun notarytool
+// submit --wait` and waits on it. That call has no timeout of its own, and
+// during an App Store Connect upload outage one build waited two hours before
+// dying on a dropped connection.
+//
+// Racing that promise against a timer did NOT fix it, and that is the part worth
+// remembering: losing a race does not kill a child process. The build printed
+// "gave up after 15 min", went on to build its dmg — and then sat for another 45
+// minutes, because notarytool was still polling Apple and node will not exit
+// while a child of its own is alive.
+//
+// notarytool has `--timeout`, which actually ends the submission. So the three
+// steps happen here — zip, submit, staple — and the limit is enforced by the
+// tool doing the waiting.
+const { execFileSync, spawnSync } = require('node:child_process');
+const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
+
+/** How long Apple gets to answer before the build ships signed-but-unnotarized.
+ *  Passed straight to notarytool, which enforces it. */
+const TIMEOUT = process.env.NOTARIZE_TIMEOUT || '20m';
+
+/** notarytool's credential flags, or null when nothing is configured. */
+function credentialArgs(env) {
+  if (env.APPLE_KEYCHAIN_PROFILE) {
+    return ['--keychain-profile', env.APPLE_KEYCHAIN_PROFILE];
+  }
+  if (env.APPLE_API_KEY && env.APPLE_API_KEY_ID && env.APPLE_API_ISSUER) {
+    return ['--key', env.APPLE_API_KEY, '--key-id', env.APPLE_API_KEY_ID, '--issuer', env.APPLE_API_ISSUER];
+  }
+  if (env.APPLE_ID && env.APPLE_APP_SPECIFIC_PASSWORD && env.APPLE_TEAM_ID) {
+    return ['--apple-id', env.APPLE_ID, '--password', env.APPLE_APP_SPECIFIC_PASSWORD, '--team-id', env.APPLE_TEAM_ID];
+  }
+  return null;
+}
 
 exports.default = async function notarizing(context) {
   const { electronPlatformName, appOutDir } = context;
   if (electronPlatformName !== 'darwin') return; // mac only
 
-  // A UNIVERSAL BUILD PACKS THREE TIMES.
-  //
-  // electron-builder produces `mac-universal-x64-temp`, then
-  // `mac-universal-arm64-temp`, then merges them into `mac-universal` — and
-  // afterSign fires on all three. So the same app was submitted to Apple three
-  // times over, each submission waiting its own timeout: a 68 minute Package
-  // step doing one release's work three times, and the only submission that
-  // matters is the last one, because the temp directories are thrown away.
-  //
-  // Only the merged app ships, so only the merged app is notarized.
+  // A universal build packs three times — mac-universal-x64-temp, then
+  // mac-universal-arm64-temp, then the merge — and afterSign can fire on each.
+  // Only the merged app ships; the temp directories are deleted after it.
   if (/-temp\/?$/.test(appOutDir)) {
     console.log(`[notarize] skipping ${appOutDir} — per-arch temp build, not the app we ship.`);
     return;
   }
 
-  const {
-    APPLE_KEYCHAIN_PROFILE,
-    APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID,
-    APPLE_API_KEY, APPLE_API_KEY_ID, APPLE_API_ISSUER
-  } = process.env;
-
-  const hasProfile = !!APPLE_KEYCHAIN_PROFILE;
-  const hasPassword = !!(APPLE_ID && APPLE_APP_SPECIFIC_PASSWORD && APPLE_TEAM_ID);
-  const hasApiKey = !!(APPLE_API_KEY && APPLE_API_KEY_ID && APPLE_API_ISSUER);
-  if (!hasProfile && !hasPassword && !hasApiKey) {
+  const creds = credentialArgs(process.env);
+  if (!creds) {
     console.log('[notarize] no APPLE_* credentials in env — skipping notarization (build stays unsigned).');
-    return;
-  }
-
-  let notarize;
-  try {
-    ({ notarize } = require('@electron/notarize'));
-  } catch {
-    console.warn('[notarize] @electron/notarize not installed — run `npm install`. Skipping.');
     return;
   }
 
   const appName = context.packager.appInfo.productFilename;
   const appPath = path.join(appOutDir, `${appName}.app`);
+  // notarytool takes an archive, not a bundle. `ditto` is what Apple documents:
+  // it preserves the symlinks and extended attributes a .app depends on, which
+  // a plain `zip` does not.
+  const zipPath = path.join(os.tmpdir(), `${appName}-notarize-${Date.now()}.zip`);
 
-  const creds = hasProfile
-    ? { keychainProfile: APPLE_KEYCHAIN_PROFILE }
-    : hasApiKey
-      ? { appleApiKey: APPLE_API_KEY, appleApiKeyId: APPLE_API_KEY_ID, appleApiIssuer: APPLE_API_ISSUER }
-      : { appleId: APPLE_ID, appleIdPassword: APPLE_APP_SPECIFIC_PASSWORD, teamId: APPLE_TEAM_ID };
-
-  // A CAP ON THE WAIT.
-  //
-  // `notarytool --wait` polls Apple until it gets an answer, and has no timeout
-  // of its own. During an App Store Connect upload incident that meant one build
-  // sat for two hours and then died on a dropped connection, and the next was
-  // still waiting at fifty minutes — burning runner time to end up exactly where
-  // giving up early would have: a signed, un-notarized build.
-  //
-  // So: lose the race and ship. The app is already signed at this point, which is
-  // what gives macOS the stable identity it remembers folder permissions by; the
-  // ticket can be added by re-running the job when Apple is healthy.
-  const TIMEOUT_MS = Number(process.env.NOTARIZE_TIMEOUT_MS || 15 * 60_000);
-  const timeout = (ms) => new Promise((_, reject) =>
-    setTimeout(() => reject(new Error(
-      `gave up after ${Math.round(ms / 60_000)} min — Apple did not answer. Check `
-      + 'https://developer.apple.com/system-status/ and re-run the job.')), ms).unref());
-
-  console.log(`[notarize] submitting ${appName}.app to Apple via notarytool `
-    + `(giving up after ${Math.round(TIMEOUT_MS / 60_000)} min)…`);
+  console.log(`[notarize] submitting ${appName}.app to Apple (notarytool --timeout ${TIMEOUT})…`);
   try {
-    await Promise.race([
-      notarize({ tool: 'notarytool', appPath, ...creds }),
-      timeout(TIMEOUT_MS)
-    ]);
-    console.log('[notarize] stapling ticket to the app…');
+    execFileSync('ditto', ['-c', '-k', '--keepParent', appPath, zipPath], { stdio: 'inherit' });
+
+    // spawnSync, not execFileSync: a non-zero exit has to be READ, not thrown,
+    // so a refusal or a timeout ends in the warning below with Apple's own words
+    // rather than a stack trace that sinks the cross-platform release.
+    const res = spawnSync('xcrun', [
+      'notarytool', 'submit', zipPath, ...creds, '--wait', '--timeout', TIMEOUT
+    ], { encoding: 'utf8', maxBuffer: 1 << 24 });
+
+    const out = `${res.stdout ?? ''}${res.stderr ?? ''}`.trim();
+    // `--wait` exits 0 for a submission that was REJECTED as well as one that was
+    // accepted, so the status line is the thing to check, not the exit code.
+    if (res.status !== 0 || !/status:\s*Accepted/i.test(out)) {
+      throw new Error(out || `notarytool exited ${res.status}`);
+    }
+    console.log('[notarize] accepted — stapling the ticket to the app…');
     execFileSync('xcrun', ['stapler', 'staple', appPath], { stdio: 'inherit' });
     console.log('[notarize] done — app is signed, notarized, and stapled.');
   } catch (err) {
     // Best-effort: notarization talks to Apple's servers and can fail for reasons
-    // outside the build (bad/expired app-specific password, unaccepted Developer
-    // Program agreement, Apple-side outage, a rejected submission). That must NOT
-    // sink the whole cross-platform release — the app is still Developer ID *signed*,
-    // which is what gives the stable identity macOS uses to remember folder-access
-    // grants (the one-time prompt). So we log loudly and ship the signed build;
-    // once the credentials are valid, the next release notarizes with no code change.
-    // Un-notarized = users may need a one-time right-click → Open on first launch.
+    // outside the build — an outage, a rejected submission, an expired password.
+    // That must NOT sink the release: the app is still Developer ID *signed*,
+    // which is what gives macOS the stable identity it remembers folder-access
+    // grants by. Un-notarized costs users a one-time "Open Anyway" in System
+    // Settings, and re-running the job adds the ticket with no code change.
     console.warn('[notarize] ⚠️  NOTARIZATION FAILED — shipping a signed-but-unnotarized build.');
-    console.warn('[notarize] Check APPLE_KEYCHAIN_PROFILE (or the APPLE_ID / APPLE_API_KEY credentials) to enable it.');
-    console.warn(`[notarize] notarytool said:\n${err && err.message ? err.message : err}`);
+    console.warn(`[notarize] ${err && err.message ? err.message : err}`);
+    console.warn('[notarize] Check https://developer.apple.com/system-status/ and re-run the job.');
+  } finally {
+    try { fs.rmSync(zipPath, { force: true }); } catch { /* temp file */ }
   }
 };
