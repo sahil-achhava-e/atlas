@@ -83,16 +83,21 @@ jobs:
           fi
           npx electron-builder ${{ matrix.args }} --publish never
         env:
-          # All optional. Unset → unsigned build, and the notarize hook no-ops.
+          # MAC ONLY, and that is load-bearing. CSC_LINK is not a mac variable —
+          # electron-builder hands it to signtool.exe on Windows too, so leaving
+          # it set for the Windows runner signed every .exe with an APPLE
+          # Developer ID certificate. Gate each one on the OS.
+          #
+          # All optional: unset → unsigned build, and the notarize hook no-ops.
           #   CSC_LINK                    base64 of the Developer ID .p12
           #   CSC_KEY_PASSWORD            that .p12's export password
           #   APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID
           #                               notarization, via notarytool
-          CSC_LINK: ${{ secrets.APPLE_CERTIFICATE_P12 }}
-          CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CSC_LINK: ${{ matrix.os == 'macos-latest' && secrets.APPLE_CERTIFICATE_P12 || '' }}
+          CSC_KEY_PASSWORD: ${{ matrix.os == 'macos-latest' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+          APPLE_ID: ${{ matrix.os == 'macos-latest' && secrets.APPLE_ID || '' }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ matrix.os == 'macos-latest' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ matrix.os == 'macos-latest' && secrets.APPLE_TEAM_ID || '' }}
 
       - name: Checksums
         shell: bash
