@@ -37,8 +37,14 @@ const os = require('node:os');
 const path = require('node:path');
 
 /** How long Apple gets to answer before the build ships signed-but-unnotarized.
- *  Passed straight to notarytool, which enforces it. */
-const TIMEOUT = process.env.NOTARIZE_TIMEOUT || '20m';
+ *  Passed straight to notarytool, which enforces it.
+ *
+ *  45 minutes because 20 was measured to be too short: submission 69f4be10 was
+ *  still "In Progress" when the build gave up at twenty minutes, and came back
+ *  Accepted about forty minutes after it was created. Apple's own guidance is
+ *  "usually under an hour", and a build that waits is cheaper than a release
+ *  that ships unnotarized. */
+const TIMEOUT = process.env.NOTARIZE_TIMEOUT || '45m';
 
 /** notarytool's credential flags, or null when nothing is configured. */
 function credentialArgs(env) {
