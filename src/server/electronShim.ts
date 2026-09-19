@@ -24,6 +24,8 @@
  */
 
 import { EventEmitter } from 'node:events';
+
+import { keepAwakeCommand } from '../shared/keepAwake';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
@@ -312,28 +314,27 @@ export const powerMonitor = new EventEmitter();
 /**
  * Keeping the machine awake without Electron.
  *
- * `powerSaveBlocker` is Chromium's. macOS ships the same capability as a
- * command: `caffeinate` holds an assertion for as long as it runs, and dies with
- * the process that spawned it, which is exactly the lifetime wanted here. Other
- * platforms get the honest no-op they had before.
+ * `powerSaveBlocker` is Chromium's. Each desktop OS ships the same capability
+ * some other way — see src/shared/keepAwake.ts for which command, and why each
+ * one holds only for as long as its process lives.
  */
 const blockers = new Map<number, import('node:child_process').ChildProcess>();
 let blockerSeq = 0;
 
 export const powerSaveBlocker = {
   start(type?: string): number {
-    if (process.platform !== 'darwin') return -1;
+    const cmd = keepAwakeCommand(process.platform, type);
+    if (!cmd) return -1;
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { spawn } = require('node:child_process') as typeof import('node:child_process');
-      // -i: no idle sleep. -d also holds the DISPLAY awake, which is what
-      // 'prevent-display-sleep' asks for and more than the app usually wants.
-      const args = type === 'prevent-display-sleep' ? ['-di'] : ['-i'];
-      const child = spawn('caffeinate', args, { stdio: 'ignore' });
-      child.on('error', () => { /* no caffeinate on this machine */ });
+      const child = spawn(cmd.exe, cmd.args, { stdio: 'ignore', windowsHide: true });
+      // A machine without the tool is a machine that will sleep — worth saying
+      // once, not worth failing over.
+      child.on('error', (e) => console.warn(`[server] keep-awake unavailable (${cmd.exe}): ${e.message}`));
       const id = ++blockerSeq;
       blockers.set(id, child);
-      console.log(`[server] keep-awake on (caffeinate ${args.join(' ')})`);
+      console.log(`[server] keep-awake on (${cmd.exe})`);
       return id;
     } catch { return -1; }
   },
@@ -349,6 +350,7 @@ export const powerSaveBlocker = {
     return !!child && child.exitCode === null && !child.killed;
   }
 };
+
 export const screen = {
   getPrimaryDisplay: () => ({ workAreaSize: { width: 1440, height: 900 }, bounds: { x: 0, y: 0, width: 1440, height: 900 } }),
   getAllDisplays: () => []

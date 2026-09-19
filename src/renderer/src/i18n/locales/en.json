@@ -211,7 +211,6 @@
     "general": {
       "homeFolder": "Home folder",
       "environment": "Environment",
-      "keepAwake": "Keep Mac awake while agents run",
       "keepAwakeDesc": "Blocks display sleep so schedules and terminals keep firing on time. Costs battery, best on AC.",
       "simpleMode": "Explain things simply",
       "simpleModeDesc": "Plain language instead of engineering shorthand, and an app without the terminal, git, model ids or skills. Agents work on their own in this mode, because the questions they would ask are asked in the terminal.",
@@ -251,7 +250,10 @@
       "currentVersion": "Version {{version}}",
       "workspaces": "Workspaces",
       "workspacesDesc": "Open another workspace, make a new one, or delete one you are done with.",
-      "workspacesOpen": "Workspaces"
+      "workspacesOpen": "Workspaces",
+      "keepAwakeMac": "Keep the Mac awake while agents run",
+      "keepAwakeWindows": "Keep the PC awake while agents run",
+      "keepAwakeLinux": "Keep the machine awake while agents run"
     },
     "agentsModels": {
       "defaultModel": "Default agent model",
@@ -758,7 +760,6 @@
       "reliabilityHead": "Keep things running while you're away",
       "reliabilityDescPlain": "Three switches for when you are away from the computer.",
       "reliabilityDesc": "Three switches for what happens when you are not at the machine.",
-      "keepAwake": "Stop the Mac sleeping",
       "keepAwakeDesc": "Timed work fires on time. Costs battery, so best on power.",
       "notifications": "Desktop notifications",
       "notificationsDesc": "A toast when an agent finishes or needs you.",
@@ -779,7 +780,10 @@
       "autoDesc": "Agents do the work without asking. This is what lets them run while you sleep.",
       "autoDescPlain": "Agents do the work without asking you first.",
       "reliabilityDescPlain_browser": "Two switches for when you are away from the computer.",
-      "reliabilityDesc_browser": "Two switches for what happens when you are not at the machine. The rest need the desktop app."
+      "reliabilityDesc_browser": "Two switches for what happens when you are not at the machine. The rest need the desktop app.",
+      "keepAwakeMac": "Stop the Mac sleeping",
+      "keepAwakeWindows": "Stop the PC sleeping",
+      "keepAwakeLinux": "Stop the machine sleeping"
     },
     "errPickHome": "Pick a harness home folder first.",
     "errCreateHome": "could not create harness home",

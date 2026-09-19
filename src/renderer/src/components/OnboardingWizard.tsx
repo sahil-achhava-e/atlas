@@ -1,4 +1,5 @@
 import { isBrowserMode } from '@/runtime';
+import { osStringKey } from '@/platformCopy';
 import { ensureNotificationPermission } from '@/browserNotifications';
 import { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
@@ -881,7 +882,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
                 <ToggleRow
                   icon="clock"
-                  label={t('onboarding.permissions.keepAwake')}
+                  label={t(`onboarding.permissions.${osStringKey('keepAwake')}`)}
                   desc={t('onboarding.permissions.keepAwakeDesc')}
                   on={strongKeepalive}
                   tint="var(--cth-mint-light)"

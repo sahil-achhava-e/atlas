@@ -1,5 +1,6 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import { ensureNotificationPermission } from '@/browserNotifications';
+import { osStringKey } from '@/platformCopy';
 import { ConfirmDialog } from './ConfirmDialog';
 import { workingAgents, nameList } from './restartWarning';
 import { useTranslation } from 'react-i18next';
@@ -851,12 +852,12 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <span style={{ fontSize: 13.5, lineHeight: '20px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>{t('settings.general.keepAwake')}</span>
+                              <span style={{ fontSize: 13.5, lineHeight: '20px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>{t(`settings.general.${osStringKey('keepAwake')}`)}</span>
                               <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
                                 {t('settings.general.keepAwakeDesc')}
                               </span>
                             </div>
-                            <Switch on={keepAwake} label={t('settings.general.keepAwake')} onChange={toggleKeepAwake} />
+                            <Switch on={keepAwake} label={t(`settings.general.${osStringKey('keepAwake')}`)} onChange={toggleKeepAwake} />
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
