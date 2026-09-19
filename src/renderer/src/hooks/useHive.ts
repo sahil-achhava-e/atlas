@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { toolPhrase } from '@shared/activityFeed';
 import { useStore, type Agent, type QueuedMessage, type StationKind, type ToolKind } from '@/store/store';
 import {
   buildSpawnCommand,
@@ -498,12 +499,12 @@ export function useHive(config: HarnessConfig | null): void {
       // pty-stream parser only refines the on-floor action/station).
       if (e.event === 'PreCompact') {
         // #5C — agent entered /compact; show it's boxing up context, not frozen.
-        if (!breakerArmed) updateAgent(e.agentId, { status: 'compacting', action: 'compacting context', carrying: undefined });
+        if (!breakerArmed) updateAgent(e.agentId, { status: 'compacting', action: 'tidying up', carrying: undefined });
       } else if (e.event === 'PostCompact') {
-        if (!breakerArmed) updateAgent(e.agentId, { status: 'working', action: 'resumed', carrying: undefined });
+        if (!breakerArmed) updateAgent(e.agentId, { status: 'working', action: 'back at it', carrying: undefined });
       } else if (e.event === 'PreToolUse' && e.tool) {
         const m = stationForTool(e.tool);
-        if (!breakerArmed) updateAgent(e.agentId, { status: 'working', currentStation: m.station, carrying: m.carry, action: `using ${e.tool}` });
+        if (!breakerArmed) updateAgent(e.agentId, { status: 'working', currentStation: m.station, carrying: m.carry, action: toolPhrase(e.tool) });
         useStore.getState().bumpToolCount(e.agentId); // usage proxy for the command center
       } else if (e.event === 'PostToolUse' || e.event === 'UserPromptSubmit') {
         // A turn is in progress (prompt submitted / tool just finished) — keep
@@ -522,7 +523,7 @@ export function useHive(config: HarnessConfig | null): void {
         // A blocked Stop means the agent is being re-engaged to process its
         // inbox — it's NOT idle, so keep it working until it genuinely stops.
         if (e.blocked) {
-          if (!breakerArmed) updateAgent(e.agentId, { status: 'working', action: 'reading inbox', carrying: undefined });
+          if (!breakerArmed) updateAgent(e.agentId, { status: 'working', action: 'checking messages', carrying: undefined });
         } else {
           // A genuine stop clears any breaker override — the run is over.
           breakerLevel.current[e.agentId] = 'healthy';

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { toolPhrase } from '@shared/activityFeed';
 import { useStore, type ToolKind, type StationKind } from '@/store/store';
 import { createAnsiStripper } from '@/components/ansiText';
 
@@ -62,7 +63,7 @@ export function usePtyParser(agentId: string) {
       // No new tool calls for ~4 s → assume the model went idle
       updateAgent(agentId, {
         status: 'idle',
-        action: 'awaiting',
+        action: 'waiting for work',
         carrying: undefined,
         currentStation: 'desk'
       });
@@ -117,9 +118,14 @@ export function usePtyParser(agentId: string) {
     if (lastTool) {
       const station = TOOL_TO_STATION[lastTool] ?? 'desk';
       const carrying = TOOLKIND_BY_NAME[lastTool] ?? undefined;
+      // The tool's NAME is the engine's business. On the floor it reads as
+      // jargon to everyone and as nothing at all to whoever chose the plain
+      // register, so say the activity instead — the same table the readable
+      // pane uses. The argument still rides along when there is one: "reading a
+      // file · src/auth.ts" is the useful half of what the name was carrying.
       // Collapse space runs: translated cursor-forwards (see ansiText) can
       // stand for several columns, and the bubble shouldn't show the gaps.
-      const summary = (lastArg ? `${lastTool.toLowerCase()} ${lastArg}` : lastTool.toLowerCase())
+      const summary = (lastArg ? `${toolPhrase(lastTool)} · ${lastArg}` : toolPhrase(lastTool))
         .replace(/\s+/g, ' ');
       // NOTE: `progress` deliberately untouched — it's the context gauge now
       // (filled by the useHive context poll), not a per-task meter.

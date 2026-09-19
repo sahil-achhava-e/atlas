@@ -131,3 +131,38 @@ export function lastSaid(rows: readonly ActivityRow[]): string | undefined {
   for (let i = rows.length - 1; i >= 0; i--) if (rows[i].kind === 'say') return rows[i].text;
   return undefined;
 }
+
+/**
+ * What to say an agent is DOING, in a thought bubble or under its name.
+ *
+ * The floor said "using Bash", which is the tool's name and nobody's business
+ * but the engine's — and it said it to someone who chose the plain register as
+ * readily as to an engineer. This is the same table the feed reads, phrased as
+ * an activity rather than an instrument: a person watching a floor wants to know
+ * whether an agent is reading, writing, running something or stuck, and the name
+ * of the tool answers none of that.
+ *
+ * Lowercase and gerund, because it lands mid-sentence: "Atlas · reading a file".
+ */
+export function toolPhrase(tool: string): string {
+  return TOOL_PHRASES[tool] ?? 'working';
+}
+
+const TOOL_PHRASES: Record<string, string> = {
+  Read: 'reading a file',
+  Write: 'writing a file',
+  Edit: 'editing a file',
+  NotebookEdit: 'editing a notebook',
+  Bash: 'running a command',
+  Glob: 'looking for files',
+  Grep: 'searching the code',
+  WebFetch: 'reading a page',
+  WebSearch: 'searching the web',
+  Task: 'on a side task',
+  Agent: 'on a side task',
+  TodoWrite: 'planning',
+  // The pty parser sees a few names the transcript does not.
+  MultiEdit: 'editing files',
+  BashOutput: 'checking a command',
+  KillShell: 'stopping a command'
+};

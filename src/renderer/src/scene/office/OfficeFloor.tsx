@@ -226,11 +226,11 @@ function recolour(img: HTMLImageElement, swap: Map<number, [number, number, numb
  *  gave it, then to a caller-supplied generic. Returns '' for the working state
  *  with nothing concrete yet — the bubble renders an animated "…" for that. */
 /** Actions that are bookkeeping, not activity, and must never reach a bubble.
- *  'starting up' is written on every spawn and restore; 'idle' is written by the
- *  hive whenever an agent goes quiet. Narrating either one puts a word over an
+ *  'starting up' is written on every spawn and restore; 'idle' and 'waiting for
+ *  work' are written whenever an agent goes quiet. Narrating either one puts a word over an
  *  agent's head that says nothing — the floor already shows idleness by the
  *  agent standing up and wandering off. */
-const BOOT_ACTIONS = new Set(['starting up', 'idle']);
+const BOOT_ACTIONS = new Set(['starting up', 'idle', 'waiting for work']);
 
 function liveActivity(agent: Agent, fallback = ''): string {
   const action = (agent.action || '').trim();

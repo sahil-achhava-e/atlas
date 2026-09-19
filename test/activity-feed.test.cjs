@@ -109,3 +109,30 @@ test('the last thing SAID skips over the work', () => {
   assert.equal(lastSaid(rows), 'Looking now.');
   assert.equal(lastSaid([]), undefined);
 });
+
+// The floor's thought bubble. It said "using Bash" — the tool's name, to
+// everyone, including the person who chose the plain register. What someone
+// watching a floor wants is whether an agent is reading, writing or stuck.
+
+const { toolPhrase } = loadTs('src/shared/activityFeed.ts');
+
+test('an agent is doing something, not using something', () => {
+  assert.equal(toolPhrase('Bash'), 'running a command');
+  assert.equal(toolPhrase('Read'), 'reading a file');
+  assert.equal(toolPhrase('Edit'), 'editing a file');
+  assert.equal(toolPhrase('Grep'), 'searching the code');
+  assert.equal(toolPhrase('Task'), 'on a side task');
+});
+
+test('an unknown tool says the honest minimum, never its own name', () => {
+  for (const t of ['Sharpen', 'mcp__weird__thing', '']) {
+    assert.equal(toolPhrase(t), 'working', t);
+  }
+});
+
+test('the phrases land mid-sentence, so they are lowercase', () => {
+  for (const t of ['Bash', 'Read', 'Write', 'Glob', 'WebSearch', 'TodoWrite', 'Nope']) {
+    const p = toolPhrase(t);
+    assert.equal(p, p.toLowerCase(), t);
+  }
+});
