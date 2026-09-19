@@ -6,7 +6,7 @@ import { Icon } from './Icon';
 import type { HarnessConfig } from '@/store/config';
 import { useNativeDialog } from '@/hooks/useNativeDialog';
 import { ConfirmDialog } from './ConfirmDialog';
-import { suggestWorkspace } from '@shared/workspaceName';
+import { suggestWorkspaceName, workspacePath, cleanWorkspaceName, WORKSPACE_ROOT } from '@shared/workspaceName';
 
 export interface HivePickerProps {
   config: HarnessConfig;
@@ -60,10 +60,11 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
   // the app (true for the OPEN workspace, which cannot be deleted under itself).
   const [confirming, setConfirming] = useState<{ path: string; reset: boolean } | undefined>();
   const recents = listed.filter((h) => !gone.includes(h));
-  // The new-workspace field, or undefined when the form is closed. It is a path,
-  // not a name: the folder is the workspace, and hiding that behind a "name"
-  // would leave people guessing where their crew ended up.
-  const [newPath, setNewPath] = useState<string | undefined>();
+  // The new-workspace NAME, or undefined when the form is closed. A name, not a
+  // path: new workspaces are folders in one root, so the only decision left is
+  // what to call this one. The root is shown beside the field, not hidden.
+  const [newName, setNewName] = useState<string | undefined>();
+  const newFolder = newName === undefined ? '' : cleanWorkspaceName(newName);
 
   /** Stop listing a workspace. The folder is untouched. */
   const forget = async (path: string) => {
@@ -270,7 +271,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                 it also made a new workspace impossible in the browser, where
                 there is no native picker at all. `changeHome(…, 'fresh')`
                 creates the folder if it is not there. */}
-            {newPath !== undefined && (
+            {newName !== undefined && (
               <div style={{
                 display: 'flex', flexDirection: 'column', gap: 8, padding: 12,
                 background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
@@ -279,32 +280,46 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                 <label style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 1, color: 'var(--cth-ink-500)' }}>
                   {t('hivePicker.newLabel')}
                 </label>
-                <input
-                  value={newPath}
-                  autoFocus
-                  spellCheck={false}
-                  onChange={(e) => setNewPath(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && newPath.trim()) void openHive(newPath.trim());
-                    if (e.key === 'Escape') setNewPath(undefined);
-                  }}
-                  style={{
-                    font: 'inherit', fontFamily: 'var(--cth-font-mono)', fontSize: 13,
-                    padding: '8px 10px', background: 'var(--cth-cream-50)',
-                    border: 'none', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
-                    borderRadius: 'var(--cth-radius-input)', color: 'var(--cth-ink-900)'
-                  }}
-                />
+                {/* The root is a label, not editable text: every new workspace
+                    is a folder in it, and that is the thing being made simpler.
+                    "Open another folder" is still there for anywhere else. */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                  <span style={{
+                    fontFamily: 'var(--cth-font-mono)', fontSize: 13, color: 'var(--cth-ink-500)',
+                    padding: '8px 2px 8px 10px', background: 'var(--cth-cream-50)',
+                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                    borderRadius: 'var(--cth-radius-input) 0 0 var(--cth-radius-input)',
+                    whiteSpace: 'nowrap'
+                  }}>{WORKSPACE_ROOT}/</span>
+                  <input
+                    value={newName}
+                    autoFocus
+                    spellCheck={false}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newFolder) void openHive(workspacePath(newName));
+                      if (e.key === 'Escape') setNewName(undefined);
+                    }}
+                    style={{
+                      flex: 1, minWidth: 0,
+                      font: 'inherit', fontFamily: 'var(--cth-font-mono)', fontSize: 13,
+                      padding: '8px 10px 8px 2px', background: 'var(--cth-cream-50)',
+                      border: 'none', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                      borderRadius: '0 var(--cth-radius-input) var(--cth-radius-input) 0',
+                      color: 'var(--cth-ink-900)'
+                    }}
+                  />
+                </div>
                 <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>{t('hivePicker.newHint')}</div>
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                  <PixelButton variant="ghost" size="sm" onClick={() => setNewPath(undefined)} disabled={!!busy}>
+                  <PixelButton variant="ghost" size="sm" onClick={() => setNewName(undefined)} disabled={!!busy}>
                     {t('hivePicker.cancel')}
                   </PixelButton>
                   <PixelButton
                     variant="primary"
                     size="sm"
-                    onClick={() => void openHive(newPath.trim())}
-                    disabled={!!busy || !newPath.trim()}
+                    onClick={() => void openHive(workspacePath(newName))}
+                    disabled={!!busy || !newFolder}
                   >
                     {t('hivePicker.create')}
                   </PixelButton>
@@ -323,7 +338,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
               <PixelButton
                 variant="secondary"
                 size="md"
-                onClick={() => setNewPath(suggestWorkspace([...(current ? [current] : []), ...recents]))}
+                onClick={() => setNewName(suggestWorkspaceName([...(current ? [current] : []), ...recents]))}
                 disabled={!!busy || browsing}
               >
                 <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>

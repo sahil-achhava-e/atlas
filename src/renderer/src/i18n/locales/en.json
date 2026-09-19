@@ -702,7 +702,7 @@
     "home": {
       "descPlain": "Pick an empty folder for Atlas to keep its notes and settings in. It is created if it does not exist.",
       "desc": "Pick a folder for Atlas to keep its own files: agent memory, logs, and any projects you start from here. It is created if it does not exist.",
-      "placeholder": "~/agents",
+      "placeholder": "~/Atlas/agents",
       "createPick": "Choose folder",
       "pick": "Choose folder",
       "notePlain": "Nothing you need to open. It is how Atlas remembers after you close the app.",
@@ -1659,8 +1659,8 @@
     "resetConfirm": "Delete and reset",
     "deleteOpen": "Delete this workspace and reset Atlas",
     "newTitle": "New workspace",
-    "newLabel": "Folder",
-    "newHint": "Created if it does not exist. Its crew, memory and board live here.",
+    "newLabel": "Name",
+    "newHint": "Created under ~/Atlas if it does not exist. Its crew, memory and board live here.",
     "create": "Create and open",
     "cancel": "Cancel"
   },
