@@ -5,28 +5,18 @@ import { PixelButton } from './PixelButton';
 import { isComposingKey } from '@shared/imeGuard';
 import { useRtl } from '@/i18n/useDirection';
 
+/** Mirrors preload's MemoryStatus. `backend` is worth showing: the jsonl
+ *  fallback is slower, and a user who sees it can ask why. */
 interface MemoryStatus {
   available: boolean;
-  preparing?: boolean;
-  prepareError?: string | null;
-  containerized?: boolean;
-  docker?: { installed: boolean; running: boolean };
   enabled: boolean;
   active: boolean;
   initialized: boolean;
   palacePath: string | null;
-  model: 'minilm' | 'embeddinggemma';
-  bin: string | null;
+  backend: string | null;
+  chunks: number;
+  agents: number;
 }
-
-type ModelId = 'minilm' | 'embeddinggemma';
-
-// Plain-language framing of each model — lead with the benefit the user actually
-// chooses between, not the model's codename. Labels are i18n keys.
-const MODELS: { id: ModelId; titleKey: string; detailKey: string }[] = [
-  { id: 'minilm',         titleKey: 'memoryPanel.modelFast',         detailKey: 'memoryPanel.modelFastDetail' },
-  { id: 'embeddinggemma', titleKey: 'memoryPanel.modelMultilingual', detailKey: 'memoryPanel.modelMultilingualDetail' },
-];
 
 /**
  * Lets the human search the shared memory agents build up across sessions, turn
@@ -54,10 +44,6 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
   };
   useEffect(() => { refreshStatus(); }, []);
 
-  const setModel = async (model: ModelId) => {
-    await window.cth.updateConfig({ embeddingModel: model });
-    await refreshStatus();
-  };
   const toggleEnabled = async () => {
     // The label and the action must read the SAME value. This defaulted the
     // unknown state to `true`, so before status loaded — or whenever the status
@@ -81,35 +67,17 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
   };
 
   const active = status?.active;
-  const pill = active ? `${t('memoryPanel.pillActive')} · ${status?.model}` : t('memoryPanel.pill');
+  const pill = active ? t('memoryPanel.pillActive') : t('memoryPanel.pill');
 
-  // One clear state line: is memory working, off, or not set up?
-  // "Preparing" comes FIRST, before "not set up". A first run on a machine with
-  // no native mempalace spends ~2 minutes building the container image, and
-  // during that window `available` is false — so without this the panel tells
-  // you to go and install something that is already installing itself.
-  // "Not set up" was true and useless: it never said that the one thing in the
-  // way is Docker. Turning memory on cannot do anything while the daemon is
-  // down, so the line says which.
-  const dockerBlocked = !!status?.enabled && !status?.available && !status?.preparing
-    && !!status?.docker && !status.docker.running;
-  const state: { dot: string; label: string } = status?.preparing
-    ? { dot: 'var(--cth-lemon)', label: t('memoryPanel.preparing') }
-    : status?.prepareError
-      ? { dot: 'var(--cth-coral)', label: t('memoryPanel.prepareFailed') }
-    : dockerBlocked
-      ? { dot: 'var(--cth-lemon)', label: status?.docker?.installed
-          ? t('memoryPanel.dockerStopped')
-          : t('memoryPanel.dockerMissing') }
-    : !status?.available
-    ? { dot: 'var(--cth-coral)', label: t('memoryPanel.notSetUp') }
-    : !status.enabled
-      ? { dot: 'var(--cth-ink-500)', label: t('common.off') }
-      : status.initialized
-        ? { dot: 'var(--cth-mint)', label: t('memoryPanel.onReady') }
-        : { dot: 'var(--cth-lemon)', label: t('memoryPanel.onGettingReady') };
+  // One clear state line. There is no "not installed" any more — the index
+  // ships with the app — so the only states left are off, on and building.
+  const state: { dot: string; label: string } = !status?.enabled
+    ? { dot: 'var(--cth-ink-500)', label: t('common.off') }
+    : status.initialized
+      ? { dot: 'var(--cth-mint)', label: t('memoryPanel.onReady') }
+      : { dot: 'var(--cth-lemon)', label: t('memoryPanel.onGettingReady') };
 
-  const canSearch = !!status?.available && !!status?.enabled;
+  const canSearch = !!status?.enabled;
 
   return (
     <div style={docked
@@ -146,13 +114,6 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
                 <span style={{ width: 9, height: 9, background: state.dot, boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)' }} />
                 {state.label}
               </span>
-              {/* Shown whether or not a CLI is resolved yet. It used to require
-                  `available`, which deadlocked the one path that matters now:
-                  switch memory off before the container image is built and
-                  `available` stays false forever, so the button that would turn
-                  it back on never renders. Turning it ON is what starts the
-                  build. */}
-              {!status?.preparing && (
                 <PixelButton
                   variant={status?.enabled ? 'secondary' : 'primary'}
                   size="sm"
@@ -160,63 +121,18 @@ export function MemoryPanel({ docked = false }: MemoryPanelProps) {
                 >
                   {status?.enabled ? t('memoryPanel.turnOff') : t('memoryPanel.turnOn')}
                 </PixelButton>
-              )}
             </div>
 
-            {/* Not installed: show full self-sufficient setup so any machine can follow it. */}
-            {!status?.available && !status?.preparing && (
-              <div style={{
-                fontSize: 13, color: 'var(--cth-ink-700)', lineHeight: 1.6,
-                background: 'var(--cth-cream-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)', padding: 16
-              }}>
-                {t('memoryPanel.needsDocker')}
-                {/* The commands used to be inlined here, hardcoded for macOS
-                    (`curl … | sh`, `source ~/.zshrc`) — dead text under cmd.exe or
-                    PowerShell, on the platform most likely to be missing the tool.
-                    Setup owns the platform-correct commands now, plus the uv
-                    dependency, the live detected state, and the delegate-to-Michael
-                    path. One source of truth beats two that disagree by OS. */}
-
-                <div style={{ marginTop: 8, color: 'var(--cth-ink-500)' }}>
-                  {t('memoryPanel.plainNotesStill')}
-                </div>
-              </div>
-            )}
-
-            {/* Model: a benefit-framed choice, not a codename dump. */}
-            {status?.available && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <span style={{ fontSize: 11, color: 'var(--cth-ink-500)', fontFamily: 'var(--cth-font-ui)', fontWeight: 600, letterSpacing: 0.5 }}>
-                  {t('memoryPanel.searchLanguage')}
-                </span>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {MODELS.map((m) => {
-                    const sel = status.model === m.id;
-                    return (
-                      <button
-                        key={m.id}
-                        onClick={() => setModel(m.id)}
-                        style={{
-                          flex: 1, textAlign: 'left', cursor: 'pointer', border: 'none',
-                          padding: '7px 12px 10px',
-                          background: sel ? 'var(--cth-lemon-light)' : 'var(--cth-cream-100)',
-                          boxShadow: sel ? 'inset 0 0 0 1.5px var(--cth-ink-500)' : 'inset 0 0 0 1px var(--cth-ink-300)',
-                          fontFamily: 'var(--cth-font-ui)'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--cth-ink-900)' }}>
-                          <span style={{
-                            width: 8, height: 8, flexShrink: 0,
-                            background: sel ? 'var(--cth-ink-900)' : 'transparent',
-                            boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)', borderRadius: 'var(--cth-radius-input)'
-                          }} />
-                          {t(m.titleKey)}
-                        </div>
-                        <div style={{ fontSize: 11, color: 'var(--cth-ink-500)', marginTop: 3 }}>{t(m.detailKey)}</div>
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* What the index holds. It replaced a row of install instructions:
+                nothing needs installing, so the useful thing to say is how much
+                there is to search and which backend answered. */}
+            {status?.enabled && (
+              <div style={{ fontSize: 12.5, color: 'var(--cth-ink-500)', lineHeight: 1.6 }}>
+                {t('memoryPanel.indexed', {
+                  chunks: status.chunks ?? 0,
+                  agents: status.agents ?? 0,
+                  backend: status.backend ?? '—'
+                })}
               </div>
             )}
 

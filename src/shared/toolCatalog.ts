@@ -3,10 +3,10 @@
  * user, and how to install it on this platform.
  *
  * Why this file exists: the app ships as one Electron bundle, but several of its
- * best features are thin wrappers over tools that live outside it — mempalace for
- * semantic memory, uv to install mempalace, git for worktrees, and one CLI per
- * agent engine. Every one of them degrades SILENTLY when absent (that is the
- * deliberate design — `memory.start()` is a documented no-op without mempalace),
+ * best features are thin wrappers over tools that live outside it — git for
+ * worktrees, and one CLI per agent engine. (Memory used to be on that list; it
+ * is a SQLite index inside the app now, so there is nothing to install.) Every
+ * one of them degrades SILENTLY when absent — that is the deliberate design,
  * which is friendly right up until the user cannot tell "off" from "broken" and
  * has no single place that says which is which. This catalog is that place.
  *
@@ -24,7 +24,7 @@ export interface ToolSpec {
   /** Stable row id. For a probed binary this is also the name we look up. */
   id: string;
   /** The executable to probe on PATH, or null when presence is derived some
-   *  other way (mempalace comes from the memory subsystem's own status). */
+   *  other way. */
   bin: string | null;
   label: string;
   kind: ToolKind;
@@ -39,36 +39,12 @@ export interface ToolSpec {
   docsUrl?: string;
 }
 
-/** Base rows — the non-engine tools. Engines are appended by `toolCatalog()`. */
+/** Base rows — the non-engine tools. Engines are appended by `toolCatalog()`.
+ *
+ *  `uv` and `mempalace` used to live here. Memory is a SQLite index that ships
+ *  with the app now (src/main/memory-core.cjs), so there is no Python
+ *  toolchain to install and nothing for a setup checklist to check. */
 const BASE_TOOLS: ToolSpec[] = [
-  {
-    id: 'uv',
-    bin: 'uv',
-    label: 'uv',
-    kind: 'prerequisite',
-    why: 'Installs and runs mempalace. A self-contained Python toolchain — it does not touch any Python you already have.',
-    essential: true,
-    install: {
-      posix: 'curl -LsSf https://astral.sh/uv/install.sh | sh',
-      // PowerShell, not cmd.exe: astral ships install.ps1 for Windows and there
-      // is no .bat equivalent. Quoted so it survives being pasted into either.
-      win32: 'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"'
-    },
-    docsUrl: 'https://docs.astral.sh/uv/'
-  },
-  {
-    id: 'mempalace',
-    bin: null, // presence comes from MemoryStatus.available, not a PATH probe
-    label: 'MemPalace — semantic memory',
-    kind: 'memory',
-    why: 'Meaning-based recall across everything your agents have learned. Without it they still keep plain markdown notes, but cannot search them by meaning.',
-    essential: true,
-    install: {
-      posix: 'uv tool install mempalace',
-      win32: 'uv tool install mempalace'
-    },
-    note: 'Needs uv first.'
-  },
   {
     id: 'git',
     bin: 'git',
@@ -140,8 +116,7 @@ export interface ToolStatus extends ToolSpec {
  *
  * Written as an explicit contract rather than a wish: name the exact commands so
  * he does not have to guess or search, tell him to VERIFY rather than assume, and
- * make the ordering dependency (uv before mempalace) explicit — an orchestrator
- * that installs mempalace first just fails and reports failure.
+ * name what each tool is for, so an agent installing them knows why.
  */
 export function setupPrompt(missing: ToolStatus[]): string {
   if (missing.length === 0) return '';
@@ -157,8 +132,7 @@ export function setupPrompt(missing: ToolStatus[]): string {
     '',
     'For each one: run the install command in your own terminal, then VERIFY it actually resolves',
     '(`which <bin>`, or `where <bin>` on Windows) before moving on — do not assume an installer that',
-    'printed no error succeeded. Install uv BEFORE mempalace; mempalace is installed BY uv and will',
-    'fail outright without it.',
+    'printed no error succeeded.',
     '',
     'If a command needs my password or a decision only I can make, stop and ask me rather than',
     'guessing or working around it. When you are done, report one line per tool: installed, already',

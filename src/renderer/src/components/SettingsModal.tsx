@@ -123,8 +123,9 @@ export type Section = 'General' | 'Agents & Models' | 'Connections' | 'Voice';
 // No Autonomy & Budgets tab: autonomy and who-may-hire moved next to the
 // model and the keys, and the circuit breaker is gone — it only ticked inside
 // the heartbeat, which ships disabled, so it governed nothing.
-// No Memory & Knowledge tab: semantic memory is MemPalace, which cannot run
-// on this machine, and the knowledge graph has no corpus to hold.
+// No Memory & Knowledge tab: memory is an index inside the app with one switch
+// (the Memory tab on the floor owns it), and the knowledge graph is off by
+// default with no corpus to hold.
 const NAV_SECTIONS: Section[] = ['General', 'Agents & Models', 'Connections', 'Voice'];
 /** i18n key for each nav section's label — the Section values themselves stay
  *  as stable identifiers (tab state, deep links). */

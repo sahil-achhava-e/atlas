@@ -1,9 +1,9 @@
 'use strict';
 
 /**
- * The list of files kept out of an agent's mempalace/git index exists TWICE:
+ * The list of files kept out of an agent's memory index and git exists TWICE:
  * `src/main/hive.ts` writes it when an agent spawns, `src/main/memory.ts` writes
- * it on every mine cycle — and only the latter reaches agents that are not
+ * it on every indexing pass — and only the latter reaches agents that are not
  * currently running. Both carry a "MUST STAY IN SYNC" comment, which is exactly
  * the kind of invariant that drifts silently: adding a line to one file alone
  * has no visible symptom until a repo bloats again (PR #128: 7.5GB of .git from

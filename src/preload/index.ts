@@ -337,19 +337,17 @@ export interface HarnessConfig {
 }
 
 export interface MemoryStatus {
+  /** Always true — the index ships with the app. Kept because callers read it. */
   available: boolean;
   enabled: boolean;
   active: boolean;
+  /** An index exists on disk. */
   initialized: boolean;
   palacePath: string | null;
-  model: 'minilm' | 'embeddinggemma';
-  bin: string | null;
-  /** First run on this machine is building the container image (~2 min). */
-  preparing: boolean;
-  prepareError: string | null;
-  /** Running in a container, which means Docker has to stay running. */
-  containerized: boolean;
-  docker: { installed: boolean; running: boolean };
+  /** 'sqlite' or 'jsonl' — which backend answered. */
+  backend: string | null;
+  chunks: number;
+  agents: number;
 }
 
 /** Enterprise Knowledge Graph — corpus status, one document, and a search hit. */

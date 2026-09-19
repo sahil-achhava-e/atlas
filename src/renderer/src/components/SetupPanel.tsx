@@ -2,8 +2,9 @@
  * PREREQUISITES — the external tools this app needs, and whether you have them.
  *
  * Several of the harness's best features are thin wrappers over tools that live
- * OUTSIDE the app bundle: mempalace for semantic memory, uv to install it, git
- * for worktrees, one CLI per agent engine. Every one of them degrades silently
+ * OUTSIDE the app bundle: git for worktrees, one CLI per agent engine. (Memory
+ * used to be on that list; it is an index inside the app now, so there is
+ * nothing to install for it.) Every one of them degrades silently
  * when missing — which is the right runtime behaviour and a terrible diagnostic
  * one, because "off" and "broken" look identical from the floor. This page is the
  * single place that distinguishes them, and the only place that says what each

@@ -4,8 +4,8 @@
  *
  * Every agent already writes `agents/<id>/memory.md` by hand. This indexes those
  * files so the whole crew can search each other's notes, which is the part
- * MemPalace did and the part that cost a Python toolchain, a container and a
- * model download to get. Keyword recall, not meaning — worth naming, because it
+ * the old MemPalace integration did, and the part that cost a Python toolchain,
+ * a container and a model download to get. Keyword recall, not meaning — worth naming, because it
  * is the trade that makes "download the app and run it" true.
  *
  * TWO BACKENDS, ONE INTERFACE. SQLite is the default: it ships with the app
@@ -18,8 +18,8 @@
  * THE INDEX IS DERIVED. `memory.md` is the only copy of anything. Delete the
  * index, corrupt it, ship a version that reads it wrong: the repair is to
  * rebuild from the markdown, which is why neither backend needs a reaper, a
- * migration or a quarantine (cf. palaceReap.ts, which exists because Chroma held
- * the only copy of its vectors).
+ * migration or a quarantine — unlike a vector store, which held the only copy of
+ * what it knew.
  *
  * PURE JS at the entry point, so a spawned agent's CLI can require it through
  * `hive-node` exactly like kg.cjs requires kg-core.cjs.

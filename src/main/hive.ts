@@ -241,8 +241,8 @@ function shortRand(): string {
   return randomBytes(3).toString('hex');
 }
 
-/** Non-memory files `mempalace mine` must not ingest (Claude Code hooks config,
- *  cursor, raw inbox/outbox JSON). `mempalace mine` honors .gitignore, so we drop
+/** Non-memory files the memory index must not ingest (Claude Code hooks config,
+ *  cursor, raw inbox/outbox JSON). The indexer honors .gitignore, so we drop
  *  one in each agent dir; written on birth here and refreshed by the mine loop.
  *
  *  `.codex/` is here for a second reason as well, and it is the load-bearing one:
@@ -776,7 +776,7 @@ export class HiveManager {
        *  every agent at boot); every scope is additionally denied in settings. */
       disabledSkills?: string[];
       /** Extra directories the agent's sandbox may write (e.g. the shared
-       *  MemPalace dir, which `mempalace` mutates). Absolute paths; ignored
+       *  index directory, which the indexer mutates). Absolute paths; ignored
        *  for providers without a sandbox. */
       extraWritableDirs?: string[];
     } = {}
@@ -811,7 +811,7 @@ export class HiveManager {
     if (!existsSync(memory)) {
       writeFileSync(memory, `# Memory — ${meta.name} (${meta.id})\n\n_Append durable facts, decisions, and context below._\n`, 'utf8');
     }
-    ensureMineIgnore(dir); // keep settings.json / cursor / messages out of mempalace's index
+    ensureMineIgnore(dir); // keep settings.json / cursor / messages out of the index
     const cursor = join(dir, 'cursor.json');
     if (!existsSync(cursor)) this.writeJson(cursor, { lastProcessed: null });
 
@@ -1587,11 +1587,12 @@ export class HiveManager {
       : '';
     const ctxLine = 'LIVE CONTEXT: each agent row in the LIVE ROSTER carries a `ctx NN%` tag — its live context-window occupancy. Treat it as the real headroom signal when routing: prefer an agent with a LOW `ctx` for a big task; treat a HIGH `ctx` (near 100%) as busy rather than idle, even if the cumulative token count looks modest.';
 
+    // Memory is an index inside the app now, not a CLI to run. Saying so
+    // matters as much as the mechanism: an agent told to run `mempalace search`
+    // spends a turn discovering the command does not exist, and the honest
+    // answer to "how do I recall" is "ask the human's app, or read the file".
     const memoryLine = semanticMemory
-      // The palace location is named, not spelled as `$MEMPALACE_PALACE_PATH`:
-      // `mempalace` reads that env var itself, and the POSIX `$` form was noise
-      // (or an empty expansion) for a Windows agent that tried to use it literally.
-      ? 'Semantic memory: the whole hive shares a searchable MemPalace at the path in your MEMPALACE_PALACE_PATH environment variable. To recall relevant past knowledge across the team, run `mempalace search "<query>"`; run `mempalace wake-up` at the start of a task for a memory digest. Your notes in memory.md are mined into the palace automatically — write durable facts there.'
+      ? `SHARED MEMORY: every agent's notes live in \`agents/<id>/memory.md\`, and the app keeps a searchable index over ALL of them — yours and everyone else's. Write durable facts, decisions and gotchas into your own memory.md as you learn them; that is the only copy, and the index is rebuilt from it. To recall something the team learned earlier, read the relevant agent's memory.md directly (they are plain markdown in ${inRoot('agents')}), or ask ${godNameForPrompt} to search the index. There is NO memory CLI — \`mempalace\` and anything like it is gone, so do not try to run one.`
       : '';
     // Enterprise Knowledge Graph (opt-in). Volatile-free: the bundled-node launcher
     // and the KG CLI are both fixed absolute paths for an install, so baking them
@@ -2833,7 +2834,7 @@ export class HiveManager {
    * record (those carry user.email / account / org / hashed-user-id). The sample
    * is PII-free by construction upstream (the provider's normalize step), so we
    * add no redaction here; we just must not widen what we write. The file lives
-   * at the hive ROOT, so `mempalace mine` (which only scans per-agent dirs) never
+   * at the hive ROOT, so the indexer (which only scans per-agent dirs) never
    * ingests it — no palace noise, no MINE_IGNORE entry needed.
    *
    * Like appendLog: append to disk now (durable immediately), let it ride the
@@ -2938,7 +2939,7 @@ export class HiveManager {
    * revision exactly as before — the .gitignore reads as a fix while the repo
    * keeps growing. This closes that: once per process, refresh every agent's
    * ignore file (agents that are not running never pass through spawn, and the
-   * mine loop only reaches them if mempalace is installed) and drop any tracked
+   * indexing pass only reaches them on its own cadence) and drop any tracked
    * `.codex` path from the index. The files stay on disk, so `codex --resume`
    * is unaffected; only their history stops.
    */
@@ -3168,16 +3169,19 @@ request is NOT failed or deleted, it waits in \`spawn-requests/\` and runs if th
 If a request of yours has sat there without moving, that is why, and it is a decision to raise with the
 human rather than retry. Route work to an agent already on the floor first either way.
 
-## Semantic memory (optional — when \`mempalace\` is installed)
-When \`MEMPALACE_PALACE_PATH\` is set in your environment, the hive shares a
-searchable MemPalace and you have the \`mempalace\` CLI:
-- \`mempalace search "<query>"\` — recall relevant past knowledge across the whole
-  team by meaning (not just keywords). Add \`--wing <agent-id>\` to scope to one
-  agent, \`--results N\` to widen.
-- \`mempalace wake-up\` — a short digest of what matters, good at the start of a task.
+## Shared memory
+Every agent keeps notes in \`agents/<id>/memory.md\` — plain markdown, and the only
+copy of anything it has learned. The app indexes all of them together, so the crew
+can search each other's notes; you do not run anything to make that happen.
 
-Your \`memory.md\` is mined into the palace automatically, so the durable facts you
-write there become searchable by every agent. You don't run \`mine\` yourself.
+- WRITE: append durable facts, decisions and gotchas to your own \`memory.md\` as
+  you learn them. A fact that is only in a terminal is a fact the next session
+  loses.
+- READ: another agent's notes are a file — read \`agents/<their-id>/memory.md\`
+  directly. For a search across everyone, ask the orchestrator.
+
+There is NO memory CLI. \`mempalace\` was removed; if you find a reference to it
+anywhere, it is stale. Do not try to install or run one.
 `;
 
 // ─── cth-hook shim (written to <hive>/bin/cth-hook.cjs) ──────────────────────

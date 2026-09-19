@@ -382,8 +382,7 @@ const hookServer = new HookServer(
 );
 const memory = new MemoryManager(
   () => readConfig().harnessHome,
-  () => { const c = readConfig(); return { enabled: c.semanticMemory !== false, model: c.embeddingModel ?? 'minilm' }; },
-  () => mempalaceResourceDir()
+  () => ({ enabled: readConfig().semanticMemory !== false })
 );
 // Enterprise Knowledge Graph — file-backed store + agent CLI (default OFF).
 const knowledge = new KnowledgeManager();
@@ -618,7 +617,7 @@ async function finalizeWorkerWorktree(wtPath: string, origCwd: string, worker: W
     if (!r.ok) { console.error('[worker] removeWorktree failed:', r.error); return; }
     // Worktree is gone (clean/integrated at teardown), but DEFER its scratch-dir
     // cleanup to the throttled GC sweep rather than deleting it synchronously here:
-    // HIVE_ROOT/agents/<id> holds the worker's memory.md and the MemPalace miner
+    // HIVE_ROOT/agents/<id> holds the worker's memory.md and the index's
     // ingests it asynchronously, so an immediate delete can beat the miner and
     // permanently lose the worker's durable notes from the shared palace. Register
     // it (its worktree path is now absent) so the sweep's path-gone branch reclaims
@@ -1507,12 +1506,6 @@ function slackReplyScriptPath(): string {
  *  `.claude/skills/` at spawn. Same packaged/dev resolution as the helpers above.
  *  Tolerated-missing until lp-manifest (Kevin) populates it (the hive copy is a
  *  no-op on an absent dir). */
-/** The shipped MemPalace Dockerfile. Same packaged/dev split as the skills dir. */
-function mempalaceResourceDir(): string {
-  return app.isPackaged
-    ? join(process.resourcesPath, 'mempalace')
-    : join(app.getAppPath(), 'resources', 'mempalace');
-}
 
 function skillsResourceDir(): string {
   return app.isPackaged
@@ -1521,18 +1514,18 @@ function skillsResourceDir(): string {
 }
 
 /** Where the helper discovers `{ port, token }` for the loopback endpoint. Kept
- *  under userData (NOT the git repo, NOT mined into MemPalace). */
+ *  under userData (NOT the git repo, NOT indexed as memory). */
 function slackReplyConfigPath(): string {
   return join(app.getPath('userData'), 'slack-reply.json');
 }
 
 /** Ledger of task ids whose done-summary has already been posted. Ids ONLY — no
- *  secret ever lands here. Under userData (out of the repo, out of MemPalace). */
+ *  secret ever lands here. Under userData (out of the repo, out of the index). */
 function slackDoneNotifiedPath(): string {
   return join(app.getPath('userData'), 'slack-done-notified.json');
 }
 
-/** Directory where downloaded Slack attachments are saved (out of repo, out of MemPalace). */
+/** Directory where downloaded Slack attachments are saved (out of repo, out of the index). */
 function slackFilesDir(): string {
   return join(app.getPath('userData'), 'slack-files');
 }
@@ -2864,9 +2857,9 @@ async function spawnAgentCore(opts: AgentSpawnOptions, owner: Electron.WebConten
           disabledSkills: readConfig().disabledSkills ?? [],
           dbConnections: dbConnectionsWithUrls(),
           skillsDir: skillsResourceDir(),
-          // The shared palace is mutated by the agent's own `mempalace` calls, so
-          // the OS sandbox must let it through (empty when memory is off).
-          extraWritableDirs: [memory.env().MEMPALACE_PALACE_PATH].filter((p): p is string => !!p)
+          // Memory is indexed by the app, not by the agent, so there is no
+          // shared directory an agent needs to write to any more.
+          extraWritableDirs: []
         }
       );
       opts.args = [...(opts.args ?? []), ...inj.args];
@@ -2875,8 +2868,8 @@ async function spawnAgentCore(opts: AgentSpawnOptions, owner: Electron.WebConten
       // way breaker escalations are: a native toast, gated on the notifications
       // setting. The hive already logged it and pushed hive:degraded to the floor.
       if (inj.degraded) breakerToast('Agent running degraded', inj.degraded);
-      // Point the agent's mempalace CLI at the shared palace + the `kg` CLI at the
-      // enterprise knowledge store (both no-ops / empty when their flags are off).
+      // Point the `kg` CLI at the enterprise knowledge store (empty when off).
+      // memory.env() is empty now — recall is the app's index, not a CLI.
       opts.env = { ...(opts.env ?? {}), ...inj.env, ...memory.env(), ...knowledge.env() };
     } catch (e) {
       // Hive provisioning is best-effort; never block a spawn on it.
@@ -3895,27 +3888,11 @@ ipcMain.handle('skills:reveal', (_evt, path: unknown) => {
  * unchanged when it finds nothing, so "resolved to a real, existing path that is
  * not just the bare name" is the found test.
  *
- * mempalace is the one row that does NOT come from PATH: the memory subsystem
- * already resolves it (including uv/pip locations PATH may not carry for a
- * Finder-launched app) and knows whether the palace is initialised, so it is
- * authoritative and reused rather than re-probed differently here.
  */
 ipcMain.handle('tools:status', (): ToolStatus[] => {
   const win = process.platform === 'win32';
-  const mem = (() => { try { memory.resetBinCache(); return memory.status(); } catch { return null; } })();
   return toolCatalog().map((spec): ToolStatus => {
     const installCommand = win ? spec.install.win32 : spec.install.posix;
-    if (spec.id === 'mempalace') {
-      return {
-        ...spec,
-        installCommand,
-        found: !!mem?.available,
-        path: mem?.bin ?? null,
-        detail: mem?.available
-          ? (mem.initialized ? 'palace initialised' : 'installed — palace not built yet')
-          : undefined
-      };
-    }
     if (!spec.bin) return { ...spec, installCommand, found: false, path: null };
     let path: string | null = null;
     try {
@@ -3926,11 +3903,7 @@ ipcMain.handle('tools:status', (): ToolStatus[] => {
   });
 });
 
-// ─── IPC: semantic memory (MemPalace CLI) ───────────────────────────────────
-// refresh() = resetBinCache + an idempotent start(). The poll is the one thing
-// that reliably notices mempalace being installed after boot, so it is what arms
-// the mine loop that boot's start() had to skip — otherwise the pill reads
-// "getting ready" until the app is restarted.
+// ─── IPC: shared memory (the app's own index) ───────────────────────────────
 ipcMain.handle('hive:memoryStatus', () => memory.refresh());
 ipcMain.handle('hive:searchMemory', (_evt, query: unknown, wing: unknown) => {
   if (typeof query !== 'string' || !query.trim()) return { ok: false, output: '', error: 'empty query' };
@@ -5510,7 +5483,7 @@ function bootstrapHiveServices(): void {
     if (r.ok && r.endpoint) { hive.setOtelEndpoint(r.endpoint); console.log('[telemetry] collector listening', r.endpoint); }
     else console.error('[telemetry] collector failed to start:', r.error);
   });
-  memory.start(); // init shared palace + mine loop (no-op without mempalace)
+  memory.start(); // open the index and re-index changed memory.md on a timer
   reflector.start(); // bound oversized memory.md files on a timer (no-op until threshold)
 
   armAlwaysOnBeats();

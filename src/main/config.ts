@@ -221,7 +221,7 @@ export interface HarnessConfig {
   mcpDefaults?: { [id: string]: { enabled: boolean } };   // credentials live in the encrypted store, never here
   /** Databases agents may query. URLs live in the encrypted store, not here. */
   dbConnections?: DbConnection[];
-  /** Enable semantic memory (MemPalace CLI). No-op if mempalace isn't installed. */
+  /** Enable the searchable memory index over every agent's memory.md. */
   semanticMemory: boolean;
   /** Embedding model for the palace: lightweight 'minilm' or multilingual 'embeddinggemma'. */
   embeddingModel: 'minilm' | 'embeddinggemma';
