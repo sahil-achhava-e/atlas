@@ -1,101 +1,30 @@
 /**
- * The handlers browser mode answers with.
+ * Browser mode boots the REAL main process.
  *
- * In Electron these live in src/main/index.ts, alongside a BrowserWindow, a
- * protocol handler, a tray and an auto-updater — none of which exist here, and
- * that file cannot be imported without them. So this registers the SAME channels
- * against the SAME portable modules: config, the PTY manager, the hive.
+ * This used to register a hand-picked subset of channels against the portable
+ * modules — config, the PTY manager, the hive. That subset was always wrong in
+ * the same direction: src/main/index.ts registers 157 channels and does a page
+ * of work on `whenReady` (seeding the hive, the hook server, missions, memory,
+ * the skills a spawned agent gets copied into it), and a re-implementation of it
+ * here is a second app to keep in step, which is exactly what the shim exists to
+ * avoid. So: import it, and let it run.
  *
- * Deliberately a subset. Terminals, the roster, the hive and the board are what
- * make the floor usable; everything else resolves empty in the page rather than
- * pretending. Adding a channel is adding a line here plus a line in bridge.ts.
+ * What makes that possible is that Electron itself is aliased to
+ * electronShim.ts at build time. `app.whenReady()` resolves immediately,
+ * `new BrowserWindow()` hands back a window whose webContents is the page, and
+ * the native surfaces that have no meaning here — dialogs, the menu bar, the
+ * protocol handler, the auto-updater — are no-ops.
  */
 
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
-
-import { app, ipcMain } from './electronShim';
+import { setPageSink } from './electronShim';
 import { browserSink } from './index';
-import { readConfig, writeConfig } from '../main/config';
-import { PtyManager } from '../main/pty';
-import { HiveManager } from '../main/hive';
-import { RosterStore } from '../main/roster';
 
-export interface ServerRuntime {
-  pty: PtyManager;
-  hive: HiveManager;
-  roster: RosterStore;
-}
+export async function registerHandlers(): Promise<void> {
+  // Before the import: main creates its window during `whenReady`, and that
+  // window's webContents has to be the page from the first push onward.
+  setPageSink(browserSink);
 
-export function registerHandlers(): ServerRuntime {
-  const pty = new PtyManager();
-  // The sink is the page, not a window: `wc.send('pty:data:<id>', …)` becomes an
-  // SSE frame. PtyManager never learns the difference.
-  pty.attachWebContents(browserSink as never);
-
-  const roster = new RosterStore(() => readConfig().harnessHome);
-
-  const hive = new HiveManager(
-    () => readConfig().harnessHome ?? null,
-    (channel, payload) => { browserSink.send(channel, payload); return true; }
-  );
-
-  // ─── config ────────────────────────────────────────────────────────────────
-  ipcMain.handle('config:get', () => readConfig());
-  ipcMain.handle('config:update', (_e, patch) => {
-    const next = writeConfig((patch ?? {}) as Parameters<typeof writeConfig>[0]);
-    // Every window is told when a setting is saved, so Settings never goes stale.
-    browserSink.send('config:changed', next);
-    return next;
-  });
-  ipcMain.handle('config:home', () => readConfig().harnessHome ?? null);
-
-  // ─── the roster mirror ─────────────────────────────────────────────────────
-  // The store reads these two at module load, before the first render. In
-  // Electron that is `sendSync`; here the page uses a blocking XHR, which is the
-  // same one round trip. Skip them and the floor boots with no roster at all.
-  ipcMain.handle('roster:read', () => roster.read());
-  ipcMain.handle('roster:write', (_e, snap) => roster.write(snap));
-
-  // ─── terminals ─────────────────────────────────────────────────────────────
-  ipcMain.handle('pty:spawn', (_e, opts) => pty.spawn(opts as never, browserSink as never));
-  ipcMain.handle('pty:write', (_e, id, data) => pty.write(String(id), String(data)));
-  ipcMain.handle('pty:resize', (_e, id, cols, rows) => pty.resize(String(id), Number(cols), Number(rows)));
-  ipcMain.handle('pty:kill', (_e, id) => pty.kill(String(id)));
-  ipcMain.handle('pty:list', () => pty.list());
-
-  // ─── the hive ──────────────────────────────────────────────────────────────
-  // `registry()` is the hive's own view of who exists — the same JSON the
-  // orchestrator reads, which is what the floor's roster is built from.
-  ipcMain.handle('hive:send', (_e, msg, from) => hive.send(msg as never, (from as string) ?? 'human'));
-  ipcMain.handle('hive:tasks', () => hive.tasks());
-  ipcMain.handle('hive:board', () => hive.board());
-
-  // ─── what the boot sequence waits on ───────────────────────────────────────
-  // App.tsx will not leave "starting up" until these answer. Shapes match
-  // preload/index.ts exactly — an array where it promises an array, null where
-  // it promises a nullable — because the renderer destructures the result.
-  ipcMain.handle('hive:registry', () => hive.registry());
-  ipcMain.handle('hive:inbox', (_e, id) => (typeof id === 'string' ? hive.inbox(id) : []));
-  ipcMain.handle('hive:addTask', (_e, task) => ({ ok: hive.addTask(task as never) }));
-  ipcMain.handle('hive:patchAgentRole', (_e, id, role) => hive.patchAgentRole(String(id), String(role)));
-  ipcMain.handle('hive:renameAgent', (_e, id, name) => hive.renameAgent(String(id), String(name)));
-  ipcMain.handle('hive:agentContext', () => null);
-  ipcMain.handle('git:isRepo', (_e, cwd) => typeof cwd === 'string' && existsSync(join(cwd, '.git')));
-
-  // Browser mode has no tool installer, no per-agent control panel, no import
-  // queue and no voice key. Empty is the honest answer, and it is the same
-  // answer the app gives before any of them are set up.
-  ipcMain.handle('tools:status', () => []);
-  ipcMain.handle('control:snapshot', () => null);
-  ipcMain.handle('hire:drainPending', () => []);
-  ipcMain.handle('realtime:hasKey', () => false);
-  // Links are the page's job — it can just open a tab.
-  ipcMain.handle('app:openExternal', () => ({ ok: true }));
-
-  // ─── app ───────────────────────────────────────────────────────────────────
-  ipcMain.handle('app:info', () => ({ version: app.getVersion(), changelog: '' }));
-
-  hive.startRouter();
-  return { pty, hive, roster };
+  // Side-effect import. Everything main does at module load and on `whenReady`
+  // happens here: ipcMain.handle × 157, the hive bootstrap, the hook server.
+  await import('../main/index');
 }

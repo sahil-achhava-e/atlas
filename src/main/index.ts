@@ -1,4 +1,5 @@
 import { interruptedWork, restartBrief, briefSignature } from './restartBrief';
+import { writeInstanceLock, clearInstanceLock } from './instanceLock';
 import { mcpSecretRef, mcpSecretEnvKeys, dbSecretRef } from '../shared/mcpCatalog';
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, net, powerMonitor, powerSaveBlocker, protocol, screen, shell, Notification } from 'electron';
 import { spawn } from 'node:child_process';
@@ -5510,6 +5511,10 @@ app.whenReady().then(() => {
   // never restarts on its own. Falls back to a notify-only releases/latest
   // check where native updating isn't possible (win-portable, dev-ish builds).
   initAutoUpdater(() => liveWebContents());
+  // Say which process owns the hive right now. `npm run serve` reads this and
+  // refuses to start a second router over the same files; this process never
+  // refuses for it — see src/main/instanceLock.ts.
+  writeInstanceLock(app.getPath('userData'), process.versions.electron ? 'app' : 'server');
   // Bootstrap the hive (if harnessHome is configured) and start the message router.
   bootstrapHiveServices();
   // Survive sleep/lock. macOS freezes libuv timers during true system sleep, so a
@@ -5596,6 +5601,7 @@ app.on('window-all-closed', () => {
 // exactly what's left to do.
 let analyticsFlushed = false;
 app.on('will-quit', (e) => {
+  clearInstanceLock(app.getPath('userData'));
   if (analyticsFlushed) return;
   analyticsFlushed = true;
   e.preventDefault();

@@ -25,7 +25,7 @@
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:win": "npm run build && electron-builder --win",
     "dist:linux": "npm run build && electron-builder --linux",
-    "build:server": "vite build --config vite.server.config.ts",
+    "build:server": "node tools/gen-bridge-map.cjs && vite build --config vite.server.config.ts",
     "serve": "npm run build && npm run build:server && node out/server/index.cjs"
   },
   "dependencies": {

@@ -27,8 +27,8 @@ import { readFile } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
 import { extname, join, normalize, resolve } from 'node:path';
 
-import { app, ipcHandlers, setNotificationSink, type RendererSink } from './electronShim';
-import { METHOD_CHANNELS, clientScript } from './bridge';
+import { app, ipcHandlers, ipcSyncHandlers, setNotificationSink, type RendererSink } from './electronShim';
+import { INVOKE, SYNC, clientScript } from './bridge';
 
 const PORT = Number(process.env.ATLAS_PORT ?? 5188);
 const HOST = '127.0.0.1';
@@ -117,16 +117,28 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     let payload: { method?: string; args?: unknown[] };
     try { payload = JSON.parse(await readBody(req)); } catch { return json(res, 400, { error: 'bad json' }); }
 
-    const channel = METHOD_CHANNELS[payload.method ?? ''];
-    if (!channel) return json(res, 404, { error: `not available in browser mode: ${payload.method}` });
+    const method = payload.method ?? '';
 
-    // A listed method whose channel this build does not register resolves EMPTY,
-    // not as an error: the renderer awaits these during boot, and a rejection
-    // there leaves the page on "starting up" forever. A gap in the UI is
-    // recoverable; a dead boot is not.
+    // A sync method is one the renderer would have sent with `sendSync`: main
+    // assigns `event.returnValue` instead of returning. The page blocks on the
+    // XHR for exactly as long as Electron blocks on the IPC.
+    if (SYNC[method]) {
+      const fn = ipcSyncHandlers().get(SYNC[method]);
+      if (!fn) return json(res, 200, { value: null });
+      const evt: { returnValue: unknown; sender: RendererSink } = { returnValue: null, sender: browserSink };
+      try { fn(evt, ...(payload.args ?? [])); } catch (e) { return json(res, 200, { error: String(e) }); }
+      return json(res, 200, { value: evt.returnValue });
+    }
+
+    const channel = INVOKE[method];
+    if (!channel) return json(res, 404, { error: `not available in browser mode: ${method}` });
+
+    // A channel main did not register: answer empty rather than reject. The
+    // renderer awaits several of these during boot, and a rejection there is a
+    // page that never renders.
     const handler = ipcHandlers().get(channel);
     if (!handler) {
-      console.warn(`[server] ${payload.method} → ${channel}: no handler in browser mode`);
+      console.warn(`[server] ${method} → ${channel}: no handler in browser mode`);
       return json(res, 200, { value: undefined });
     }
 
@@ -165,6 +177,26 @@ export async function start(): Promise<void> {
     process.exit(1);
   }
 
+  // Refuse to be a second brain over the same files. The desktop app writes this
+  // lock while it holds the hive; two routers would deliver every message twice.
+  const { readInstanceLock } = await import('../main/instanceLock');
+  const held = readInstanceLock(app.getPath('userData'));
+  if (held) {
+    console.error(`\n  Atlas is already running (${held.mode}, pid ${held.pid}).`);
+    console.error('  Both views share one state, so only one of them may run at a time.');
+    console.error('  Quit the app, then start this again.\n');
+    process.exit(1);
+  }
+
+  // Leaving on Ctrl-C releases the lock; main only clears it on `will-quit`,
+  // which no one emits here.
+  const release = (): never => {
+    void import('../main/instanceLock').then((m) => m.clearInstanceLock(app.getPath('userData')));
+    process.exit(0);
+  };
+  process.on('SIGINT', release);
+  process.on('SIGTERM', release);
+
   // A main-process notification becomes an event the page can raise itself.
   setNotificationSink((title, body) => broadcast('app:notification', [{ title, body }]));
 
@@ -172,8 +204,8 @@ export async function start(): Promise<void> {
   // here rather than at the top because handlers.ts imports `browserSink` from
   // this module — a cycle node resolves fine at call time, not at load time.
   const { registerHandlers } = await import('./handlers');
-  const runtime = registerHandlers();
-  console.log(`[server] ${Object.keys(runtime).length} subsystems up`);
+  await registerHandlers();
+  console.log(`[server] main process up — ${ipcHandlers().size} channels`);
 
   const server = createServer((req, res) => {
     handle(req, res).catch((e) => {

@@ -14,103 +14,15 @@
  * WebSocket on purpose: it is one GET, it reconnects by itself, and it needs no
  * dependency, which keeps `npm run serve` a thing you can run anywhere.
  *
- * THE METHOD TABLE IS DELIBERATE. It would be easy to let the page name any
- * channel and forward it blindly; that would also let a page on another tab
- * drive the hive. Only what is listed here is reachable.
+ * THE METHOD TABLE IS GENERATED, from preload/index.ts, by
+ * tools/gen-bridge-map.cjs. It was hand-written once and drifted immediately:
+ * the renderer calls `spawnPty`, the table said `ptySpawn`, and the page died
+ * on an undefined result. Preload is the authority for what a method is called
+ * and which channel it reaches; this just reads it.
  */
+import { INVOKE, SYNC, EVENTS, PTY_EVENTS } from './bridgeMap.generated';
 
-/** `cth` method name → the ipcMain channel it invokes. Mirrors preload/index.ts;
- *  anything absent is simply not available in browser mode yet. */
-export const METHOD_CHANNELS: Record<string, string> = {
-  // config + roster
-  getConfig: 'config:get',
-  updateConfig: 'config:update',
-  harnessHome: 'config:home',
-  rosterRead: 'roster:read',
-  rosterWrite: 'roster:write',
-
-  // terminals — the names the renderer actually uses (see preload/index.ts)
-  spawnPty: 'pty:spawn',
-  writePty: 'pty:write',
-  resizePty: 'pty:resize',
-  killPty: 'pty:kill',
-  listPtys: 'pty:list',
-
-  // the hive
-  hiveRegistry: 'hive:registry',
-  hiveInbox: 'hive:inbox',
-  hiveSend: 'hive:send',
-  hiveTasks: 'hive:tasks',
-  hiveAddTask: 'hive:addTask',
-  hiveBoard: 'hive:board',
-  hiveRenameAgent: 'hive:renameAgent',
-  hivePatchAgentRole: 'hive:patchAgentRole',
-  agentContext: 'hive:agentContext',
-  ensureAgent: 'hive:ensureAgent',
-
-  // what the boot sequence asks for before it will draw anything
-  toolsStatus: 'tools:status',
-  controlSnapshot: 'control:snapshot',
-  gitIsRepo: 'git:isRepo',
-  drainPendingHires: 'hire:drainPending',
-  realtimeHasOpenAiKey: 'realtime:hasKey',
-  openExternal: 'app:openExternal',
-
-  // memory + knowledge
-  memoryStatus: 'memory:status',
-  memorySearch: 'memory:search',
-  knowledgeStatus: 'knowledge:status',
-  knowledgeSearch: 'knowledge:search',
-
-  // app
-  appInfo: 'app:info',
-  historyAdd: 'history:add',
-  historyList: 'history:list',
-  historySearch: 'history:search'
-};
-
-/** `cth.onX(cb)` → the channel the main process pushes on. Mirrors the
- *  `ipcRenderer.on` calls in preload/index.ts. Anything absent here simply never
- *  fires in browser mode; the page still gets a working unsubscribe. */
-export const EVENT_CHANNELS: Record<string, string> = {
-  onHiveHookEvent: 'hive:hookEvent',
-  onHiveContextUpdate: 'hive:contextUpdate',
-  onHiveMessage: 'hive:message',
-  onHiveEnqueue: 'hive:enqueueToAgent',
-  onHiveAgentSpawned: 'hive:agentSpawned',
-  onHiveAgentArchived: 'hive:agentArchived',
-  onHiveTerminalHandoff: 'hive:terminalHandoff',
-  onHireImport: 'hire:import',
-  onHireError: 'hire:error',
-  onConfigChanged: 'config:changed',
-  onCloseRequested: 'app:closeRequested',
-  onPowerResume: 'power:resume',
-  onClosingTime: 'app:closingTime',
-  onBreakerState: 'control:breakerState',
-  onApprovalRequest: 'control:approvalRequest',
-  onMissionsUpdated: 'missions:updated',
-  onAutoCompact: 'mission:autoCompact',
-  onSlackMessage: 'slack:incomingMessage',
-  onRealtimeEnqueue: 'realtime:enqueue',
-  onUpdateStatus: 'update:status'
-};
-
-/** The same, for channels addressed per pty: `onPtyData(id, cb)` listens on
- *  `pty:data:<id>`, exactly as preload does. */
-export const PTY_EVENT_CHANNELS: Record<string, string> = {
-  onPtyData: 'pty:data',
-  onPtyExit: 'pty:exit',
-  onPtyRelaunch: 'pty:relaunch'
-};
-
-/** Methods the store calls SYNCHRONOUSLY at module load, before the first
- *  render — `sendSync` in Electron, a blocking XHR here. They are listed apart
- *  because the generic wrapper returns a promise, and a promise where the store
- *  expects a snapshot is what left the page on a blank screen. */
-export const SYNC_METHODS: Record<string, string> = {
-  rosterReadSync: 'rosterRead',
-  harnessHomeSync: 'harnessHome'
-};
+export { INVOKE, SYNC, EVENTS, PTY_EVENTS };
 
 /**
  * The script served at /cth.js.
@@ -122,10 +34,10 @@ export const SYNC_METHODS: Record<string, string> = {
 export function clientScript(): string {
   return `(function () {
   'use strict';
-  var METHODS = ${JSON.stringify(Object.keys(METHOD_CHANNELS))};
-  var EVENTS = ${JSON.stringify(EVENT_CHANNELS)};
-  var PTY_EVENTS = ${JSON.stringify(PTY_EVENT_CHANNELS)};
-  var SYNC = ${JSON.stringify(SYNC_METHODS)};
+  var METHODS = ${JSON.stringify(Object.keys(INVOKE))};
+  var EVENTS = ${JSON.stringify(EVENTS)};
+  var PTY_EVENTS = ${JSON.stringify(PTY_EVENTS)};
+  var SYNC = ${JSON.stringify(Object.keys(SYNC))};
 
   var subs = Object.create(null);
   var stream = new EventSource('/events');
@@ -178,12 +90,11 @@ export function clientScript(): string {
     // Browser mode has no Electron window to own these.
     isServerMode: true
   };
-  Object.keys(SYNC).forEach(function (name) {
-    api[name] = function () { return callSync(SYNC[name]); };
+  SYNC.forEach(function (name) {
+    api[name] = function () { return callSync(name); };
   });
-  // Sync string getters with no server side: the page owns its own clipboard,
-  // and a browser never hands JS a real file path.
-  api.readClipboardSync = function () { return ''; };
+  // The one sync method with no main-process side: a browser never hands JS a
+  // real path for a dropped file.
   api.pathForFile = function () { return ''; };
   METHODS.forEach(function (m) {
     api[m] = function () { return call(m, Array.prototype.slice.call(arguments)); };

@@ -25,7 +25,7 @@
 
 import { EventEmitter } from 'node:events';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 
 /** Where the app keeps its own state. Electron puts this under
@@ -60,9 +60,12 @@ const PATHS: Record<string, string> = {
 };
 
 class AppShim extends EventEmitter {
-  /** Server mode is always "packaged" in the sense that matters: it is not an
-   *  `electron .` dev run, so paths resolve against the install, not a repo. */
-  readonly isPackaged = true;
+  /** FALSE on purpose. Every `app.isPackaged` branch in src/main chooses between
+   *  `process.resourcesPath` (an .app bundle) and `getAppPath()/resources` (a
+   *  checkout). Browser mode runs from a checkout, so it wants the second — and
+   *  it also wants what `isPackaged` gates OFF: the auto-updater, which has no
+   *  meaning when the answer to "update" is `git pull`. */
+  readonly isPackaged = false;
 
   getPath(name: string): string {
     const p = PATHS[name] ?? PATHS.userData;
@@ -70,7 +73,9 @@ class AppShim extends EventEmitter {
     return p;
   }
 
-  getAppPath(): string { return process.cwd(); }
+  /** The repo root: out/server/index.cjs sits two levels down from it. This is
+   *  what resources/skills, resources/kg.cjs and the rest resolve against. */
+  getAppPath(): string { return resolve(__dirname, '..', '..'); }
   /** The app's real version. Read from package.json rather than hardcoded so the
    *  browser tab and Settings agree with the desktop build. */
   getVersion(): string {
@@ -125,16 +130,22 @@ export function setNotificationSink(fn: (title: string, body: string) => void): 
 type Handler = (event: unknown, ...args: unknown[]) => unknown;
 const handlers = new Map<string, Handler>();
 
+/** `ipcMain.on` channels are the SYNCHRONOUS ones: the renderer sends, the
+ *  handler assigns `event.returnValue`, and the call returns inline. The store
+ *  reads the roster and the open hive that way, before its first render. */
+const syncHandlers = new Map<string, Handler>();
+
 export const ipcMain = {
   handle(channel: string, fn: Handler): void { handlers.set(channel, fn); },
   handleOnce(channel: string, fn: Handler): void { handlers.set(channel, fn); },
   removeHandler(channel: string): void { handlers.delete(channel); },
-  on(): void { /* fire-and-forget channels are not used by the bridge yet */ },
+  on(channel: string, fn: Handler): void { syncHandlers.set(channel, fn); },
   emit(): boolean { return false; }
 };
 
 /** Every channel the main process registered, for the bridge to dispatch to. */
 export function ipcHandlers(): Map<string, Handler> { return handlers; }
+export function ipcSyncHandlers(): Map<string, Handler> { return syncHandlers; }
 
 /** The renderer sink. In Electron this is a WebContents; here it is whatever the
  *  bridge hands over, with the same two methods the main process actually uses. */
@@ -154,18 +165,109 @@ export const shell = {
   openPath(): Promise<string> { return Promise.resolve(''); }
 };
 
-/** Absent by design — see the header. Exported so an accidental import fails at
- *  the call site with a clear message rather than `undefined is not a function`. */
-function absent(name: string): never {
-  throw new Error(`[server] ${name} is not available in browser mode`);
+/**
+ * A window that is a browser tab.
+ *
+ * src/main/index.ts creates one of these, keeps it in `allWindows`, and uses it
+ * for two things that matter here: `webContents.send(...)`, which is how every
+ * push reaches the UI, and `isDestroyed()`, which is how it decides whether
+ * there is a UI to push to. Both are answered by the page sink the server
+ * installs below.
+ *
+ * Everything else a window does — geometry, focus, the traffic lights, the
+ * permission handlers — belongs to Chromium, and the browser is already doing
+ * it. Those calls land on the Proxy and do nothing.
+ */
+class WindowShim extends EventEmitter {
+  static readonly instances = new Set<WindowShim>();
+  readonly id: number;
+  readonly webContents: unknown;
+
+  constructor() {
+    super();
+    this.setMaxListeners(0);
+    this.id = WindowShim.instances.size + 1;
+    this.webContents = webContentsProxy();
+    WindowShim.instances.add(this);
+  }
+
+  isDestroyed(): boolean { return false; }
+  isMinimized(): boolean { return false; }
+  isMaximized(): boolean { return false; }
+  isVisible(): boolean { return true; }
+  getBounds(): { x: number; y: number; width: number; height: number } {
+    return { x: 0, y: 0, width: 1440, height: 900 };
+  }
+  loadFile(): Promise<void> { return Promise.resolve(); }
+  loadURL(): Promise<void> { return Promise.resolve(); }
+  destroy(): void { WindowShim.instances.delete(this); }
+  close(): void { this.destroy(); }
 }
 
-export const BrowserWindow = new Proxy({}, { get: () => () => absent('BrowserWindow') });
+/** What `win.webContents` answers. `send` and `isDestroyed` are the page — they
+ *  are the only two the main process depends on. `session` exists because
+ *  createWindow installs permission handlers on it, and a browser grants its own
+ *  permissions. Anything else is a no-op. */
+function webContentsProxy(): unknown {
+  const session = noOpProxy({ setPermissionRequestHandler: () => undefined, setPermissionCheckHandler: () => undefined });
+  return noOpProxy({
+    get session() { return session; },
+    id: 1,
+    send: (channel: string, ...args: unknown[]) => pageSink?.send(channel, ...args),
+    isDestroyed: () => pageSink?.isDestroyed() ?? true,
+    getURL: () => 'http://127.0.0.1',
+    isLoading: () => false
+  });
+}
+
+/** An object whose unknown members are harmless no-op functions. The main
+ *  process calls dozens of Chromium methods that have no meaning without a
+ *  window; none of them should be the reason a boot dies halfway. */
+function noOpProxy<T extends object>(own: T): T {
+  return new Proxy(own, {
+    get(target, key, receiver) {
+      if (key in target) return Reflect.get(target, key, receiver);
+      if (typeof key === 'symbol') return undefined;
+      return () => undefined;
+    }
+  });
+}
+
+/** Unknown methods are no-ops rather than crashes: main calls a couple of dozen
+ *  window methods and none of them mean anything without a Chromium window. */
+const windowProxy = (win: WindowShim): WindowShim => noOpProxy(win);
+
+/** The page's event sink, installed by the server once it can push. Windows
+ *  created before that still answer `send` — into nothing. */
+let pageSink: { send(channel: string, ...args: unknown[]): void; isDestroyed(): boolean } | null = null;
+export function setPageSink(sink: RendererSink): void { pageSink = sink; }
+
+export const BrowserWindow = Object.assign(
+  function BrowserWindow(this: unknown) { return windowProxy(new WindowShim()); } as unknown as {
+    new (opts?: unknown): WindowShim;
+    getAllWindows(): WindowShim[];
+    getFocusedWindow(): WindowShim | null;
+    fromWebContents(): WindowShim | null;
+  },
+  {
+    getAllWindows: () => [...WindowShim.instances],
+    getFocusedWindow: () => [...WindowShim.instances][0] ?? null,
+    fromWebContents: () => [...WindowShim.instances][0] ?? null
+  }
+);
+
+/** A browser cannot open a native file picker on the server's filesystem, and a
+ *  server-side picker would be the wrong machine anyway. Every dialog answers
+ *  "the user cancelled", which every call site already handles. */
 export const dialog = {
-  showOpenDialog: () => absent('dialog.showOpenDialog'),
-  showMessageBox: () => absent('dialog.showMessageBox'),
-  showSaveDialog: () => absent('dialog.showSaveDialog')
+  showOpenDialog: () => Promise.resolve({ canceled: true, filePaths: [] }),
+  showOpenDialogSync: () => undefined,
+  showSaveDialog: () => Promise.resolve({ canceled: true, filePath: undefined }),
+  showMessageBox: () => Promise.resolve({ response: 0, checkboxChecked: false }),
+  showMessageBoxSync: () => 0,
+  showErrorBox: () => { /* the page shows its own errors */ }
 };
+
 export const protocol = {
   registerSchemesAsPrivileged(): void { /* the server serves over http */ },
   handle(): void { /* ditto */ }
@@ -181,12 +283,24 @@ export const clipboard = {
   readText: () => '',
   writeText: () => { /* the page owns the clipboard */ }
 };
+/** Electron's safeStorage encrypts with a key only the OS keychain holds, and
+ *  that key is bound to the signed app — a node process cannot read it. So this
+ *  reports "no encryption", which integrations.ts already treats as a REFUSAL to
+ *  store: a secret written here would be plaintext on disk, and a secret written
+ *  by the desktop app cannot be read back. Integrations are therefore desktop
+ *  only until this has a real keychain bridge. */
+export const safeStorage = {
+  isEncryptionAvailable(): boolean { return false; },
+  encryptString(): Buffer { throw new Error('[server] safeStorage is not available in browser mode'); },
+  decryptString(): string { throw new Error('[server] safeStorage is not available in browser mode'); }
+};
+
 export const nativeTheme = { shouldUseDarkColors: false, on: () => { /* none */ } };
-export const Menu = { setApplicationMenu: () => { /* no menu bar */ }, buildFromTemplate: () => ({}) };
-export const net = { request: () => absent('net.request') };
+export const Menu = { setApplicationMenu: () => { /* no menu bar */ }, buildFromTemplate: () => ({ popup: () => undefined }) };
+export const net = { request: () => { throw new Error('[server] net.request is not available in browser mode'); } };
 export const webUtils = { getPathForFile: () => '' };
 
 export default {
   app, BrowserWindow, Notification, clipboard, dialog, ipcMain, Menu, nativeTheme,
-  net, powerMonitor, powerSaveBlocker, protocol, screen, shell, webUtils
+  net, powerMonitor, powerSaveBlocker, protocol, safeStorage, screen, shell, webUtils
 };
