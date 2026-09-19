@@ -149,7 +149,17 @@ export function useRestoreTeam(config?: HarnessConfig | null): RestoreTeamState 
             // agent id is preserved across restart, so its registry entry,
             // memory.md and inbox reattach by id. No-op without a recorded session.
             resume: true,
-            hive: { id: a.id, name: a.name, provider, cwd, role: roleForHiveSpawn(a), isLead: a.isLead }
+            // Send the identity fields too, so a restore carries the agent's
+            // briefing and face forward rather than leaving the hive's copy to
+            // be the only one. `undefined` means "unchanged" at the other end.
+            hive: {
+              id: a.id, name: a.name, provider, cwd,
+              role: roleForHiveSpawn(a),
+              isLead: a.isLead,
+              goal: a.goal,
+              character: a.character,
+              accent: a.accent
+            }
           });
           if (res.ok) {
             restored++;

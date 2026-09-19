@@ -838,6 +838,17 @@ export class HiveManager {
       ...meta,
       capabilities: meta.capabilities ?? prev?.capabilities ?? [],
       role,
+      // A spawn must never LAUNDER a default back over something the human set.
+      //
+      // The renderer sends the card it happens to hold, and after a lost roster
+      // that card is a default — no briefing, no face, isLead false. Spreading
+      // it flat then overwrote the registry, which was the only surviving copy,
+      // with exactly the emptiness it was supposed to repair. An absent field in
+      // the spawn means "unchanged", not "cleared".
+      goal: meta.goal ?? prev?.goal,
+      character: meta.character ?? prev?.character,
+      accent: meta.accent ?? prev?.accent,
+      isLead: meta.isLead ?? prev?.isLead,
       status: 'idle',
       cwdValid: cwd.valid,
       // A (re)spawn always means a live terminal — clear any prior archived flag.
