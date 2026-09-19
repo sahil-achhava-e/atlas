@@ -57,3 +57,27 @@ test('an agent with no cwd is still listed, just without a project', () => {
   const hive = withFleet([{ id: 'a1', role: 'backend' }]);
   assert.match(hive.rosterContext(), /a1 \(backend, no activity yet\)/);
 });
+
+// An empty floor has to SAY it is empty. Left to infer it from a one-row
+// roster, the orchestrator filled the gap with the subagent templates lying
+// around the machine (~/.claude/agents/backend-engineer.md and friends) and
+// planned hires around a team that did not exist.
+
+test('a floor with only the orchestrator says so, in words', () => {
+  const hive = withFleet([{ id: 'god', role: 'orchestrator', isGod: true, cwd: '/w' }]);
+  const roster = hive.rosterContext();
+  assert.match(roster, /ONLY agent on this floor/);
+  assert.match(roster, /no workers/i);
+  // And names the thing it must not mistake for a crew.
+  assert.match(roster, /\.claude\/agents/);
+});
+
+test('one real worker is a floor, and reads as the normal roster', () => {
+  const hive = withFleet([
+    { id: 'god', role: 'orchestrator', isGod: true, cwd: '/w' },
+    { id: 'a1', name: 'Dana', role: 'backend', cwd: '/r/api' }
+  ]);
+  const roster = hive.rosterContext();
+  assert.ok(!roster.includes('ONLY agent'));
+  assert.match(roster, /a1 "Dana" \(backend, api/);
+});
