@@ -1,13 +1,13 @@
 'use strict';
 
 /**
- * A spawn must never launder a default back over something the human set.
+ * Identity belongs to the record, not to whoever is respawning.
  *
  * The renderer sends the card it happens to hold. After a lost roster that card
- * is a default — no briefing, no face, isLead false — and spreading it flat
- * overwrote the registry, which was the only surviving copy, with exactly the
- * emptiness it was meant to repair. An absent field in a spawn means
- * "unchanged", not "cleared".
+ * is a DEFAULT — a stand-in face, a stand-in colour, no briefing, isLead false —
+ * and preferring it overwrote the registry, the only surviving copy, with
+ * exactly the emptiness it was meant to repair. A first spawn establishes these
+ * fields; every spawn after that keeps them. Changing one is an explicit edit.
  */
 
 const test = require('node:test');
@@ -19,10 +19,9 @@ const src = readFileSync(join(__dirname, '..', 'src/main/hive.ts'), 'utf8');
 const upsert = src.slice(src.indexOf('reg.agents[meta.id] = {'), src.indexOf('if (meta.isGod) reg.godId'));
 
 for (const field of ['goal', 'character', 'accent', 'isLead']) {
-  test(`a spawn without \`${field}\` keeps the one on record`, () => {
-    // `meta.x ?? prev?.x` — nullish, so `false` and `''` from the human still win.
-    const re = new RegExp(`${field}: meta\\.${field} \\?\\? prev\\?\\.${field}`);
-    assert.match(upsert, re, `${field} must fall back to the previous record`);
+  test(`a respawn cannot change \`${field}\` — the record wins`, () => {
+    const re = new RegExp(`${field}: prev\\?\\.${field} \\?\\? meta\\.${field}`);
+    assert.match(upsert, re, `${field} must prefer the record over the spawn`);
   });
 }
 

@@ -838,17 +838,21 @@ export class HiveManager {
       ...meta,
       capabilities: meta.capabilities ?? prev?.capabilities ?? [],
       role,
-      // A spawn must never LAUNDER a default back over something the human set.
+      // IDENTITY BELONGS TO THE RECORD, not to whoever is respawning.
       //
-      // The renderer sends the card it happens to hold, and after a lost roster
-      // that card is a default — no briefing, no face, isLead false. Spreading
-      // it flat then overwrote the registry, which was the only surviving copy,
-      // with exactly the emptiness it was supposed to repair. An absent field in
-      // the spawn means "unchanged", not "cleared".
-      goal: meta.goal ?? prev?.goal,
-      character: meta.character ?? prev?.character,
-      accent: meta.accent ?? prev?.accent,
-      isLead: meta.isLead ?? prev?.isLead,
+      // A first spawn establishes it — there is no prior record, so `meta` wins.
+      // Every spawn after that KEEPS it, because the renderer sends the card it
+      // happens to hold, and after a lost roster that card is a default: a
+      // stand-in face, a stand-in colour, no briefing, isLead false. Preferring
+      // it overwrote the only surviving copy with exactly the emptiness it was
+      // meant to repair — twice, including a correction made a minute earlier.
+      //
+      // Changing any of these deliberately goes through `hive:patchAgentCard`
+      // (Edit agent), which is a human saying so rather than a respawn guessing.
+      goal: prev?.goal ?? meta.goal,
+      character: prev?.character ?? meta.character,
+      accent: prev?.accent ?? meta.accent,
+      isLead: prev?.isLead ?? meta.isLead,
       status: 'idle',
       cwdValid: cwd.valid,
       // A (re)spawn always means a live terminal — clear any prior archived flag.

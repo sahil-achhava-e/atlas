@@ -38,6 +38,22 @@ const GOD_PTY = `pty-${GOD_ID}`;
  *  "is this agent's terminal running" and a second spelling would answer no. */
 const ptyIdFor = (agentId: string): string => `pty-${agentId}`;
 
+/** A stable face and colour for an agent whose own were never recorded. Derived
+ *  from the id, so it is the same on every reload rather than random — and
+ *  different per agent, which the single DEFAULT_CHARACTER was not. */
+const hashOf = (s: string): number => {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+};
+const FALLBACK_ACCENTS = ['sky', 'mint', 'lemon', 'lilac', 'coral'] as const;
+const faceForId = (id: string): string => {
+  // The orchestrator's own face is his alone — never hand it to a worker.
+  const cast = OFFICE_CAST.map((c) => c.name).filter((n) => n !== DEFAULT_CHARACTER);
+  return cast.length ? cast[hashOf(id) % cast.length] : DEFAULT_CHARACTER;
+};
+const accentForId = (id: string): string => FALLBACK_ACCENTS[hashOf(id) % FALLBACK_ACCENTS.length];
+
 const REMOTE_CONTROL_SETTLE_MS = 1500;
 // Provider-agnostic PTY-quiescence idle fallback (#2e). A non-Claude bridge that
 // fires a 'working' event but never its turn-end signal (Stop / session.idle /
@@ -411,8 +427,13 @@ export function useHive(config: HarnessConfig | null): void {
         // Whatever the hive kept. It has the briefing, the face and the colour
         // now, so a restored agent comes back as ITSELF rather than a default
         // wearing its name.
-        character: e.character || (e.isGod ? 'michael' : DEFAULT_CHARACTER),
-        accent: e.accent || 'coral',
+        //
+        // For an agent hired before the hive kept them there is nothing to come
+        // back to, and the fallback must not be the SAME face for everyone —
+        // that is why a restored floor looked like three Atlases. Pick from the
+        // cast by id, so each gets a different one and keeps it across reloads.
+        character: e.character || (e.isGod ? 'michael' : faceForId(e.id)),
+        accent: e.accent || accentForId(e.id),
         goal: e.goal,
         description: e.role || (e.isGod ? 'runs the floor' : 'restored from the hive'),
         project: (e.cwd ?? '').replace(/\/+$/, '').split('/').filter(Boolean).pop() ?? '',
