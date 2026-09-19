@@ -103,6 +103,15 @@ export const PTY_EVENT_CHANNELS: Record<string, string> = {
   onPtyRelaunch: 'pty:relaunch'
 };
 
+/** Methods the store calls SYNCHRONOUSLY at module load, before the first
+ *  render — `sendSync` in Electron, a blocking XHR here. They are listed apart
+ *  because the generic wrapper returns a promise, and a promise where the store
+ *  expects a snapshot is what left the page on a blank screen. */
+export const SYNC_METHODS: Record<string, string> = {
+  rosterReadSync: 'rosterRead',
+  harnessHomeSync: 'harnessHome'
+};
+
 /**
  * The script served at /cth.js.
  *
@@ -116,6 +125,7 @@ export function clientScript(): string {
   var METHODS = ${JSON.stringify(Object.keys(METHOD_CHANNELS))};
   var EVENTS = ${JSON.stringify(EVENT_CHANNELS)};
   var PTY_EVENTS = ${JSON.stringify(PTY_EVENT_CHANNELS)};
+  var SYNC = ${JSON.stringify(SYNC_METHODS)};
 
   var subs = Object.create(null);
   var stream = new EventSource('/events');
@@ -146,6 +156,20 @@ export function clientScript(): string {
     });
   };
 
+  // Blocking on purpose, and only at boot: the zustand store is built at module
+  // load and an async roster would arrive after the first paint. Same trade the
+  // app makes with ipcRenderer.sendSync.
+  var callSync = function (method) {
+    try {
+      var x = new XMLHttpRequest();
+      x.open('POST', '/rpc', false);
+      x.setRequestHeader('content-type', 'application/json');
+      x.send(JSON.stringify({ method: method, args: [] }));
+      var res = JSON.parse(x.responseText);
+      return res && !res.error && res.value !== undefined ? res.value : null;
+    } catch (err) { return null; }
+  };
+
   var api = {
     // Values, not calls — the Proxy below would otherwise hand back a function.
     version: window.__ATLAS_VERSION__ || '0.0.0-server',
@@ -154,6 +178,13 @@ export function clientScript(): string {
     // Browser mode has no Electron window to own these.
     isServerMode: true
   };
+  Object.keys(SYNC).forEach(function (name) {
+    api[name] = function () { return callSync(SYNC[name]); };
+  });
+  // Sync string getters with no server side: the page owns its own clipboard,
+  // and a browser never hands JS a real file path.
+  api.readClipboardSync = function () { return ''; };
+  api.pathForFile = function () { return ''; };
   METHODS.forEach(function (m) {
     api[m] = function () { return call(m, Array.prototype.slice.call(arguments)); };
   });

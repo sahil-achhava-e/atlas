@@ -26,21 +26,28 @@
 import { EventEmitter } from 'node:events';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 
 /** Where the app keeps its own state. Electron puts this under
  *  ~/Library/Application Support/<productName>; server mode uses the SAME
  *  directory, deliberately — running in a browser must not strand the config,
  *  the roster and the database the app wrote. */
 function userDataDir(): string {
-  const name = 'Atlas';
-  if (process.platform === 'darwin') {
-    return join(homedir(), 'Library', 'Application Support', name);
+  const parent = process.platform === 'darwin'
+    ? join(homedir(), 'Library', 'Application Support')
+    : process.platform === 'win32'
+      ? (process.env.APPDATA ?? join(homedir(), 'AppData', 'Roaming'))
+      : (process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config'));
+
+  // Electron names this directory after the app, and this app has been called
+  // three things: the packaged build uses the productName, an `electron-vite
+  // dev` run uses package.json's name, and both predate the rename. Whichever
+  // one has a config.json is the one with the user's hive in it — starting a
+  // browser session on an empty directory would look like a lost install.
+  for (const name of ['Atlas', 'atlas', 'munder-difflin']) {
+    if (existsSync(join(parent, name, 'config.json'))) return join(parent, name);
   }
-  if (process.platform === 'win32') {
-    return join(process.env.APPDATA ?? join(homedir(), 'AppData', 'Roaming'), name);
-  }
-  return join(process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config'), name);
+  return join(parent, 'Atlas');
 }
 
 const PATHS: Record<string, string> = {

@@ -19,10 +19,12 @@ import { browserSink } from './index';
 import { readConfig, writeConfig } from '../main/config';
 import { PtyManager } from '../main/pty';
 import { HiveManager } from '../main/hive';
+import { RosterStore } from '../main/roster';
 
 export interface ServerRuntime {
   pty: PtyManager;
   hive: HiveManager;
+  roster: RosterStore;
 }
 
 export function registerHandlers(): ServerRuntime {
@@ -30,6 +32,8 @@ export function registerHandlers(): ServerRuntime {
   // The sink is the page, not a window: `wc.send('pty:data:<id>', …)` becomes an
   // SSE frame. PtyManager never learns the difference.
   pty.attachWebContents(browserSink as never);
+
+  const roster = new RosterStore(() => readConfig().harnessHome);
 
   const hive = new HiveManager(
     () => readConfig().harnessHome ?? null,
@@ -45,6 +49,13 @@ export function registerHandlers(): ServerRuntime {
     return next;
   });
   ipcMain.handle('config:home', () => readConfig().harnessHome ?? null);
+
+  // ─── the roster mirror ─────────────────────────────────────────────────────
+  // The store reads these two at module load, before the first render. In
+  // Electron that is `sendSync`; here the page uses a blocking XHR, which is the
+  // same one round trip. Skip them and the floor boots with no roster at all.
+  ipcMain.handle('roster:read', () => roster.read());
+  ipcMain.handle('roster:write', (_e, snap) => roster.write(snap));
 
   // ─── terminals ─────────────────────────────────────────────────────────────
   ipcMain.handle('pty:spawn', (_e, opts) => pty.spawn(opts as never, browserSink as never));
@@ -86,5 +97,5 @@ export function registerHandlers(): ServerRuntime {
   ipcMain.handle('app:info', () => ({ version: app.getVersion(), changelog: '' }));
 
   hive.startRouter();
-  return { pty, hive };
+  return { pty, hive, roster };
 }
