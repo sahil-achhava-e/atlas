@@ -181,7 +181,8 @@ export const INVOKE: Record<string, string> = {
 export const SYNC: Record<string, string> = {
   readClipboardSync: 'app:readClipboardSync',
   rosterReadSync: 'roster:readSync',
-  harnessHomeSync: 'config:homeSync'
+  harnessHomeSync: 'config:homeSync',
+  bootIdSync: 'app:bootIdSync'
 };
 
 /** `cth.onX(cb)` → the channel main pushes on. */

@@ -100,6 +100,12 @@ import {
 
 const isDev = !!process.env.ELECTRON_RENDERER_URL;
 
+/** This run of the main process. The renderer compares it with the one it saw
+ *  last to tell a page RELOAD (same process, agents never left) from an app
+ *  restart (a genuine morning, worth walking everyone in for). Generated once,
+ *  here, so every window in this process agrees. */
+const BOOT_ID = randomBytes(8).toString('hex');
+
 /**
  * Keep using the state directory we already have.
  *
@@ -3720,6 +3726,12 @@ ipcMain.handle('git:checkout', async (_evt, cwd: unknown, ref: unknown, detach: 
 // (`roster` itself is constructed earlier so HookServer can read standing goals.)
 ipcMain.on('roster:readSync', (evt) => { evt.returnValue = roster.read(); });
 ipcMain.on('config:homeSync', (evt) => { evt.returnValue = readConfig().harnessHome ?? null; });
+/** This run of the main process, SYNCHRONOUSLY — the office floor needs it
+ *  before it places a single character, to tell a page reload (everyone is
+ *  already at their desks) from an app start (walk them in). An async answer
+ *  arrives after the first avatars are placed, which is exactly the frame the
+ *  decision governs. */
+ipcMain.on('app:bootIdSync', (evt) => { evt.returnValue = BOOT_ID; });
 ipcMain.handle('roster:read', () => roster.read());
 ipcMain.handle('roster:write', (_evt, snap: unknown) => roster.write(snap));
 
@@ -4900,7 +4912,7 @@ ipcMain.handle('app:info', () => {
   const top = changelog
     ? changelog.split(/\n## /).slice(1, 3).map((s) => `## ${s}`).join('\n').slice(0, 8000)
     : '';
-  return { version: app.getVersion(), changelog: top };
+  return { version: app.getVersion(), changelog: top, bootId: BOOT_ID };
 });
 ipcMain.handle('realtime:drainCompletions', () => completionWatcher.drainQueuedCompletions());
 ipcMain.handle('realtime:waitFor', (_e, taskId: unknown, timeoutMs: unknown) =>

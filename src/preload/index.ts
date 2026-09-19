@@ -1401,8 +1401,10 @@ const api = {
     ipcRenderer.on('realtime:enqueue', listener);
     return () => ipcRenderer.removeListener('realtime:enqueue', listener);
   },
-  /** v0.3.4: app self-knowledge — version + newest changelog sections. */
-  appInfo: (): Promise<{ version: string; changelog: string }> =>
+  /** v0.3.4: app self-knowledge — version + newest changelog sections, plus the
+   *  id of THIS run of the main process (the floor uses it to tell a page reload
+   *  from an app restart). */
+  appInfo: (): Promise<{ version: string; changelog: string; bootId?: string }> =>
     ipcRenderer.invoke('app:info'),
   // ─── Roster mirror (agents + notes + queues, shared dev ↔ packaged) ─────────
   /** Read the roster file beside the hive. SYNCHRONOUS on purpose: the zustand
@@ -1424,6 +1426,12 @@ const api = {
    *  hive its localStorage keys belong to before it decides to trust them. */
   harnessHomeSync: (): string | null => {
     try { return ipcRenderer.sendSync('config:homeSync') ?? null; } catch { return null; }
+  },
+  /** The id of THIS run of the main process. Synchronous for the same reason
+   *  the two above are: the floor decides whether to play the morning before it
+   *  places its first character. */
+  bootIdSync: (): string | null => {
+    try { return ipcRenderer.sendSync('app:bootIdSync') ?? null; } catch { return null; }
   },
   /** Mirror the roster to disk. Debounced by the caller; main keeps the previous
    *  contents as a backup and refuses a first write that would empty a full file. */

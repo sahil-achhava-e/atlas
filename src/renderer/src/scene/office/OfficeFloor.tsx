@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { shouldPlayArrivals, BOOT_ID_KEY } from '@shared/floorArrival';
 import { useTranslation } from 'react-i18next';
 import { Application, Container, Graphics, Ticker, Texture } from 'pixi.js';
 // PixiJS uses new Function() internally, blocked by Electron CSP — this patches it.
@@ -342,6 +343,22 @@ export function OfficeFloor() {
     const mountId = ++mountIdRef.current;
     const app = new Application();
     appRef.current = app;
+
+      // A RELOAD IS NOT A MORNING. The agents never left — their processes have
+      // been running the whole time — so walking them in again says something
+      // untrue, and costs ten seconds before the floor is usable. Same boot id
+      // as this browser saw last means the same main process: a reload.
+      //
+      // Read SYNCHRONOUSLY, before a single character is placed: an async answer
+      // arrives after the first avatars are already walking, which is exactly
+      // the frame this decides. See shared/floorArrival.ts.
+      const playArrivals = ((): boolean => {
+        const bootId = window.cth.bootIdSync?.() ?? undefined;
+        let seen: string | null = null;
+        try { seen = window.localStorage.getItem(BOOT_ID_KEY); } catch { /* private window */ }
+        if (bootId) { try { window.localStorage.setItem(BOOT_ID_KEY, bootId); } catch { /* ignore */ } }
+        return shouldPlayArrivals(bootId ?? undefined, seen);
+      })();
 
     const runtimes = new Map<string, Runtime>();
     const seatClaims = new Set<number>();
@@ -1646,7 +1663,9 @@ export function OfficeFloor() {
           frames,
           seatTile,
           seatDirection: facingForSeat(seatTile),
-          spawnTile: entrance, // walk in from the office door
+          // Reload: appear at the desk, because that is where they have been.
+          // Fresh start: walk in from the office door.
+          spawnTile: playArrivals ? entrance : seatTile,
           // `member` is undefined for a library or generated face, so the
           // selection glow takes that face's own garment colour rather than
           // crashing on `.shirt` (which is what made the cast gate load-bearing).
@@ -1656,8 +1675,11 @@ export function OfficeFloor() {
         character.show(charLayer);
         // A hello on the way in. Deliberately not tied to the clock: the floor
         // does not know what time your agents think it is, and "good morning" at
-        // 9pm is worse than no greeting at all.
-        character.showThought(t(ARRIVE_LINES[Math.floor(Math.random() * ARRIVE_LINES.length)]));
+        // 9pm is worse than no greeting at all. Not on a reload: nobody just
+        // arrived, and being greeted by your whole team for pressing R is odd.
+        if (playArrivals) {
+          character.showThought(t(ARRIVE_LINES[Math.floor(Math.random() * ARRIVE_LINES.length)]));
+        }
         // Everyone but Atlas stays out of his cabin while roaming.
         if (!agent.isGod) character.setNoWanderTiles(godRoomTiles);
         const rt: Runtime = {
@@ -1665,11 +1687,14 @@ export function OfficeFloor() {
           greetUntil: Date.now() + 4000,
           // Long enough to cross the floor and be seen at the desk. Idle
           // behaviour resumes after it; work interrupts it immediately.
-          settleUntil: Date.now() + 12_000
+          // The settle window is the arrival's tail — time to be SEEN sitting
+          // down. On a reload there was no arrival, so normal life resumes at
+          // once.
+          settleUntil: playArrivals ? Date.now() + 12_000 : undefined
         };
         // Straight to your desk, screen on. Everyone, every time.
         if (!agent.isGod) character.sitAtDesk(false);
-        if (agent.isGod && godDoorApproach) {
+        if (agent.isGod && godDoorApproach && playArrivals) {
           // Walk to the corridor outside his own door, THEN to the desk. Both
           // routes are 31 steps — the difference is that the shortest-path tie
           // goes through the boardroom, and his room has a door of its own.
@@ -1873,8 +1898,10 @@ export function OfficeFloor() {
       const ARRIVAL_GAP_S = 2;
       const DOORS_OPEN_AFTER_S = 2;
       const arriving = new Set<string>();      // addCharacter in flight
-      let godSeatedFor = -1;                   // seconds since Atlas first sat, or -1
-      let doorsOpen = false;                   // latched: he sat once, the office is open
+      let godSeatedFor = playArrivals ? -1 : 99;   // seconds since Atlas first sat, or -1
+      // Already here: the doors are open, so breaks, errands and meetings are
+      // not held behind an arrival that is not coming.
+      let doorsOpen = !playArrivals;
       let sinceLastArrival = 0;
 
       /** True once the office has opened AND everyone expected has walked in.
