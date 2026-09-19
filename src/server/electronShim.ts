@@ -44,6 +44,8 @@ function userDataDir(): string {
   // dev` run uses package.json's name, and both predate the rename. Whichever
   // one has a config.json is the one with the user's hive in it — starting a
   // browser session on an empty directory would look like a lost install.
+  // Same answer src/main's adoptLegacyStateDir() reaches, reached earlier: the
+  // server checks the instance lock before it imports main.
   for (const name of ['Atlas', 'atlas', 'munder-difflin']) {
     if (existsSync(join(parent, name, 'config.json'))) return join(parent, name);
   }
@@ -66,6 +68,10 @@ class AppShim extends EventEmitter {
    *  it also wants what `isPackaged` gates OFF: the auto-updater, which has no
    *  meaning when the answer to "update" is `git pull`. */
   readonly isPackaged = false;
+
+  /** src/main adopts a previous release's state directory when this build's own
+   *  is empty (the app was renamed). That call lands here. */
+  setPath(name: string, value: string): void { PATHS[name] = value; }
 
   getPath(name: string): string {
     const p = PATHS[name] ?? PATHS.userData;

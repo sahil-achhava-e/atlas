@@ -97,6 +97,35 @@ import {
 
 const isDev = !!process.env.ELECTRON_RENDERER_URL;
 
+/**
+ * Keep using the state directory we already have.
+ *
+ * Electron names userData after the app, and this app was renamed. A build that
+ * calls itself Atlas therefore looks at an empty folder and offers onboarding,
+ * while the config, the workspace list and the local database sit in the old
+ * one — same machine, same user, invisible. The browser view has to agree with
+ * the desktop view about where state lives, and the cheapest way for them to
+ * agree is for there to be one directory, not a copy.
+ *
+ * So: if this build's directory has no config.json and a previous name's does,
+ * point at that. A fresh install has neither and is untouched. Runs BEFORE
+ * anything reads a path, which is why it is up here rather than in whenReady.
+ */
+const LEGACY_STATE_DIRS = ['munder-difflin'];
+(function adoptLegacyStateDir(): void {
+  const current = app.getPath('userData');
+  if (existsSync(join(current, 'config.json'))) return;
+  const parent = dirname(current);
+  for (const name of LEGACY_STATE_DIRS) {
+    const legacy = join(parent, name);
+    if (legacy !== current && existsSync(join(legacy, 'config.json'))) {
+      app.setPath('userData', legacy);
+      console.log(`[state] using ${legacy} — this build's own directory has no config yet`);
+      return;
+    }
+  }
+})();
+
 /** The packaged app's own origin. A standard, secure scheme so the renderer's
  *  `default-src 'self'` CSP covers it and history.pushState is allowed. */
 const APP_SCHEME = 'atlas';
