@@ -8,6 +8,7 @@ import { resolvePalette, paletteIsNoop, swapTable, applySwap } from './tilePalet
 import { LEAD_SEAT_NAMES, nextLeadSlot } from './leadSeats';
 import { useStore, type Agent } from '@/store/store';
 import { TiledMapRenderer } from './TiledMapRenderer';
+import { nearestReachable } from './pathfinding';
 import { Camera } from './Camera';
 import { Character, paintCup } from './Character';
 import { DeskScreen } from './DeskScreen';
@@ -919,6 +920,18 @@ export function OfficeFloor() {
         }
       };
 
+      /** The nearest of a set of candidate spots, by walkable steps from where
+       *  this agent is standing. Falls back to the first candidate when nothing
+       *  is reachable — the walk will fail the same way it would have anyway,
+       *  and a trip that does not start is worse than one that cannot finish. */
+      const nearestSpot = <T extends { tile: Tile }>(rt: Runtime, candidates: T[]): T | undefined => {
+        if (candidates.length <= 1) return candidates[0];
+        const from = rt.character.getTilePosition();
+        const goals = candidates.map((c, i) => ({ x: c.tile.x, y: c.tile.y, i }));
+        const hit = nearestReachable(mapRenderer, from, goals);
+        return hit ? candidates[hit.i] : candidates[0];
+      };
+
       const startBreak = (id: string, rt: Runtime): void => {
         // Prefer (≈half the time) a seat whose table-mate is already there, so
         // pairs form and chat; otherwise any free spot.
@@ -931,8 +944,13 @@ export function OfficeFloor() {
           if (p >= 0 && cafeTaken[p]) social.push(i);
         }
         if (free.length === 0) return;
+        // A table-mate still beats proximity — that is what makes pairs chat —
+        // but WITHIN the pool it is now the nearest seat rather than a random
+        // one. Picking at random sent agents past three empty chairs.
         const pool = (social.length && Math.random() < 0.55) ? social : free;
-        const idx = pool[Math.floor(Math.random() * pool.length)];
+        const picked = nearestSpot(rt, pool.map((i) => ({ i, tile: cafeSpots[i].tile })));
+        if (!picked) return;
+        const idx = picked.i;
         const spot = cafeSpots[idx];
         cafeTaken[idx] = id;
         rt.brk = { spotIdx: idx, phase: 'walking', timer: 0, quipTimer: 0 };
@@ -1139,7 +1157,12 @@ export function OfficeFloor() {
         if (Math.random() >= 0.35) return;          // keep it occasional
         const free = ERRAND_SPOTS.map((_, i) => i).filter((i) => !errandTaken[i]);
         if (free.length === 0) return;
-        const idx = free[Math.floor(Math.random() * free.length)];
+        // A random spot decided which KIND of errand this is (and whether it is
+        // the boss's), so it is still drawn at random here. Once the performer
+        // is known, the choice is re-made as the nearest free spot they are
+        // allowed — see below. Picking purely at random walked an agent past
+        // the plant it was going to water.
+        let idx = free[Math.floor(Math.random() * free.length)];
         const spot = ERRAND_SPOTS[idx];
         // Pick the performer. The CEO office's spots belong to Michael alone —
         // and unlike workers he runs his errands FROM his desk (he's seated
@@ -1163,15 +1186,20 @@ export function OfficeFloor() {
           if (candidates.length === 0) return;
           [agent, rt] = candidates[Math.floor(Math.random() * candidates.length)];
         }
+        // Now that we know who is going, go to the CLOSEST one they may use.
+        const allowed = free.filter((i) => !!ERRAND_SPOTS[i].godOnly === !!spot.godOnly);
+        const closest = nearestSpot(rt, allowed.map((i) => ({ i, tile: ERRAND_SPOTS[i].stand })));
+        if (closest) idx = closest.i;
+        const chosen = ERRAND_SPOTS[idx];
         const c = rt.character;
         errandTaken[idx] = agent.id;
         rt.err = { phase: 'walking', timer: 0, idx };
-        c.walkToAndThen(spot.stand, () => {
+        c.walkToAndThen(chosen.stand, () => {
           if (!rt!.err || rt!.err.idx !== idx) return;
           rt!.err.phase = 'doing';
           rt!.err.timer = 0;
-          c.faceDirection(spot.facing);
-          const lines = ERRAND_THOUGHTS[spot.kind];
+          c.faceDirection(chosen.facing);
+          const lines = ERRAND_THOUGHTS[chosen.kind];
           c.showThought(t(lines[Math.floor(Math.random() * lines.length)]));
           const finish = (): void => {
             const wasGod = !!agent!.isGod;
@@ -1896,9 +1924,17 @@ export function OfficeFloor() {
       // Nothing about the agents' PROCESSES changes; this is the arrival on the
       // floor only, so an agent is working long before its avatar sits down.
       const ARRIVAL_GAP_S = 2;
-      const DOORS_OPEN_AFTER_S = 2;
+      /** From Atlas ARRIVING, not from him sitting down. */
+      const DOORS_OPEN_AFTER_S = 3;
       const arriving = new Set<string>();      // addCharacter in flight
-      let godSeatedFor = playArrivals ? -1 : 99;   // seconds since Atlas first sat, or -1
+      /** Seconds since Atlas walked in, or -1 before he has. The door opens on
+       *  a clock from his ARRIVAL, not from him reaching his chair: his walk is
+       *  long (out of his own door, down the corridor, across the floor) and
+       *  waiting it out left the office empty for the best part of a minute
+       *  before anyone else appeared. Three seconds is enough that he is
+       *  unmistakably first through the door, and the rest follow while he is
+       *  still crossing the room, which is what an office looks like. */
+      let sinceGodArrived = playArrivals ? -1 : 99;
       // Already here: the doors are open, so breaks, errands and meetings are
       // not held behind an arrival that is not coming.
       let doorsOpen = !playArrivals;
@@ -1950,13 +1986,13 @@ export function OfficeFloor() {
         const god = agents.find((a) => a.isGod);
         const grt = god ? runtimes.get(god.id) : undefined;
 
-        // No boss yet, or he has not reached his desk: nobody else comes in. Once
-        // he HAS sat, the latch stays open — he goes for coffee like anyone else,
-        // and that must not turn the queue back at the door.
+        // No boss yet: nobody else comes in — he opens the office. Once the
+        // clock has run the latch stays open, so him going for coffee later
+        // cannot turn the queue back at the door.
         if (!doorsOpen) {
-          if (!grt || !grt.character.isSitting()) { godSeatedFor = -1; return; }
-          godSeatedFor = godSeatedFor < 0 ? 0 : godSeatedFor + dt;
-          if (godSeatedFor < DOORS_OPEN_AFTER_S) return;
+          if (!grt) { sinceGodArrived = -1; return; }
+          sinceGodArrived = sinceGodArrived < 0 ? 0 : sinceGodArrived + dt;
+          if (sinceGodArrived < DOORS_OPEN_AFTER_S) return;
           doorsOpen = true;
         }
 
@@ -2046,11 +2082,15 @@ export function OfficeFloor() {
         if (grt.brk || grt.err || grt.run || grt.mtg || !grt.character.isSitting()) return;
 
         const godSeat = seatTiles[GOD_SEAT];
-        const spot = [
+        // Three places to stand at the boss's desk. `find` took whichever came
+        // first in the list, which could be the far side of his desk.
+        const openStands = [
           { x: godSeat.x + 1, y: godSeat.y + 1 },
           { x: godSeat.x - 1, y: godSeat.y + 1 },
           { x: godSeat.x, y: godSeat.y + 2 }
-        ].find((tl) => mapRenderer.isWalkable(tl.x, tl.y) && !visitSpots.has(`${tl.x},${tl.y}`));
+        ].filter((tl) => mapRenderer.isWalkable(tl.x, tl.y) && !visitSpots.has(`${tl.x},${tl.y}`));
+        const nearestStand = nearestSpot(rt, openStands.map((tl) => ({ tile: tl })));
+        const spot = nearestStand?.tile;
         if (!spot) return;
 
         visitCooldown = 25;
@@ -2163,8 +2203,16 @@ export function OfficeFloor() {
         if (going.length < 3) return;
 
         meetingCooldown = 90;
-        going.forEach(([id, rt], n) => {
-          const [tile, idx] = free[n];
+        // Chairs used to be handed out by list position, so the agent nearest
+        // the door could be sent to the far side of the table and cross the
+        // room past an empty seat. Each attendee takes the closest chair still
+        // going, in the order they were gathered.
+        const openSeats = [...free];
+        going.forEach(([id, rt]) => {
+          const pick = nearestSpot(rt, openSeats.map(([tl, i], k) => ({ tile: tl, i, k })));
+          const seatAt = pick ? pick.k : 0;
+          const [tile, idx] = openSeats[seatAt];
+          openSeats.splice(seatAt, 1);
           meetingTaken[idx] = id;
           rt.mtg = { phase: 'walking', timer: 0, tile };
           rt.character.walkToAndThen(tile, () => {
