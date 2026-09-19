@@ -38,7 +38,7 @@ import { MemoryManager } from './memory';
 import { KnowledgeManager } from './knowledge';
 import { MemoryReflector, type ReflectSettings } from './reflect';
 import { PersistStore } from './db';
-import { readAgentUsage, readContextTokens, seedSessionTranscript, resolveSessionCwd } from './transcript';
+import { readAgentUsage, readContextTokens, seedSessionTranscript, resolveSessionCwd, projectDir } from './transcript';
 import { listIssues, listCIRuns } from './github';
 import { SlackWebhookServer, SlackReplyServer, postSlackReply, type SlackEventFile } from './slack';
 import {
@@ -4095,10 +4095,44 @@ ipcMain.handle('hive:agentUsage', (_evt, cwd: unknown) =>
  * Reads the tail rather than the file: a long session's transcript runs to
  * megabytes, and this is polled.
  */
+/**
+ * The transcript to read this agent's activity from.
+ *
+ * A hook tells us the exact file, which is the right answer — but only once one
+ * has fired, and the first can be a minute into a session. Until then the pane
+ * would sit empty while the agent was visibly working, which reads as broken.
+ *
+ * So: fall back to the agent's own cwd. Claude keys transcripts by working
+ * directory, and the registry records the session id the spawn resumed; failing
+ * that, the newest file in that project directory is the session that is running
+ * now, because nothing else in that folder has been written to since.
+ */
+function activityTranscript(agentId: string): string | null {
+  const hooked = hookServer.transcriptPath(agentId);
+  if (hooked && existsSync(hooked)) return hooked;
+
+  const agent = hive.registry().agents?.[agentId];
+  if (!agent?.cwd) return null;
+  const dir = projectDir(agent.cwd);
+  if (!existsSync(dir)) return null;
+
+  if (agent.sessionId) {
+    const byId = join(dir, `${agent.sessionId}.jsonl`);
+    if (existsSync(byId)) return byId;
+  }
+  try {
+    const newest = readdirSync(dir)
+      .filter((f) => f.endsWith('.jsonl'))
+      .map((f) => ({ f, at: statSync(join(dir, f)).mtimeMs }))
+      .sort((a, b) => b.at - a.at)[0];
+    return newest ? join(dir, newest.f) : null;
+  } catch { return null; }
+}
+
 ipcMain.handle('agent:activity', (_evt, agentId: unknown, limit: unknown) => {
   if (typeof agentId !== 'string') return [];
-  const tp = hookServer.transcriptPath(agentId);
-  if (!tp || !existsSync(tp)) return [];
+  const tp = activityTranscript(agentId);
+  if (!tp) return [];
   try {
     const size = statSync(tp).size;
     const TAIL = 512 * 1024;   // enough for a few hundred entries

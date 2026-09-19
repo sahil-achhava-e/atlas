@@ -21,18 +21,32 @@ export interface ActivityRow {
   text: string;
   /** For a `do` row: the file, command or pattern it acted on. */
   detail?: string;
+  /** What KIND of work, so the page can colour it without re-deriving the
+   *  answer from the label. Reading and changing files are different risks and
+   *  should not look the same at a glance. */
+  tone?: ActivityTone;
   at?: number;
 }
+
+/** Deliberately few: six colours a person can learn, not one per tool. */
+export type ActivityTone = 'read' | 'write' | 'run' | 'search' | 'delegate' | 'plan' | 'other';
 
 /** Tool name → what to call it when a person reads it. Anything not here falls
  *  back to the tool's own name, which is better than dropping the row: an agent
  *  doing something unnamed is still an agent doing something. */
-const TOOL_VERBS: Record<string, string> = {
-  Read: 'Reading', Write: 'Writing', Edit: 'Editing', NotebookEdit: 'Editing a notebook',
-  Bash: 'Running a command', Glob: 'Looking for files', Grep: 'Searching',
-  WebFetch: 'Reading a page', WebSearch: 'Searching the web',
-  Task: 'Handing work to a helper', TodoWrite: 'Updating its plan',
-  Agent: 'Handing work to a helper'
+const TOOLS: Record<string, { verb: string; tone: ActivityTone }> = {
+  Read: { verb: 'Reading', tone: 'read' },
+  Write: { verb: 'Writing', tone: 'write' },
+  Edit: { verb: 'Editing', tone: 'write' },
+  NotebookEdit: { verb: 'Editing a notebook', tone: 'write' },
+  Bash: { verb: 'Running a command', tone: 'run' },
+  Glob: { verb: 'Looking for files', tone: 'search' },
+  Grep: { verb: 'Searching', tone: 'search' },
+  WebFetch: { verb: 'Reading a page', tone: 'read' },
+  WebSearch: { verb: 'Searching the web', tone: 'search' },
+  Task: { verb: 'Handing work to a helper', tone: 'delegate' },
+  Agent: { verb: 'Handing work to a helper', tone: 'delegate' },
+  TodoWrite: { verb: 'Updating its plan', tone: 'plan' }
 };
 
 /** Noise that is true but not worth a line: the engine's own error banners, and
@@ -74,9 +88,16 @@ export function activityRows(lines: readonly string[], limit = 200): ActivityRow
         rows.push({ kind: 'say', text, at });
       } else if (block.type === 'tool_use') {
         const name = block.name ?? '';
+        const known = TOOLS[name];
         // `thinking` is deliberately absent: it is the model's scratchpad, and
         // putting it in front of someone who asked for less noise is more.
-        rows.push({ kind: 'do', text: TOOL_VERBS[name] ?? name, detail: toolDetail(block.input), at });
+        rows.push({
+          kind: 'do',
+          text: known?.verb ?? name,
+          tone: known?.tone ?? 'other',
+          detail: toolDetail(block.input),
+          at
+        });
       }
     }
   }

@@ -1726,6 +1726,7 @@
   "activity": {
     "nothingYet": "لم يقل {{name}} شيئًا بعد.",
     "showTerminal": "إظهار الطرفية",
-    "hideTerminal": "إخفاء الطرفية"
+    "hideTerminal": "إخفاء الطرفية",
+    "working": "يعمل"
   }
 }

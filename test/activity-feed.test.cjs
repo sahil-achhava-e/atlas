@@ -24,15 +24,27 @@ test('a tool call becomes a verb and the thing it acted on', () => {
     assistant({ type: 'tool_use', name: 'Bash', input: { command: 'npm test', description: 'Run the tests' } })
   ]);
   assert.deepEqual(rows, [
-    { kind: 'do', text: 'Reading', detail: '/repo/src/auth.ts', at: Date.parse('2026-09-19T10:00:00Z') },
-    { kind: 'do', text: 'Running a command', detail: 'Run the tests', at: Date.parse('2026-09-19T10:00:00Z') }
+    { kind: 'do', text: 'Reading', tone: 'read', detail: '/repo/src/auth.ts', at: Date.parse('2026-09-19T10:00:00Z') },
+    { kind: 'do', text: 'Running a command', tone: 'run', detail: 'Run the tests', at: Date.parse('2026-09-19T10:00:00Z') }
   ]);
 });
 
 test('an unknown tool still gets a row, under its own name', () => {
   // An agent doing something unnamed is still an agent doing something.
   const rows = activityRows([assistant({ type: 'tool_use', name: 'Sharpen', input: {} })]);
-  assert.deepEqual(rows.map((r) => r.text), ['Sharpen']);
+  assert.deepEqual(rows.map((r) => [r.text, r.tone]), [['Sharpen', 'other']]);
+});
+
+test('reading and changing are not the same colour', () => {
+  // The two carry different risk, so they must not look alike at a glance.
+  const tone = (name) => activityRows([assistant({ type: 'tool_use', name, input: {} })])[0].tone;
+  assert.equal(tone('Read'), 'read');
+  assert.equal(tone('Edit'), 'write');
+  assert.equal(tone('Write'), 'write');
+  assert.equal(tone('Bash'), 'run');
+  assert.equal(tone('Grep'), 'search');
+  assert.equal(tone('Task'), 'delegate');
+  assert.equal(tone('TodoWrite'), 'plan');
 });
 
 test('thinking never reaches the page', () => {

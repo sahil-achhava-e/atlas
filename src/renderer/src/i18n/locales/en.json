@@ -1726,6 +1726,7 @@
   "activity": {
     "nothingYet": "{{name}} has not said anything yet.",
     "showTerminal": "Show the terminal",
-    "hideTerminal": "Hide the terminal"
+    "hideTerminal": "Hide the terminal",
+    "working": "Working"
   }
 }
