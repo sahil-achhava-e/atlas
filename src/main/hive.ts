@@ -407,6 +407,16 @@ export class HiveManager {
   setOrchestratorMaySpawn(on: boolean): void {
     this._maySpawn = on;
   }
+
+  /** The folders the human registered as their projects (config.registeredRepos),
+   *  mirrored here for the prompt builder. Set at bootstrap and on every config
+   *  write, the same way `_maySpawn` is — hive.ts deliberately does not import
+   *  the config module. */
+  private _projects: string[] = [];
+  setProjects(paths: readonly string[]): void {
+    this._projects = [...paths];
+  }
+  projects(): string[] { return [...this._projects]; }
   orchestratorMaySpawn(): boolean {
     return this._maySpawn;
   }
@@ -1543,6 +1553,21 @@ export class HiveManager {
     const runtimeLine = rt
       ? `RUNNING BUILD: Atlas v${rt.version}, ${rt.packaged ? 'packaged app' : 'local dev build'}${rt.appPath ? `, from ${rt.appPath}` : ''}. Say this version if asked which one is running, and do not assume behaviour from an older one. A local dev build inherits the launching shell's environment (umask included) where a packaged app does not, so file modes and inherited env can legitimately differ between the two. \`log.jsonl\` records an \`app-start\` event on every launch, which is how you spot a restart or a build switch.`
       : '';
+    // WHICH REPOSITORIES THIS IS ABOUT.
+    //
+    // Setup asks for them and writes them to config.registeredRepos, and until
+    // now that was the end of it: the orchestrator was never told, so asked
+    // "what are we working on" he answered, correctly and uselessly, that he had
+    // no project — while the answer sat in the config file. A crew that does not
+    // know its own repositories cannot dispatch anything without being told them
+    // again every session.
+    const projects = this.projects();
+    const projectsLine = projects.length > 0
+      ? `PROJECTS: the human registered these folders as the work — ${projects.join(', ')}. `
+        + 'These are the repositories this crew exists for. Read one before you plan against it, and when you dispatch, name the folder the agent should work in. '
+        + `${projects.length > 1 ? 'Several are registered, so ask which one a request is about when it is not obvious.' : ''}`
+        + ' The human can add or remove them in Settings, so re-read this rather than remembering a list from an earlier session.'
+      : 'PROJECTS: none registered yet. The human adds them in Settings (or during setup); until then there is no repository to plan against, so ask for a folder or an objective rather than guessing.';
     // Item 11: god could not find the spawn queue. The mechanism has worked since
     // v0.4.4, but nothing told him it existed — the prompt said "spawn" without
     // saying how, COMMANDS.md and PROTOCOL.md did not mention it, and the only
@@ -1601,6 +1626,7 @@ export class HiveManager {
       knowledgeLine,
       godLine,
       spawnQueueLine,
+      projectsLine,
       runtimeLine,
       slackLine,
       ctxLine,

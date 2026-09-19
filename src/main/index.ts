@@ -3363,6 +3363,26 @@ ipcMain.handle('config:update', (_evt, patch: Partial<HarnessConfig>) => {
       }, 'system');
     } catch (e) { console.error('[hive] audience broadcast:', e); }
   }
+  // Projects changed under a running floor: the prompt only reaches an agent at
+  // spawn, so a crew already on the floor would keep working from the list it
+  // was born with. Tell them, the same way the audience change does.
+  if (Array.isArray(patch?.registeredRepos)) {
+    const before = hive.projects();
+    const after = next.registeredRepos ?? [];
+    hive.setProjects(after);
+    if (hive.enabled() && before.join('\u0000') !== after.join('\u0000')) {
+      try {
+        hive.send({
+          to: 'broadcast',
+          act: 'inform',
+          subject: 'Projects changed',
+          body: after.length > 0
+            ? `The human changed which folders are registered as the work. The list is now: ${after.join(', ')}. These are the repositories this crew exists for; work against these and no others unless told otherwise.`
+            : 'The human removed every registered project. There is no repository to plan against until one is added — ask for a folder rather than guessing.'
+        }, 'system');
+      } catch (e) { console.error('[hive] projects broadcast:', e); }
+    }
+  }
   if (!hiveWasEnabled && hive.enabled()) {
     console.log('[hive] harnessHome configured — bootstrapping hive services');
     try { bootstrapHiveServices(); } catch (e) { console.error('[hive] bootstrap after onboarding:', e); }
@@ -5347,6 +5367,9 @@ function bootstrapHiveServices(): void {
   // builder reads this, so an agent spawned earlier would never learn it.
   hive.setRuntimeInfo({ version: app.getVersion(), packaged: app.isPackaged, appPath: app.getAppPath() });
   hive.setOrchestratorMaySpawn(readConfig().orchestratorMaySpawn === true);
+  // The repositories this crew exists for. Mirrored like the flag above, so the
+  // prompt builder can name them without hive.ts importing the config module.
+  hive.setProjects(readConfig().registeredRepos ?? []);
   // An app-start marker in the event log. log.jsonl had twelve event kinds and
   // none of them meant "the app restarted", so a relaunch, and more importantly a
   // switch between a packaged build and a local one, was invisible to every agent
