@@ -6,6 +6,7 @@ import { Icon } from './Icon';
 import type { HarnessConfig } from '@/store/config';
 import { useNativeDialog } from '@/hooks/useNativeDialog';
 import { ConfirmDialog } from './ConfirmDialog';
+import { suggestWorkspace } from '@shared/workspaceName';
 
 export interface HivePickerProps {
   config: HarnessConfig;
@@ -59,6 +60,10 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
   // the app (true for the OPEN workspace, which cannot be deleted under itself).
   const [confirming, setConfirming] = useState<{ path: string; reset: boolean } | undefined>();
   const recents = listed.filter((h) => !gone.includes(h));
+  // The new-workspace field, or undefined when the form is closed. It is a path,
+  // not a name: the folder is the workspace, and hiding that behind a "name"
+  // would leave people guessing where their crew ended up.
+  const [newPath, setNewPath] = useState<string | undefined>();
 
   /** Stop listing a workspace. The folder is untouched. */
   const forget = async (path: string) => {
@@ -260,15 +265,67 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
               </div>
             )}
 
-            {/* OPEN / CREATE — both browse to a folder; "fresh" mode re-points at it
-                (bootstrapping an empty one, or reusing existing hive data in place). */}
+            {/* NEW — a path, typed. It used to open the same folder picker "Open
+                another folder" does, which made two buttons that did one thing;
+                it also made a new workspace impossible in the browser, where
+                there is no native picker at all. `changeHome(…, 'fresh')`
+                creates the folder if it is not there. */}
+            {newPath !== undefined && (
+              <div style={{
+                display: 'flex', flexDirection: 'column', gap: 8, padding: 12,
+                background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                borderRadius: 'var(--cth-radius-input)'
+              }}>
+                <label style={{ fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 11, letterSpacing: 1, color: 'var(--cth-ink-500)' }}>
+                  {t('hivePicker.newLabel')}
+                </label>
+                <input
+                  value={newPath}
+                  autoFocus
+                  spellCheck={false}
+                  onChange={(e) => setNewPath(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newPath.trim()) void openHive(newPath.trim());
+                    if (e.key === 'Escape') setNewPath(undefined);
+                  }}
+                  style={{
+                    font: 'inherit', fontFamily: 'var(--cth-font-mono)', fontSize: 13,
+                    padding: '8px 10px', background: 'var(--cth-cream-50)',
+                    border: 'none', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                    borderRadius: 'var(--cth-radius-input)', color: 'var(--cth-ink-900)'
+                  }}
+                />
+                <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>{t('hivePicker.newHint')}</div>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <PixelButton variant="ghost" size="sm" onClick={() => setNewPath(undefined)} disabled={!!busy}>
+                    {t('hivePicker.cancel')}
+                  </PixelButton>
+                  <PixelButton
+                    variant="primary"
+                    size="sm"
+                    onClick={() => void openHive(newPath.trim())}
+                    disabled={!!busy || !newPath.trim()}
+                  >
+                    {t('hivePicker.create')}
+                  </PixelButton>
+                </div>
+              </div>
+            )}
+
+            {/* OPEN — browse to a folder that already exists. "fresh" mode
+                re-points at it, reusing any hive data it already holds. */}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <PixelButton variant="secondary" size="md" onClick={browse} disabled={!!busy || browsing}>
                 <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                   <Icon name="folder" /> {t('hivePicker.openAnother')}
                 </span>
               </PixelButton>
-              <PixelButton variant="secondary" size="md" onClick={browse} disabled={!!busy || browsing}>
+              <PixelButton
+                variant="secondary"
+                size="md"
+                onClick={() => setNewPath(suggestWorkspace([...(current ? [current] : []), ...recents]))}
+                disabled={!!busy || browsing}
+              >
                 <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                   <Icon name="plus" /> {t('hivePicker.newWorkspace')}
                 </span>
