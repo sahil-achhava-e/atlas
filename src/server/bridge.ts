@@ -29,19 +29,32 @@ export const METHOD_CHANNELS: Record<string, string> = {
   rosterRead: 'roster:read',
   rosterWrite: 'roster:write',
 
-  // terminals
-  ptySpawn: 'pty:spawn',
-  ptyWrite: 'pty:write',
-  ptyResize: 'pty:resize',
-  ptyKill: 'pty:kill',
-  ptyList: 'pty:list',
+  // terminals — the names the renderer actually uses (see preload/index.ts)
+  spawnPty: 'pty:spawn',
+  writePty: 'pty:write',
+  resizePty: 'pty:resize',
+  killPty: 'pty:kill',
+  listPtys: 'pty:list',
 
   // the hive
-  hiveState: 'hive:state',
+  hiveRegistry: 'hive:registry',
+  hiveInbox: 'hive:inbox',
   hiveSend: 'hive:send',
   hiveTasks: 'hive:tasks',
+  hiveAddTask: 'hive:addTask',
   hiveBoard: 'hive:board',
   hiveRenameAgent: 'hive:renameAgent',
+  hivePatchAgentRole: 'hive:patchAgentRole',
+  agentContext: 'hive:agentContext',
+  ensureAgent: 'hive:ensureAgent',
+
+  // what the boot sequence asks for before it will draw anything
+  toolsStatus: 'tools:status',
+  controlSnapshot: 'control:snapshot',
+  gitIsRepo: 'git:isRepo',
+  drainPendingHires: 'hire:drainPending',
+  realtimeHasOpenAiKey: 'realtime:hasKey',
+  openExternal: 'app:openExternal',
 
   // memory + knowledge
   memoryStatus: 'memory:status',
@@ -56,18 +69,39 @@ export const METHOD_CHANNELS: Record<string, string> = {
   historySearch: 'history:search'
 };
 
-/** Channels the main process pushes at the renderer, forwarded to the page over
- *  SSE. The page subscribes with the same `onX(cb)` names it always used. */
-export const EVENT_CHANNELS: readonly string[] = [
-  'pty:data',
-  'pty:exit',
-  'hive:hookEvent',
-  'hive:message',
-  'hive:degraded',
-  'config:changed',
-  'update:status',
-  'app:closeRequested'
-];
+/** `cth.onX(cb)` → the channel the main process pushes on. Mirrors the
+ *  `ipcRenderer.on` calls in preload/index.ts. Anything absent here simply never
+ *  fires in browser mode; the page still gets a working unsubscribe. */
+export const EVENT_CHANNELS: Record<string, string> = {
+  onHiveHookEvent: 'hive:hookEvent',
+  onHiveContextUpdate: 'hive:contextUpdate',
+  onHiveMessage: 'hive:message',
+  onHiveEnqueue: 'hive:enqueueToAgent',
+  onHiveAgentSpawned: 'hive:agentSpawned',
+  onHiveAgentArchived: 'hive:agentArchived',
+  onHiveTerminalHandoff: 'hive:terminalHandoff',
+  onHireImport: 'hire:import',
+  onHireError: 'hire:error',
+  onConfigChanged: 'config:changed',
+  onCloseRequested: 'app:closeRequested',
+  onPowerResume: 'power:resume',
+  onClosingTime: 'app:closingTime',
+  onBreakerState: 'control:breakerState',
+  onApprovalRequest: 'control:approvalRequest',
+  onMissionsUpdated: 'missions:updated',
+  onAutoCompact: 'mission:autoCompact',
+  onSlackMessage: 'slack:incomingMessage',
+  onRealtimeEnqueue: 'realtime:enqueue',
+  onUpdateStatus: 'update:status'
+};
+
+/** The same, for channels addressed per pty: `onPtyData(id, cb)` listens on
+ *  `pty:data:<id>`, exactly as preload does. */
+export const PTY_EVENT_CHANNELS: Record<string, string> = {
+  onPtyData: 'pty:data',
+  onPtyExit: 'pty:exit',
+  onPtyRelaunch: 'pty:relaunch'
+};
 
 /**
  * The script served at /cth.js.
@@ -81,10 +115,8 @@ export function clientScript(): string {
   'use strict';
   var METHODS = ${JSON.stringify(Object.keys(METHOD_CHANNELS))};
   var EVENTS = ${JSON.stringify(EVENT_CHANNELS)};
+  var PTY_EVENTS = ${JSON.stringify(PTY_EVENT_CHANNELS)};
 
-  // One SSE stream carries every push channel. Subscribers are kept per channel
-  // and per pty id, because pty:data is addressed (pty:data:<id>) in the app and
-  // the page subscribes the same way.
   var subs = Object.create(null);
   var stream = new EventSource('/events');
   stream.onmessage = function (e) {
@@ -125,13 +157,14 @@ export function clientScript(): string {
   METHODS.forEach(function (m) {
     api[m] = function () { return call(m, Array.prototype.slice.call(arguments)); };
   });
-  // Subscriptions: onPtyData('id', cb) addresses a channel; the rest are plain.
-  api.onPtyData = function (id, cb) { return subscribe('pty:data:' + id, cb); };
-  api.onPtyExit = function (cb) { return subscribe('pty:exit', cb); };
-  api.onHiveHookEvent = function (cb) { return subscribe('hive:hookEvent', cb); };
-  api.onHiveMessage = function (cb) { return subscribe('hive:message', cb); };
-  api.onConfigChanged = function (cb) { return subscribe('config:changed', cb); };
-  api.onUpdateStatus = function (cb) { return subscribe('update:status', cb); };
+  // Subscriptions. Two shapes, same as preload: pty listeners name a pty in
+  // their first argument, everything else takes the callback alone.
+  Object.keys(EVENTS).forEach(function (name) {
+    api[name] = function (cb) { return subscribe(EVENTS[name], cb); };
+  });
+  Object.keys(PTY_EVENTS).forEach(function (name) {
+    api[name] = function (id, cb) { return subscribe(PTY_EVENTS[name] + ':' + id, cb); };
+  });
 
   // Anything the UI asks for that browser mode does not implement resolves empty
   // rather than throwing: a missing feature should leave a quiet gap in the page,

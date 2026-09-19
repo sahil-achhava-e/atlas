@@ -26,7 +26,7 @@
 import { EventEmitter } from 'node:events';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 
 /** Where the app keeps its own state. Electron puts this under
  *  ~/Library/Application Support/<productName>; server mode uses the SAME
@@ -64,7 +64,15 @@ class AppShim extends EventEmitter {
   }
 
   getAppPath(): string { return process.cwd(); }
-  getVersion(): string { return process.env.ATLAS_VERSION ?? '0.0.0-server'; }
+  /** The app's real version. Read from package.json rather than hardcoded so the
+   *  browser tab and Settings agree with the desktop build. */
+  getVersion(): string {
+    if (process.env.ATLAS_VERSION) return process.env.ATLAS_VERSION;
+    for (const dir of [join(__dirname, '..', '..'), process.cwd()]) {
+      try { return JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version; } catch { /* next */ }
+    }
+    return '0.0.0-server';
+  }
   getName(): string { return 'Atlas'; }
 
   /** Electron resolves this when the process is ready to create windows. There

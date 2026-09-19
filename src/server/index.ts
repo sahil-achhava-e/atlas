@@ -120,8 +120,15 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     const channel = METHOD_CHANNELS[payload.method ?? ''];
     if (!channel) return json(res, 404, { error: `not available in browser mode: ${payload.method}` });
 
+    // A listed method whose channel this build does not register resolves EMPTY,
+    // not as an error: the renderer awaits these during boot, and a rejection
+    // there leaves the page on "starting up" forever. A gap in the UI is
+    // recoverable; a dead boot is not.
     const handler = ipcHandlers().get(channel);
-    if (!handler) return json(res, 501, { error: `no handler registered for ${channel}` });
+    if (!handler) {
+      console.warn(`[server] ${payload.method} → ${channel}: no handler in browser mode`);
+      return json(res, 200, { value: undefined });
+    }
 
     try {
       // The first argument is Electron's IpcMainInvokeEvent. Handlers that use it

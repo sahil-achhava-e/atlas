@@ -11,7 +11,10 @@
  * pretending. Adding a channel is adding a line here plus a line in bridge.ts.
  */
 
-import { ipcMain } from './electronShim';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+
+import { app, ipcMain } from './electronShim';
 import { browserSink } from './index';
 import { readConfig, writeConfig } from '../main/config';
 import { PtyManager } from '../main/pty';
@@ -53,13 +56,34 @@ export function registerHandlers(): ServerRuntime {
   // ─── the hive ──────────────────────────────────────────────────────────────
   // `registry()` is the hive's own view of who exists — the same JSON the
   // orchestrator reads, which is what the floor's roster is built from.
-  ipcMain.handle('hive:state', () => hive.registry());
   ipcMain.handle('hive:send', (_e, msg, from) => hive.send(msg as never, (from as string) ?? 'human'));
   ipcMain.handle('hive:tasks', () => hive.tasks());
   ipcMain.handle('hive:board', () => hive.board());
 
+  // ─── what the boot sequence waits on ───────────────────────────────────────
+  // App.tsx will not leave "starting up" until these answer. Shapes match
+  // preload/index.ts exactly — an array where it promises an array, null where
+  // it promises a nullable — because the renderer destructures the result.
+  ipcMain.handle('hive:registry', () => hive.registry());
+  ipcMain.handle('hive:inbox', (_e, id) => (typeof id === 'string' ? hive.inbox(id) : []));
+  ipcMain.handle('hive:addTask', (_e, task) => ({ ok: hive.addTask(task as never) }));
+  ipcMain.handle('hive:patchAgentRole', (_e, id, role) => hive.patchAgentRole(String(id), String(role)));
+  ipcMain.handle('hive:renameAgent', (_e, id, name) => hive.renameAgent(String(id), String(name)));
+  ipcMain.handle('hive:agentContext', () => null);
+  ipcMain.handle('git:isRepo', (_e, cwd) => typeof cwd === 'string' && existsSync(join(cwd, '.git')));
+
+  // Browser mode has no tool installer, no per-agent control panel, no import
+  // queue and no voice key. Empty is the honest answer, and it is the same
+  // answer the app gives before any of them are set up.
+  ipcMain.handle('tools:status', () => []);
+  ipcMain.handle('control:snapshot', () => null);
+  ipcMain.handle('hire:drainPending', () => []);
+  ipcMain.handle('realtime:hasKey', () => false);
+  // Links are the page's job — it can just open a tab.
+  ipcMain.handle('app:openExternal', () => ({ ok: true }));
+
   // ─── app ───────────────────────────────────────────────────────────────────
-  ipcMain.handle('app:info', () => ({ version: process.env.ATLAS_VERSION ?? '', changelog: '' }));
+  ipcMain.handle('app:info', () => ({ version: app.getVersion(), changelog: '' }));
 
   hive.startRouter();
   return { pty, hive };
