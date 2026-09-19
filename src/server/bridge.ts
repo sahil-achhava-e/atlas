@@ -41,6 +41,12 @@ export function clientScript(): string {
 
   var subs = Object.create(null);
   var stream = new EventSource('/events');
+  // A relaunch (reset, workspace switch) replaces the process behind this page.
+  // EventSource reconnects by itself; the PAGE is the stale part at that point,
+  // holding a config and a roster the new process has already replaced.
+  var dropped = false;
+  stream.onerror = function () { dropped = true; };
+  stream.onopen = function () { if (dropped) window.location.reload(); };
   stream.onmessage = function (e) {
     var msg;
     try { msg = JSON.parse(e.data); } catch (err) { return; }

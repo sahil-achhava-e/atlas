@@ -214,6 +214,19 @@ export async function start(): Promise<void> {
     });
   });
 
+  // A relaunch starts the replacement before this process has finished exiting,
+  // so the port can still be held for a moment. Retry briefly rather than dying
+  // on the handover.
+  let attempts = 0;
+  server.on('error', (e: NodeJS.ErrnoException) => {
+    if (e.code === 'EADDRINUSE' && attempts++ < 10) {
+      setTimeout(() => server.listen(PORT, HOST), 300);
+      return;
+    }
+    console.error('[server]', e);
+    process.exit(1);
+  });
+
   server.listen(PORT, HOST, () => {
     console.log(`\n  Atlas — browser mode\n  http://${HOST}:${PORT}\n`);
     console.log(`  state: ${app.getPath('userData')}`);

@@ -97,19 +97,49 @@ class AppShim extends EventEmitter {
    *  are no windows here, so it is ready immediately. */
   whenReady(): Promise<void> { return Promise.resolve(); }
 
-  quit(): void { process.exit(0); }
-  exit(code = 0): void { process.exit(code); }
+  /** Quitting a browser-mode server ends it. Nothing restarts it, which is why
+   *  `relaunch()` below exists: main pairs the two. */
+  quit(): void { this.exit(0); }
+
+  /** `app.relaunch(); app.exit(0)` is how main applies a reset or a workspace
+   *  change — and in Electron the runtime starts the new process. Here nobody
+   *  would: the server would simply die, taking the page's backend with it,
+   *  which is exactly what happened the first time someone reset the app from a
+   *  browser tab. So a relaunch re-execs this same command, detached, and the
+   *  page reconnects to it when its event stream comes back. */
+  exit(code = 0): void {
+    if (relaunching) {
+      relaunching = false;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { spawn } = require('node:child_process') as typeof import('node:child_process');
+        spawn(process.execPath, process.argv.slice(1), {
+          detached: true,
+          stdio: 'inherit',
+          env: process.env,
+          cwd: process.cwd()
+        }).unref();
+        console.log('[server] relaunching…');
+      } catch (e) {
+        console.error('[server] could not relaunch:', e);
+      }
+    }
+    process.exit(code);
+  }
   setAsDefaultProtocolClient(): boolean { return false; }
   requestSingleInstanceLock(): boolean { return true; }
   /** No dock, no menu bar, no login items. */
   setLoginItemSettings(): void { /* not a desktop app here */ }
   getLoginItemSettings(): { openAtLogin: boolean } { return { openAtLogin: false }; }
-  relaunch(): void { /* the operator restarts the server */ }
+  relaunch(): void { relaunching = true; }
   focus(): void { /* nothing to focus */ }
   on(event: string, listener: (...args: unknown[]) => void): this {
     return super.on(event, listener) as this;
   }
 }
+
+/** Set by `app.relaunch()`, acted on by the `app.exit()` that follows it. */
+let relaunching = false;
 
 export const app = new AppShim();
 
