@@ -679,6 +679,8 @@ const api = {
     ipcRenderer.invoke('config:changeHome', { newHome, mode }),
 
   // ─── Filesystem (sandboxed to cwd) ───────────────────────────────────────
+  /** The machine's home directory — where a folder picker starts. */
+  homeDir: (): Promise<string> => ipcRenderer.invoke('app:homeDir'),
   listDir: (root: string, rel: string): Promise<
     { ok: true; entries: DirEntry[]; path: string } | { ok: false; error: string }
   > => ipcRenderer.invoke('fs:listDir', root, rel),

@@ -19,6 +19,7 @@ export const INVOKE: Record<string, string> = {
   setAgentTokenCap: 'config:setAgentTokenCap',
   ensureHarnessHome: 'config:ensureHome',
   changeHome: 'config:changeHome',
+  homeDir: 'app:homeDir',
   listDir: 'fs:listDir',
   readFile: 'fs:readFile',
   readBinary: 'fs:readBinary',

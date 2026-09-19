@@ -1701,12 +1701,15 @@
     "clickHint": "Or click a desk on the plan.",
     "impliedHint": "Would sit at {{label}} — the first desk free right now."
   },
-  "pathPrompt": {
-    "title": "Type the folder path",
-    "titleMulti": "Type the folder paths",
-    "body": "Atlas is running in a browser, which cannot open your Mac’s file picker. Paste or type the path instead.",
-    "bodyMulti": "Atlas is running in a browser, which cannot open your Mac’s file picker. One path per line.",
+  "folderPicker": {
+    "title": "Choose a folder",
+    "titleMulti": "Choose folders",
+    "loading": "Reading…",
+    "noFolders": "No folders in here.",
+    "selected": "{{count}} selected",
+    "willUse": "Uses {{name}}",
     "use": "Use this folder",
+    "addSelected": "Add {{count}}",
     "cancel": "Cancel"
   }
 }

@@ -3500,6 +3500,10 @@ ipcMain.handle('workspace:delete', (_evt, path: unknown) => {
 });
 
 // ─── IPC: filesystem (sandboxed to a root) ──────────────────────────────────
+/** The user's home directory. The browser-mode folder picker starts here; it
+ *  has no other way to know where "~" is on the machine running the server. */
+ipcMain.handle('app:homeDir', () => homedir());
+
 ipcMain.handle('fs:listDir', (_evt, root: unknown, rel: unknown) => {
   if (typeof root !== 'string' || typeof rel !== 'string') return { ok: false, error: 'invalid args' };
   return listDir(root, rel);
