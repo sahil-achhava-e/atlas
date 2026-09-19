@@ -2,7 +2,7 @@
   "name": "atlas",
   "version": "0.8.1",
   "private": true,
-  "description": "Clones for you and your team, working 24/7 — a free, local-first multi-agent harness that turns the CLI coding agent you already run into a clone of you, coordinating an office of agents on your machine.",
+  "description": "Clones for you and your team, working 24/7 \u2014 a free, local-first multi-agent harness that turns the CLI coding agent you already run into a clone of you, coordinating an office of agents on your machine.",
   "main": "out/main/index.js",
   "author": "Mohammad Sahil Achhava",
   "homepage": "https://github.com/sahilethara/atlas",
@@ -24,7 +24,9 @@
     "dist": "npm run build && electron-builder",
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:win": "npm run build && electron-builder --win",
-    "dist:linux": "npm run build && electron-builder --linux"
+    "dist:linux": "npm run build && electron-builder --linux",
+    "build:server": "vite build --config vite.server.config.ts",
+    "serve": "npm run build && npm run build:server && node out/server/index.cjs"
   },
   "dependencies": {
     "@codemirror/lang-css": "^6.3.1",
