@@ -969,6 +969,22 @@ function syncContextTriggers(): void {
  *  spawn and pruned on teardown). God is never archived. A user's real agents are
  *  unaffected: the "restore team" flow respawns them through ensureAgent, which
  *  re-clears `archived` — restorability does not depend on the archived flag. */
+/**
+ * Archive registry entries whose agent is genuinely gone.
+ *
+ * NOT AT BOOT. It used to run inside the hive bootstrap, and "no live PTY" is
+ * true of EVERY agent at that moment — the terminals have not been spawned yet.
+ * On a normal launch the renderer restores the team a second later and the
+ * damage was invisible; after the server CRASHED, the roster it would have
+ * restored from was already gone, so a whole floor was archived by a function
+ * whose job is to tidy up stragglers. The user watched two agents vanish.
+ *
+ * So it waits. The renderer gets the grace window to put the team back; anything
+ * still without a terminal after that was not restored by anybody and is a stale
+ * entry, which is what this was for.
+ */
+const ORPHAN_GRACE_MS = 3 * 60_000;
+
 function archiveOrphanedAgents(): void {
   if (!hive.enabled()) return;
   try {
@@ -5456,7 +5472,9 @@ function bootstrapHiveServices(): void {
     platform: process.platform
   });
   control.replaceAutoDeliveryPauses(readConfig().autoDeliveryPausedAgents ?? []);
-  archiveOrphanedAgents(); // #57/#58: archive stale archived:false entries with no live PTY
+  // Deliberately NOT now — see ORPHAN_GRACE_MS. At bootstrap every agent looks
+  // orphaned, because no terminal has been spawned yet.
+  setTimeout(archiveOrphanedAgents, ORPHAN_GRACE_MS).unref?.();
   hive.startRouter();
   postRestartBrief();      // tell god what was mid-task when we last stopped
   startEphemeralWorkerWatcher(); // poll HIVE_ROOT/spawn-requests → ephemeral workers
