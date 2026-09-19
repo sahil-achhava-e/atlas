@@ -309,7 +309,46 @@ export const protocol = {
   handle(): void { /* ditto */ }
 };
 export const powerMonitor = new EventEmitter();
-export const powerSaveBlocker = { start: () => -1, stop: () => { /* none */ }, isStarted: () => false };
+/**
+ * Keeping the machine awake without Electron.
+ *
+ * `powerSaveBlocker` is Chromium's. macOS ships the same capability as a
+ * command: `caffeinate` holds an assertion for as long as it runs, and dies with
+ * the process that spawned it, which is exactly the lifetime wanted here. Other
+ * platforms get the honest no-op they had before.
+ */
+const blockers = new Map<number, import('node:child_process').ChildProcess>();
+let blockerSeq = 0;
+
+export const powerSaveBlocker = {
+  start(type?: string): number {
+    if (process.platform !== 'darwin') return -1;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { spawn } = require('node:child_process') as typeof import('node:child_process');
+      // -i: no idle sleep. -d also holds the DISPLAY awake, which is what
+      // 'prevent-display-sleep' asks for and more than the app usually wants.
+      const args = type === 'prevent-display-sleep' ? ['-di'] : ['-i'];
+      const child = spawn('caffeinate', args, { stdio: 'ignore' });
+      child.on('error', () => { /* no caffeinate on this machine */ });
+      const id = ++blockerSeq;
+      blockers.set(id, child);
+      console.log(`[server] keep-awake on (caffeinate ${args.join(' ')})`);
+      return id;
+    } catch { return -1; }
+  },
+  stop(id: number): void {
+    const child = blockers.get(id);
+    if (!child) return;
+    blockers.delete(id);
+    try { child.kill(); } catch { /* already gone */ }
+    console.log('[server] keep-awake off');
+  },
+  isStarted(id: number): boolean {
+    const child = blockers.get(id);
+    return !!child && child.exitCode === null && !child.killed;
+  }
+};
 export const screen = {
   getPrimaryDisplay: () => ({ workAreaSize: { width: 1440, height: 900 }, bounds: { x: 0, y: 0, width: 1440, height: 900 } }),
   getAllDisplays: () => []

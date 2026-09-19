@@ -1,3 +1,4 @@
+import { isBrowserMode } from '@/runtime';
 import { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { PixelPanel } from './PixelPanel';
@@ -867,7 +868,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             {step === 'away' && (
               <>
                 <p style={{ margin: 0, fontSize: 13, lineHeight: '21px', color: 'var(--cth-ink-600)' }}>
-                  {plain ? t('onboarding.permissions.reliabilityDescPlain') : t('onboarding.permissions.reliabilityDesc')}
+                  {/* Two of the three switches need an OS this page cannot reach,
+                      so in the browser the count in the copy would be wrong. */}
+                  {isBrowserMode()
+                    ? (plain ? t('onboarding.permissions.reliabilityDescPlain_browser') : t('onboarding.permissions.reliabilityDesc_browser'))
+                    : (plain ? t('onboarding.permissions.reliabilityDescPlain') : t('onboarding.permissions.reliabilityDesc'))}
                 </p>
 
                 <ToggleRow
@@ -890,6 +895,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   onChange={toggleNotifications}
                 />
 
+                {/* Login items and System Settings belong to the OS, and a
+                    browser tab has no way to reach either. A switch that cannot
+                    do what it says is worse than no switch. */}
+                {!isBrowserMode() && (
                 <ToggleRow
                   icon="play"
                   label={t('onboarding.permissions.openAtLogin')}
@@ -899,7 +908,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   edge="var(--cth-mint)"
                   onChange={toggleOpenAtLogin}
                 />
+                )}
 
+                {!isBrowserMode() && (
+                <>
                 {/* LEVER 4 "— instruction-only: the OS won't let the app flip its sleep setting itself, so we deep-link the pane where one exists (macOS/Windows) and fall back to text-only guidance on Linux. */}
                 <div style={{
                   display: 'flex', gap: 12, alignItems: 'flex-start', padding: 16,
@@ -932,6 +944,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     )}
                   </div>
                 </div>
+                </>
+                )}
               </>
             )}
 

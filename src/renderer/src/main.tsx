@@ -22,10 +22,13 @@ if (splashMark) {
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { FolderPickerHost, installBrowserFolderPicker } from '@/components/FolderPicker';
+import { installBrowserNotifications } from '@/browserNotifications';
 
 // In a browser tab there is no OS dialog to open, so every "pick a folder"
 // button browses the server's filesystem instead. No-op in the desktop app.
 installBrowserFolderPicker();
+// …and a notification raised by main becomes a browser notification.
+installBrowserNotifications();
 
 const root = document.getElementById('root');
 if (!root) throw new Error('No root element');

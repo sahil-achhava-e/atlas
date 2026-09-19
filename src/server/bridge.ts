@@ -110,6 +110,9 @@ export function clientScript(): string {
   Object.keys(EVENTS).forEach(function (name) {
     api[name] = function (cb) { return subscribe(EVENTS[name], cb); };
   });
+  // Not a preload channel: in Electron a notification is native, and only the
+  // server has to hand it to the page.
+  api.onNotification = function (cb) { return subscribe('app:notification', cb); };
   Object.keys(PTY_EVENTS).forEach(function (name) {
     api[name] = function (id, cb) { return subscribe(PTY_EVENTS[name] + ':' + id, cb); };
   });

@@ -777,7 +777,9 @@
       "askDescPlain": "Agents check with you before they change anything.",
       "autoTitle": "Just get on with it",
       "autoDesc": "Agents do the work without asking. This is what lets them run while you sleep.",
-      "autoDescPlain": "Agents do the work without asking you first."
+      "autoDescPlain": "Agents do the work without asking you first.",
+      "reliabilityDescPlain_browser": "Two switches for when you are away from the computer.",
+      "reliabilityDesc_browser": "Two switches for what happens when you are not at the machine. The rest need the desktop app."
     },
     "errPickHome": "Pick a harness home folder first.",
     "errCreateHome": "could not create harness home",
