@@ -443,6 +443,19 @@ function TaskCard({ task, accent, assigneeName, assigneeCharacter, onOpen, onDis
           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
         }}>{task.title}</span>
 
+        {/* One line of what it IS. The title says what will be true when the
+            card is done; this says enough to know whether you care, without
+            opening it. Two lines and then clipped — the full text is one click
+            away, and a card that grows with its description stops being
+            scannable, which is the only thing a board is for. */}
+        {task.description?.trim() && (
+          <span style={{
+            fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, lineHeight: '18px',
+            color: 'var(--cth-ink-500)',
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
+          }}>{task.description.trim()}</span>
+        )}
+
         {/* Who has it, with their own face. A shouted uppercase surname told you
             less and looked like a label rather than a person. */}
         <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>

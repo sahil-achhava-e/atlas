@@ -1658,6 +1658,13 @@ export class HiveManager {
       : meta.isLead
       ? `You are the TEAM LEAD for this project. You are still an agent that does work, but you own the project's shape: keep its slice of tasks.json honest, know what every agent in this cwd is doing, and be the one ${godNameForPrompt} can ask "where is this project" and get a real answer. When ${godNameForPrompt} hands your project work, you decide who takes it — if another agent here fits better, hand it on with a 4-part contract (objective, output, tools, boundaries) rather than doing everything yourself. Report UP in summaries, not transcripts: one message to ${godNameForPrompt} covering what moved, what is stuck and what you need, instead of forwarding each agent's chatter. Escalate a cross-project call or anything needing the human to ${godNameForPrompt}; do not sit on it.`
       : 'For anything ambiguous, cross-cutting, or needing sign-off, address a message to "god".';
+    // EVERY DISPATCH IS A CARD. The assignee rule existed, buried mid-paragraph
+    // in a very long orchestrator prompt, and nothing asked for a description at
+    // all — so the board filled with bare titles owned by nobody, and the human
+    // reading it could not tell what a card was or who had it.
+    const cardLine = meta.isGod || meta.isLead
+      ? `THE BOARD IS HOW THE HUMAN SEES THE WORK. Dispatching without a card means the work is invisible to them. So: BEFORE you hand a task to an agent, write it into ${inRoot('tasks.json')}, and give every card all four of these. (1) TITLE — what will be true when it is done, in a handful of words: "encrypt Emirates ID at rest", not "security". (2) DESCRIPTION — two or three sentences a person who has not read the code can follow: what is wrong or wanted, which repo and roughly where, and how anyone will know it worked. Never leave it empty and never restate the title. (3) ASSIGNEE — the agent id, set the MOMENT you dispatch, never later and never cleared on a status change: a done card must still say who did it, because that is how the human reads the board. (4) STATUS — todo when queued, doing when the agent starts, blocked with a humanQA entry when it needs the human, done when it is finished and verified. A card with no assignee is work nobody owns; a card with no description is a title the human has to come and ask you about.`
+      : `THE BOARD: keep the card you are working on honest. Set it to \`doing\` when you start and \`done\` when it is finished and verified, and never remove your own id from \`assignee\`. If a card needs the human, set it \`blocked\` and say what you need rather than stalling silently.`;
     const guardrailsLine = 'Guardrails: a circuit breaker watches the floor — a "Circuit breaker: steer/constrain" message means you are looping or overspending, so STOP repeating, summarize what you tried, and follow it. Be token-frugal (a floor-wide or per-agent token budget can pause you). The shared plan has two parts: board.md (freeform; god is the sole scribe) and tasks.json (structured kanban — todo/doing/blocked/done).';
     // How every agent on this floor builds, orchestrator included. Static text:
     // no volatile values, so the prompt-cache invariant above still holds.
@@ -1690,6 +1697,7 @@ export class HiveManager {
       '4. At the END of a task, append what you learned to memory.md so future-you remembers.',
       craftLine,
       craftGodLine,
+      cardLine,
       brevityLine,
       registerLine,
       guardrailsLine,
@@ -3085,8 +3093,20 @@ over-explaining, and never cut the thing that makes an answer usable.
 ## The work: board.md vs tasks.json
 There are two shared surfaces, both in the hive root:
 - \`board.md\` — the freeform narrative plan. The god agent is its sole scribe; others \`propose\` edits.
-- \`tasks.json\` — the structured task ledger (a kanban: \`todo / doing / blocked / done\`, with title,
-  assignee, priority, deps). Keep the task you're working reflected in its status.
+- \`tasks.json\` — the structured task ledger (a kanban: \`todo / doing / blocked / done\`).
+
+Every card carries four things, and the god or the project lead writes them when the work is
+dispatched — not afterwards:
+
+| field | what goes in it |
+| --- | --- |
+| \`title\` | what will be true when it is done: "encrypt Emirates ID at rest", not "security" |
+| \`description\` | two or three sentences someone who has not read the code can follow: what is wrong or wanted, which repo and roughly where, and how anyone will know it worked |
+| \`assignee\` | the agent id, set the moment it is dispatched and never cleared — a done card must still say who did it |
+| \`status\` | \`todo\` queued, \`doing\` started, \`blocked\` needs the human (with a \`humanQA\` entry), \`done\` finished and verified |
+
+A card with no assignee is work nobody owns. A card with no description is a title the human has to
+come and ask about. If you are working a card, keep its status honest as you go.
 
 ## Asking the human (the ASK ME card)
 When a card can only move with the human — a question to answer, or an action only they can do
