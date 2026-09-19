@@ -5,7 +5,6 @@ import { PixelPanel } from './PixelPanel';
 import { PixelBadge } from './PixelBadge';
 import { PixelButton } from './PixelButton';
 import { SpritePortrait } from './SpritePortrait';
-import { PtyTerminalView } from './PtyTerminalView';
 import { MessageQueueComposer } from './MessageQueueComposer';
 import { TasksKanban } from './TasksKanban';
 import { AskMeTab } from './AskMeTab';
@@ -13,7 +12,6 @@ import { TriggersTab } from './triggers/TriggersTab';
 import { WorkersTab } from './WorkersTab';
 import { SkillsTab } from './SkillsTab';
 import { acquireTerminal, disposeTerminal, resetTerminal } from './terminalPool';
-import { terminalInstanceKey } from './terminalRecovery';
 import { Icon } from './Icon';
 import { StatusGlyph } from './StatusGlyph';
 import { Dropdown } from './Dropdown';
@@ -31,7 +29,6 @@ import { COMMAND_GROUPS } from '@shared/claudeCommands';
 import { roleForHiveSpawn } from '@shared/agentRole';
 import { useStore, type Agent } from '@/store/store';
 import { SIMPLE_MODE_CC_TABS, visibleTabs } from '@/store/simpleMode';
-import { usePtyParser } from '@/hooks/usePtyParser';
 import {
   buildSpawnCommand,
   decodeProviderModel,
@@ -39,7 +36,6 @@ import {
   inferAgentProvider,
   isClaudeProvider,
   modelProvidersForAgent,
-  modelsForProvider,
   providerPreset,
   tokenizeCommand,
   AGENT_PROVIDER_PRESETS,
@@ -147,24 +143,12 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
   const updateAgent = useStore((s) => s.updateAgent);
   const setFullscreen = useStore((s) => s.setFullscreen);
   const fullscreenAgentId = useStore((s) => s.fullscreenAgentId);
-  const onPtyStream = usePtyParser(agent.id);
   // True only for the DOCKED panel while the overlay holds this agent.
   const isFullscreenedHere = fullscreenAgentId === agent.id && !fullscreen;
   // What it is doing NOW while it works; where it lives when it is not.
   const headerLine = (agent.status !== 'idle' && agent.action)
     ? agent.action
     : (agent.description?.trim() || (agent.isGod ? t('commandCenter.roleGod') : t('commandCenter.roleWorker')));
-  // What is actually running in the terminal below, in the words the picker
-  // used when it was chosen — not the raw model id, and not the pty handle the
-  // header used to print.
-  const agentProvider = agent.provider ?? 'claude';
-  const engineLabel = [
-    providerPreset(agentProvider).label,
-    agent.model
-      ? (modelsForProvider(agentProvider).find((m) => m.id === agent.model)?.label ?? agent.model)
-      : ''
-  ].filter(Boolean).join(' · ');
-
   // Below 1k there is nothing to report and the rounding says "0k", which reads
   // as a broken gauge rather than as a session that has barely started.
   /** One pane, by key. Pulled out of the tab switch so focus mode can render
@@ -179,24 +163,13 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                 ) : agent.ptyId ? (
                   <>
                     <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
-                      <TechnicalLog agent={agent}>
-                      <PtyTerminalView
-                        key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}
-                        ptyId={agent.ptyId}
-                        label={engineLabel}
-                        onStreamData={onPtyStream}
-                        onUserPrompt={(t) => {
-                          updateAgent(agent.id, { lastPrompt: t });
-                          if (t.trim().toLowerCase() === '/clear') {
-                            updateAgent(agent.id, { contextTokens: 0, contextLimit: undefined, progress: 0 });
-                          }
-                          void window.cth.historyAdd({ agentId: agent.id, cwd: agent.cwd, text: t });
-                        }}
-                        onToggleFullscreen={() => setFullscreen(fullscreen ? null : agent.id)}
-                        fullscreen={fullscreen}
-                        embedded={!fullscreen}
-                      />
-                      </TechnicalLog>
+                      {/* Read-only: what the agent is saying and working on.
+                          The engine's terminal lives in focus mode (the title
+                          bar's toggle), for the times only its own output will
+                          do. PtyTerminalView is not mounted here — terminalPool
+                          keeps the xterm alive per pty regardless, so nothing
+                          is lost and the scrollback is intact when it opens. */}
+                      <TechnicalLog agent={agent} />
                     </div>
                     <MessageQueueComposer agent={agent} />
                   </>

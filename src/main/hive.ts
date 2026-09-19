@@ -1566,6 +1566,10 @@ export class HiveManager {
     // How every agent on this floor builds, orchestrator included. Static text:
     // no volatile values, so the prompt-cache invariant above still holds.
     const craftLine = 'HOW YOU BUILD: take the simplest thing that works. Reuse what this codebase already has before writing anything new; prefer the standard library and native platform features over a new dependency; one line over fifty. No speculative abstraction, no scaffolding "for later", no interface with one implementation. Deletion beats addition and boring beats clever. Fix the ROOT CAUSE, not the symptom: before you edit, check every caller of what you are changing, because one guard in the shared function is a smaller diff than a guard in each caller. NEVER simplify away input validation at a trust boundary, error handling that prevents data loss, security, accessibility, or anything the human explicitly asked for. Non-trivial logic leaves ONE runnable check behind: the smallest thing that fails if the logic breaks. Understanding is never what you shorten — read the whole flow first, then write the small version.';
+    // How every agent writes, to each other AND to the human. Full version in
+    // PROTOCOL.md; this is the line that reaches a session that never opens it.
+    // Static text, so the prompt-cache invariant above still holds.
+    const brevityLine = 'HOW YOU WRITE: short, closed-ended, the point then stop. Lead with the answer or the ask; context only when it changes what the reader does. One question per message, answerable in a line ("ship it or hold?" beats "thoughts on the deploy?") — a message nobody can answer in a line is a message that sits. Do not restate the request, do not summarise what you are about to say, do not close by repeating it. No filler, no apologies, no praise. Say what you did and what it means; skip the walkthrough unless it was asked for. Uncertain is a clause, not a paragraph. Numbers and names over adjectives. This holds for everyone, the human included. It is not curtness: a short message that answers is friendlier than a long one that does not, length is earned by content, and a real explanation someone asked for is not over-explaining.';
     // "Explain things simply" (Settings → General, and the first onboarding
     // screen). Scoped to what the agent says to the HUMAN: the code it writes and
     // the messages it sends other agents are unaffected, because the register is a
@@ -1590,6 +1594,7 @@ export class HiveManager {
       '4. At the END of a task, append what you learned to memory.md so future-you remembers.',
       craftLine,
       craftGodLine,
+      brevityLine,
       registerLine,
       guardrailsLine,
       memoryLine,
@@ -2924,6 +2929,25 @@ Write one JSON file into \`outbox/\` (any filename ending in \`.json\`):
 \`\`\`
 
 The harness fills in \`id\`, \`from\`, \`hops\`, and timestamps.
+
+## How to write — to each other, and to the human
+
+Short. Closed-ended. The point, then stop.
+
+- Lead with the answer or the ask. Context only if it changes what the reader does.
+- One question per message, and make it answerable: "ship it or hold?" beats "what
+  are your thoughts on the deploy?". A message nobody can answer in a line is a
+  message that sits.
+- No restating what you were asked, no summarising what you are about to say, no
+  closing paragraph repeating it. No "I hope this helps", no apologies, no praise.
+- Say what you did and what it means. Skip the walkthrough unless it was asked for.
+- Uncertain? Say so in a clause, not a paragraph: "probably the cache — not checked".
+- Numbers and names over adjectives. "3 tests fail" beats "a few issues remain".
+
+This is how you talk to EVERYONE, including the human. It is not about being
+curt: a short message that answers is friendlier than a long one that does not.
+Length is earned by content — a real explanation someone asked for is not
+over-explaining, and never cut the thing that makes an answer usable.
 
 ## Rules of the road
 - Only \`request\`, \`query\`, and \`propose\` expect a reply. \`inform\` and \`done\` are terminal —

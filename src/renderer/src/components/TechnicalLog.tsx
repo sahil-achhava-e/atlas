@@ -1,61 +1,30 @@
-import { useState, type ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useStore, type Agent } from '@/store/store';
+import type { ReactNode } from 'react';
+import { type Agent } from '@/store/store';
 import { ActivityLog } from './ActivityLog';
 
 /**
- * THE READABLE PANE, with the terminal folded behind it.
+ * THE READABLE PANE. There is no terminal here.
  *
- * The terminal is the most technical thing in the app: a TUI, tool calls, box
- * drawing, a permission prompt you answer by pressing a key — and it takes
- * typing, which invites typing into a session that is not yours to drive. What
- * a person is actually here to read is what the agent is SAYING and what it is
- * working on, and that is what this shows: prose as prose, work as one quiet
- * line each, read-only. It comes from the session transcript rather than the
- * terminal's bytes (see shared/activityFeed.ts).
+ * The pane used to host the engine's own TUI — box drawing, ANSI, spinners, and
+ * a permission prompt answered by keystroke. It is the truth of the session and
+ * it is unreadable unless you already know what you are looking at, and it takes
+ * typing, which invites typing into a session that is not yours to drive.
  *
- * The terminal is one click away and stays one click away — hidden, not removed.
- * "Where did my terminal go" is a worse first day than a busy one, and there are
- * real moments (a stuck prompt, an engine error, a diff you want in full) where
- * only the engine's own output will do.
+ * What a person is here to read is what the agent is SAYING and what it is
+ * working on, so that is all this shows, read-only. It comes from the session
+ * transcript rather than the terminal's bytes (shared/activityFeed.ts), because
+ * the transcript is already structured and un-drawing a terminal is not.
  *
- * The COMPOSER is not part of this. It lives below and is untouched either way:
- * folding the log must never remove the way to say something to an agent.
+ * THE TERMINAL IS NOT GONE, it is not HERE. Fullscreen still opens the real
+ * xterm for the moments only the engine's own output will do — a stuck prompt,
+ * an engine error, a diff you want in full. `children` is that terminal, and it
+ * is deliberately not rendered: `terminalPool` keeps one xterm per pty alive for
+ * the app's lifetime either way, so nothing is lost by leaving it unmounted and
+ * the scrollback is intact whenever it is opened.
  *
- * Unmounting the terminal view is safe: `terminalPool` keeps one xterm per pty
- * for the app's lifetime and re-parents its host element on mount, so the
- * scrollback is still there when it is opened again.
+ * The COMPOSER is not part of this. It lives below and is untouched: this pane
+ * must never be the reason there is no way to say something to an agent.
  */
-export function TechnicalLog({ agent, children }: { agent: Agent; children: ReactNode }) {
-  const { t } = useTranslation();
-  // Someone who chose the technical register gets the terminal open by default;
-  // everyone else gets the readable pane and can open it. Either way it is the
-  // same toggle, so neither audience is stuck with the other's choice.
-  const simpleMode = useStore((s) => s.simpleMode);
-  const [open, setOpen] = useState(!simpleMode);
-
-  const toggle = (
-    <button
-      type="button"
-      onClick={() => setOpen((v) => !v)}
-      style={{
-        alignSelf: 'flex-start',
-        border: 'none', background: 'transparent', cursor: 'pointer',
-        padding: '6px 10px',
-        fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, fontWeight: 600,
-        color: 'var(--cth-ink-500)'
-      }}
-    >
-      {open ? t('activity.hideTerminal') : t('activity.showTerminal')}
-    </button>
-  );
-
-  return (
-    <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-      {open
-        ? <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>{children}</div>
-        : <ActivityLog agent={agent} />}
-      {toggle}
-    </div>
-  );
+export function TechnicalLog({ agent }: { agent: Agent; children?: ReactNode }) {
+  return <ActivityLog agent={agent} />;
 }

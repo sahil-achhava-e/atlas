@@ -59,25 +59,30 @@ test('a tab that survives is left exactly where it was', () => {
   assert.deepEqual(coerceTabsForSimpleMode('tasks', 'terminal'), { ccTab: 'tasks', sidebarTab: 'terminal' });
 });
 
-// --- no raw terminal, anywhere ---------------------------------------------
-// The first pass wrapped the two panels and missed the focus view, which mounts
-// its own PtyTerminalView — so going fullscreen in simple mode put the whole
-// TUI back on screen. Count the mounts against the wrappers instead of naming
-// the files that were wrong that day: a fourth mount fails this too.
+// --- no raw terminal in the docked panes -----------------------------------
+// The panes people read are read-only: what the agent is SAYING and what it is
+// working on, never the engine's TUI. The terminal lives in focus mode alone,
+// and that is the whole rule — counted rather than described, so a fourth mount
+// somewhere fails this too.
 
 const COMPONENT = (name) =>
   readFileSync(join(__dirname, '..', 'src/renderer/src/components', name), 'utf8');
 
-const TERMINAL_HOSTS = ['AgentDetailPanel.tsx', 'CommandCenterPanel.tsx', 'FullscreenTerminal.tsx'];
+const READ_ONLY_PANES = ['AgentDetailPanel.tsx', 'CommandCenterPanel.tsx'];
 
-test('every terminal the app mounts is folded away in simple mode', () => {
-  for (const file of TERMINAL_HOSTS) {
+test('the docked panes mount no terminal at all', () => {
+  for (const file of READ_ONLY_PANES) {
     const src = COMPONENT(file);
-    const mounts = src.match(/<PtyTerminalView/g)?.length ?? 0;
-    const wrapped = src.match(/<TechnicalLog/g)?.length ?? 0;
-    assert.ok(mounts > 0, `${file} no longer mounts a terminal — drop it from this list`);
-    assert.equal(wrapped, mounts, `${file} mounts a terminal that simple mode cannot fold away`);
+    assert.equal(src.match(/<PtyTerminalView/g)?.length ?? 0, 0,
+      `${file} puts the engine's TUI back in a pane that is meant to be read`);
+    assert.match(src, /<TechnicalLog/, `${file} should show the readable log instead`);
   }
+});
+
+test('focus mode is the one place the real terminal opens', () => {
+  const src = COMPONENT('FullscreenTerminal.tsx');
+  assert.ok((src.match(/<PtyTerminalView/g)?.length ?? 0) > 0,
+    'there has to be somewhere to see exactly what the engine printed');
 });
 
 test('every button that opens the code editor is hidden in simple mode', () => {

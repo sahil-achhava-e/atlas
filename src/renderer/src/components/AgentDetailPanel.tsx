@@ -4,8 +4,6 @@ import { PixelPanel } from './PixelPanel';
 import { PixelBadge } from './PixelBadge';
 import { PixelButton } from './PixelButton';
 import { SpritePortrait } from './SpritePortrait';
-import { PtyTerminalView } from './PtyTerminalView';
-import { terminalInstanceKey } from './terminalRecovery';
 import { MessageQueueComposer } from './MessageQueueComposer';
 import { CommandCenterPanel } from './CommandCenterPanel';
 import { disposeTerminal } from './terminalPool';
@@ -19,7 +17,6 @@ import { GitTab } from './GitTab';
 import { EditIcon, CodeIcon, StopIcon } from './TabIcons';
 import { AgentNameEditor } from './AgentNameEditor';
 import { useStore, type Agent } from '@/store/store';
-import { usePtyParser } from '@/hooks/usePtyParser';
 
 export interface AgentDetailPanelProps {
   agent: Agent;
@@ -52,7 +49,6 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
   // re-mounts and re-fits when fullscreen closes.
   const isFullscreenedHere = fullscreenAgentId === agent.id;
 
-  const onPtyStream = usePtyParser(agent.id);
 
   // Michael gets the full command-center dashboard instead of the plain panel.
   if (agent.isGod) return <CommandCenterPanel agent={agent} />;
@@ -194,23 +190,9 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
             ) : (
             <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
               <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-                <TechnicalLog agent={agent}>
-                <PtyTerminalView
-                  key={terminalInstanceKey(agent.ptyId, agent.terminalGeneration)}
-                  ptyId={agent.ptyId}
-                  onStreamData={onPtyStream}
-                  onUserPrompt={(t) => {
-                    updateAgent(agent.id, { lastPrompt: t });
-                    if (t.trim().toLowerCase() === '/clear') {
-                      updateAgent(agent.id, { contextTokens: 0, contextLimit: undefined, progress: 0 });
-                    }
-                    void window.cth.historyAdd({ agentId: agent.id, cwd: agent.cwd, text: t });
-                  }}
-                  onToggleFullscreen={() => setFullscreen(agent.id)}
-                  fullscreen={false}
-                  embedded
-                />
-                </TechnicalLog>
+                {/* Read-only: what the agent is saying and working on. The
+                    engine's terminal is in focus mode, not here. */}
+                <TechnicalLog agent={agent} />
               </div>
               <MessageQueueComposer agent={agent} />
             </div>
