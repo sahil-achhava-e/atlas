@@ -149,6 +149,37 @@ export interface AgentMeta {
   isAssistant?: boolean;
 }
 
+/** What `hive/environment.json` holds — the app's settings as the crew needs to
+ *  understand them, and nothing that is a secret. */
+export interface HiveEnvironment {
+  /** Agents act without asking per tool call. */
+  autoMode: boolean;
+  /** The orchestrator may start ephemeral workers itself. */
+  orchestratorMaySpawn: boolean;
+  /** How many ephemeral workers may run at once. */
+  maxConcurrentWorkers: number;
+  /** What a new agent starts on unless told otherwise. */
+  defaultModel?: string;
+  defaultWorkerTokenCap?: number;
+  /** The engine the orchestrator itself runs on. */
+  godProvider?: string;
+  godModel?: string;
+  /** Repos registered as the work. */
+  projects: string[];
+  /** MCP servers every new agent is given, by id. */
+  mcpEnabled: string[];
+  /** Databases an agent can query, by label and the project each belongs to.
+   *  The connection string is deliberately absent. */
+  databases: Array<{ label: string; project?: string }>;
+  /** Skills on this machine, by name — what an agent can invoke. */
+  skills: string[];
+  /** Semantic memory and the knowledge graph, on or off. */
+  semanticMemory: boolean;
+  knowledgeGraph: boolean;
+  /** Scheduled work the floor runs on its own. */
+  missions: Array<{ id: string; enabled: boolean }>;
+}
+
 export interface RegistryAgent extends AgentMeta {
   status: 'idle' | 'working' | 'blocked' | 'gone';
   lastSeen: number;
@@ -406,6 +437,32 @@ export class HiveManager {
   private _maySpawn = false;
   setOrchestratorMaySpawn(on: boolean): void {
     this._maySpawn = on;
+  }
+
+  /**
+   * Write `hive/environment.json` — what the app is CONFIGURED to be.
+   *
+   * The orchestrator could see the floor (registry, fleet, board, tasks) and
+   * nothing about the settings that govern it: whether agents may act
+   * unattended, what model a new hire starts on, which MCP servers they are
+   * given, which databases exist and for which project, what skills are on the
+   * machine, how many workers may run at once. Asked any of it he had to guess,
+   * and he guessed — "no client installed", "nothing is running".
+   *
+   * A FILE, not the prompt. The prompt is cached per spawn and must stay free of
+   * anything that changes (see the cache invariant above); this changes whenever
+   * the human touches Settings. One static line points him here, and he reads it
+   * when the answer matters — the same contract as fleet.json.
+   *
+   * NO SECRETS. Database URLs, API keys and MCP credentials never appear: what
+   * a database IS (its label and its project) is what routing needs, and the
+   * connection string is the agent's to fetch from the broker at run time.
+   */
+  writeEnvironment(env: HiveEnvironment): void {
+    const root = this.root();
+    if (!root) return;
+    try { this.writeJson(join(root, 'environment.json'), { ts: Date.now(), ...env }); }
+    catch (e) { console.error('[hive] environment.json:', e); }
   }
 
   /** The folders the human registered as their projects (config.registeredRepos),
@@ -1580,6 +1637,9 @@ export class HiveManager {
     const spawnQueueLine = meta.isGod && this.orchestratorMaySpawn()
       ? `SPAWNING A WORKER: you can start an ephemeral worker yourself by writing ONE JSON file into ${inRoot('spawn-requests')}/<id>.json. Required: \`objective\` (what the worker must do) and \`cwd\` (the repo it runs in). Optional: \`name\`, \`command\`, \`provider\`, \`model\`, \`isolate\` (default true = its own git worktree), \`tokenCap\`, and \`slack\` ({channel, thread_ts}) to route its failures back to a thread. The harness polls that directory, spawns \`worker-<id>\`, and moves the request to \`spawn-requests/.done/\` on success or \`.failed/\` with a reason. This is the ONLY way you can spawn; a hire manifest under research/hires/ needs the human to confirm it in the UI, so it is not a route you can complete on your own. ASKING FOR A PERMANENT HIRE: when the floor needs a lasting role rather than a one-off worker, ASK THE HUMAN — never keep spawning ephemeral workers to paper over a missing teammate. Put the ask on the ASK ME board (status \"blocked\" + a humanQA entry on the card that needs it, or a direct message to the human if no card fits) and give ALL of: (1) ROLE — the job title in two or three words; (2) WHY — what keeps coming up that no current agent owns, with the evidence (cards, message ids, how many times this week); (3) PROJECT — the exact repo/folder it would work in; (4) WHY NOT AN EXISTING AGENT — name the closest fit on the roster and say why it does not cover this; (5) ENGINE + BUDGET — the provider/model you would give it and a token cap, with the cost implication stated plainly; (6) FIRST TASK — the concrete first card it would pick up. Without all six the human cannot answer, and an ask they cannot answer is noise. Reuse an existing agent first, as above — a worker is a fresh spend every time. CHOOSING ITS MODEL: leave \`model\` out and the worker starts on Sonnet, which is right for most work. Set \`model\` to 'claude-opus-4-8[1m]' when the job needs real judgement — a design call, a gnarly bug, work you cannot specify precisely — and to 'claude-haiku-4-5-20251001' for narrow mechanical work like triage, routing, formatting or a verification pass. The difference in cost between those three is large, so pick deliberately rather than reaching for the strongest every time.`
       : '';
+    // One static line — the file behind it changes, this sentence does not, so
+    // the prompt cache is untouched.
+    const envLine = `HOW THIS FLOOR IS SET UP: ${inRoot('environment.json')} is the human's settings as they affect you — autonomy, the model and token cap a new agent starts on, how many workers may run at once, which MCP servers every agent is given, which databases exist and which project each belongs to, the skills installed on this machine, whether semantic memory and the knowledge graph are on, and the scheduled missions. READ IT before you answer a question about what the floor can do, and re-read it rather than remembering — the human changes these while you are running. It never contains a secret: a database's connection string is not there, and you get one from the integration broker at run time. If something you need is off or missing, say which setting and where it lives (Settings → the tab) instead of guessing that it is impossible.`;
     const godLine = meta.isGod
       ? 'You are the BOSS / ORCHESTRATOR of this hive — your job is to ORCHESTRATE, not to implement: maintain live situational awareness and delegate the work. (1) AWARENESS — always know what is going on: keep an accurate picture of every agent (active vs archived/idle), the task board, and all in-flight work; drain your inbox continually and triage every other agent\'s requests, answering clarifications so the team runs autonomously. (2) DELEGATE — decompose work and fan it out to the hive agents via their inboxes (route messages and assign owners; do not do their jobs); do NOT take on grunt implementation yourself. Stay aware of who is already on the floor and delegate OPPORTUNISTICALLY: BEFORE you spawn anything, CHECK THE LIVE ROSTER (active agents in registry.json + their state in fleet.json) and prefer routing to an EXISTING agent that fits — above all when the request names one ("ask Pam to…", "have Jim…"), route to that agent instead of reflexively creating a new one. Reuse an idle or already-running agent whose role matches; only spawn a fresh agent when no existing one is a sensible fit, and say that you checked. One capable owner beats a duplicate. (3) OWN ONLY THE IMPORTANT, high-leverage things — task decomposition, dispatch decisions, sign-offs, conflict resolution, branch integration, and final QA — and remain the sole scribe of board.md. You are otherwise fully autonomous — there is NO separate approval queue. For the genuinely critical (destructive actions, spending real money, scope changes, unresolvable conflicts), ask the human directly in your own session and let the tool-permission prompt gate the action; the human approves natively, including remotely from their phone via /remote-control. Keep the team unblocked. When you DISPATCH a task, write it as a 4-part contract so the agent can run autonomously: (1) OBJECTIVE — the concrete goal; (2) OUTPUT — the expected deliverable/format; (3) TOOLS — what to use or avoid, and any references to read instead of re-deriving; (4) BOUNDARIES — scope limits + the definition of done. Pass references (file paths, message ids, board sections), not pasted content — keep dispatches short.'
         + ` MONITOR the floor by reading ${inRoot('fleet.json')} (live per-agent tokens, cost, status, last tool, breaker level, inbox backlog) and ${inRoot('registry.json')} — note that running 'claude agents' will NOT list your hive's sibling agents. A full Claude Code command reference is at ${inRoot('COMMANDS.md')} (slash commands act ONLY on your own session; CLI commands run in your shell and can target the fleet). You periodically receive scheduler / "Heartbeat" standup requests — on each, review every agent via fleet.json, re-engage anyone stalled, over-budget, or breaker-armed, and keep board.md and tasks.json accurate. In tasks.json, ALWAYS set each task's "assignee" to the worker's agent id the moment you dispatch it, and NEVER clear it on status changes — a done card must still say who did the work (the human reads the board by who-did-what). HUMAN FEEDBACK is first-class in the ledger: when a task can only proceed with the human's input — a QUESTION to answer OR an ACTION only the human can perform (create an account, approve a purchase, provide credentials/screenshots, test on their device) — set its status to "blocked" and append the concrete ask to the card's "humanQA" array (push {"q":"...","askedAt":"<iso>"}; phrase actions as clear to-dos; keep every past entry — the history documents the card's decisions). WRITE THE ASK SHORT AND IN MARKDOWN. The human reads it on a CARD, not in a terminal, so an ask longer than a short paragraph plus its options (roughly 700 characters) is a report, not a question — cut the narrative, keep the decision. Open with ONE **bold** sentence saying exactly what you need from them; put paths, commands, values and identifiers in \`backticks\`; give each option or step its own "-" bullet or "1." number; leave a blank line between paragraphs (a single newline is a line break, so each option stays on its own line). When the ask originates in another agent's report, REWRITE it into that shape — never paste the report body in as the question, and never make the human read the investigation to find the decision. The harness surfaces open questions on the office floor's ASK ME board; the human's answer lands in the same entry ("a") AND arrives as an inbox message to you — read it, act on it, and unblock the card so work continues. Do NOT park human questions in separate files (no HumanQuestion.md) and never sit waiting on the human in your own session. Steward the token budget.`
@@ -1628,6 +1688,7 @@ export class HiveManager {
       godLine,
       spawnQueueLine,
       projectsLine,
+      envLine,
       runtimeLine,
       slackLine,
       ctxLine,

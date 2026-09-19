@@ -3422,6 +3422,9 @@ ipcMain.handle('config:update', (_evt, patch: Partial<HarnessConfig>) => {
       } catch (e) { console.error('[hive] projects broadcast:', e); }
     }
   }
+  // Settings the crew reads live in a file, not the prompt — so every write
+  // refreshes it, whatever changed.
+  publishEnvironment();
   if (!hiveWasEnabled && hive.enabled()) {
     console.log('[hive] harnessHome configured — bootstrapping hive services');
     try { bootstrapHiveServices(); } catch (e) { console.error('[hive] bootstrap after onboarding:', e); }
@@ -5396,6 +5399,43 @@ ipcMain.handle('workers:stop', (_evt, workerId: string): { ok: boolean; error?: 
   return { ok: true };
 });
 
+/** Refresh `hive/environment.json` — the settings the crew reads.
+ *
+ *  Called at bootstrap and after every config write, because the orchestrator's
+ *  prompt is built once per spawn and cannot carry anything that changes. See
+ *  HiveManager.writeEnvironment for why this is a file. */
+function publishEnvironment(): void {
+  if (!hive.enabled()) return;
+  const cfg = readConfig();
+  let skills: string[] = [];
+  try {
+    skills = listLocalSkills({ cwds: cfg.registeredRepos ?? [], bundledDir: skillsResourceDir() })
+      .map((s) => s.name);
+  } catch { /* a skills directory we cannot read is not a reason to publish nothing */ }
+  hive.writeEnvironment({
+    autoMode: cfg.autoMode !== false,
+    orchestratorMaySpawn: cfg.orchestratorMaySpawn === true,
+    maxConcurrentWorkers: Math.max(1, cfg.maxConcurrentWorkers ?? 4),
+    defaultModel: cfg.defaultModel,
+    defaultWorkerTokenCap: cfg.defaultWorkerTokenCap,
+    godProvider: cfg.godProvider,
+    godModel: cfg.godModel,
+    projects: cfg.registeredRepos ?? [],
+    mcpEnabled: Object.entries(cfg.mcpDefaults ?? {})
+      .filter(([, v]) => v?.enabled).map(([id]) => id),
+    // Label and project only — the connection string stays in the encrypted
+    // store, and an agent gets it from the broker at run time.
+    databases: (cfg.dbConnections ?? []).map((d) => ({
+      label: d.label || d.id,
+      project: d.cwd ? d.cwd.replace(/\/+$/, '').split('/').filter(Boolean).pop() : undefined
+    })),
+    skills,
+    semanticMemory: cfg.semanticMemory !== false,
+    knowledgeGraph: cfg.knowledgeGraph?.enabled === true,
+    missions: (cfg.missions ?? []).map((m) => ({ id: m.id, enabled: m.enabled !== false }))
+  });
+}
+
 /** Start every hive-bound background service against the current harnessHome.
  *  Called on boot, and again to recover in place if a folder-change copy fails
  *  (config:changeHome tears these down before copying). No-op without a home. */
@@ -5409,6 +5449,7 @@ function bootstrapHiveServices(): void {
   // The repositories this crew exists for. Mirrored like the flag above, so the
   // prompt builder can name them without hive.ts importing the config module.
   hive.setProjects(readConfig().registeredRepos ?? []);
+  publishEnvironment();
   // An app-start marker in the event log. log.jsonl had twelve event kinds and
   // none of them meant "the app restarted", so a relaunch, and more importantly a
   // switch between a packaged build and a local one, was invisible to every agent
