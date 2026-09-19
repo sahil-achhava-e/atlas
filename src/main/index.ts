@@ -3344,7 +3344,27 @@ ipcMain.handle('config:update', (_evt, patch: Partial<HarnessConfig>) => {
   // Keep the hive's mirror of the spawn gate current. The queue itself reads
   // config per tick so it gates immediately; this is for the PROMPT, which is
   // built per spawn, so flipping the toggle reaches god the next time he starts.
-  if (typeof patch?.orchestratorMaySpawn === 'boolean') hive.setOrchestratorMaySpawn(patch.orchestratorMaySpawn);
+  if (typeof patch?.orchestratorMaySpawn === 'boolean') {
+    const was = hive.orchestratorMaySpawn();
+    hive.setOrchestratorMaySpawn(patch.orchestratorMaySpawn);
+    // The HOW — the spawn-request queue and its schema — is in the prompt, and
+    // the prompt is built at spawn. So flipping this on under a running floor
+    // moved the gate but told nobody it had moved: god kept asking permission
+    // for something he was now allowed to do, which looks exactly like the
+    // toggle not working. Same fix as the register and the project list.
+    if (hive.enabled() && was !== patch.orchestratorMaySpawn) {
+      try {
+        hive.send({
+          to: 'god',
+          act: 'inform',
+          subject: 'Spawning workers',
+          body: patch.orchestratorMaySpawn
+            ? 'The human turned ON "Atlas can add agents". You may now start an ephemeral worker yourself by writing one JSON file into HIVE_ROOT/spawn-requests/<id>.json with `objective` and `cwd` (optional: name, command, provider, model, isolate, tokenCap). The harness polls that directory and spawns worker-<id>. COMMANDS.md has the full schema. This covers one-off workers only: a PERMANENT hire still needs the human to confirm it in the UI, so keep asking for those. Check the live roster first and reuse an agent that fits — a worker is a fresh spend every time.'
+            : 'The human turned OFF "Atlas can add agents". Do not write to HIVE_ROOT/spawn-requests any more: a request left there is not failed, it simply waits until this is switched back on. Ask the human when the floor needs someone.'
+        }, 'system');
+      } catch (e) { console.error('[hive] spawn-gate broadcast:', e); }
+    }
+  }
   // "Explain things simply" flipped in Settings. The register is baked into each
   // agent's system prompt at spawn, so on its own this would reach nobody already
   // running — the switch would look dead to anyone who flips it mid-session, which
