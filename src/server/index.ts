@@ -86,7 +86,14 @@ async function readBody(req: IncomingMessage): Promise<string> {
 function indexHtml(): string {
   const file = join(RENDERER, 'index.html');
   const html = readFileSync(file, 'utf8');
-  const boot = `<script>window.__ATLAS_VERSION__=${JSON.stringify(app.getVersion())};`
+  // `<base>` first, and it matters on a REFRESH. The built page asks for
+  // `./assets/index-abc.js`, which the browser resolves against the current URL:
+  // fine at `/`, but at `/setup/welcome` it becomes `/setup/assets/index-abc.js`,
+  // which is not a file, so the SPA fallback answered with this very HTML and
+  // the page sat loading forever. A base of `/` makes every relative reference
+  // resolve from the renderer root, whatever route the user reloaded on.
+  const boot = `<base href="/">`
+    + `<script>window.__ATLAS_VERSION__=${JSON.stringify(app.getVersion())};`
     + `window.__ATLAS_PLATFORM__=${JSON.stringify(process.platform)};`
     + `window.__ATLAS_ARCH__=${JSON.stringify(process.arch)};</script>`
     + `<script src="/cth.js"></script>`;
@@ -160,7 +167,12 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   // ─── static files, and the SPA fallback ───────────────────────────────────
   // Anything with an extension is a real file; anything else is an in-app route
   // and gets index.html, the same rule the packaged app's protocol handler uses.
-  const rel = normalize(decodeURIComponent(url.pathname)).replace(/^(\.\.[/\\])+/, '');
+  let rel = normalize(decodeURIComponent(url.pathname)).replace(/^(\.\.[/\\])+/, '');
+  // An asset asked for from under a route — the case `<base>` above prevents for
+  // the page itself, and which a cached page or a hand-typed URL can still
+  // produce. `/setup/assets/x.js` is `/assets/x.js`; there is one asset tree.
+  const nested = rel.match(/\/(assets\/.+)$/);
+  if (nested) rel = nested[1];
   const onDisk = join(RENDERER, rel);
   if (extname(onDisk) && onDisk.startsWith(RENDERER) && existsSync(onDisk)) {
     const body = await readFile(onDisk);
