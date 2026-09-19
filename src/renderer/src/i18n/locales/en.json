@@ -1515,7 +1515,8 @@
     "nudgeLabel": "Inbox nudge",
     "nudgeSummary_one": "One new hive message. Read it, act on what is pending, file the rest.",
     "nudgeSummary_other": "{{count}} new hive messages. Read them, act on what is pending, file the rest.",
-    "queued": "{{count}} queued"
+    "queued": "{{count}} queued",
+    "waitingFor": "sent — {{name}} is working on it"
   },
   "idePanel": {
     "workspace": "{{name}}'s workspace",
@@ -1728,6 +1729,11 @@
     "nothingYet": "{{name}} has not said anything yet.",
     "showTerminal": "Show the terminal",
     "hideTerminal": "Hide the terminal",
-    "working": "Working"
+    "thinking": "{{name}} is thinking",
+    "compacting": "{{name}} is tidying its context",
+    "looping": "{{name}} is stuck in a loop",
+    "delivered": "sent — waiting for {{name}}",
+    "workingLabel": "{{name}} is working",
+    "working": "{{name}} is working"
   }
 }

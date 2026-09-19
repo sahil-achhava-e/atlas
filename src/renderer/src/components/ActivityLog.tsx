@@ -100,8 +100,53 @@ export function ActivityLog({ agent }: { agent: Agent }) {
         )}
         {chunks.map((c) => (c.kind === 'say'
           ? <Said key={c.key} row={c.row} name={agent.name} accent={accent} />
-          : <Did key={c.key} rows={c.rows} label={t('activity.working')} />))}
+          : <Did key={c.key} rows={c.rows} label={t('activity.workingLabel')} />))}
+        {/* THE GAP BETWEEN SENDING AND HEARING BACK.
+            Everything above is history — it only appears once the agent has
+            written it down. Press Send and, until the first line lands, the
+            pane is exactly as it was: no queue any more, no reply yet, nothing
+            saying anyone is there. This is the live bit, and it is the only
+            thing on this page that is not the transcript. */}
+        <Live agent={agent} accent={accent} />
       </div>
+    </div>
+  );
+}
+
+/** What the agent is doing RIGHT NOW, from its live status rather than the
+ *  transcript — the one line on this page that is not history.
+ *
+ *  Silent when idle, deliberately: a permanent "waiting" would make the pane
+ *  look busy when nothing is. `action` is the specific thing (its own words,
+ *  e.g. "using Bash"), shown beside the status when it says more than the
+ *  status already does. */
+function Live({ agent, accent }: { agent: Agent; accent: string }) {
+  const { t } = useTranslation();
+  if (agent.status === 'idle' || !agent.ptyId) return null;
+
+  const key = ['thinking', 'compacting', 'looping'].includes(agent.status) ? agent.status : 'working';
+  const label = t(`activity.${key}`, { name: agent.name });
+  const action = agent.action && agent.action !== 'idle' && !label.toLowerCase().includes(agent.action.toLowerCase())
+    ? agent.action
+    : undefined;
+
+  return (
+    <div
+      aria-live="polite"
+      style={{
+        display: 'flex', alignItems: 'center', gap: 8, margin: '12px 0 4px',
+        fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, lineHeight: '18px',
+        color: agent.status === 'looping' ? 'var(--cth-coral-text)' : accent
+      }}
+    >
+      <span className="cth-dots" aria-hidden><i /><i /><i /></span>
+      <span style={{ fontWeight: 600 }}>{label}</span>
+      {action && (
+        <span style={{
+          minWidth: 0, color: 'var(--cth-ink-500)', fontWeight: 400,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+        }}>{action}</span>
+      )}
     </div>
   );
 }

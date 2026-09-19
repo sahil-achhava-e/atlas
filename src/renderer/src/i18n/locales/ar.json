@@ -1512,7 +1512,8 @@
     "nudgeLabel": "تنبيه الوارد",
     "nudgeSummary_one": "رسالة واردة جديدة. اقرأها، ونفّذ ما هو معلّق، وأرشف الباقي.",
     "nudgeSummary_other": "{{count}} رسائل واردة جديدة. اقرأها، ونفّذ ما هو معلّق، وأرشف الباقي.",
-    "queued": "{{count}} في الانتظار"
+    "queued": "{{count}} في الانتظار",
+    "waitingFor": "أُرسلت — {{name}} يعمل عليها"
   },
   "idePanel": {
     "workspace": "مساحة عمل {{name}}",
@@ -1728,6 +1729,11 @@
     "nothingYet": "لم يقل {{name}} شيئًا بعد.",
     "showTerminal": "إظهار الطرفية",
     "hideTerminal": "إخفاء الطرفية",
-    "working": "يعمل"
+    "thinking": "{{name}} يفكّر",
+    "compacting": "{{name}} يرتّب سياقه",
+    "looping": "{{name}} عالق في حلقة",
+    "delivered": "أُرسلت — في انتظار {{name}}",
+    "workingLabel": "{{name}} يعمل",
+    "working": "{{name}} يعمل"
   }
 }

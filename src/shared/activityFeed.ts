@@ -44,8 +44,13 @@ const TOOLS: Record<string, { verb: string; tone: ActivityTone }> = {
   Grep: { verb: 'Searching', tone: 'search' },
   WebFetch: { verb: 'Reading a page', tone: 'read' },
   WebSearch: { verb: 'Searching the web', tone: 'search' },
-  Task: { verb: 'Handing work to a helper', tone: 'delegate' },
-  Agent: { verb: 'Handing work to a helper', tone: 'delegate' },
+  // NOT a hire. Task/Agent start a helper INSIDE this agent's own session — it
+  // has no desk, no name and no card on the floor, and it is gone when the step
+  // is. "Handing work to a helper" read as delegating to a worker who did not
+  // exist, which is alarming on a floor with nobody on it. Hiring is a spawn,
+  // and a spawn puts an agent on the floor where you can see it.
+  Task: { verb: 'Side task', tone: 'delegate' },
+  Agent: { verb: 'Side task', tone: 'delegate' },
   TodoWrite: { verb: 'Updating its plan', tone: 'plan' }
 };
 

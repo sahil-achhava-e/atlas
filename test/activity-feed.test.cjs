@@ -35,6 +35,15 @@ test('an unknown tool still gets a row, under its own name', () => {
   assert.deepEqual(rows.map((r) => [r.text, r.tone]), [['Sharpen', 'other']]);
 });
 
+test('a helper inside the session is not a hire', () => {
+  // Task starts a helper in the agent's OWN session: no desk, no card, gone when
+  // the step is. Calling it "handing work to a helper" read as delegating to a
+  // worker who did not exist, on a floor with nobody on it.
+  const rows = activityRows([assistant({ type: 'tool_use', name: 'Task', input: { description: 'Brief the repo' } })]);
+  assert.equal(rows[0].text, 'Side task');
+  assert.ok(!/helper|agent|hire/i.test(rows[0].text));
+});
+
 test('reading and changing are not the same colour', () => {
   // The two carry different risk, so they must not look alike at a glance.
   const tone = (name) => activityRows([assistant({ type: 'tool_use', name, input: {} })])[0].tone;

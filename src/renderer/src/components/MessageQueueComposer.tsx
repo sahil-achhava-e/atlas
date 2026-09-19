@@ -188,8 +188,15 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
   // look permanently stuck with no explanation and no escape hatch.
   const deliveryPaused = useDeliveryPaused(agent.id, queue.length > 0);
 
+  // THE SILENCE AFTER SEND.
+  //
+  // Every line below needed something queued to say anything, so the moment a
+  // message was delivered the queue emptied and the whole strip vanished —
+  // between pressing Send and a reply appearing there was no sign anyone was
+  // there. An empty queue and a busy agent is the most common state there is,
+  // and it is the one that said nothing.
   const statusHint = queue.length === 0
-    ? null
+    ? (!idle && agent.ptyId ? t('queueComposer.waitingFor', { name: agent.name }) : null)
     : block === 'draft'
     ? t('queueComposer.heldDraft', { name: agent.name })
     : block === 'picker'
@@ -235,7 +242,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
           The texts are one click away, and the recover button is not part of the
           queue at all — a blocked prompt needs it whether or not anything is
           waiting. */}
-      {(queue.length > 0 || block === 'draft' || block === 'picker') && (
+      {(queue.length > 0 || statusHint || block === 'draft' || block === 'picker') && (
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
         {queue.length > 0 && (
           <button
@@ -258,13 +265,19 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
         )}
         {statusHint && (
           <span
+            aria-live="polite"
             style={{
-              minWidth: 0,
+              minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 6,
               fontSize: 11.5, lineHeight: '16px',
               color: 'var(--cth-ink-500)',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
             }}
-          >{statusHint}</span>
+          >
+            {/* Moving, because the difference between "working" and "stopped"
+                is the whole question a person has while waiting. */}
+            {!idle && <span className="cth-dots" aria-hidden><i /><i /><i /></span>}
+            <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{statusHint}</span>
+          </span>
         )}
         {(block === 'draft' || block === 'picker') && agent.ptyId && (
           <button
