@@ -6,6 +6,7 @@ import { Icon } from './Icon';
 import type { HarnessConfig } from '@/store/config';
 import { useNativeDialog } from '@/hooks/useNativeDialog';
 import { ConfirmDialog } from './ConfirmDialog';
+import { useWorkspaceNames } from '@/hooks/useWorkspaceNames';
 import { suggestWorkspaceName, workspacePath, cleanWorkspaceName, WORKSPACE_ROOT } from '@shared/workspaceName';
 
 export interface HivePickerProps {
@@ -65,6 +66,11 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
   // what to call this one. The root is shown beside the field, not hidden.
   const [newName, setNewName] = useState<string | undefined>();
   const newFolder = newName === undefined ? '' : cleanWorkspaceName(newName);
+  // Folders already under the root. Typing one of these names would OPEN that
+  // workspace rather than make one, which is not what a button called "Create"
+  // should do without saying so.
+  const takenNames = useWorkspaceNames();
+  const newTaken = !!newFolder && takenNames.includes(newFolder);
 
   /** Stop listing a workspace. The folder is untouched. */
   const forget = async (path: string) => {
@@ -297,7 +303,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                     spellCheck={false}
                     onChange={(e) => setNewName(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && newFolder) void openHive(workspacePath(newName));
+                      if (e.key === 'Enter' && newFolder && !newTaken) void openHive(workspacePath(newName));
                       if (e.key === 'Escape') setNewName(undefined);
                     }}
                     style={{
@@ -310,7 +316,9 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                     }}
                   />
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>{t('hivePicker.newHint')}</div>
+                <div style={{ fontSize: 12, color: newTaken ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)' }}>
+                  {newTaken ? t('hivePicker.newTaken', { name: newFolder }) : t('hivePicker.newHint')}
+                </div>
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                   <PixelButton variant="ghost" size="sm" onClick={() => setNewName(undefined)} disabled={!!busy}>
                     {t('hivePicker.cancel')}
@@ -319,7 +327,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                     variant="primary"
                     size="sm"
                     onClick={() => void openHive(workspacePath(newName))}
-                    disabled={!!busy || !newFolder}
+                    disabled={!!busy || !newFolder || newTaken}
                   >
                     {t('hivePicker.create')}
                   </PixelButton>
@@ -338,7 +346,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
               <PixelButton
                 variant="secondary"
                 size="md"
-                onClick={() => setNewName(suggestWorkspaceName([...(current ? [current] : []), ...recents]))}
+                onClick={() => setNewName(suggestWorkspaceName([...(current ? [current] : []), ...recents, ...takenNames]))}
                 disabled={!!busy || browsing}
               >
                 <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>

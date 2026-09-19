@@ -723,7 +723,8 @@
       "reviewMode": "Agents",
       "reviewModeAsk": "ask first",
       "reviewModeAuto": "work on their own",
-      "errName": "Give the workspace a name."
+      "errName": "Give the workspace a name.",
+      "nameTaken": "~/Atlas/{{name}} already exists. Opening it would use that crew and its history — pick another name, or open it from the workspace picker instead."
     },
     "orchestrator": {
       "descPlain": "Pick the AI that powers {{godName}}. Give it the best one you have: it is the one deciding what everyone else does.",
@@ -1670,7 +1671,8 @@
     "newLabel": "Name",
     "newHint": "Created under ~/Atlas if it does not exist. Its crew, memory and board live here.",
     "create": "Create and open",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "newTaken": "That workspace already exists. Open it from the list above, or pick another name."
   },
   "updateBadge": {
     "manualBody": "Download the latest version and replace the app you have. Prefer the app to update itself? Settings → Updates.",

@@ -11,6 +11,7 @@ import { SpritePortrait } from './SpritePortrait';
 import { AtlasMark } from './AtlasMark';
 import { stepsFor, nextStep, prevStep, type Audience, type Step } from '@/store/onboardingSteps';
 import { readDraft, writeDraft, clearDraft } from '@/store/onboardingDraft';
+import { useWorkspaceNames } from '@/hooks/useWorkspaceNames';
 import { Dropdown } from './Dropdown';
 import { Switch } from './Switch';
 import { ProviderLogo } from './ProviderLogo';
@@ -162,6 +163,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const [workspaceTyped, setWorkspaceTyped] = useState(draft.workspaceTyped ?? false);
   const home = workspace.trim() ? workspacePath(workspace) : '';
   const [repos, setRepos] = useState<string[]>(draft.repos ?? []);
+  // What is already under ~/Atlas. A suggestion that matched one of these would
+  // not fail — it would open that crew instead of making one.
+  const takenNames = useWorkspaceNames();
+  const nameTaken = takenNames.includes(cleanWorkspaceName(workspace));
   const [autoMode, setAutoMode] = useState<boolean>(draft.autoMode ?? true);
   // Anonymous usage stats (TELEMETRY.md). No longer asked about at first run:
   // the PostHog key is injected at BUILD time and is empty in a fork build, so
@@ -255,8 +260,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   // absolute path. No new IPC surface.
   useEffect(() => {
     if (workspaceTyped) return;
-    setWorkspace(workspaceNameFromProjects(repos));
-  }, [repos, workspaceTyped]);
+    setWorkspace(workspaceNameFromProjects(repos, takenNames));
+  }, [repos, workspaceTyped, takenNames]);
 
   const [pickingRepo, pickRepo] = useNativeDialog(async () => {
     setError(undefined);
@@ -279,7 +284,13 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     setBusy(true);
     setError(undefined);
     const harnessHome = home.trim(); // whitespace-only is not a folder
-    if (!harnessHome) { setError(t('onboarding.errPickHome')); setBusy(false); setStep('home'); return; }
+    if (!harnessHome) { setError(t('onboarding.home.errName')); setBusy(false); setStep('home'); return; }
+    // Finishing on a name that already exists would adopt that crew rather than
+    // start one. The home step says so; this is the step that cannot be skipped.
+    if (nameTaken) {
+      setError(t('onboarding.home.nameTaken', { name: cleanWorkspaceName(workspace) }));
+      setBusy(false); setStep('home'); return;
+    }
     // The orchestrator step already refuses to advance on this, but a late probe
     // result can change the answer after the user has moved on. Never write a
     // godProvider that is known to be unable to boot.
@@ -508,6 +519,18 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     style={{ ...inputStyle, borderRadius: '0 var(--cth-radius-input) var(--cth-radius-input) 0', paddingLeft: 4 }}
                   />
                 </div>
+                {/* A name that already exists does not make a workspace, it
+                    OPENS one — with a crew and a history that are not yours to
+                    inherit by accident. Said here, and refused on Continue. */}
+                {nameTaken && (
+                  <div style={{
+                    padding: '8px 14px', fontSize: 13, lineHeight: '18px',
+                    background: 'var(--cth-lemon-light)',
+                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                    borderRadius: 'var(--cth-radius-input)'
+                  }}>{t('onboarding.home.nameTaken', { name: cleanWorkspaceName(workspace) })}</div>
+                )}
+
                 {/* What actually lands in there. Three words beat a metaphor:
                     the old copy called it "the town hall", which tells you
                     nothing about whether you can delete it. */}
@@ -1034,6 +1057,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       // four steps and then bounces you back to step 1 to be told.
                       if (step === 'home' && !cleanWorkspaceName(workspace)) {
                         setError(t('onboarding.home.errName'));
+                        return;
+                      }
+                      if (step === 'home' && nameTaken) {
+                        setError(t('onboarding.home.nameTaken', { name: cleanWorkspaceName(workspace) }));
                         return;
                       }
                       // Same idea for the engine: refuse here, with the reason on
