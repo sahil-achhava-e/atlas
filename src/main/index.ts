@@ -1,5 +1,6 @@
 import { interruptedWork, restartBrief, briefSignature } from './restartBrief';
 import { writeInstanceLock, clearInstanceLock } from './instanceLock';
+import { canDeleteWorkspace, WORKSPACE_DATA } from '../shared/workspaceDelete';
 import { mcpSecretRef, mcpSecretEnvKeys, dbSecretRef } from '../shared/mcpCatalog';
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, net, powerMonitor, powerSaveBlocker, protocol, screen, shell, Notification } from 'electron';
 import { spawn } from 'node:child_process';
@@ -3453,6 +3454,49 @@ ipcMain.handle('config:changeHome', async (_evt, payload: unknown) => {
   app.relaunch();
   app.exit(0);
   return { ok: true as const }; // unreachable (process exits) — typed for the renderer
+});
+
+// ─── IPC: workspaces (the launch picker's list) ─────────────────────────────
+
+/** Drop a workspace from the picker's list. The folder is untouched — this is
+ *  "stop showing me this", not a delete. */
+ipcMain.handle('workspace:forget', (_evt, path: unknown) => {
+  if (typeof path !== 'string' || !path) return { ok: false, error: 'invalid path' };
+  const cfg = readConfig();
+  const recents = (cfg.recentHives ?? []).filter((h) => h !== path);
+  writeConfig({ recentHives: recents });
+  return { ok: true as const, recentHives: recents };
+});
+
+/** Delete a workspace's crew: every agent's memory and session history, the
+ *  inboxes, the board, the hive's git repo, the semantic palace and the roster.
+ *  Only the subdirectories Atlas created (WORKSPACE_DATA) — never the folder
+ *  itself, which is the user's and can hold their own files.
+ *
+ *  Refuses the OPEN workspace: its services are live and its agents hold PTYs.
+ *  `app:resetAll` is that path, and it tears everything down in order first. */
+ipcMain.handle('workspace:delete', (_evt, path: unknown) => {
+  const target = typeof path === 'string' ? resolve(expandTilde(path)) : '';
+  const cfg = readConfig();
+  const home = cfg.harnessHome ? resolve(cfg.harnessHome) : null;
+  const recents = (cfg.recentHives ?? []).map((h) => resolve(expandTilde(h)));
+
+  const allowed = canDeleteWorkspace(target, { home, recents });
+  if (!allowed.ok) return allowed;
+
+  const failed: string[] = [];
+  for (const sub of WORKSPACE_DATA) {
+    const p = join(target, sub);
+    if (!existsSync(p)) continue;
+    try { rmSync(p, { recursive: true, force: true }); }
+    catch (e) { console.error('[workspace] rm', p, e); failed.push(`${sub}: ${e instanceof Error ? e.message : String(e)}`); }
+  }
+  if (failed.length > 0) return { ok: false, error: `Could not delete ${failed.join('; ')}` };
+
+  const kept = (cfg.recentHives ?? []).filter((h) => resolve(expandTilde(h)) !== target);
+  writeConfig({ recentHives: kept });
+  console.log(`[workspace] deleted the crew in ${target}`);
+  return { ok: true as const, recentHives: kept };
 });
 
 // ─── IPC: filesystem (sandboxed to a root) ──────────────────────────────────

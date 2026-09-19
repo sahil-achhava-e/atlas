@@ -7,7 +7,7 @@ export type IconName =
   | 'gear' | 'plus' | 'x' | 'check' | 'arrow-right' | 'pause' | 'play'
   | 'bell' | 'folder' | 'terminal' | 'code' | 'web' | 'mcp' | 'sparkle'
   | 'expand' | 'minimize' | 'clock' | 'mic' | 'ledger' | 'info' | 'sidebar'
-  | 'image' | 'edit' | 'git' | 'send';
+  | 'image' | 'edit' | 'git' | 'send' | 'trash';
 
 interface IconDef {
   ink: string;     // primary color path d
@@ -27,6 +27,12 @@ const paths: Record<IconName, IconDef> = {
   plus: {
     accentColor: 'var(--cth-mint)',
     ink:   'M7 2h2v5h5v2H9v5H7V9H2V7h5V2z'
+  },
+  // A bin: handle, lid, then the body as walls with two slots cut out by the
+  // same evenodd rule the cog's hub hole uses.
+  trash: {
+    accentColor: 'var(--cth-coral)',
+    ink:   'M6 1h4v1H6zM3 2h10v2H3zM4 5h8v10H4zM6 7h1v6H6zM9 7h1v6H9z'
   },
   x: {
     accentColor: 'var(--cth-coral)',

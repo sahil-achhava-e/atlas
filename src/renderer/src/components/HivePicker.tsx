@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { Icon } from './Icon';
 import type { HarnessConfig } from '@/store/config';
 import { useNativeDialog } from '@/hooks/useNativeDialog';
+import { ConfirmDialog } from './ConfirmDialog';
 
 export interface HivePickerProps {
   config: HarnessConfig;
@@ -20,6 +21,16 @@ const SKIP_KEY = 'cth.skipHivePickerOnce';
 function folderName(path: string): string {
   return path.split('/').filter(Boolean).pop() ?? path;
 }
+
+/** The two square buttons at the end of a recent row. Quiet until hovered —
+ *  they sit next to the row you click to OPEN a workspace, and neither of them
+ *  should read as the primary thing to do. */
+const rowAction: CSSProperties = {
+  width: 28, height: 28, flexShrink: 0,
+  display: 'grid', placeItems: 'center',
+  background: 'transparent', border: 'none', borderRadius: 'var(--cth-radius-input)',
+  cursor: 'pointer', color: 'var(--cth-ink-500)'
+};
 
 /** Everything above the folder, for the muted second line. */
 function parentPath(path: string): string {
@@ -37,10 +48,41 @@ function parentPath(path: string): string {
  */
 export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
   const current = config.harnessHome;
-  const recents = (config.recentHives ?? []).filter((h) => h && h !== current);
+  const listed = (config.recentHives ?? []).filter((h) => h && h !== current);
   const { t } = useTranslation();
   const [busy, setBusy] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
+  // Rows the user has just removed or deleted. `config` is a snapshot handed
+  // down by App, so it does not change under us when main rewrites recentHives.
+  const [gone, setGone] = useState<string[]>([]);
+  // The workspace awaiting confirmation, and whether confirming it also resets
+  // the app (true for the OPEN workspace, which cannot be deleted under itself).
+  const [confirming, setConfirming] = useState<{ path: string; reset: boolean } | undefined>();
+  const recents = listed.filter((h) => !gone.includes(h));
+
+  /** Stop listing a workspace. The folder is untouched. */
+  const forget = async (path: string) => {
+    setError(undefined);
+    setGone((g) => [...g, path]);
+    const res = await window.cth.forgetWorkspace(path);
+    if (!res.ok) { setGone((g) => g.filter((p) => p !== path)); setError(res.error); }
+  };
+
+  /** Delete a workspace's crew. The open one goes through resetAll instead,
+   *  which tears its services down in order and relaunches into setup. */
+  const destroy = async ({ path, reset }: { path: string; reset: boolean }) => {
+    setConfirming(undefined);
+    setError(undefined);
+    if (reset) { await window.cth.resetAll(); return; } // never returns — the app relaunches
+    setBusy(path);
+    try {
+      const res = await window.cth.deleteWorkspace(path);
+      if (res.ok) setGone((g) => [...g, path]);
+      else setError(res.error ?? t('hivePicker.deleteFailed'));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally { setBusy(undefined); }
+  };
 
   // Open a hive. Same folder as the current one → just enter it (no relaunch).
   // A different folder → changeHome('fresh') re-points + relaunches the process.
@@ -122,6 +164,21 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                     {t('hivePicker.open')}
                   </PixelButton>
                 </div>
+                {/* The open workspace cannot be deleted under itself — its
+                    services are running and its agents hold live terminals. So
+                    this is the app's own reset, said in the words of the thing
+                    the user is actually doing. */}
+                <button
+                  onClick={() => setConfirming({ path: current, reset: true })}
+                  disabled={!!busy}
+                  style={{
+                    marginTop: 8, padding: 0, background: 'none', border: 'none',
+                    font: 'inherit', fontSize: 12, color: 'var(--cth-ink-500)',
+                    textDecoration: 'underline', cursor: 'pointer'
+                  }}
+                >
+                  {t('hivePicker.deleteOpen')}
+                </button>
               </div>
             )}
 
@@ -133,31 +190,60 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 220, overflowY: 'auto' }}>
                   {recents.map((h) => (
-                    <button
+                    <div
                       key={h}
-                      onClick={() => openHive(h)}
-                      disabled={!!busy}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: 12, padding: '12px 12px',
-                        background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)', borderRadius: 'var(--cth-radius-input)',
-                        border: 'none', cursor: busy ? 'default' : 'pointer', textAlign: 'left',
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        background: 'var(--cth-paper-100)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                        borderRadius: 'var(--cth-radius-input)', paddingRight: 8,
                         opacity: busy && busy !== h ? 0.5 : 1
                       }}
                     >
-                      <Icon name="folder" />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600, color: 'var(--cth-ink-900)' }}>
-                          {folderName(h)}
+                      <button
+                        onClick={() => openHive(h)}
+                        disabled={!!busy}
+                        style={{
+                          flex: 1, minWidth: 0,
+                          display: 'flex', alignItems: 'center', gap: 12, padding: '12px 12px',
+                          background: 'transparent', border: 'none',
+                          cursor: busy ? 'default' : 'pointer', textAlign: 'left'
+                        }}
+                      >
+                        <Icon name="folder" />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600, color: 'var(--cth-ink-900)' }}>
+                            {folderName(h)}
+                          </div>
+                          <div style={{
+                            fontFamily: 'var(--cth-font-mono)', fontSize: 13, color: 'var(--cth-ink-500)',
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                          }}>{parentPath(h)}</div>
                         </div>
-                        <div style={{
-                          fontFamily: 'var(--cth-font-mono)', fontSize: 13, color: 'var(--cth-ink-500)',
-                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                        }}>{parentPath(h)}</div>
-                      </div>
-                      <span style={{ fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>
-                        {busy === h ? 'opening…' : 'switch →'}
-                      </span>
-                    </button>
+                        <span style={{ fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>
+                          {busy === h ? 'opening…' : 'switch →'}
+                        </span>
+                      </button>
+                      {/* Two different actions, and the difference matters: one
+                          stops listing a folder, the other erases the crew in it. */}
+                      <button
+                        onClick={() => void forget(h)}
+                        disabled={!!busy}
+                        title={t('hivePicker.remove')}
+                        aria-label={`${t('hivePicker.remove')}: ${folderName(h)}`}
+                        style={rowAction}
+                      >
+                        <Icon name="x" />
+                      </button>
+                      <button
+                        onClick={() => setConfirming({ path: h, reset: false })}
+                        disabled={!!busy}
+                        title={t('hivePicker.delete')}
+                        aria-label={`${t('hivePicker.delete')}: ${folderName(h)}`}
+                        style={{ ...rowAction, color: 'var(--cth-coral)' }}
+                      >
+                        <Icon name="trash" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -193,6 +279,17 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
           </div>
         </PixelPanel>
       </div>
+
+      {confirming && (
+        <ConfirmDialog
+          title={t(confirming.reset ? 'hivePicker.resetTitle' : 'hivePicker.deleteTitle')}
+          body={t(confirming.reset ? 'hivePicker.resetBody' : 'hivePicker.deleteBody', { name: folderName(confirming.path) })}
+          confirmLabel={t(confirming.reset ? 'hivePicker.resetConfirm' : 'hivePicker.deleteConfirm')}
+          destructive
+          onCancel={() => setConfirming(undefined)}
+          onConfirm={() => void destroy(confirming)}
+        />
+      )}
     </div>
   );
 }

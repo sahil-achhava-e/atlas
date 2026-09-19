@@ -1647,7 +1647,17 @@
     "open": "Open",
     "openAnother": "Open another folder",
     "newWorkspace": "New workspace",
-    "openFailed": "Could not open that folder."
+    "openFailed": "Could not open that folder.",
+    "remove": "Remove from list",
+    "delete": "Delete",
+    "deleteTitle": "Delete this workspace?",
+    "deleteBody": "This removes the crew in {{name}}: every agent, their memory and sessions, the task board and the history. Your own files in that folder stay. It cannot be undone.",
+    "deleteConfirm": "Delete the crew",
+    "deleteFailed": "Could not delete that workspace.",
+    "resetTitle": "Delete this workspace and reset Atlas?",
+    "resetBody": "This workspace is open, so deleting it resets the app: the crew in {{name}} is erased and Atlas restarts at setup. Your own files in that folder stay. It cannot be undone.",
+    "resetConfirm": "Delete and reset",
+    "deleteOpen": "Delete this workspace and reset Atlas"
   },
   "updateBadge": {
     "manualBody": "Download the latest version and replace the app you have. Prefer the app to update itself? Settings → Updates.",

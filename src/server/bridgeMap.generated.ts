@@ -163,6 +163,8 @@ export const INVOKE: Record<string, string> = {
   realtimeDrainCompletions: 'realtime:drainCompletions',
   realtimeWaitFor: 'realtime:waitFor',
   appInfo: 'app:info',
+  forgetWorkspace: 'workspace:forget',
+  deleteWorkspace: 'workspace:delete',
   rosterWrite: 'roster:write',
   updateCurrent: 'update:current',
   updateRestartAndInstall: 'update:restartAndInstall',

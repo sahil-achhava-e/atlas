@@ -1399,6 +1399,13 @@ const api = {
    *  store is created at module load, so an async read would arrive after the
    *  first render and the floor would flash empty. One blocking round trip at
    *  boot. `null` = no file (or unreadable) — the caller then uses localStorage. */
+  /** Drop a workspace from the launch picker's list. The folder is untouched. */
+  forgetWorkspace: (path: string): Promise<{ ok: boolean; error?: string; recentHives?: string[] }> =>
+    ipcRenderer.invoke('workspace:forget', path),
+  /** Delete a workspace's crew — agents, memory, sessions, board, palace, roster.
+   *  Refused for the workspace that is currently open; `resetAll` covers that one. */
+  deleteWorkspace: (path: string): Promise<{ ok: boolean; error?: string; recentHives?: string[] }> =>
+    ipcRenderer.invoke('workspace:delete', path),
   rosterReadSync: (): RosterSnapshot | null => {
     try { return ipcRenderer.sendSync('roster:readSync') ?? null; } catch { return null; }
   },
