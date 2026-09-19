@@ -429,8 +429,40 @@ export function useHive(config: HarnessConfig | null): void {
     const t = setTimeout(async () => {
       if (cancelled) return;
       const live = await window.cth.listPtys().catch(() => []);
-      if (live.some((p) => p.id === GOD_PTY)) { // already running — keep restored entry
-        if (!cancelled) useStore.getState().setGodStatus('ready');
+      if (live.some((p) => p.id === GOD_PTY)) {
+        // His terminal is already running, so do NOT spawn a second one — but
+        // "keep the restored entry" assumed there was one. After a crash the
+        // renderer's roster can be gone while the terminal is fine, and then
+        // nothing ever put Atlas on the floor: an orchestrator running happily
+        // with no card, no desk and no way to talk to him.
+        if (!cancelled) {
+          const known = useStore.getState().agents.some((a) => a.id === GOD_ID);
+          if (!known) {
+            const reg = await window.cth.hiveRegistry().catch(() => null);
+            const entry = reg?.agents?.[GOD_ID];
+            console.log('[hive] adopting the running orchestrator — no card for a live terminal');
+            useStore.getState().addAgent({
+              id: GOD_ID,
+              name: resolveGodName(entry?.name),
+              character: 'michael',
+              accent: 'coral',
+              description: 'runs the floor',
+              project: 'hive',
+              tmuxTarget: '',
+              cwd: entry?.cwd ?? config.harnessHome!,
+              status: 'idle',
+              action: 'running the floor',
+              progress: 0,
+              currentStation: 'desk',
+              ptyId: GOD_PTY,
+              provider: config.godProvider ?? 'claude',
+              model: config.godModel,
+              isGod: true,
+              recentTextTs: Date.now()
+            });
+          }
+          useStore.getState().setGodStatus('ready');
+        }
         return;
       }
       // Synchronous guard (no await between check and set) → exactly one spawn.
