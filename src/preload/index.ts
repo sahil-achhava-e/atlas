@@ -1027,6 +1027,11 @@ const api = {
   /** Current context size (tokens) of an agent's live session, read from the
    *  last assistant message of its transcript. Null until the agent's hooks
    *  have fired at least once (the transcript path is learned from them). */
+  /** What the agent is saying and doing, in plain language — the readable half
+   *  of the terminal, read from the session transcript rather than the TUI. */
+  agentActivity: (agentId: string, limit?: number): Promise<Array<{
+    kind: 'say' | 'do'; text: string; detail?: string; at?: number;
+  }>> => ipcRenderer.invoke('agent:activity', agentId, limit),
   agentContext: (agentId: string): Promise<number | null> =>
     ipcRenderer.invoke('hive:agentContext', agentId),
 

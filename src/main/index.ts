@@ -2,13 +2,14 @@ import { interruptedWork, restartBrief, briefSignature } from './restartBrief';
 import { readInstanceLock, writeInstanceLock, clearInstanceLock } from './instanceLock';
 import { canDeleteWorkspace, WORKSPACE_DATA } from '../shared/workspaceDelete';
 import { mcpSecretRef, mcpSecretEnvKeys, dbSecretRef } from '../shared/mcpCatalog';
+import { activityRows } from '../shared/activityFeed';
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, net, powerMonitor, powerSaveBlocker, protocol, screen, shell, Notification } from 'electron';
 import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import {
   rmSync, existsSync, readFileSync, readdirSync, statSync, cpSync, writeFileSync,
   unlinkSync, mkdirSync, renameSync, createWriteStream, copyFileSync, lstatSync,
-  readlinkSync, symlinkSync
+  readlinkSync, symlinkSync, openSync, readSync, closeSync
 } from 'node:fs';
 import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { join, resolve, sep, basename, dirname, isAbsolute, normalize, extname } from 'node:path';
@@ -4083,6 +4084,41 @@ ipcMain.handle('hive:agentUsage', (_evt, cwd: unknown) =>
 // spawn), so this works even when several agents share one cwd. Null until the
 // first hook fires; a known-but-empty transcript reads as 0 so a freshly
 // (re)started session zeroes the gauge instead of leaving a stale value up.
+/**
+ * What an agent is saying and doing, readable.
+ *
+ * The terminal is the engine's TUI, which is the truth of the session and is
+ * unreadable unless you already know what you are looking at. The same session
+ * writes a structured transcript, so the readable view is built from that —
+ * see src/shared/activityFeed.ts.
+ *
+ * Reads the tail rather than the file: a long session's transcript runs to
+ * megabytes, and this is polled.
+ */
+ipcMain.handle('agent:activity', (_evt, agentId: unknown, limit: unknown) => {
+  if (typeof agentId !== 'string') return [];
+  const tp = hookServer.transcriptPath(agentId);
+  if (!tp || !existsSync(tp)) return [];
+  try {
+    const size = statSync(tp).size;
+    const TAIL = 512 * 1024;   // enough for a few hundred entries
+    const from = Math.max(0, size - TAIL);
+    const fd = openSync(tp, 'r');
+    try {
+      const buf = Buffer.alloc(size - from);
+      readSync(fd, buf, 0, buf.length, from);
+      const text = buf.toString('utf8');
+      // A partial first line when we started mid-file; activityRows drops it
+      // anyway, but slicing keeps the intent obvious.
+      const lines = (from > 0 ? text.slice(text.indexOf('\n') + 1) : text).split('\n');
+      return activityRows(lines, typeof limit === 'number' ? limit : 200);
+    } finally { closeSync(fd); }
+  } catch (e) {
+    console.error('[activity] could not read transcript:', e);
+    return [];
+  }
+});
+
 ipcMain.handle('hive:agentContext', (_evt, agentId: unknown) => {
   if (typeof agentId !== 'string') return null;
   const tp = hookServer.transcriptPath(agentId);

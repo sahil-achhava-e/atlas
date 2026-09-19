@@ -1,33 +1,38 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore, type Agent } from '@/store/store';
+import { ActivityLog } from './ActivityLog';
 
 /**
- * SIMPLE MODE — the raw engine terminal, folded away.
+ * THE READABLE PANE, with the terminal folded behind it.
  *
  * The terminal is the most technical thing in the app: a TUI, tool calls, box
- * drawing, and a permission prompt you answer by pressing a key. For someone who
- * does not code it is noise at best. But it is also the pane that holds the
- * COMPOSER — the only way to say anything to an agent — so "hide the terminal"
- * cannot mean unmounting the tab. The composer stays; the log folds.
+ * drawing, a permission prompt you answer by pressing a key — and it takes
+ * typing, which invites typing into a session that is not yours to drive. What
+ * a person is actually here to read is what the agent is SAYING and what it is
+ * working on, and that is what this shows: prose as prose, work as one quiet
+ * line each, read-only. It comes from the session transcript rather than the
+ * terminal's bytes (see shared/activityFeed.ts).
  *
- * Collapsed, the pane shows the last thing the agent said, which is the answer to
- * the question a non-technical user actually has. The log is one click away and
- * stays one click away: hidden, not removed, because "where did my terminal go"
- * is a worse first day than a busy one.
+ * The terminal is one click away and stays one click away — hidden, not removed.
+ * "Where did my terminal go" is a worse first day than a busy one, and there are
+ * real moments (a stuck prompt, an engine error, a diff you want in full) where
+ * only the engine's own output will do.
  *
- * Technical mode renders `children` untouched — no wrapper, no extra chrome.
+ * The COMPOSER is not part of this. It lives below and is untouched either way:
+ * folding the log must never remove the way to say something to an agent.
  *
  * Unmounting the terminal view is safe: `terminalPool` keeps one xterm per pty
  * for the app's lifetime and re-parents its host element on mount, so the
- * scrollback is still there when the log is opened again.
+ * scrollback is still there when it is opened again.
  */
 export function TechnicalLog({ agent, children }: { agent: Agent; children: ReactNode }) {
   const { t } = useTranslation();
+  // Someone who chose the technical register gets the terminal open by default;
+  // everyone else gets the readable pane and can open it. Either way it is the
+  // same toggle, so neither audience is stuck with the other's choice.
   const simpleMode = useStore((s) => s.simpleMode);
-  const [open, setOpen] = useState(false);
-
-  if (!simpleMode) return <>{children}</>;
+  const [open, setOpen] = useState(!simpleMode);
 
   const toggle = (
     <button
@@ -41,45 +46,15 @@ export function TechnicalLog({ agent, children }: { agent: Agent; children: Reac
         color: 'var(--cth-ink-500)'
       }}
     >
-      {open ? t('simpleMode.hideLog') : t('simpleMode.showLog')}
+      {open ? t('activity.hideTerminal') : t('activity.showTerminal')}
     </button>
   );
 
-  if (open) {
-    return (
-      <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        {toggle}
-        <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>{children}</div>
-      </div>
-    );
-  }
-
-  const said = agent.recentAssistantText?.trim();
   return (
-    <div style={{
-      flex: 1, minWidth: 0, minHeight: 0,
-      display: 'flex', flexDirection: 'column',
-      background: 'var(--cth-paper-100)'
-    }}>
-      <div style={{
-        flex: 1, minHeight: 0, overflowY: 'auto',
-        padding: '16px 18px'
-      }}>
-        <div style={{
-          fontFamily: 'var(--cth-font-ui)', fontSize: 11.5, fontWeight: 700,
-          letterSpacing: '0.04em', textTransform: 'uppercase',
-          color: 'var(--cth-ink-400)', marginBottom: 8
-        }}>
-          {t('simpleMode.lastMessage', { name: agent.name })}
-        </div>
-        <div style={{
-          fontFamily: 'var(--cth-font-ui)', fontSize: 13.5, lineHeight: '21px',
-          color: said ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
-          whiteSpace: 'pre-wrap', wordBreak: 'break-word'
-        }}>
-          {said || t('simpleMode.nothingYet')}
-        </div>
-      </div>
+    <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+      {open
+        ? <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>{children}</div>
+        : <ActivityLog agent={agent} />}
       {toggle}
     </div>
   );

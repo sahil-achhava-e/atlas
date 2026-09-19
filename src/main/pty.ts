@@ -338,11 +338,15 @@ export function parseNpmCmdShim(shimPath: string, content: string): NpmShimTarge
 function repairSpawnHelper(): void {
   if (process.platform !== 'darwin') return;
   try {
-    // Resolved from node-pty itself so this finds the copy actually in use —
-    // repo, packaged app.asar.unpacked, or a server-mode checkout alike.
-    const root = join(require.resolve('node-pty'), '..', '..');
+    // Both paths are resolved from node-pty itself rather than from this file:
+    // the bundler rewrites this module's own location (out/main, or
+    // out/server/assets), so a source-relative path to the tool resolves to
+    // nothing — which is how the repair silently stopped running in server mode.
+    // node_modules is a fixed distance from node-pty in every layout there is.
+    const nodePty = require.resolve('node-pty');
+    const root = join(nodePty, '..', '..');
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { ensureSpawnHelper } = require('../../tools/pty-spawn-helper.cjs') as {
+    const { ensureSpawnHelper } = require(join(root, '..', '..', 'tools', 'pty-spawn-helper.cjs')) as {
       ensureSpawnHelper(root: string): string;
     };
     const res = ensureSpawnHelper(root);

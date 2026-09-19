@@ -1722,5 +1722,10 @@
     "addSelected": "Add {{count}}",
     "cancel": "Cancel",
     "addThis": "Add this folder"
+  },
+  "activity": {
+    "nothingYet": "{{name}} has not said anything yet.",
+    "showTerminal": "Show the terminal",
+    "hideTerminal": "Hide the terminal"
   }
 }

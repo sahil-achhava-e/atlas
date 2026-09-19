@@ -1722,5 +1722,10 @@
     "addSelected": "أضف {{count}}",
     "cancel": "إلغاء",
     "addThis": "أضف هذا المجلد"
+  },
+  "activity": {
+    "nothingYet": "لم يقل {{name}} شيئًا بعد.",
+    "showTerminal": "إظهار الطرفية",
+    "hideTerminal": "إخفاء الطرفية"
   }
 }

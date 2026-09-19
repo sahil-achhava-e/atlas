@@ -91,6 +91,7 @@ export const INVOKE: Record<string, string> = {
   cancelClosingTime: 'app:cancelClosingTime',
   resetAll: 'app:resetAll',
   agentUsage: 'hive:agentUsage',
+  agentActivity: 'agent:activity',
   agentContext: 'hive:agentContext',
   telemetryUsage: 'telemetry:usage',
   telemetrySpans: 'telemetry:spans',
