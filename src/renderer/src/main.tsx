@@ -21,6 +21,11 @@ if (splashMark) {
 }
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { PathPromptHost, installBrowserFolderPicker } from '@/components/PathPrompt';
+
+// In a browser tab there is no OS dialog to open, so every "pick a folder"
+// button asks for a typed path instead. No-op in the desktop app.
+installBrowserFolderPicker();
 
 const root = document.getElementById('root');
 if (!root) throw new Error('No root element');
@@ -29,6 +34,7 @@ createRoot(root).render(
   <StrictMode>
     <ErrorBoundary label="Atlas" onReset={() => window.location.reload()}>
       <App />
+      <PathPromptHost />
     </ErrorBoundary>
   </StrictMode>
 );
