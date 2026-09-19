@@ -985,12 +985,14 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
 
                   {section === 'Agents & Models' && (
                     <>
-                      {/* The engine and prerequisite checks used to be their own
-                          Prerequisites tab. They belong beside the model settings:
-                          "which engine runs my agents" and "is that engine even
-                          installed" are the same question. The memory half of that
-                          panel moved to the Memory tab, where the switch is. */}
-                      <SetupPanel only={['prerequisite', 'engine']} onDone={onClose} />
+                      {/* The ENGINES you actually have, and nothing else.
+                          This page is about how your agents run, so it lists what
+                          can run them. The prerequisites — uv, git, Node — are a
+                          setup checklist, not a choice about agents, and an engine
+                          you never installed is a catalogue entry: twelve of those
+                          under this heading buried the one you use. Setup still
+                          shows all of it, which is where a checklist belongs. */}
+                      <SetupPanel only={['engine']} installedOnly onDone={onClose} />
                       <div style={groupCard}>
                         <div style={sectionHead}>
                           {t('settings.agentsModels.defaultModel')}

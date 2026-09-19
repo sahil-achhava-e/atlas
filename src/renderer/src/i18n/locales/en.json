@@ -934,7 +934,9 @@
       },
       "engine": {
         "title": "Agent engines",
-        "blurb": "The CLIs your agents can run on. You only need the one this workspace uses; the rest are here so you can see what is already on the machine."
+        "blurb": "The CLIs your agents can run on. You only need the one this workspace uses; the rest are here so you can see what is already on the machine.",
+        "blurbInstalled": "The CLIs on this machine that your agents can run on. Add one in Setup if you want another.",
+        "titleInstalled": "Installed engines"
       }
     },
     "titleEngines": "Engines and tools",
@@ -1732,8 +1734,7 @@
     "thinking": "{{name}} is thinking",
     "compacting": "{{name}} is tidying its context",
     "looping": "{{name}} is stuck in a loop",
-    "delivered": "sent — waiting for {{name}}",
-    "workingLabel": "{{name}} is working",
+    "workingLabel": "Working",
     "working": "{{name}} is working"
   }
 }

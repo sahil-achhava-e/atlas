@@ -117,7 +117,7 @@ function ToolRow({ tool }: { tool: ToolStatus }) {
 }
 
 export function SetupPanel(
-  { onDone, only }: { onDone?: () => void; only?: ToolKind[] } = {}
+  { onDone, only, installedOnly }: { onDone?: () => void; only?: ToolKind[]; installedOnly?: boolean } = {}
 ) {
   const { t } = useTranslation();
   const [tools, setTools] = useState<ToolStatus[] | null>(null);
@@ -139,8 +139,14 @@ export function SetupPanel(
   // same subset. It counted every tool in the catalogue, which is how a memory
   // section showing one row announced "2 of 3 ready".
   const visible = useMemo(
-    () => (tools ?? []).filter((t) => !only || only.includes(t.kind)),
-    [tools, only]
+    () => (tools ?? [])
+      .filter((t) => !only || only.includes(t.kind))
+      // `installedOnly` is for the settings page, where this is a statement of
+      // what you HAVE rather than a setup checklist. Twelve engines you never
+      // installed, under a heading about your agents, is a catalogue — and the
+      // one you do use is somewhere in it.
+      .filter((t) => !installedOnly || t.found),
+    [tools, only, installedOnly]
   );
   const missingEssential = useMemo(
     () => visible.filter((t) => !t.found && t.essential),
@@ -241,10 +247,10 @@ export function SetupPanel(
             <div style={{
               fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 13, lineHeight: '16px',
               color: 'var(--cth-ink-900)'
-            }}>{t(section.titleKey)}</div>
+            }}>{t(installedOnly && section.kind === 'engine' ? 'setupPanel.sections.engine.titleInstalled' : section.titleKey)}</div>
             <div style={{
               fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)', margin: '2px 0 0'
-            }}>{t(section.blurbKey)}</div>
+            }}>{t(installedOnly && section.kind === 'engine' ? 'setupPanel.sections.engine.blurbInstalled' : section.blurbKey)}</div>
             {/* One band each, and only when both halves exist: a section where
                 everything is installed should not carry a header saying so. */}
             {installed.length > 0 && missing.length > 0
