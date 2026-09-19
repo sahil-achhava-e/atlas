@@ -44,6 +44,10 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
 
   // Draft lives in the store, keyed by agent — switching agents remounts this
   // component, and component-local state would silently eat the typed text.
+  // The queue is a holding pen, not a document: collapsed to a count by
+  // default, and opened when someone wants to see or reorder what is in it.
+  const [queueOpen, setQueueOpen] = useState(false);
+
   const text = useStore((s) => s.drafts[agent.id] ?? '');
   const setDraft = useStore((s) => s.setDraft);
   const setText = (t: string) => setDraft(agent.id, t);
@@ -56,6 +60,17 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
   // agent's output does, at every zoom level.
   const composerFontSize = 13;
   const composerLineHeight = 20;
+
+  // Height follows content. Reset to `auto` first or the box can only ever
+  // grow: scrollHeight of an already-tall element includes the height it was
+  // given last time.
+  const boxRef = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, composerLineHeight * 10)}px`;
+  }, [text, composerLineHeight]);
 
   const idle = agent.status === 'idle';
 
@@ -202,8 +217,8 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
         background: 'var(--cth-cream-100)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
-        padding: 12,
+        gap: 6,
+        padding: 8,
         boxShadow: dragOver ? 'inset 0 0 0 2px var(--cth-lilac)' : undefined
       }}>
       {dragOver && (
@@ -212,40 +227,40 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
           color: 'var(--cth-ink-700)', textAlign: 'center'
         }}>{t('queueComposer.dropToAttach')}</span>
       )}
-      {/* Header: label, count, status, clear-all.
-          The whole row is conditional. With nothing queued, `statusHint` is
-          null, the count is hidden and Clear all needs two items — so the only
-          thing left was the word "Queue", sitting above an empty composer
-          labelling nothing. A blocked prompt still needs its recover button,
-          which is why that is part of the condition rather than the queue
-          alone. */}
+      {/* THE QUEUE, in one line until it is asked to be more.
+          It used to be a heading, a count chip, a status, a Clear-all and then
+          a scrolling list — five rows of chrome above the box you actually type
+          in, in a panel that is often 380px wide. Queued messages are a holding
+          pen: what matters at a glance is HOW MANY and whether they are moving.
+          The texts are one click away, and the recover button is not part of the
+          queue at all — a blocked prompt needs it whether or not anything is
+          waiting. */}
       {(queue.length > 0 || block === 'draft' || block === 'picker') && (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
         {queue.length > 0 && (
-          <span style={{
-            flexShrink: 0,
-            fontFamily: 'var(--cth-font-ui)', fontWeight: 600,
-            // 12px, matching the status beside it. At 11px the label was
-            // smaller than the line it labels, which read as a caption for the
-            // sentence rather than a heading over it.
-            fontSize: 12, lineHeight: '16px',
-            color: 'var(--cth-ink-700)'
-          }}>{t('queueComposer.queue')}</span>
-        )}
-        {queue.length > 1 && (
-          <span style={{
-            flexShrink: 0,
-            fontFamily: 'var(--cth-font-mono)', fontSize: 11, lineHeight: '16px',
-            padding: '0 6px',
-            background: 'var(--cth-cream-200)', color: 'var(--cth-ink-700)',
-            borderRadius: 'var(--cth-radius-input)'
-          }}>{queue.length}</span>
+          <button
+            onClick={() => setQueueOpen((v) => !v)}
+            aria-expanded={queueOpen}
+            style={{
+              flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5,
+              height: 22, padding: '0 8px', border: 'none', cursor: 'pointer',
+              borderRadius: 'var(--cth-radius-input)',
+              background: deliveryPaused ? 'var(--cth-lemon-light)' : 'var(--cth-cream-200)',
+              color: deliveryPaused ? 'var(--cth-lemon-text)' : 'var(--cth-ink-700)',
+              fontFamily: 'var(--cth-font-ui)', fontSize: 11.5, fontWeight: 600, lineHeight: '16px'
+            }}
+          >
+            <span style={{ display: 'inline-flex', transform: queueOpen ? 'rotate(90deg)' : 'none', transition: 'transform 120ms ease' }}>
+              <Icon name="arrow-right" style={{ width: 10, height: 10 }} />
+            </span>
+            {t('queueComposer.queued', { count: queue.length })}
+          </button>
         )}
         {statusHint && (
           <span
             style={{
               minWidth: 0,
-              fontSize: 12, lineHeight: '16px',
+              fontSize: 11.5, lineHeight: '16px',
               color: 'var(--cth-ink-500)',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
             }}
@@ -267,7 +282,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             }}
             style={{
               border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-              fontFamily: 'var(--cth-font-ui)', fontSize: 13,
+              fontFamily: 'var(--cth-font-ui)', fontSize: 12,
               color: 'var(--cth-ink-900)', textDecoration: 'underline'
             }}
           >{block === 'picker' ? t('queueComposer.closePicker') : t('queueComposer.recoverPrompt')}</button>
@@ -278,12 +293,10 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             onClick={() => clearQueue(agent.id)}
             style={{
               marginLeft: 'auto', flexShrink: 0, whiteSpace: 'nowrap',
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              height: 26, padding: '0 10px',
+              height: 22, padding: '0 8px',
               border: 'none', borderRadius: 'var(--cth-radius-btn)', cursor: 'pointer',
               background: 'transparent', color: 'var(--cth-ink-500)',
-              fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600,
-              transition: 'background 120ms ease, color 120ms ease'
+              fontFamily: 'var(--cth-font-ui)', fontSize: 11.5, fontWeight: 600
             }}
             className="cth-quiet-danger"
           >{t('queueComposer.clearAll')}</button>
@@ -291,19 +304,17 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
       </div>
       )}
 
-      {/* Pending list */}
-      {queue.length > 0 && (
+      {queue.length > 0 && queueOpen && (
         <div style={{
-          display: 'flex', flexDirection: 'column', gap: 4,
-          maxHeight: 132, overflowY: 'auto'
+          display: 'flex', flexDirection: 'column', gap: 3,
+          maxHeight: 120, overflowY: 'auto'
         }}>
           {queue.map((m, i) => (
             <QueuedMessageRow
               key={m.id}
               index={i}
               // The number answers "which goes first", which is a question only
-              // a list of two or more can raise. On a single row it was a "1."
-              // beside a count chip that also said 1.
+              // a list of two or more can raise.
               showIndex={queue.length > 1}
               message={m}
               paused={deliveryPaused}
@@ -356,24 +367,26 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
         background: 'var(--cth-paper-100)'
       }}>
         <textarea
+          ref={boxRef}
           dir={rtl ? 'auto' : undefined}
           className="cth-input cth-input-bare"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKey}
           onPaste={onPaste}
-          rows={5}
+          rows={1}
           placeholder={idle ? t('queueComposer.messagePlaceholder', { name: agent.name }) : t('queueComposer.busyPlaceholder', { name: agent.name })}
           style={{
             width: '100%',
             resize: 'vertical',
-            // Track the terminal's zoom (Cmd +/- or the terminal's own zoom
-            // buttons) instead of a hardcoded 13px. On a large display the
-            // terminal text scaled up while this box stayed tiny; box height is
-            // derived from the same size so the visible line count is stable.
-            minHeight: composerLineHeight * 5 + 14,
-            maxHeight: composerLineHeight * 18,
-            padding: '12px 14px',
+            // Grows with what is typed, from one line, rather than reserving
+            // five. Five was most of a narrow panel's height held open for text
+            // that is usually one sentence — and the pane above it is the thing
+            // a person is reading. The cap keeps a long paste scrollable instead
+            // of swallowing the panel.
+            minHeight: composerLineHeight + 18,
+            maxHeight: composerLineHeight * 10,
+            padding: '9px 12px',
             background: 'var(--cth-paper-100)',
             border: 'none',
             // Border lives in .cth-input so :focus can change it — an inline
@@ -391,9 +404,9 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             flexWrap so a narrow sidebar wraps rather than pushing Send off the
             edge. */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
+          display: 'flex', alignItems: 'center', gap: 6,
           flexWrap: 'nowrap', minWidth: 0,
-          padding: '8px 10px',
+          padding: '5px 6px 5px 8px',
           background: 'var(--cth-cream-50)',
           borderTop: '1px solid var(--cth-ink-100)'
         }}>
@@ -412,7 +425,7 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
             data-label={t('queueComposer.files')}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 30, height: 30, padding: 0, border: 'none',
+              width: 28, height: 28, padding: 0, border: 'none',
               cursor: picking ? 'default' : 'pointer', flexShrink: 0,
               borderRadius: 'var(--cth-radius-btn)',
               background: picking ? 'var(--cth-mint-light)' : 'transparent',
@@ -422,28 +435,22 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
           ><Icon name="plus" /></button>
           {agent.isGod && <CostHud compact />}
           <span style={{ flex: 1 }} />
-          {/* The one keystroke everybody gets wrong on a box that also takes
-              multi-line input. Hidden while empty: it is instruction, not decor. */}
-          {canSend && (
-            <span style={{
-              fontSize: 11, color: 'var(--cth-ink-500)',
-              fontFamily: 'var(--cth-font-ui)',
-              minWidth: 0, flexShrink: 1,
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-            }}>{t('queueComposer.enterHint')}</span>
-          )}
+          {/* The keystroke hint is the button's tooltip now. As a visible line
+              it competed for width with Send in a 380px panel, and it is
+              instruction someone needs once. */}
           <button
             onClick={queueIt}
             disabled={!canSend}
+            title={t('queueComposer.enterHint')}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 7,
-              height: 32, padding: '0 14px', border: 'none', flexShrink: 0,
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              height: 28, padding: '0 11px', border: 'none', flexShrink: 0,
               borderRadius: 'var(--cth-radius-btn)',
               cursor: canSend ? 'pointer' : 'not-allowed',
               background: canSend ? 'var(--cth-lilac)' : 'transparent',
               color: canSend ? 'var(--cth-on-accent)' : 'var(--cth-ink-500)',
               boxShadow: canSend ? 'var(--cth-shadow-btn)' : 'none',
-              fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
+              fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, fontWeight: 600,
               transition: 'background 120ms ease, box-shadow 120ms ease, color 120ms ease'
             }}
           >

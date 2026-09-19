@@ -1514,7 +1514,8 @@
     "removeOne": "Remove from queue",
     "nudgeLabel": "Inbox nudge",
     "nudgeSummary_one": "One new hive message. Read it, act on what is pending, file the rest.",
-    "nudgeSummary_other": "{{count}} new hive messages. Read them, act on what is pending, file the rest."
+    "nudgeSummary_other": "{{count}} new hive messages. Read them, act on what is pending, file the rest.",
+    "queued": "{{count}} queued"
   },
   "idePanel": {
     "workspace": "{{name}}'s workspace",
