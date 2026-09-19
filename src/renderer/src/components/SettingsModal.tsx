@@ -1,4 +1,5 @@
 import { useState, useEffect, type CSSProperties } from 'react';
+import { ensureNotificationPermission } from '@/browserNotifications';
 import { ConfirmDialog } from './ConfirmDialog';
 import { workingAgents, nameList } from './restartWarning';
 import { useTranslation } from 'react-i18next';
@@ -174,6 +175,9 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
   const toggleNotifications = async () => {
     const next = !notifications;
     setNotifications(next); // optimistic
+    // Browser mode: Chrome's own permission is the real gate, and it only
+    // answers a prompt raised from a gesture — this click.
+    if (next && !(await ensureNotificationPermission())) { setNotifications(false); return; }
     try { await window.cth.setNotifications(next); }
     catch { setNotifications(!next); /* revert on failure */ }
   };

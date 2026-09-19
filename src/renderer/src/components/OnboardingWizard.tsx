@@ -1,4 +1,5 @@
 import { isBrowserMode } from '@/runtime';
+import { ensureNotificationPermission } from '@/browserNotifications';
 import { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { PixelPanel } from './PixelPanel';
@@ -189,6 +190,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   };
   const toggleNotifications = async (v: boolean) => {
     setNotifications(v); // optimistic
+    // In a browser the OS gate is Chrome's, and it only answers a prompt that
+    // came from a gesture — this click. Asking anywhere else is ignored.
+    if (v && !(await ensureNotificationPermission())) { setNotifications(false); return; }
     try { await window.cth.setNotifications(v); }
     catch { setNotifications(!v); } // revert on failure
   };
