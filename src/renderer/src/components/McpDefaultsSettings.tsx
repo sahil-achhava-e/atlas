@@ -284,9 +284,19 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                             ariaLabel={t('mcpDefaults.dbScopeLabel')}
                             width={190}
                           />
+                          {/* Plain text, not dots. A connection string is a
+                              structure you check by reading it — the host, the
+                              port, the database name, whether you typed the
+                              read-only user — and every one of those is hidden
+                              by a password field. It is pasted once, in your own
+                              Settings, and getting it wrong silently is the
+                              likelier harm than someone reading it over your
+                              shoulder. It is still write-only at rest: stored
+                              encrypted and never read back into this field. */}
                           <input
                             className="cth-input"
-                            type="password"
+                            type="text"
+                            spellCheck={false}
                             autoComplete="off"
                             value={draft[c.id] ?? ''}
                             onChange={(e) => setDraft((d) => ({ ...d, [c.id]: e.target.value }))}

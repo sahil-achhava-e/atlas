@@ -28,7 +28,7 @@ import { EventEmitter } from 'node:events';
 import { keepAwakeCommand } from '../shared/keepAwake';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 /** Where the app keeps its own state. Electron puts this under
  *  ~/Library/Application Support/<productName>; server mode uses the SAME
@@ -360,16 +360,68 @@ export const clipboard = {
   readText: () => '',
   writeText: () => { /* the page owns the clipboard */ }
 };
-/** Electron's safeStorage encrypts with a key only the OS keychain holds, and
- *  that key is bound to the signed app — a node process cannot read it. So this
- *  reports "no encryption", which integrations.ts already treats as a REFUSAL to
- *  store: a secret written here would be plaintext on disk, and a secret written
- *  by the desktop app cannot be read back. Integrations are therefore desktop
- *  only until this has a real keychain bridge. */
+/**
+ * Secrets at rest, without the OS keychain.
+ *
+ * Electron's safeStorage encrypts with a key the login keychain holds and hands
+ * only to the signed app; a plain node process cannot ask for it. Reporting "no
+ * encryption" was the honest first answer and it made a whole feature
+ * unusable — integrations.ts fails closed rather than writing plaintext, so in
+ * browser mode a database connection string simply could not be saved, and the
+ * Save button did nothing.
+ *
+ * So: AES-256-GCM under a key file in the app's own state directory, created
+ * once at 0600. Be clear about what that is and is not. It stops a connection
+ * string sitting in a config file that gets copied, pasted into an issue, or
+ * read by anything that wanders through userData. It does NOT stop someone who
+ * is already running as this user — they can read the key. The keychain's
+ * guarantee is stronger and the desktop app keeps it.
+ *
+ * A consequence worth stating: what one writes, the other cannot read. Secrets
+ * saved here are not readable by the packaged app, and vice versa.
+ */
+const SECRET_KEY_FILE = 'secret.key';
+
+function secretKey(): Buffer {
+  const path = join(app.getPath('userData'), SECRET_KEY_FILE);
+  try {
+    const existing = readFileSync(path);
+    if (existing.length === 32) return existing;
+  } catch { /* first run */ }
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { randomBytes } = require('node:crypto') as typeof import('node:crypto');
+  const key = randomBytes(32);
+  // 0600 at creation, not after: a key that is briefly world-readable is a key
+  // that was world-readable.
+  writeFileSync(path, key, { mode: 0o600 });
+  return key;
+}
+
 export const safeStorage = {
-  isEncryptionAvailable(): boolean { return false; },
-  encryptString(): Buffer { throw new Error('[server] safeStorage is not available in browser mode'); },
-  decryptString(): string { throw new Error('[server] safeStorage is not available in browser mode'); }
+  isEncryptionAvailable(): boolean { return true; },
+
+  encryptString(plaintext: string): Buffer {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { createCipheriv, randomBytes } = require('node:crypto') as typeof import('node:crypto');
+    const iv = randomBytes(12);
+    const cipher = createCipheriv('aes-256-gcm', secretKey(), iv);
+    const body = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
+    // iv | tag | ciphertext, so one buffer carries everything decryption needs.
+    return Buffer.concat([iv, cipher.getAuthTag(), body]);
+  },
+
+  decryptString(blob: Buffer): string {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { createDecipheriv } = require('node:crypto') as typeof import('node:crypto');
+    const iv = blob.subarray(0, 12);
+    const tag = blob.subarray(12, 28);
+    const decipher = createDecipheriv('aes-256-gcm', secretKey(), iv);
+    decipher.setAuthTag(tag);
+    // GCM throws on a wrong key or tampered bytes rather than returning
+    // rubbish, which is what makes "could not read it" distinguishable from
+    // "read something wrong".
+    return Buffer.concat([decipher.update(blob.subarray(28)), decipher.final()]).toString('utf8');
+  }
 };
 
 export const nativeTheme = { shouldUseDarkColors: false, on: () => { /* none */ } };
