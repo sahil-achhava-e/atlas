@@ -379,6 +379,48 @@ export function useHive(config: HarnessConfig | null): void {
     }).catch(() => { /* hive not ready yet */ });
   }, [config?.onboardingComplete]);
 
+  // 0b) ADOPT anyone the hive knows about and the renderer does not.
+  //
+  //     The registry is the main process's copy of the floor, and it survives
+  //     what the renderer's does not: a crash, a cleared origin, a roster
+  //     written before the agent existed. Restore only ever looked at what the
+  //     renderer already remembered, so an agent alive in the hive had no way
+  //     back — two of them vanished after a crash and the orchestrator was told
+  //     it was alone. Adding them to `restorable` is enough: the boot restore
+  //     picks them up and spawns them with their original id, so their memory,
+  //     inbox and identity reattach by themselves.
+  useEffect(() => {
+    if (!config?.onboardingComplete) return;
+    void window.cth.hiveRegistry().then((reg) => {
+      const adopted: Agent[] = [];
+      for (const [id, entry] of Object.entries(reg.agents ?? {})) {
+        if (entry.archived || entry.isGod || id === reg.godId) continue;
+        if (!entry.cwd) continue;   // nothing to spawn into
+        adopted.push({
+          id,
+          name: entry.name || id,
+          character: DEFAULT_CHARACTER,
+          accent: 'coral',
+          description: entry.role || 'restored from the hive',
+          project: entry.cwd.replace(/\/+$/, '').split('/').filter(Boolean).pop() ?? '',
+          tmuxTarget: '',
+          cwd: entry.cwd,
+          status: 'idle',
+          action: '',
+          progress: 0,
+          currentStation: 'desk',
+          provider: (entry.provider as Agent['provider']) ?? 'claude',
+          isLead: entry.isLead,
+          recentTextTs: Date.now()
+        });
+      }
+      if (adopted.length) {
+        console.log('[hive] adopting agents the renderer had lost:', adopted.map((a) => a.id));
+        useStore.getState().adoptRestorable(adopted);
+      }
+    }).catch(() => { /* no hive yet */ });
+  }, [config?.onboardingComplete]);
+
   // 1) Bootstrap the god agent (source of truth = live PTYs, to dodge restarts).
   useEffect(() => {
     if (!config?.onboardingComplete || !config.harnessHome) return;

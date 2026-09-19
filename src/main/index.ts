@@ -519,7 +519,16 @@ function teardownPty(id: string): void {
   // 0) Revoke this id's broker capability (if any). Idempotent + harmless for a
   //    non-worker PTY; ensures a dead worker's token can never reach an integration.
   try { integrationBroker.revoke(id); } catch { /* best-effort */ }
-  // 1) Archive the agent — retained + flagged; only live-PTY agents are active.
+  // 1) The agent STAYS. A terminal can die for reasons that have nothing to do
+  //    with the agent — the server crashed, the engine was killed, the machine
+  //    slept — and archiving on every exit meant a crash took the whole floor
+  //    with it and the orchestrator woke up alone. An agent leaves the floor
+  //    when the human removes it, and at no other time.
+  //
+  //    Ephemeral WORKERS are the exception, and not really one: the human never
+  //    created them. The orchestrator spawns one per task, its id is never
+  //    reused, and it is finished when its process is. Keeping them would fill
+  //    the floor with the dead.
   const agentId = ptyToAgent.get(id);
   if (agentId) {
     ptyToAgent.delete(id);
@@ -532,7 +541,7 @@ function teardownPty(id: string): void {
     // W1 — kill this agent's proxy-bridge sidecar (qwen), if any, so a dead
     // PTY never leaves an orphan loopback listener. No-op for non-proxy agents.
     try { hive.stopProxyBridge(agentId); } catch (e) { console.error('[hive] stopProxyBridge failed:', e); }
-    if (hive.enabled()) {
+    if (hive.enabled() && wasWorker) {
       try { hive.setArchived(agentId, true); } catch (e) { console.error('[hive] setArchived failed:', e); }
     }
   }
@@ -969,38 +978,6 @@ function syncContextTriggers(): void {
  *  spawn and pruned on teardown). God is never archived. A user's real agents are
  *  unaffected: the "restore team" flow respawns them through ensureAgent, which
  *  re-clears `archived` — restorability does not depend on the archived flag. */
-/**
- * Archive registry entries whose agent is genuinely gone.
- *
- * NOT AT BOOT. It used to run inside the hive bootstrap, and "no live PTY" is
- * true of EVERY agent at that moment — the terminals have not been spawned yet.
- * On a normal launch the renderer restores the team a second later and the
- * damage was invisible; after the server CRASHED, the roster it would have
- * restored from was already gone, so a whole floor was archived by a function
- * whose job is to tidy up stragglers. The user watched two agents vanish.
- *
- * So it waits. The renderer gets the grace window to put the team back; anything
- * still without a terminal after that was not restored by anybody and is a stale
- * entry, which is what this was for.
- */
-const ORPHAN_GRACE_MS = 3 * 60_000;
-
-function archiveOrphanedAgents(): void {
-  if (!hive.enabled()) return;
-  try {
-    const reg = hive.registry();
-    for (const [id, a] of Object.entries(reg.agents)) {
-      if (a.archived) continue;
-      if (id === reg.godId) continue;        // god is never archived
-      if (ptyForAgent(id)) continue;         // has a live PTY → genuinely active
-      hive.setArchived(id, true);            // stale archived:false orphan → archive
-      console.log('[migration] archived orphaned agent (no live PTY):', id);
-    }
-  } catch (e) {
-    console.error('[migration] archiveOrphanedAgents failed:', e);
-  }
-}
-
 /** One-time migration: ensure the built-in hourly ops standup exists for installs
  *  that predate it. Guarded by `opsStandupSeeded` so a user who later deletes the
  *  mission doesn't get it re-added on every boot. Stamps lastFiredAt = now so the
@@ -5472,9 +5449,10 @@ function bootstrapHiveServices(): void {
     platform: process.platform
   });
   control.replaceAutoDeliveryPauses(readConfig().autoDeliveryPausedAgents ?? []);
-  // Deliberately NOT now — see ORPHAN_GRACE_MS. At bootstrap every agent looks
-  // orphaned, because no terminal has been spawned yet.
-  setTimeout(archiveOrphanedAgents, ORPHAN_GRACE_MS).unref?.();
+  // No orphan sweep. There used to be one here, archiving every registry entry
+  // without a live terminal — which at bootstrap is all of them, and after a
+  // crash meant the floor was emptied by the tidy-up rather than by anyone
+  // asking. An entry with no terminal is an agent waiting to be restarted.
   hive.startRouter();
   postRestartBrief();      // tell god what was mid-task when we last stopped
   startEphemeralWorkerWatcher(); // poll HIVE_ROOT/spawn-requests → ephemeral workers

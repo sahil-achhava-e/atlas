@@ -193,6 +193,15 @@ interface State {
    *  registry entry reattach by themselves. God/assistant are excluded (they
    *  auto-respawn). */
   restorableAgents: Agent[];
+  /** Add agents the renderer has no record of but the HIVE does.
+   *
+   *  The registry is the main process's copy and it survives things the
+   *  renderer's does not — a crash, a cleared origin, a roster written before
+   *  the agent existed. Without this, an agent that is alive and well in the
+   *  hive has no way back onto the floor, because restore only ever looked at
+   *  what the renderer already remembered. Additive and id-keyed: anything
+   *  already known, live or restorable, is left exactly as it is. */
+  adoptRestorable: (agents: Agent[]) => void;
   selectedId: string | null;
   feeds: Record<string, string[]>;
   addAgentOpen: boolean;
@@ -877,6 +886,19 @@ export const useStore = create<State>((set, get) => ({
       persistAgents(agents, selectedId);
       if (_queueGone) persistQueues(messageQueues);
       return { agents, feeds, selectedId, messageQueues, fullscreenAgentId };
+    }),
+  adoptRestorable: (incoming) =>
+    set((s) => {
+      const known = new Set([
+        ...s.agents.map((a) => a.id),
+        ...s.restorableAgents.map((a) => a.id),
+        ...s.archivedAgents.map((a) => a.id)
+      ]);
+      const missing = incoming.filter((a) => !known.has(a.id));
+      if (missing.length === 0) return s;
+      const restorableAgents = [...s.restorableAgents, ...missing];
+      persistRestorable(restorableAgents);
+      return { restorableAgents };
     }),
   archiveAgent: (id) =>
     set((s) => {
