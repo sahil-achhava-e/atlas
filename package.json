@@ -26,7 +26,8 @@
     "dist:win": "npm run build && electron-builder --win",
     "dist:linux": "npm run build && electron-builder --linux",
     "build:server": "node tools/gen-bridge-map.cjs && vite build --config vite.server.config.ts",
-    "serve": "npm run build && npm run build:server && node out/server/index.cjs"
+    "serve": "npm run build && npm run build:server && node tools/serve.cjs",
+    "serve:once": "node out/server/index.cjs"
   },
   "dependencies": {
     "@codemirror/lang-css": "^6.3.1",
