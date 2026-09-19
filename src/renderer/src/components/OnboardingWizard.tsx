@@ -1,6 +1,6 @@
 import { isBrowserMode } from '@/runtime';
 import { osStringKey } from '@/platformCopy';
-import { workspacePath, suggestWorkspaceName } from '@shared/workspaceName';
+import { workspacePath, suggestWorkspaceName, WORKSPACE_ROOT, cleanWorkspaceName } from '@shared/workspaceName';
 import { ensureNotificationPermission } from '@/browserNotifications';
 import { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
@@ -144,7 +144,12 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   }, [audience]);
   useEffect(() => { if (step !== 'done') go({ screen: 'setup', step }); }, [step]);
 
-  const [home, setHome] = useState<string>('');
+  // The workspace's NAME, not a path. New workspaces are folders under one
+  // root, so the only decision left here is what to call this one — and the
+  // folder it makes is the name, which is why the root is shown beside the
+  // field rather than hidden inside it.
+  const [workspace, setWorkspace] = useState<string>('');
+  const home = workspace.trim() ? workspacePath(workspace) : '';
   const [repos, setRepos] = useState<string[]>([]);
   const [autoMode, setAutoMode] = useState<boolean>(true);
   // Anonymous usage stats (TELEMETRY.md). No longer asked about at first run:
@@ -226,21 +231,15 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   // field rendered empty "— leaving the copy above promising a default the user
   // could not accept, and Finish failing with "Pick a harness home folder first."
   //
-  // Suggest the literal `~/Atlas/agents` instead. That is exactly the string
-  // #140's normalizeHiveHome()/expandTilde() were built to absorb: it is expanded
-  // at the config-write boundary AND at ensureHarnessHome's mkdir, so every
-  // downstream reader still sees one absolute path. No new IPC surface.
+  // Suggest a NAME, and build `~/Atlas/<name>` from it. That tilde path is
+  // exactly the string #140's normalizeHiveHome()/expandTilde() were built to
+  // absorb: it is expanded at the config-write boundary AND at
+  // ensureHarnessHome's mkdir, so every downstream reader still sees one
+  // absolute path. No new IPC surface.
   useEffect(() => {
-    if (!home) setHome(workspacePath(suggestWorkspaceName([])));
+    if (!workspace) setWorkspace(suggestWorkspaceName([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const [pickingHome, pickHome] = useNativeDialog(async () => {
-    setError(undefined);
-    const res = await window.cth.chooseFolder();
-    if (res.ok) setHome(res.path);
-    else if (res.error !== 'cancelled') setError(res.error);
-  });
 
   const [pickingRepo, pickRepo] = useNativeDialog(async () => {
     setError(undefined);
@@ -468,19 +467,26 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   {plain ? t('onboarding.home.descPlain') : t('onboarding.home.desc')}
                 </p>
                 <FieldLabel>{t('onboarding.home.fieldLabel')}</FieldLabel>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'stretch' }}>
+                  {/* The root is a label, not editable text. Somewhere else on
+                      disk is still reachable — the workspace picker's "Open
+                      another folder" — but the folder this step MAKES is named
+                      here and lives there. */}
+                  <span style={{
+                    display: 'flex', alignItems: 'center', padding: '0 4px 0 14px',
+                    fontFamily: 'var(--cth-font-mono, monospace)', fontSize: 15,
+                    color: 'var(--cth-ink-500)', whiteSpace: 'nowrap',
+                    background: 'var(--cth-cream-50)',
+                    boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                    borderRadius: 'var(--cth-radius-input) 0 0 var(--cth-radius-input)'
+                  }}>{WORKSPACE_ROOT}/</span>
                   <input
-                    value={home}
-                    onChange={(e) => setHome(e.target.value)}
+                    value={workspace}
+                    onChange={(e) => setWorkspace(e.target.value)}
                     placeholder={t('onboarding.home.placeholder')}
                     className="cth-input"
-                    style={inputStyle}
+                    style={{ ...inputStyle, borderRadius: '0 var(--cth-radius-input) var(--cth-radius-input) 0', paddingLeft: 4 }}
                   />
-                  <PixelButton variant="secondary" size="lg" onClick={pickHome} disabled={pickingHome}>
-                    <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-                      <Icon name="folder" /> {plain ? t('onboarding.home.createPick') : t('onboarding.home.pick')}
-                    </span>
-                  </PixelButton>
                 </div>
                 {/* What actually lands in there. Three words beat a metaphor:
                     the old copy called it "the town hall", which tells you
@@ -1006,8 +1012,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                       // Validate the home step HERE. Without this the only check
                       // lives in finish(), so an empty field walks you through all
                       // four steps and then bounces you back to step 1 to be told.
-                      if (step === 'home' && !home.trim()) {
-                        setError(t('onboarding.errPickHome'));
+                      if (step === 'home' && !cleanWorkspaceName(workspace)) {
+                        setError(t('onboarding.home.errName'));
                         return;
                       }
                       // Same idea for the engine: refuse here, with the reason on

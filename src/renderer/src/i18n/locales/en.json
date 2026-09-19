@@ -707,12 +707,10 @@
     "home": {
       "descPlain": "Pick a folder for your first crew. Atlas keeps its notes and settings there, under ~/Atlas. It is created if it does not exist.",
       "desc": "A workspace is one folder holding one crew: its agents, their memory, the task board and the history. New ones live under ~/Atlas, one folder each. It is created if it does not exist.",
-      "placeholder": "~/Atlas/agents",
-      "createPick": "Choose folder",
-      "pick": "Choose folder",
-      "notePlain": "Nothing you need to open. It is how Atlas remembers after you close the app.",
-      "note": "Nothing you need to open. It is what lets a session pick back up after a restart.",
-      "fieldLabel": "Folder",
+      "placeholder": "agents",
+      "notePlain": "The name is the folder. Nothing you need to open — it is how Atlas remembers after you close the app.",
+      "note": "The name is the folder. Nothing you need to open — it is what lets a session pick back up after a restart.",
+      "fieldLabel": "Workspace name",
       "holdsState": "Agent state",
       "holdsMemory": "Memory",
       "holdsLogs": "Logs",
@@ -724,7 +722,8 @@
       "reviewProjectsNone": "none yet",
       "reviewMode": "Agents",
       "reviewModeAsk": "ask first",
-      "reviewModeAuto": "work on their own"
+      "reviewModeAuto": "work on their own",
+      "errName": "Give the workspace a name."
     },
     "orchestrator": {
       "descPlain": "Pick the AI that powers {{godName}}. Give it the best one you have: it is the one deciding what everyone else does.",
