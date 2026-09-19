@@ -47,6 +47,10 @@ export interface RosterSnapshot {
 export interface RosterWriteResult {
   ok: boolean;
   /** Set when the write was deliberately declined; the file is unchanged. */
+  /** Why a write was declined. 'empty-first-write' is kept as the name for the
+   *  case it has always described — a fresh window offering nothing — and now
+   *  also covers a window offering LESS than the disk holds, which is the same
+   *  accident with a smaller number. */
   skipped?: 'empty-first-write';
   error?: string;
 }
@@ -135,12 +139,22 @@ export class RosterStore {
       mkdirSync(home, { recursive: true });
       const existing = this.read();
 
-      if (!this.wrote && existing && entryCount(existing) > 0 && entryCount(snap) === 0) {
+      // A FIRST write from a window that knows less than the file does is not a
+      // save, it is a loss. The empty case was guarded; the PARTIAL one was not,
+      // and that is the one that happened: after a crash a fresh renderer knew
+      // about one agent, wrote its roster over a file holding three, and the
+      // other two existed nowhere the floor could find them. A window only ever
+      // starts with everything or with nothing, so a first write that has fewer
+      // agents than the disk is the same accident in both shapes.
+      if (!this.wrote && existing && entryCount(snap) < entryCount(existing)) {
         // Back it up anyway: what is on disk right now is exactly what we are
         // protecting, and a copy of it costs nothing. `wrote` stays false: the
-        // guard disarms only when a non-empty write lands, never on a refusal.
+        // guard disarms only when a full write lands, never on a refusal.
         this.backup(home, p, 'declined');
-        console.warn('[roster] refused to overwrite a non-empty roster with an empty one');
+        console.warn(
+          `[roster] refused a first write that would drop entries: `
+          + `${entryCount(existing)} on disk, ${entryCount(snap)} offered`
+        );
         return { ok: false, skipped: 'empty-first-write' };
       }
 

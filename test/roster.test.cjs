@@ -190,3 +190,41 @@ test('queues and selection round-trip, and a bad queues field degrades to empty'
   assert.deepEqual(coerced.queues, {});
   assert.equal(coerced.selectedId, null);
 });
+
+// The empty case was guarded; the PARTIAL one was not, and that is the one that
+// happened. After a crash a fresh window knew about one agent, wrote its roster
+// over a file holding three, and the other two existed nowhere the floor could
+// find them. A window starts with everything or with nothing, so a first write
+// holding fewer agents than the disk is the same accident with a smaller number.
+
+const card = (id) => ({ id, name: id });
+
+test('a first write that would DROP agents is refused, not just an empty one', () => {
+  const dir = tmpHome();
+  storeAt(dir).write(snapshot([card('a'), card('b'), card('c')]));
+
+  const nextRun = storeAt(dir);
+  const res = nextRun.write(snapshot([card('a')]));
+  assert.equal(res.ok, false);
+  assert.equal(res.skipped, 'empty-first-write');
+  // The three are still there.
+  assert.equal(nextRun.read().agents.length, 3);
+});
+
+test('a first write that keeps or adds agents is allowed through', () => {
+  const dir = tmpHome();
+  storeAt(dir).write(snapshot([card('a'), card('b')]));
+
+  const nextRun = storeAt(dir);
+  assert.equal(nextRun.write(snapshot([card('a'), card('b'), card('c')])).ok, true);
+  assert.equal(nextRun.read().agents.length, 3);
+});
+
+test('once a full write lands, removing an agent is the human and is honoured', () => {
+  const dir = tmpHome();
+  const store = storeAt(dir);
+  store.write(snapshot([card('a'), card('b')]));
+  // Same run: the guard has disarmed, so a deliberate removal saves.
+  assert.equal(store.write(snapshot([card('a')])).ok, true);
+  assert.equal(store.read().agents.length, 1);
+});
