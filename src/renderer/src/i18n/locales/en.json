@@ -638,8 +638,8 @@
     "titles": {
       "persona": "Welcome to Atlas",
       "welcome": "Meet your office",
-      "home": "Last thing: a home for Atlas",
-      "homePlain": "Last thing: a home for Atlas",
+      "home": "Last thing: your first workspace",
+      "homePlain": "Last thing: your first workspace",
       "orchestrator": "Pick the engine",
       "orchestratorPlain": "Pick the engine",
       "repos": "Your projects",
@@ -705,8 +705,8 @@
       "cursor": "Cursor Agent CLI, uses your Cursor credits (Luna, Composer, …)"
     },
     "home": {
-      "descPlain": "Pick an empty folder for Atlas to keep its notes and settings in. It is created if it does not exist.",
-      "desc": "Pick a folder for Atlas to keep its own files: agent memory, logs, and any projects you start from here. It is created if it does not exist.",
+      "descPlain": "Pick a folder for your first crew. Atlas keeps its notes and settings there, under ~/Atlas. It is created if it does not exist.",
+      "desc": "A workspace is one folder holding one crew: its agents, their memory, the task board and the history. New ones live under ~/Atlas, one folder each. It is created if it does not exist.",
       "placeholder": "~/Atlas/agents",
       "createPick": "Choose folder",
       "pick": "Choose folder",
