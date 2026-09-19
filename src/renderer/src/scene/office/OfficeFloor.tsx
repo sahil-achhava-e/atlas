@@ -861,12 +861,23 @@ export function OfficeFloor() {
       // the sink and racks it back on the sideboard. An agent without a mug
       // fetches a clean one off the rack first — no mug, no coffee: if the rack
       // ran dry the run ends in a sulk instead of a brew.
+      /** How long an agent stays at its desk after coming back from anything.
+       *
+       *  The floor is meant to read as people WORKING, with the occasional
+       *  errand — and it was reading as a floor where nobody sits down. Each
+       *  trip is short (a break lingers 8–16s), so without a dwell afterwards an
+       *  agent became eligible again the moment it sat, and the boss in
+       *  particular was up every few seconds. This is the pause that makes the
+       *  desk the default and the trip the exception. */
+      const deskDwellMs = (): number => 60_000 + Math.random() * 90_000;
+
       const endBreak = (id: string, rt: Runtime): void => {
         const arrived = rt.brk?.phase === 'lingering';
         releaseBreak(rt);
         rt.character.hideThought();
         const agent = agentById(id);
         const c = rt.character;
+        rt.settleUntil = Date.now() + deskDwellMs();
         if (agent?.isGod) {
           // Same mug economy as everyone else — he is not exempt from washing up
           // — but he returns to desk-ceo instead of wandering.
@@ -943,7 +954,7 @@ export function OfficeFloor() {
         // talking about him the moment he sits down. Rarer than a worker's
         // break, and the sitting check does not apply because he is seated
         // whenever he is idle.
-        if (agent.isGod) return Math.random() < 0.25;
+        if (agent.isGod) return Math.random() < 0.06;
         return !rt.character.isSitting();   // already parked at a desk → leave it
       };
 
@@ -995,9 +1006,11 @@ export function OfficeFloor() {
         // Periodically send one idle agent on a break — but cap the room at 4.
         cafeCooldown -= dt;
         if (cafeCooldown > 0) return;
-        cafeCooldown = 6 + Math.random() * 6;
-        if (cafeTaken.filter(Boolean).length >= 4) return;
-        if (Math.random() >= 0.7) return;          // not every window — keep it casual
+        cafeCooldown = 45 + Math.random() * 45;
+        // Two in the café at once, not four: a room with half the floor in it
+        // is a break room, and the desks behind it are empty.
+        if (cafeTaken.filter(Boolean).length >= 2) return;
+        if (Math.random() >= 0.35) return;          // not every window — keep it rare
         const candidates: Array<[Agent, Runtime]> = [];
         for (const agent of useStore.getState().agents) {
           const rt = runtimes.get(agent.id);
@@ -1076,6 +1089,9 @@ export function OfficeFloor() {
         errandTaken[rt.err.idx] = null;
         errandFx.get(rt.err.idx)?.clear();
         rt.err = undefined;
+        // Same dwell as a café break: every way back to the desk has to set it,
+        // or the one that does not becomes the loop that keeps the floor up.
+        rt.settleUntil = Date.now() + deskDwellMs();
         rt.character.stopWatering();
         rt.character.stopSmoking();
       };
@@ -1102,8 +1118,8 @@ export function OfficeFloor() {
         }
         errCooldown -= dt;
         if (errCooldown > 0) return;
-        errCooldown = 14 + Math.random() * 18;
-        if (Math.random() >= 0.65) return;          // keep it occasional
+        errCooldown = 70 + Math.random() * 70;
+        if (Math.random() >= 0.35) return;          // keep it occasional
         const free = ERRAND_SPOTS.map((_, i) => i).filter((i) => !errandTaken[i]);
         if (free.length === 0) return;
         const idx = free[Math.floor(Math.random() * free.length)];
@@ -1118,7 +1134,8 @@ export function OfficeFloor() {
           const grt = god ? runtimes.get(god.id) : undefined;
           if (!god || !grt || grt.err || grt.brk
             || (god.status !== 'idle' && god.status !== 'success')
-            || Math.random() >= 0.5) return;        // the boss is unhurried
+            || (grt.settleUntil !== undefined && Date.now() < grt.settleUntil)
+            || Math.random() >= 0.15) return;       // the boss is unhurried
           agent = god; rt = grt;
         } else {
           const candidates: Array<[Agent, Runtime]> = [];
@@ -2023,8 +2040,9 @@ export function OfficeFloor() {
         if (!rt.visit) return;
         visitSpots.delete(`${rt.visit.tile.x},${rt.visit.tile.y}`);
         rt.visit = undefined;
+        rt.settleUntil = Date.now() + deskDwellMs();
         rt.character.hideThought();
-        rt.character.startWandering();
+        rt.character.sitAtDesk(true);
       };
 
       const updateVisits = (dt: number): void => {
@@ -2068,10 +2086,12 @@ export function OfficeFloor() {
         const idx = meetingTiles.findIndex((tl) => tl.x === m.tile.x && tl.y === m.tile.y);
         if (idx >= 0 && meetingTaken[idx] === id) meetingTaken[idx] = null;
         rt.mtg = undefined;
+        rt.settleUntil = Date.now() + deskDwellMs();
         rt.character.hideThought();
-        const agent = agentById(id);
-        if (agent?.isGod) rt.character.sitAtDesk(true);
-        else rt.character.startWandering();
+        // Back to work, not back to wandering: a standup that ends with everyone
+        // milling about is the floor's busiest-looking moment and its least
+        // truthful — the meeting is over, so they are at their desks.
+        rt.character.sitAtDesk(true);
       };
 
       /**

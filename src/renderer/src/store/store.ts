@@ -546,7 +546,12 @@ function loadPersistedAgents(): Agent[] {
       ...a,
       progress: 0,
       status: 'idle',
-      action: 'reconnecting…',
+      // Restored from the roster, not doing anything yet. It used to say
+      // "reconnecting…", which every surface then printed as the agent's
+      // activity — a word about the APP's bookkeeping, shown as if the agent
+      // were doing it, and it outlived the reconnect because nothing clears an
+      // action until the next event.
+      action: '',
       currentStation: 'desk',
       carrying: undefined,
       recentTextTs: Date.now(),

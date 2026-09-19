@@ -1566,6 +1566,7 @@ export class HiveManager {
       ? `PROJECTS: the human registered these folders as the work — ${projects.join(', ')}. `
         + 'These are the repositories this crew exists for. Read one before you plan against it, and when you dispatch, name the folder the agent should work in. '
         + `${projects.length > 1 ? 'Several are registered, so ask which one a request is about when it is not obvious.' : ''}`
+        + ' EVERY AGENT BELONGS TO ONE PROJECT: its working directory, shown beside its role in the live roster. Route a card to an agent whose project matches it — an agent working in one repo cannot see another, so a card sent to the wrong one comes back as "file not found" or, worse, gets done in the wrong codebase. When you dispatch, name the repo in the OBJECTIVE so the agent can tell immediately that it is the right owner. If a job spans both, split it into one card per repo rather than handing one agent work outside its folder. An agent marked "own worktree" has its own checkout of that repo: it can branch and commit without colliding with anyone else in the same repo, so parallel cards there are safe — agents sharing a plain checkout must be serialised.'
         + ' The human can add or remove them in Settings, so re-read this rather than remembering a list from an earlier session.'
       : 'PROJECTS: none registered yet. The human adds them in Settings (or during setup); until then there is no repository to plan against, so ask for a folder or an objective rather than guessing.';
     // Item 11: god could not find the spawn queue. The mechanism has worked since
@@ -2583,6 +2584,7 @@ export class HiveManager {
         ts?: number;
         agents?: Array<{
           id: string; name?: string; role?: string; isGod?: boolean;
+          cwd?: string; worktreePath?: string;
           breaker?: string; tokens?: number; usd?: number;
           lastTool?: string | null; lastActiveSecAgo?: number | null; inboxBacklog?: number;
           onHold?: boolean;
@@ -2604,8 +2606,15 @@ export class HiveManager {
       let anyCtx = false;
       let anyHold = false;
       const rows = shown.map((a) => {
-        const bits = [a.role ?? 'agent',
-          typeof a.lastActiveSecAgo === 'number' ? `active ${ago(a.lastActiveSecAgo)}` : 'no activity yet'];
+        // WHICH PROJECT. With one repo it is implied; with two it is the first
+        // thing routing depends on, and the roster never said it — so a card for
+        // the events repo could go to the agent that only knows the VMS one.
+        // The folder name, not the path: the path is in fleet.json for whoever
+        // needs it, and a roster of absolute paths is unreadable.
+        const project = a.cwd ? a.cwd.replace(/\/+$/, '').split('/').filter(Boolean).pop() : undefined;
+        const bits = [a.role ?? 'agent'];
+        if (project && !a.isGod) bits.push(a.worktreePath ? `${project} (own worktree)` : project);
+        bits.push(typeof a.lastActiveSecAgo === 'number' ? `active ${ago(a.lastActiveSecAgo)}` : 'no activity yet');
         if (a.tokens) bits.push(`${Math.round(a.tokens / 1000)}k tok`);
         if (a.usd) bits.push(`$${a.usd.toFixed(2)}`);
         if (a.inboxBacklog) bits.push(`inbox ${a.inboxBacklog}`);

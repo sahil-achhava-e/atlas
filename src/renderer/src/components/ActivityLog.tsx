@@ -22,7 +22,14 @@ import type { ActivityRow, ActivityTone } from '@shared/activityFeed';
  * Read-only by construction: there is nothing to type into.
  */
 
-const POLL_MS = 1500;
+/** How often the transcript is re-read.
+ *
+ *  600ms because this is the only thing standing in for a live stream: the
+ *  engine writes each block as it finishes it, so the interval IS the latency
+ *  between an agent saying something and a person seeing it. A second and a
+ *  half read as a pane that had stopped. The read is a 512KB tail parse of a
+ *  local file — cheap enough to do often, and it stops when the pane unmounts. */
+const POLL_MS = 600;
 
 /** Six colours a person can learn. Anything unrecognised is ink, which reads as
  *  "something happened" rather than as a category that does not exist. */
@@ -74,11 +81,22 @@ export function ActivityLog({ agent }: { agent: Agent }) {
     return () => { live = false; clearInterval(timer); };
   }, [agent.id]);
 
+  // Follow the bottom as the feed grows — after paint, not during it. Setting
+  // scrollTop in the same tick as the change uses the PREVIOUS scrollHeight, so
+  // a tall row (a long reply) lands a screen short of the end, which reads as
+  // the pane refusing to follow. `agent.status` is a dependency because the
+  // live line appears and disappears under the last row.
   useEffect(() => {
     if (!pinned.current) return;
     const el = scroller.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [rows]);
+    if (!el) return;
+    const id = requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+    return () => cancelAnimationFrame(id);
+  }, [rows, agent.status, agent.action]);
+
+  // Switching agents starts at the bottom of THEIR feed, not wherever the last
+  // one was left.
+  useEffect(() => { pinned.current = true; }, [agent.id]);
 
   const chunks = useMemo(() => chunk(rows), [rows]);
   const accent = `var(--cth-${agent.accent}, var(--cth-sky))`;

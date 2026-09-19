@@ -1363,6 +1363,12 @@ function writeFleetSnapshot(): void {
           name: a.name,
           role: a.role ?? (a.isGod ? 'orchestrator' : 'agent'),
           cwd: a.cwd,
+          // Whether this agent is working in its OWN git worktree rather than
+          // the repo directly. God routes on it: two agents isolated in one repo
+          // can work in parallel, two sharing a checkout cannot. Read from the
+          // live map rather than the registry — the worktree belongs to the
+          // RUN, and it is gone when the agent is.
+          worktreePath: worktreePaths.get(id),
           isGod: !!a.isGod,
           breaker: breaker.levelFor(id),
           tokens,

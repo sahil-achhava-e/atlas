@@ -195,15 +195,12 @@ export function MessageQueueComposer({ agent }: MessageQueueComposerProps) {
   // between pressing Send and a reply appearing there was no sign anyone was
   // there. An empty queue and a busy agent is the most common state there is,
   // and it is the one that said nothing.
-  // An empty queue does not mean nothing is happening. The message may be
-  // delivered and the engine not yet awake — idle, nothing queued, and a person
-  // staring at a strip that says nothing. `lastSentAt` is the record that the
-  // silence is a wait; useHive clears it when the agent answers.
-  const sentAt = useStore((s) => s.lastSentAt[agent.id]);
+  // The QUEUE's business only. Whether the agent is working is said once, at
+  // the end of the feed above, where it sits with what the agent is doing —
+  // saying it here too put two live lines a centimetre apart, both animating,
+  // both about the same thing.
   const statusHint = queue.length === 0
-    ? (agent.ptyId && (!idle || sentAt !== undefined)
-        ? t('queueComposer.waitingFor', { name: agent.name })
-        : null)
+    ? null
     : block === 'draft'
     ? t('queueComposer.heldDraft', { name: agent.name })
     : block === 'picker'
