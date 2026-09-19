@@ -57,6 +57,11 @@ export interface HiveAgentMeta {
   /** Marked by the human as a project's team lead: gets the lead brief on spawn
    *  and one of the two side offices on the floor. */
   isLead?: boolean;
+  /** The standing directive the human wrote, and the face and colour they
+   *  picked. Mirrored into the registry so a lost roster cannot lose them. */
+  goal?: string;
+  character?: string;
+  accent?: string;
 }
 
 export interface HiveMessage {
@@ -760,6 +765,13 @@ const api = {
   // ─── Hive (multi-agent coordination) ─────────────────────────────────────
   hiveRegistry: (): Promise<HiveRegistry> => ipcRenderer.invoke('hive:registry'),
   /** Persist a hire/job role to hive registry.json + identity.md (no respawn). */
+  /** Keep the hive's copy of an agent's briefing, face, colour and lead flag in
+   *  step with the renderer's. The registry survives a lost roster; without this
+   *  an agent comes back nameless-in-spirit — same id, no goal, default face. */
+  hivePatchAgentCard: (
+    id: string,
+    patch: { goal?: string; character?: string; accent?: string; isLead?: boolean }
+  ): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke('hive:patchAgentCard', id, patch),
   hivePatchAgentRole: (id: string, role: string): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke('hive:patchAgentRole', id, role),
   /** Rename an agent's display name. Its id, hive directory, and PTY are unchanged. */

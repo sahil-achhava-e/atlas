@@ -45,9 +45,11 @@ test('the human-driven archive is still reachable', () => {
   assert.match(src, /ipcMain\.handle\('hive:setArchived'/);
 });
 
-test('the renderer can adopt agents the hive knows and it does not', () => {
+test('the renderer reconciles the floor against the hive on boot', () => {
   const store = readFileSync(join(__dirname, '..', 'src/renderer/src/store/store.ts'), 'utf8');
   const hive = readFileSync(join(__dirname, '..', 'src/renderer/src/hooks/useHive.ts'), 'utf8');
   assert.match(store, /adoptRestorable:/, 'store needs the action');
-  assert.match(hive, /adoptRestorable\(adopted\)/, 'and something must call it on boot');
+  assert.match(hive, /planFloor\(/, 'and boot must plan the floor from the registry + live ptys');
+  assert.match(hive, /adoptRestorable\(/, 'agents with no terminal go to restore');
+  assert.match(hive, /addAgent\(cardFor\(e, ptyIdFor\(e\.id\)\)\)/, 'a live terminal gets a card wired to it');
 });

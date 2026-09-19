@@ -3783,6 +3783,23 @@ ipcMain.handle('hive:setArchived', (_evt, id: unknown, archived: unknown) => {
   hive.setArchived(id, archived === true);
   return { ok: true };
 });
+/** Update the parts of an agent's card the hive keeps: its briefing, face and
+ *  colour. The renderer owns these day to day; the hive keeps a copy so a lost
+ *  roster does not lose the agent's identity with it. */
+ipcMain.handle('hive:patchAgentCard', (_evt, id: unknown, patch: unknown) => {
+  if (typeof id !== 'string' || !patch || typeof patch !== 'object') {
+    return { ok: false, error: 'invalid args' };
+  }
+  const p = patch as { goal?: unknown; character?: unknown; accent?: unknown; isLead?: unknown };
+  const next: Record<string, unknown> = {};
+  if (typeof p.goal === 'string') next.goal = p.goal;
+  if (typeof p.character === 'string') next.character = p.character;
+  if (typeof p.accent === 'string') next.accent = p.accent;
+  if (typeof p.isLead === 'boolean') next.isLead = p.isLead;
+  if (Object.keys(next).length === 0) return { ok: true as const };
+  return hive.patchAgent(id, next);
+});
+
 ipcMain.handle('hive:patchAgentRole', (_evt, id: unknown, role: unknown) => {
   if (typeof id !== 'string') return { ok: false, error: 'invalid id' };
   if (typeof role !== 'string') return { ok: false, error: 'invalid role' };

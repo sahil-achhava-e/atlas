@@ -42,6 +42,7 @@ export const INVOKE: Record<string, string> = {
   gitWorktrees: 'git:worktrees',
   gitCheckout: 'git:checkout',
   hiveRegistry: 'hive:registry',
+  hivePatchAgentCard: 'hive:patchAgentCard',
   hivePatchAgentRole: 'hive:patchAgentRole',
   hiveRenameAgent: 'hive:renameAgent',
   hiveSetAgentHold: 'hive:setAgentHold',

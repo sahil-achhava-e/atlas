@@ -143,6 +143,14 @@ export interface AgentMeta {
    *  agents and reports up, rather than being dispatched to like a worker. */
   isLead?: boolean;
   cwd: string;
+  /** The standing directive the human wrote for this agent, and the face and
+   *  colour they picked. Kept HERE, not only in the renderer, because the
+   *  renderer's copy can be lost — a crash took a whole roster once — and an
+   *  agent that comes back without its briefing is a different agent wearing
+   *  the same name. The registry survives what the roster does not. */
+  goal?: string;
+  character?: string;
+  accent?: string;
   isGod?: boolean;
   /** Michael's prep assistant — enriches prompts and forwards them to Michael.
    *  Send-only: excluded from broadcast fan-out so it never drains an inbox. */
@@ -1054,6 +1062,20 @@ export class HiveManager {
 
   /** Update the durable job string (hire role) without respawning. Refreshes
    *  registry.json + identity.md so the floor editor and the hive stay aligned. */
+  /** Merge fields into one agent's registry record. Read-modify-write against
+   *  the file, so a concurrent write to a different agent is not lost. */
+  patchAgent(id: string, patch: Record<string, unknown>): { ok: boolean; error?: string } {
+    const reg = this.registry();
+    const agent = reg.agents[id];
+    if (!agent) return { ok: false, error: 'no such agent' };
+    reg.agents[id] = { ...agent, ...patch } as typeof agent;
+    const root = this.root();
+    if (!root) return { ok: false, error: 'no hive' };
+    this.writeJson(join(root, 'registry.json'), reg);
+    this.commit(`hive: patch ${id}`);
+    return { ok: true };
+  }
+
   patchAgentRole(id: string, role: string): { ok: boolean; error?: string } {
     const root = this.root();
     if (!root) return { ok: false, error: 'hive disabled' };

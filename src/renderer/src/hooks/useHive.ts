@@ -21,6 +21,7 @@ import { bridgeOf, providerPreset } from '../../../shared/agentProvider';
 import { isDurableRole, preferredAgentRole, roleForHiveSpawn } from '../../../shared/agentRole';
 import { inboxNudgeText } from '../../../shared/hiveNudge';
 import { resolveGodName } from '../../../shared/godIdentity';
+import { planFloor } from '../../../shared/floorReconcile';
 import { acquireTerminal, resetTerminal, isTerminalAutomationSafe } from '@/components/terminalPool';
 import { canDeliverToAgent, deliverWithAcknowledgement, checkPrecondition } from './queueDelivery';
 import { OFFICE_CAST, DEFAULT_CHARACTER } from '@/scene/office/cast';
@@ -33,6 +34,9 @@ const GOD_ID = 'god';
  *  AddAgentModal palette. */
 const SPAWN_ACCENTS = ['coral', 'mint', 'sky', 'lemon', 'lilac', 'peach'] as const;
 const GOD_PTY = `pty-${GOD_ID}`;
+/** An agent's terminal id. One place, because the floor reconciliation asks
+ *  "is this agent's terminal running" and a second spelling would answer no. */
+const ptyIdFor = (agentId: string): string => `pty-${agentId}`;
 
 const REMOTE_CONTROL_SETTLE_MS = 1500;
 // Provider-agnostic PTY-quiescence idle fallback (#2e). A non-Claude bridge that
@@ -379,46 +383,63 @@ export function useHive(config: HarnessConfig | null): void {
     }).catch(() => { /* hive not ready yet */ });
   }, [config?.onboardingComplete]);
 
-  // 0b) ADOPT anyone the hive knows about and the renderer does not.
+  // 0b) RECONCILE the floor against the hive and the live terminals.
   //
-  //     The registry is the main process's copy of the floor, and it survives
-  //     what the renderer's does not: a crash, a cleared origin, a roster
-  //     written before the agent existed. Restore only ever looked at what the
-  //     renderer already remembered, so an agent alive in the hive had no way
-  //     back — two of them vanished after a crash and the orchestrator was told
-  //     it was alone. Adding them to `restorable` is enough: the boot restore
-  //     picks them up and spawns them with their original id, so their memory,
-  //     inbox and identity reattach by themselves.
+  //     The renderer's copy of who is on the floor can be lost — a crash, a
+  //     cleared origin, a roster written before an agent existed — while the
+  //     registry and the running processes are untouched. Every "where did my
+  //     agent go" bug in this app has been a path that asked the renderer
+  //     instead of those two. So ask them, once, and put right whatever is
+  //     missing: a live terminal gets a card wired to it, an agent with no
+  //     terminal goes to restore, and an archived one is left alone because
+  //     archiving is the human's decision. See shared/floorReconcile.ts.
   useEffect(() => {
     if (!config?.onboardingComplete) return;
-    void window.cth.hiveRegistry().then((reg) => {
-      const adopted: Agent[] = [];
-      for (const [id, entry] of Object.entries(reg.agents ?? {})) {
-        if (entry.archived || entry.isGod || id === reg.godId) continue;
-        if (!entry.cwd) continue;   // nothing to spawn into
-        adopted.push({
-          id,
-          name: entry.name || id,
-          character: DEFAULT_CHARACTER,
-          accent: 'coral',
-          description: entry.role || 'restored from the hive',
-          project: entry.cwd.replace(/\/+$/, '').split('/').filter(Boolean).pop() ?? '',
-          tmuxTarget: '',
-          cwd: entry.cwd,
-          status: 'idle',
-          action: '',
-          progress: 0,
-          currentStation: 'desk',
-          provider: (entry.provider as Agent['provider']) ?? 'claude',
-          isLead: entry.isLead,
-          recentTextTs: Date.now()
-        });
+    void (async () => {
+      const [reg, live] = await Promise.all([
+        window.cth.hiveRegistry().catch(() => null),
+        window.cth.listPtys().catch(() => [] as Array<{ id: string }>)
+      ]);
+      if (!reg?.agents) return;
+      const entries = Object.entries(reg.agents).map(([id, e]) => ({ ...e, id }));
+      const known = new Set(useStore.getState().agents.map((a) => a.id));
+      const plan = planFloor(entries, live.map((p) => p.id), known, ptyIdFor);
+
+      const cardFor = (e: (typeof entries)[number], ptyId?: string): Agent => ({
+        id: e.id,
+        name: e.name || e.id,
+        // Whatever the hive kept. It has the briefing, the face and the colour
+        // now, so a restored agent comes back as ITSELF rather than a default
+        // wearing its name.
+        character: e.character || (e.isGod ? 'michael' : DEFAULT_CHARACTER),
+        accent: e.accent || 'coral',
+        goal: e.goal,
+        description: e.role || (e.isGod ? 'runs the floor' : 'restored from the hive'),
+        project: (e.cwd ?? '').replace(/\/+$/, '').split('/').filter(Boolean).pop() ?? '',
+        tmuxTarget: '',
+        cwd: e.cwd ?? config.harnessHome ?? '',
+        status: 'idle',
+        action: '',
+        progress: 0,
+        currentStation: 'desk',
+        ptyId,
+        provider: (e.provider as Agent['provider']) ?? 'claude',
+        isGod: e.isGod,
+        isLead: e.isLead,
+        recentTextTs: Date.now()
+      });
+
+      for (const e of plan.adoptLive) {
+        console.log('[hive] adopting a running agent with no card:', e.id);
+        useStore.getState().addAgent(cardFor(e, ptyIdFor(e.id)));
       }
-      if (adopted.length) {
-        console.log('[hive] adopting agents the renderer had lost:', adopted.map((a) => a.id));
-        useStore.getState().adoptRestorable(adopted);
+      if (plan.adoptRestorable.length) {
+        console.log('[hive] handing lost agents to restore:', plan.adoptRestorable.map((x) => x.id));
+        useStore.getState().adoptRestorable(
+          plan.adoptRestorable.filter((x) => !x.isGod).map((x) => cardFor(x))
+        );
       }
-    }).catch(() => { /* no hive yet */ });
+    })();
   }, [config?.onboardingComplete]);
 
   // 1) Bootstrap the god agent (source of truth = live PTYs, to dodge restarts).

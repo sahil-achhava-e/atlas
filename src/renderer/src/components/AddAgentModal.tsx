@@ -490,6 +490,11 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
         cwd,
         role: description.trim() || undefined,
         isLead,
+        // The hive keeps its own copy of these — see AgentMeta. A crash that
+        // takes the renderer's roster must not take the agent's briefing.
+        goal: composedGoal.trim() || undefined,
+        character: effectiveCharacter,
+        accent,
         // A hire manifest may carry validated capability tags (routing hints).
         capabilities: hireMeta?.capabilities
       }

@@ -115,6 +115,17 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
       description: trimmedDescription,
       goal: trimmedGoal || undefined
     });
+
+    // Mirror the durable half into the hive. The renderer's roster can be lost
+    // — a crash took one — and an agent that comes back without its briefing is
+    // a different agent wearing the same name. Best-effort: a hive that refuses
+    // must not fail the save the user just made.
+    void window.cth.hivePatchAgentCard?.(agent.id, {
+      goal: trimmedGoal,
+      character: agent.character,
+      accent,
+      isLead
+    })?.catch(() => { /* the store write already happened */ });
     onClose();
   };
 
