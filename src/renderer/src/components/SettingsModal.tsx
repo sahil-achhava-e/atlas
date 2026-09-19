@@ -37,6 +37,9 @@ export interface SettingsModalProps {
    *  elsewhere in the UI — "set it now" beside a disabled Talk button lands on
    *  the tab that actually holds the field, rather than making the user hunt. */
   initialSection?: Section;
+  /** Go back to the workspace picker. A workspace could only be made during
+   *  setup or at launch, which meant a second one cost you a restart. */
+  onSwitchWorkspace?: () => void;
 }
 
 /**
@@ -146,7 +149,7 @@ function describeUpdate(st: UpdateStatus | null | undefined, t: (k: string, o?: 
   }
 }
 
-export function SettingsModal({ config, onClose, initialSection }: SettingsModalProps) {
+export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspace}: SettingsModalProps) {
   const { t, i18n } = useTranslation();
   const godName = useStore((s) => s.agents.find((a) => a.isGod)?.name) ?? 'the orchestrator';
   const [confirming, setConfirming] = useState(false);
@@ -816,6 +819,23 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                           <PixelButton variant="secondary" size="sm" onClick={pickNewHome} disabled={pickingHome}>{t('settings.change')}</PixelButton>
                         </div>
                       </div>
+                      )}
+
+                      {/* Workspaces. Making one used to mean setup or a restart:
+                          the picker only ever showed at launch, and Change above
+                          repoints THIS workspace rather than opening another. */}
+                      {onSwitchWorkspace && (
+                        <div style={groupCard}>
+                          <div style={sectionHead}>{t('settings.general.workspaces')}</div>
+                          <div style={{ display: 'flex', gap: 12, fontSize: 13, lineHeight: '20px', alignItems: 'center' }}>
+                            <span style={{ flex: 1, color: 'var(--cth-ink-500)' }}>
+                              {t('settings.general.workspacesDesc')}
+                            </span>
+                            <PixelButton variant="secondary" size="sm" onClick={onSwitchWorkspace}>
+                              {t('settings.general.workspacesOpen')}
+                            </PixelButton>
+                          </div>
+                        </div>
                       )}
 
 

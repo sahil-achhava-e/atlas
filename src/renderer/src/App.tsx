@@ -759,6 +759,11 @@ export function App() {
           config={config}
           initialSection={settingsSection}
           onClose={() => { setSettingsOpen(false); setSettingsSection(undefined); }}
+          onSwitchWorkspace={() => {
+            setSettingsOpen(false);
+            setSettingsSection(undefined);
+            setHiveOpened(false);
+          }}
         />
       )}
 

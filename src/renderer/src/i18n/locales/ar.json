@@ -248,7 +248,10 @@
       "updateDownloading": "جارٍ التنزيل… {{percent}}%",
       "updateReady": "الإصدار {{version}} جاهز. أعد التشغيل للتطبيق.",
       "updateManual": "يجب تنزيل الإصدار {{version}} يدوياً.",
-      "currentVersion": "الإصدار {{version}}"
+      "currentVersion": "الإصدار {{version}}",
+      "workspaces": "مساحات العمل",
+      "workspacesDesc": "افتح مساحة عمل أخرى، أو أنشئ واحدة جديدة، أو احذف واحدة انتهيت منها.",
+      "workspacesOpen": "مساحات العمل"
     },
     "agentsModels": {
       "defaultModel": "النموذج الافتراضي للوكلاء",

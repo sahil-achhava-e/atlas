@@ -248,7 +248,10 @@
       "updateDownloading": "Downloading… {{percent}}%",
       "updateReady": "v{{version}} ready. Restart to apply.",
       "updateManual": "v{{version}} must be downloaded by hand.",
-      "currentVersion": "Version {{version}}"
+      "currentVersion": "Version {{version}}",
+      "workspaces": "Workspaces",
+      "workspacesDesc": "Open another workspace, make a new one, or delete one you are done with.",
+      "workspacesOpen": "Workspaces"
     },
     "agentsModels": {
       "defaultModel": "Default agent model",
