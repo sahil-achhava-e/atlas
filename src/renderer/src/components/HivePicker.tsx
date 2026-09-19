@@ -163,22 +163,20 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                   <PixelButton variant="primary" size="md" onClick={onOpenCurrent} disabled={!!busy}>
                     {t('hivePicker.open')}
                   </PixelButton>
+                  {/* Beside Open, like every recent row's bin — the actions for a
+                      workspace belong on its own card. This one cannot delete in
+                      place (its router and terminals are live), so it runs the
+                      app's reset; the dialog says so before anything happens. */}
+                  <button
+                    onClick={() => setConfirming({ path: current, reset: true })}
+                    disabled={!!busy}
+                    title={t('hivePicker.deleteOpen')}
+                    aria-label={t('hivePicker.deleteOpen')}
+                    style={{ ...rowAction, color: 'var(--cth-coral)' }}
+                  >
+                    <Icon name="trash" />
+                  </button>
                 </div>
-                {/* The open workspace cannot be deleted under itself — its
-                    services are running and its agents hold live terminals. So
-                    this is the app's own reset, said in the words of the thing
-                    the user is actually doing. */}
-                <button
-                  onClick={() => setConfirming({ path: current, reset: true })}
-                  disabled={!!busy}
-                  style={{
-                    marginTop: 8, padding: 0, background: 'none', border: 'none',
-                    font: 'inherit', fontSize: 12, color: 'var(--cth-ink-500)',
-                    textDecoration: 'underline', cursor: 'pointer'
-                  }}
-                >
-                  {t('hivePicker.deleteOpen')}
-                </button>
               </div>
             )}
 
