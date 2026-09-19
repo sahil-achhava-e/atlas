@@ -1,5 +1,5 @@
 import { interruptedWork, restartBrief, briefSignature } from './restartBrief';
-import { writeInstanceLock, clearInstanceLock } from './instanceLock';
+import { readInstanceLock, writeInstanceLock, clearInstanceLock } from './instanceLock';
 import { canDeleteWorkspace, WORKSPACE_DATA } from '../shared/workspaceDelete';
 import { mcpSecretRef, mcpSecretEnvKeys, dbSecretRef } from '../shared/mcpCatalog';
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, net, powerMonitor, powerSaveBlocker, protocol, screen, shell, Notification } from 'electron';
@@ -5588,9 +5588,28 @@ app.whenReady().then(() => {
   // never restarts on its own. Falls back to a notify-only releases/latest
   // check where native updating isn't possible (win-portable, dev-ish builds).
   initAutoUpdater(() => liveWebContents());
-  // Say which process owns the hive right now. `npm run serve` reads this and
-  // refuses to start a second router over the same files; this process never
-  // refuses for it — see src/main/instanceLock.ts.
+  // One brain at a time. The app and `npm run serve` are the same main process
+  // over the same files, and two of them means two routers: every message
+  // delivered twice, every mission dispatched twice, two hook servers racing for
+  // the port agents were told to call back on.
+  //
+  // This refuses only for a LIVE holder — readInstanceLock signals the pid to
+  // check, so a lock left behind by a crash is not one, and cannot be the reason
+  // the app will not open.
+  const heldBy = readInstanceLock(app.getPath('userData'));
+  if (heldBy) {
+    dialog.showMessageBoxSync({
+      type: 'warning',
+      title: 'Atlas is already running',
+      message: `Atlas is already running (${heldBy.mode}, pid ${heldBy.pid}).`,
+      detail: 'Both views share one workspace, so only one of them may run at a time. '
+        + 'Stop the other one and open Atlas again.',
+      buttons: ['OK']
+    });
+    allowQuit = true;
+    app.exit(0);
+    return;
+  }
   writeInstanceLock(app.getPath('userData'), process.versions.electron ? 'app' : 'server');
   // Bootstrap the hive (if harnessHome is configured) and start the message router.
   bootstrapHiveServices();

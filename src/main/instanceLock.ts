@@ -11,10 +11,11 @@
  * same files: mail delivered twice, a mission dispatched twice, and two servers
  * racing for the port agents were told to call back on.
  *
- * So the app writes a lock naming its pid, and the browser server refuses to
- * start while that pid is alive. Deliberately asymmetric — the app never
- * refuses, because a stale lock must never be the reason someone's desktop app
- * won't open. The server is the one you can always re-run after quitting.
+ * So whichever starts first writes a lock naming its pid, and the other refuses
+ * while that pid is alive. The liveness check is what makes this safe to apply
+ * to the app as well: a lock left behind by a crash names a dead process, and a
+ * dead process holds nothing — so a stale lock can never be the reason someone's
+ * app will not open.
  */
 
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
