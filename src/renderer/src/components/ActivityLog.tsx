@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next';
 import { Icon, type IconName } from './Icon';
 import { MarkdownPreview } from '@/markdown/MarkdownPreview';
-import type { Agent } from '@/store/store';
+import { useStore, type Agent } from '@/store/store';
 import type { ActivityRow, ActivityTone } from '@shared/activityFeed';
 
 /**
@@ -107,7 +107,7 @@ export function ActivityLog({ agent }: { agent: Agent }) {
             pane is exactly as it was: no queue any more, no reply yet, nothing
             saying anyone is there. This is the live bit, and it is the only
             thing on this page that is not the transcript. */}
-        <Live agent={agent} accent={accent} />
+        <Live agent={agent} accent={accent} newestAt={rows[rows.length - 1]?.at} />
       </div>
     </div>
   );
@@ -120,9 +120,34 @@ export function ActivityLog({ agent }: { agent: Agent }) {
  *  look busy when nothing is. `action` is the specific thing (its own words,
  *  e.g. "using Bash"), shown beside the status when it says more than the
  *  status already does. */
-function Live({ agent, accent }: { agent: Agent; accent: string }) {
+function Live({ agent, accent, newestAt }: { agent: Agent; accent: string; newestAt?: number }) {
   const { t } = useTranslation();
-  if (agent.status === 'idle' || !agent.ptyId) return null;
+  const sentAt = useStore((s) => s.lastSentAt[agent.id]);
+  if (!agent.ptyId) return null;
+
+  // THE QUIETEST MOMENT, and the one that needed saying most: the message is
+  // delivered so the queue is empty, and the engine has not woken up so the
+  // status is still idle. Both of the things every surface keys off say
+  // "nothing happening", and the honest answer is "it has your message".
+  //
+  // Answered means the transcript has grown since we sent — that is what makes
+  // this end by itself rather than on a timer.
+  const answered = newestAt !== undefined && sentAt !== undefined && newestAt >= sentAt;
+  const waiting = agent.status === 'idle' && sentAt !== undefined && !answered;
+  if (agent.status === 'idle' && !waiting) return null;
+
+  if (waiting) {
+    return (
+      <div aria-live="polite" style={{
+        display: 'flex', alignItems: 'center', gap: 8, margin: '12px 0 4px',
+        fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, lineHeight: '18px',
+        color: 'var(--cth-ink-500)'
+      }}>
+        <span className="cth-dots" aria-hidden><i /><i /><i /></span>
+        <span>{t('activity.sentWaiting', { name: agent.name })}</span>
+      </div>
+    );
+  }
 
   const key = ['thinking', 'compacting', 'looping'].includes(agent.status) ? agent.status : 'working';
   const label = t(`activity.${key}`, { name: agent.name });

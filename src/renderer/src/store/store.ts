@@ -341,6 +341,17 @@ interface State {
   releaseQueuedMessage: (agentId: string, messageId: string) => void;
   /** Clear an agent's entire pending queue. */
   clearQueue: (agentId: string) => void;
+  /** The agent has picked the message up — stop saying we are waiting. Called
+   *  the moment it stops being idle, since that is the engine waking. */
+  clearSentMark: (agentId: string) => void;
+  /** When we last handed this agent something to answer, per agent.
+   *
+   *  Between a message being delivered and the first hook firing, the agent is
+   *  still `idle` and the queue is already empty — so every surface that keys
+   *  off those two showed nothing at all, for as long as the engine took to
+   *  wake up. This is the only record that the silence is a wait rather than an
+   *  empty floor. Not persisted: a wait does not survive a reload. */
+  lastSentAt: Record<string, number>;
   setAddAgentOpen: (open: boolean) => void;
   /** Validated manifests waiting for one-at-a-time human review. */
   hireQueue: HireReviewQueue;
@@ -741,6 +752,17 @@ export const useStore = create<State>((set, get) => ({
   updateAgent: (id, patch) =>
     set((s) => {
       const agents = s.agents.map(a => a.id === id ? { ...a, ...patch } : a);
+      // The engine waking IS the agent picking the message up, and this is the
+      // one place every path to a status change goes through — hooks, the pty
+      // parser, the realtime watcher. Clearing it anywhere narrower would leave
+      // "waiting" on screen for whichever path was missed.
+      const picked = patch.status !== undefined && patch.status !== 'idle' && s.lastSentAt[id] !== undefined;
+      if (picked) {
+        const lastSentAt = { ...s.lastSentAt };
+        delete lastSentAt[id];
+        if (touchesDurableAgentField(patch)) persistAgents(agents, s.selectedId);
+        return { agents, lastSentAt };
+      }
       // Persist only when something DURABLE changed. `updateAgent` is also the
       // pty parser's per-chunk write (status/action/progress), so persisting
       // unconditionally would rewrite localStorage on every burst of terminal
@@ -952,6 +974,14 @@ export const useStore = create<State>((set, get) => ({
   // them, and a legacy or partial object used to reach `cfg.apiKey.trim()` in
   // the Triggers panel and blank the window.
   setOrgTrigger: (cfg) => set({ orgTrigger: { ...DEFAULT_ORG_TRIGGER, ...(cfg ?? {}) } }),
+  lastSentAt: {},
+  clearSentMark: (agentId) =>
+    set((s) => {
+      if (s.lastSentAt[agentId] === undefined) return s;
+      const next = { ...s.lastSentAt };
+      delete next[agentId];
+      return { lastSentAt: next };
+    }),
   enqueueMessage: (agentId, text, meta) =>
     set((s) => {
       const trimmed = text.trim();
@@ -992,7 +1022,13 @@ export const useStore = create<State>((set, get) => ({
       };
       const messageQueues = { ...s.messageQueues, [agentId]: [...(s.messageQueues[agentId] ?? []), msg] };
       persistQueues(messageQueues);
-      return { messageQueues };
+      // Machine traffic — an inbox nudge, a compact — is not something a person
+      // is waiting on an answer to, and marking it would leave "waiting for
+      // Atlas" on screen after housekeeping nobody asked about.
+      const human = !isInboxNudge(trimmed) && !isCompactionCommand(trimmed);
+      return human
+        ? { messageQueues, lastSentAt: { ...s.lastSentAt, [agentId]: Date.now() } }
+        : { messageQueues };
     }),
   removeQueuedMessage: (agentId, messageId) =>
     set((s) => {

@@ -1736,6 +1736,7 @@
     "compacting": "{{name}} is tidying its context",
     "looping": "{{name}} is stuck in a loop",
     "workingLabel": "Working",
-    "working": "{{name}} is working"
+    "working": "{{name}} is working",
+    "sentWaiting": "sent — waiting for {{name}} to pick it up"
   }
 }

@@ -1736,6 +1736,7 @@
     "compacting": "{{name}} يرتّب سياقه",
     "looping": "{{name}} عالق في حلقة",
     "workingLabel": "يعمل",
-    "working": "{{name}} يعمل"
+    "working": "{{name}} يعمل",
+    "sentWaiting": "أُرسلت — في انتظار أن يلتقطها {{name}}"
   }
 }
