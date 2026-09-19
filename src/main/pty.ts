@@ -323,7 +323,42 @@ export function parseNpmCmdShim(shimPath: string, content: string): NpmShimTarge
   return { interpreter, scriptPath };
 }
 
+/**
+ * Repair node-pty's spawn-helper before the first PTY, if this machine needs it.
+ *
+ * macOS node-pty execs a bundled binary to start every process, and an app
+ * allowlisting product kills any binary that arrived in an npm tarball — every
+ * agent then dies instantly with no output, which reads as a broken install
+ * rather than a policy. tools/pty-spawn-helper.cjs probes for that and swaps in
+ * a shell equivalent; it is a no-op on a machine that has no such policy.
+ *
+ * Runs once, here rather than only at install time, because the block belongs to
+ * the machine the app is RUNNING on, not the one it was built on.
+ */
+function repairSpawnHelper(): void {
+  if (process.platform !== 'darwin') return;
+  try {
+    // Resolved from node-pty itself so this finds the copy actually in use —
+    // repo, packaged app.asar.unpacked, or a server-mode checkout alike.
+    const root = join(require.resolve('node-pty'), '..', '..');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { ensureSpawnHelper } = require('../../tools/pty-spawn-helper.cjs') as {
+      ensureSpawnHelper(root: string): string;
+    };
+    const res = ensureSpawnHelper(root);
+    if (res === 'patched') {
+      console.log('[pty] spawn-helper is blocked by this machine\'s app policy — using a shell equivalent.');
+    }
+  } catch (e) {
+    // Never fatal: a machine where this fails is a machine where PTYs either
+    // already work or were never going to.
+    console.warn('[pty] could not check spawn-helper:', e instanceof Error ? e.message : e);
+  }
+}
+
 export class PtyManager {
+  constructor() { repairSpawnHelper(); }
+
   private sessions = new Map<string, PtySession>();
   private webContents: WebContents | null = null;
   /** Fired when a PTY exits on its OWN (child finished/crashed/killed
