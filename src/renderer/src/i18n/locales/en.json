@@ -632,7 +632,11 @@
     "faceTaken": "That face is already hired. Pick another.",
     "deskQ": "Where does this agent sit?",
     "deskHint": "Already pointed at the first free desk. Change it if you want them somewhere particular.",
-    "errBriefing": "Write what it does and what it should achieve."
+    "errBriefing": "Write what it does and what it should achieve.",
+    "leadQ": "Is this a team lead?",
+    "leadHint": "A lead runs a sub-team and gets a side office instead of a desk on the floor.",
+    "leadOn": "Leads a sub-team — dispatches work rather than doing it.",
+    "leadOff": "Does the work itself."
   },
   "onboarding": {
     "titles": {

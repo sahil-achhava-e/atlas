@@ -6,6 +6,7 @@ import { SpritePortrait } from './SpritePortrait';
 import { Icon } from './Icon';
 import { canOpenSection, sectionsFor, type SectionKey } from './addAgentGate';
 import { DeskPicker } from './DeskPicker';
+import { Switch } from './Switch';
 import { DESK_MAP } from '@/scene/office/deskDirectory';
 import { ProviderLogo } from './ProviderLogo';
 import { useStore, type Agent } from '@/store/store';
@@ -259,6 +260,11 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   /** Pre-selected: the first desk nobody is sitting at. The step still lets you
    *  change it, but "wherever there is room" is what most agents want and this
    *  shows WHERE that is instead of leaving it a surprise. */
+  // A lead sits in a side office rather than the open floor, and the hive tells
+  // it to run a sub-team instead of doing the work itself. It was only settable
+  // by hiring first and editing afterwards — two steps for a decision you have
+  // already made by the time you are naming the agent.
+  const [isLead, setIsLead] = useState(false);
   const [seat, setSeat] = useState(
     () => DESK_MAP.desks.find((d) => !deskOccupants[d.name])?.name ?? ''
   );
@@ -483,6 +489,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
         provider,
         cwd,
         role: description.trim() || undefined,
+        isLead,
         // A hire manifest may carry validated capability tags (routing hints).
         capabilities: hireMeta?.capabilities
       }
@@ -520,6 +527,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
       // same way rather than double-seating.
       seat: seat || undefined,
       description: description.trim() || 'a fresh harness',
+      isLead,
       project: basename(projectCwd),
       tmuxTarget: '',
       cwd: spawnedCwd,
@@ -1232,9 +1240,24 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                 )}
 
                 {section === 'desk' && (
+                  <>
                   <Question q={tr('addAgent.deskQ')} hint={tr('addAgent.deskHint')}>
                     <DeskPicker value={seat} occupants={deskOccupants} onChange={setSeat} scale={14} />
                   </Question>
+                  {/* Asked here because it IS a seating question as much as a
+                      role one: a lead takes a side office. It also changes what
+                      the hive tells the agent — run a sub-team, do not do the
+                      work yourself — which is why it cannot wait for a later
+                      edit: the prompt is built at spawn. */}
+                  <Question q={tr('addAgent.leadQ')} hint={tr('addAgent.leadHint')}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <Switch on={isLead} label={tr('addAgent.leadQ')} onChange={() => setIsLead((v) => !v)} />
+                      <span style={{ fontSize: 13, color: 'var(--cth-ink-500)' }}>
+                        {isLead ? tr('addAgent.leadOn') : tr('addAgent.leadOff')}
+                      </span>
+                    </div>
+                  </Question>
+                  </>
                 )}
               </div>
             </div>
