@@ -1706,12 +1706,16 @@
   "folderPicker": {
     "title": "Choose a folder",
     "titleMulti": "Choose folders",
+    "home": "Home",
+    "up": "Up one level",
+    "open": "Open {{name}}",
+    "filter": "Filter folders",
     "loading": "Reading…",
     "noFolders": "No folders in here.",
-    "selected": "{{count}} selected",
-    "willUse": "Uses {{name}}",
+    "noMatch": "Nothing matches that.",
     "use": "Use this folder",
     "addSelected": "Add {{count}}",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "addThis": "Add this folder"
   }
 }

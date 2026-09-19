@@ -7,7 +7,7 @@ export type IconName =
   | 'gear' | 'plus' | 'x' | 'check' | 'arrow-right' | 'pause' | 'play'
   | 'bell' | 'folder' | 'terminal' | 'code' | 'web' | 'mcp' | 'sparkle'
   | 'expand' | 'minimize' | 'clock' | 'mic' | 'ledger' | 'info' | 'sidebar'
-  | 'image' | 'edit' | 'git' | 'send' | 'trash';
+  | 'image' | 'edit' | 'git' | 'send' | 'trash' | 'arrow-up';
 
 interface IconDef {
   ink: string;     // primary color path d
@@ -34,13 +34,27 @@ const paths: Record<IconName, IconDef> = {
     accentColor: 'var(--cth-coral)',
     ink:   'M6 1h4v1H6zM3 2h10v2H3zM4 5h8v10H4zM6 7h1v6H6zM9 7h1v6H9z'
   },
+  // X and check are DIAGONALS, and a diagonal on the pixel grid is a staircase
+  // whose blocks meet only at their corners — which reads as a dotted line, and
+  // read worse the larger it was drawn. These two are solid strokes instead, and
+  // set `smooth` so the renderer does not snap them back onto the grid. Every
+  // other glyph here is orthogonal and still crisp.
   x: {
     accentColor: 'var(--cth-coral)',
-    ink:   'M3 3h2v2h2v2h2V5h2V3h2v2h-2v2h-2v2h2v2h2v2h-2v-2h-2V9H7v2H5v2H3v-2h2v-2h2V7H5V5H3V3z'
+    smooth: true,
+    ink:   'M4.6 3.2 8 6.6l3.4-3.4L12.8 4.6 9.4 8l3.4 3.4-1.4 1.4L8 9.4l-3.4 3.4-1.4-1.4L6.6 8 3.2 4.6z'
   },
   check: {
     accentColor: 'var(--cth-mint)',
-    ink:   'M13 4h2v2h-2v2h-2v2H9v2H7v2H5v-2H3v-2H1V8h2v2h2v2h2v-2h2V8h2V6h2V4z'
+    smooth: true,
+    ink:   'M6.3 10.9 3.3 7.9 1.8 9.3l4.5 4.5 7.9-7.9-1.4-1.4z'
+  },
+  // Up one level: a stem and a head, drawn as one stroke rather than a stack of
+  // blocks, for the same reason x and check are.
+  'arrow-up': {
+    accentColor: 'var(--cth-sky)',
+    smooth: true,
+    ink:   'M7 13.6V6.2L4.3 8.9 2.9 7.5 8 2.4l5.1 5.1-1.4 1.4L9 6.2v7.4z'
   },
   'arrow-right': {
     accentColor: 'var(--cth-sky)',

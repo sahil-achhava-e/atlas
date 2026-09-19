@@ -1706,12 +1706,16 @@
   "folderPicker": {
     "title": "اختر مجلدًا",
     "titleMulti": "اختر المجلدات",
+    "home": "المجلد الرئيسي",
+    "up": "مستوى للأعلى",
+    "open": "افتح {{name}}",
+    "filter": "تصفية المجلدات",
     "loading": "جارٍ القراءة…",
     "noFolders": "لا مجلدات هنا.",
-    "selected": "تم اختيار {{count}}",
-    "willUse": "سيستخدم {{name}}",
+    "noMatch": "لا شيء يطابق ذلك.",
     "use": "استخدم هذا المجلد",
     "addSelected": "أضف {{count}}",
-    "cancel": "إلغاء"
+    "cancel": "إلغاء",
+    "addThis": "أضف هذا المجلد"
   }
 }
