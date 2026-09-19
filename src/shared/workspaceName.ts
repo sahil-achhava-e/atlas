@@ -38,10 +38,7 @@ export function cleanWorkspaceName(name: string): string {
  *  `agents-2`, and so on — pressing New twice must not offer the folder just
  *  made, because opening that one would reuse its crew instead of starting. */
 export function suggestWorkspaceName(known: readonly string[]): string {
-  const taken = new Set(known.map(folderName));
-  if (!taken.has('agents')) return 'agents';
-  for (let n = 2; n < 100; n++) if (!taken.has(`agents-${n}`)) return `agents-${n}`;
-  return `agents-${Date.now()}`;
+  return workspaceNameFromProjects([], known);
 }
 
 /**
@@ -67,12 +64,29 @@ export function workspaceNameFromProjects(
   taken: readonly string[] = []
 ): string {
   const paths = projects.map((p) => p.replace(/\/+$/, '')).filter(Boolean);
-  if (paths.length === 0) return suggestWorkspaceName(taken);
 
-  const pick = paths.length === 1 ? folderName(paths[0]) : (sharedParent(paths) ?? folderName(paths[0]));
-  const name = cleanWorkspaceName(pick);
-  if (!name) return suggestWorkspaceName(taken);
+  // One project names the crew. Several that live in one specific folder are
+  // named after that folder. Several with nothing in common are NOT named after
+  // whichever was added first — that one is not more important than the others,
+  // and a crew called `api` that also works on `web` reads as a mistake.
+  const subject = paths.length === 0 ? null
+    : paths.length === 1 ? folderName(paths[0])
+      : sharedParent(paths);
+
+  const name = withSuffix(cleanWorkspaceName(subject ?? DEFAULT_NAME) || DEFAULT_NAME);
   return dedupe(name, taken);
+}
+
+/** What a workspace is called when nothing else names it. */
+const DEFAULT_NAME = 'agents';
+
+/** Every workspace folder ends the same way, so a folder full of them says what
+ *  they are — and `~/Atlas/billing-workspace` reads as a workspace where
+ *  `~/Atlas/billing` could be anything. Never doubled. */
+export const WORKSPACE_SUFFIX = '-workspace';
+
+function withSuffix(name: string): string {
+  return name.toLowerCase().endsWith(WORKSPACE_SUFFIX) ? name : `${name}${WORKSPACE_SUFFIX}`;
 }
 
 /** The folder every path sits directly in, when there is one worth using. */

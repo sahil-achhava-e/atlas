@@ -2,7 +2,7 @@ import { isBrowserMode } from '@/runtime';
 import { osStringKey } from '@/platformCopy';
 import { workspacePath, workspaceNameFromProjects, WORKSPACE_ROOT, cleanWorkspaceName } from '@shared/workspaceName';
 import { ensureNotificationPermission } from '@/browserNotifications';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
@@ -10,6 +10,7 @@ import { Icon, type IconName } from './Icon';
 import { SpritePortrait } from './SpritePortrait';
 import { AtlasMark } from './AtlasMark';
 import { stepsFor, nextStep, prevStep, type Audience, type Step } from '@/store/onboardingSteps';
+import { readDraft, writeDraft, clearDraft } from '@/store/onboardingDraft';
 import { Dropdown } from './Dropdown';
 import { Switch } from './Switch';
 import { ProviderLogo } from './ProviderLogo';
@@ -120,9 +121,14 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const godName = useResolvedGodName();
   const [step, setStep] = useState<Step>('welcome');
 
+  // Answers survive a reload — see store/onboardingDraft.ts. Read once, at
+  // construction, so the first render already has them and nothing flashes a
+  // default before being corrected.
+  const draft = useRef(readDraft()).current;
+
   // Self-identified audience. Undefined until the dialog below is answered; it
   // decides both the copy register (`plain`) and which steps exist at all.
-  const [audience, setAudience] = useState<Audience | undefined>();
+  const [audience, setAudience] = useState<Audience | undefined>(draft.audience);
   const plain = audience === 'non-technical';
   const steps = stepsFor(audience ?? 'technical');
   const lastStep = steps[steps.length - 1];
@@ -144,27 +150,28 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   }, [audience]);
   useEffect(() => { if (step !== 'done') go({ screen: 'setup', step }); }, [step]);
 
+
   // The workspace's NAME, not a path. New workspaces are folders under one
   // root, so the only decision left here is what to call this one — and the
   // folder it makes is the name, which is why the root is shown beside the
   // field rather than hidden inside it.
-  const [workspace, setWorkspace] = useState<string>('');
+  const [workspace, setWorkspace] = useState<string>(draft.workspace ?? '');
   // Whether the name is the user's. Until they type one it FOLLOWS the projects
   // — add a repo on step 3 and the name on step 6 is already right — and the
   // moment they type, it is theirs and nothing overwrites it.
-  const [workspaceTyped, setWorkspaceTyped] = useState(false);
+  const [workspaceTyped, setWorkspaceTyped] = useState(draft.workspaceTyped ?? false);
   const home = workspace.trim() ? workspacePath(workspace) : '';
-  const [repos, setRepos] = useState<string[]>([]);
-  const [autoMode, setAutoMode] = useState<boolean>(true);
+  const [repos, setRepos] = useState<string[]>(draft.repos ?? []);
+  const [autoMode, setAutoMode] = useState<boolean>(draft.autoMode ?? true);
   // Anonymous usage stats (TELEMETRY.md). No longer asked about at first run:
   // the PostHog key is injected at BUILD time and is empty in a fork build, so
   // this consent row was asking permission for something that cannot fire. The
   // flag is still written, and Settings still exposes it, so a build that does
   // carry a key keeps working.
   const shareStats = false;
-  const [godProvider, setGodProvider] = useState<AgentProvider>('claude');
+  const [godProvider, setGodProvider] = useState<AgentProvider>((draft.godProvider as AgentProvider) ?? 'claude');
   const [godModel, setGodModel] = useState<string | undefined>(
-    providerPreset('claude').recommendedOrchestratorModel
+    draft.godModel ?? providerPreset('claude').recommendedOrchestratorModel
   );
   const [error, setError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
@@ -190,9 +197,15 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   // own IPC / OS state) "— they are NOT part of finish()'s config write. First-run
   // defaults: notifications off (config default), login-item off (fresh install);
   // each reconciles to the real state the IPC returns.
-  const [strongKeepalive, setStrongKeepalive] = useState(false);
-  const [notifications, setNotifications] = useState(false);
+  const [strongKeepalive, setStrongKeepalive] = useState(draft.strongKeepalive ?? false);
+  const [notifications, setNotifications] = useState(draft.notifications ?? false);
   const [openAtLogin, setOpenAtLogin] = useState(false);
+
+  // Keep the draft current. Cheap, and it means a reload at any point in setup
+  // comes back with everything already answered — see store/onboardingDraft.ts.
+  useEffect(() => {
+    writeDraft({ audience, repos, workspace, workspaceTyped, godProvider, godModel, autoMode, strongKeepalive, notifications });
+  }, [audience, repos, workspace, workspaceTyped, godProvider, godModel, autoMode, strongKeepalive, notifications]);
 
   const toggleStrongKeepalive = async (v: boolean) => {
     setStrongKeepalive(v); // optimistic
@@ -295,6 +308,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
       telemetryEnabled: shareStats
     });
     setBusy(false);
+    // Submitted: the draft has served its purpose, and leaving it behind would
+    // repopulate a future setup with answers from this one.
+    clearDraft();
     onComplete(next);
   };
 
