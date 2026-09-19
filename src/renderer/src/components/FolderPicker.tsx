@@ -55,6 +55,10 @@ export function FolderPickerHost() {
   const { t } = useTranslation();
   const [ask, setAsk] = useState<{ multi: boolean; resolve: (r: FolderChoice) => void } | undefined>();
   const [home, setHome] = useState('');
+  // The projects this install already works on. They belong in the rail: the
+  // folder you want is nearly always one of them or inside one — adding a
+  // sub-repo of a project meant walking down from home every time.
+  const [projects, setProjects] = useState<string[]>([]);
   const [dir, setDir] = useState('/');
   const [rows, setRows] = useState<string[]>([]);
   const [picked, setPicked] = useState<string[]>([]);
@@ -70,6 +74,9 @@ export function FolderPickerHost() {
       // Start at home: what anyone is looking for is under it, and the server's
       // home is not something the page can work out for itself.
       void window.cth.homeDir().then((h) => { setHome(h || '/'); setDir(h || '/'); }).catch(() => setDir('/'));
+      void window.cth.getConfig()
+        .then((c) => setProjects((c?.registeredRepos ?? []).filter(Boolean)))
+        .catch(() => { /* no config: the rail is just the standard places */ });
     });
     return () => { opener = null; };
   }, []);
@@ -108,15 +115,21 @@ export function FolderPickerHost() {
 
   // Home, and the handful under it people actually keep code in. Anything
   // missing is simply not offered — the tree is still there to walk.
-  const places: Array<{ label: string; path: string }> = home
-    ? [
+  const places: Array<{ label: string; path: string; group?: string }> = [
+    ...(home ? [
       { label: t('folderPicker.home'), path: home },
       { label: 'Desktop', path: `${home}/Desktop` },
       { label: 'Documents', path: `${home}/Documents` },
-      { label: 'Downloads', path: `${home}/Downloads` },
       { label: 'Atlas', path: `${home}/Atlas` }
-    ]
-    : [];
+    ] : []),
+    // Projects last and labelled, so the rail reads as "the usual places, then
+    // the things you actually work on" rather than one undifferentiated list.
+    ...projects.map((p, i) => ({
+      label: p.replace(/\/+$/, '').split('/').filter(Boolean).pop() ?? p,
+      path: p,
+      group: i === 0 ? t('folderPicker.projects') : undefined
+    }))
+  ];
 
   return (
     <div
@@ -186,8 +199,16 @@ export function FolderPickerHost() {
                   {places.map((p) => {
                     const on = dir === p.path;
                     return (
+                      <div key={`w-${p.path}`}>
+                      {p.group && (
+                        <div style={{
+                          margin: '10px 0 4px', padding: '0 8px',
+                          fontFamily: 'var(--cth-font-ui)', fontSize: 10.5, fontWeight: 700,
+                          letterSpacing: '0.06em', textTransform: 'uppercase',
+                          color: 'var(--cth-ink-400, var(--cth-ink-500))'
+                        }}>{p.group}</div>
+                      )}
                       <button
-                        key={p.path}
                         onClick={() => setDir(p.path)}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 8, padding: '7px 8px',
@@ -200,6 +221,7 @@ export function FolderPickerHost() {
                         <Icon name="folder" />
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.label}</span>
                       </button>
+                      </div>
                     );
                   })}
                 </div>

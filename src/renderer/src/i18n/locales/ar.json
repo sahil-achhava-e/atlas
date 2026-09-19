@@ -1719,7 +1719,8 @@
     "use": "استخدم هذا المجلد",
     "addSelected": "أضف {{count}}",
     "cancel": "إلغاء",
-    "addThis": "أضف هذا المجلد"
+    "addThis": "أضف هذا المجلد",
+    "projects": "المشاريع"
   },
   "activity": {
     "nothingYet": "لم يقل {{name}} شيئًا بعد.",

@@ -1719,7 +1719,8 @@
     "use": "Use this folder",
     "addSelected": "Add {{count}}",
     "cancel": "Cancel",
-    "addThis": "Add this folder"
+    "addThis": "Add this folder",
+    "projects": "Projects"
   },
   "activity": {
     "nothingYet": "{{name}} has not said anything yet.",
