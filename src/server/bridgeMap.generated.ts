@@ -149,6 +149,7 @@ export const INVOKE: Record<string, string> = {
   integrationsTest: 'integrations:test',
   dbConnSetUrl: 'dbConn:setUrl',
   dbConnHasUrl: 'dbConn:hasUrl',
+  dbConnMaskedUrl: 'dbConn:maskedUrl',
   dbConnClearUrl: 'dbConn:clearUrl',
   mcpSecretSet: 'mcpSecret:set',
   mcpSecretHas: 'mcpSecret:has',

@@ -1319,6 +1319,9 @@ const api = {
   dbConnSetUrl: (req: { id: string; url: string }): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke('dbConn:setUrl', req),
   dbConnHasUrl: (id: string): Promise<boolean> => ipcRenderer.invoke('dbConn:hasUrl', id),
+  /** The saved string with its password masked — enough to check the row points
+   *  where you meant. The password itself never crosses this boundary. */
+  dbConnMaskedUrl: (id: string): Promise<string> => ipcRenderer.invoke('dbConn:maskedUrl', id),
   dbConnClearUrl: (id: string): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke('dbConn:clearUrl', id),
 

@@ -3,6 +3,7 @@ import { readInstanceLock, writeInstanceLock, clearInstanceLock } from './instan
 import { canDeleteWorkspace, WORKSPACE_DATA } from '../shared/workspaceDelete';
 import { mcpSecretRef, mcpSecretEnvKeys, dbSecretRef } from '../shared/mcpCatalog';
 import { activityRows } from '../shared/activityFeed';
+import { maskDbUrl } from '../shared/dbUrl';
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, net, powerMonitor, powerSaveBlocker, protocol, screen, shell, Notification } from 'electron';
 import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
@@ -3246,6 +3247,18 @@ ipcMain.handle('dbConn:setUrl', (_evt, payload: unknown) => {
 });
 ipcMain.handle('dbConn:hasUrl', (_evt, id: unknown) =>
   typeof id === 'string' ? integrations.hasSecret(dbSecretRef(id)) : false);
+/** The saved connection string with its PASSWORD masked.
+ *
+ *  getSecret stays main-internal — this never returns it. What it returns is
+ *  the part that is not a secret: user, host, port and database, which is what
+ *  a person needs to check that the row points where they meant. A row that can
+ *  only say "Set" is a row you cannot verify, and the commonest mistake here —
+ *  pointing at the wrong database, or at a user with write access — is visible
+ *  in exactly these characters. */
+ipcMain.handle('dbConn:maskedUrl', (_evt, id: unknown) => {
+  if (typeof id !== 'string') return '';
+  return maskDbUrl(integrations.getSecret(dbSecretRef(id)) ?? '');
+});
 ipcMain.handle('dbConn:clearUrl', (_evt, id: unknown) => {
   if (typeof id !== 'string') return { ok: false, error: 'id required' };
   try { integrations.deleteSecret(dbSecretRef(id)); return { ok: true }; }

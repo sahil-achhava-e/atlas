@@ -57,11 +57,15 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
           catch { next[entry.id + envName] = false; }
         }
       }
+      const urls: Record<string, string> = {};
       for (const c of config.dbConnections ?? []) {
         try { next[c.id] = await window.cth.dbConnHasUrl(c.id); }
         catch { next[c.id] = false; }
+        if (next[c.id]) {
+          try { urls[c.id] = await window.cth.dbConnMaskedUrl(c.id); } catch { /* shows "set" */ }
+        }
       }
-      if (alive) setHasSecret(next);
+      if (alive) { setHasSecret(next); setMasked(urls); }
     })();
     return () => { alive = false; };
   }, []);
@@ -86,6 +90,17 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
 
   // ── database connections: labels in config, URLs in the encrypted store ──
   const [conns, setConns] = useState<DbConnection[]>(config.dbConnections ?? []);
+  // A saved row SHOWS its connection string (password masked) and offers
+  // Replace; only a row being edited has a field and a Save. A Save button over
+  // a box you cannot see the current value of is a button with nothing to say.
+  const [masked, setMasked] = useState<Record<string, string>>({});
+  const [editing, setEditing] = useState<Record<string, boolean>>({});
+  const loadMasked = async (id: string) => {
+    try {
+      const url = await window.cth.dbConnMaskedUrl(id);
+      setMasked((m) => ({ ...m, [id]: url }));
+    } catch { /* unreadable: the row falls back to saying it is set */ }
+  };
   const persist = async (next: DbConnection[]) => {
     setConns(next);
     try { await window.cth.updateConfig({ dbConnections: next } as Partial<HarnessConfig>); }
@@ -114,6 +129,8 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
       // so it is kept in the (non-secret) list. Nothing else from the URL is.
       const name = dbNameFromUrl(url);
       if (name) void persist(conns.map((c) => (c.id === id ? { ...c, label: name } : c)));
+      setEditing((e) => ({ ...e, [id]: false }));
+      void loadMasked(id);
       setNote('saved — agents spawned from now on can query it');
     } else {
       setNote(res?.error ?? 'could not save');
@@ -253,25 +270,25 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                           fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)'
                         }}>{t('mcpDefaults.dbUrlHint')}</span>
                       </div>
-                      {conns.map((c) => (
+                      {conns.map((c) => {
+                        const set = !!hasSecret[c.id];
+                        const open = !set || editing[c.id];
+                        return (
                         <div key={c.id} style={{
                           display: 'flex', flexDirection: 'column', gap: 8,
                           padding: 12, borderRadius: 'var(--cth-radius-card)',
                           background: 'var(--cth-cream-100)'
                         }}>
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                        {/* Name, scope and state on one line. The scope belongs
+                            up here with the name: which project this database
+                            is for is part of what the row IS, not part of
+                            editing its string. */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <span style={{
                             fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13,
-                            color: hasSecret[c.id] ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)'
-                          }}>{hasSecret[c.id] ? c.label : t('mcpDefaults.dbUnset')}</span>
-                          {hasSecret[c.id] && (
-                            <span style={{
-                              fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999,
-                              background: 'var(--cth-mint-light)', color: 'var(--cth-mint-text)'
-                            }}>{t('mcpDefaults.dbSet')}</span>
-                          )}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            color: set ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)'
+                          }}>{set && c.label ? c.label : t('mcpDefaults.dbUnset')}</span>
+                          <span style={{ flex: 1 }} />
                           <Dropdown
                             value={c.cwd ?? ''}
                             options={[
@@ -284,38 +301,76 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                             ariaLabel={t('mcpDefaults.dbScopeLabel')}
                             width={190}
                           />
-                          {/* Plain text, not dots. A connection string is a
-                              structure you check by reading it — the host, the
-                              port, the database name, whether you typed the
-                              read-only user — and every one of those is hidden
-                              by a password field. It is pasted once, in your own
-                              Settings, and getting it wrong silently is the
-                              likelier harm than someone reading it over your
-                              shoulder. It is still write-only at rest: stored
-                              encrypted and never read back into this field. */}
-                          <input
-                            className="cth-input"
-                            type="text"
-                            spellCheck={false}
-                            autoComplete="off"
-                            value={draft[c.id] ?? ''}
-                            onChange={(e) => setDraft((d) => ({ ...d, [c.id]: e.target.value }))}
-                            placeholder={hasSecret[c.id]
-                              ? 'set — paste a new one to replace it'
-                              : 'postgresql://user:pass@localhost:5432/epicxp_visits'}
-                            style={{ ...fieldStyle, flex: 1, minWidth: 200 }}
-                          />
                         </div>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <PixelButton variant="primary" size="sm" onClick={() => { void saveUrl(c.id); }}>
-                            {t('common.save')}
-                          </PixelButton>
-                          <PixelButton variant="secondary" size="sm" onClick={() => { void removeConn(c.id); }}>
-                            {t('common.delete')}
-                          </PixelButton>
+
+                        {/* SET, and not being edited: the string itself, with
+                            the password masked. A row that can only say "Set"
+                            is a row you cannot check — and pointing at the
+                            wrong database, or at a user with write access, is
+                            visible in exactly these characters. */}
+                        {!open && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                            <code style={{
+                              flex: 1, minWidth: 0,
+                              fontFamily: 'var(--cth-font-mono)', fontSize: 12.5, lineHeight: '30px',
+                              color: 'var(--cth-ink-700)',
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                            }} title={masked[c.id] ?? ''}>{masked[c.id] || t('mcpDefaults.dbSet')}</code>
+                            <PixelButton variant="secondary" size="sm" onClick={() => {
+                              setEditing((e) => ({ ...e, [c.id]: true }));
+                              setDraft((d) => ({ ...d, [c.id]: '' }));
+                            }}>{t('mcpDefaults.dbReplace')}</PixelButton>
+                            <PixelButton variant="secondary" size="sm" onClick={() => { void removeConn(c.id); }}>
+                              {t('common.delete')}
+                            </PixelButton>
+                          </div>
+                        )}
+
+                        {/* Being edited, or never set. Plain text, not dots: a
+                            connection string is a structure you check by
+                            reading it, and a password field hides every part of
+                            that. Write-only at rest all the same — stored
+                            encrypted, and only ever read back masked. */}
+                        {open && (
+                          <>
+                            <input
+                              className="cth-input"
+                              type="text"
+                              spellCheck={false}
+                              autoComplete="off"
+                              autoFocus={!!editing[c.id]}
+                              value={draft[c.id] ?? ''}
+                              onChange={(e) => setDraft((d) => ({ ...d, [c.id]: e.target.value }))}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && (draft[c.id] ?? '').trim()) void saveUrl(c.id);
+                                if (e.key === 'Escape' && set) setEditing((x) => ({ ...x, [c.id]: false }));
+                              }}
+                              placeholder="postgresql://user:pass@localhost:5432/epicxp_visits"
+                              style={{ ...fieldStyle, width: '100%' }}
+                            />
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <PixelButton
+                                variant="primary"
+                                size="sm"
+                                disabled={!(draft[c.id] ?? '').trim()}
+                                onClick={() => { void saveUrl(c.id); }}
+                              >{t('common.save')}</PixelButton>
+                              {set ? (
+                                <PixelButton variant="secondary" size="sm" onClick={() => {
+                                  setEditing((e) => ({ ...e, [c.id]: false }));
+                                  setDraft((d) => ({ ...d, [c.id]: '' }));
+                                }}>{t('common.cancel')}</PixelButton>
+                              ) : (
+                                <PixelButton variant="secondary" size="sm" onClick={() => { void removeConn(c.id); }}>
+                                  {t('common.delete')}
+                                </PixelButton>
+                              )}
+                            </div>
+                          </>
+                        )}
                         </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                       <div>
                         <button
                           onClick={() => { void addConn(); }}

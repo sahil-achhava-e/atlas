@@ -978,7 +978,8 @@
     "dbUnset": "No connection string yet",
     "dbSet": "Set",
     "dbUrlShape": "A connection string looks like this",
-    "dbUrlHint": "Host is localhost for a database on this machine, 5432 is the usual Postgres port, and database is the one you want queried. Use a read-only user unless you mean otherwise."
+    "dbUrlHint": "Host is localhost for a database on this machine, 5432 is the usual Postgres port, and database is the one you want queried. Use a read-only user unless you mean otherwise.",
+    "dbReplace": "Replace"
   },
   "devicePicker": {
     "microphone": "Microphone",
