@@ -1,6 +1,6 @@
 import { isBrowserMode } from '@/runtime';
 import { osStringKey } from '@/platformCopy';
-import { workspacePath, suggestWorkspaceName, WORKSPACE_ROOT, cleanWorkspaceName } from '@shared/workspaceName';
+import { workspacePath, workspaceNameFromProjects, WORKSPACE_ROOT, cleanWorkspaceName } from '@shared/workspaceName';
 import { ensureNotificationPermission } from '@/browserNotifications';
 import { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
@@ -149,6 +149,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   // folder it makes is the name, which is why the root is shown beside the
   // field rather than hidden inside it.
   const [workspace, setWorkspace] = useState<string>('');
+  // Whether the name is the user's. Until they type one it FOLLOWS the projects
+  // — add a repo on step 3 and the name on step 6 is already right — and the
+  // moment they type, it is theirs and nothing overwrites it.
+  const [workspaceTyped, setWorkspaceTyped] = useState(false);
   const home = workspace.trim() ? workspacePath(workspace) : '';
   const [repos, setRepos] = useState<string[]>([]);
   const [autoMode, setAutoMode] = useState<boolean>(true);
@@ -237,9 +241,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   // ensureHarnessHome's mkdir, so every downstream reader still sees one
   // absolute path. No new IPC surface.
   useEffect(() => {
-    if (!workspace) setWorkspace(suggestWorkspaceName([]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (workspaceTyped) return;
+    setWorkspace(workspaceNameFromProjects(repos));
+  }, [repos, workspaceTyped]);
 
   const [pickingRepo, pickRepo] = useNativeDialog(async () => {
     setError(undefined);
@@ -482,7 +486,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   }}>{WORKSPACE_ROOT}/</span>
                   <input
                     value={workspace}
-                    onChange={(e) => setWorkspace(e.target.value)}
+                    onChange={(e) => { setWorkspaceTyped(true); setWorkspace(e.target.value); }}
                     placeholder={t('onboarding.home.placeholder')}
                     className="cth-input"
                     style={{ ...inputStyle, borderRadius: '0 var(--cth-radius-input) var(--cth-radius-input) 0', paddingLeft: 4 }}

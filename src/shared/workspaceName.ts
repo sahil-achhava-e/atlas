@@ -44,6 +44,56 @@ export function suggestWorkspaceName(known: readonly string[]): string {
   return `agents-${Date.now()}`;
 }
 
+/**
+ * A name for a workspace, taken from the projects it will work on.
+ *
+ * The folder is the thing you will recognise it by later, and "agents" tells you
+ * nothing once there are three of them. One project is easy — its own name. For
+ * several, the folder they share is usually the honest answer (~/code/api and
+ * ~/code/web are the `code` crew), unless what they share is somewhere everyone
+ * keeps everything: Desktop, Documents, Downloads, the home directory itself.
+ * Naming a workspace after Desktop is worse than not guessing.
+ *
+ * ponytail: `GENERIC_PARENTS` is a list, not a rule. Add to it if a name looks
+ * silly; it only ever changes a PREFILL the user can type over.
+ */
+const GENERIC_PARENTS = new Set([
+  'desktop', 'documents', 'downloads', 'home', 'users', 'src', 'code', 'dev',
+  'projects', 'repos', 'work', 'workspace', 'git', 'github'
+]);
+
+export function workspaceNameFromProjects(
+  projects: readonly string[],
+  taken: readonly string[] = []
+): string {
+  const paths = projects.map((p) => p.replace(/\/+$/, '')).filter(Boolean);
+  if (paths.length === 0) return suggestWorkspaceName(taken);
+
+  const pick = paths.length === 1 ? folderName(paths[0]) : (sharedParent(paths) ?? folderName(paths[0]));
+  const name = cleanWorkspaceName(pick);
+  if (!name) return suggestWorkspaceName(taken);
+  return dedupe(name, taken);
+}
+
+/** The folder every path sits directly in, when there is one worth using. */
+function sharedParent(paths: readonly string[]): string | null {
+  const parents = new Set(paths.map((p) => p.slice(0, p.lastIndexOf('/'))));
+  if (parents.size !== 1) return null;
+  const parent = [...parents][0];
+  const name = folderName(parent);
+  // `/Users/someone` is a home directory; anything shallower is a system root.
+  if (parent.split('/').filter(Boolean).length < 3) return null;
+  return GENERIC_PARENTS.has(name.toLowerCase()) ? null : name;
+}
+
+/** `name`, or the first `name-N` nobody is using. */
+function dedupe(name: string, taken: readonly string[]): string {
+  const used = new Set(taken.map(folderName));
+  if (!used.has(name)) return name;
+  for (let n = 2; n < 100; n++) if (!used.has(`${name}-${n}`)) return `${name}-${n}`;
+  return `${name}-${Date.now()}`;
+}
+
 function folderName(path: string): string {
   return path.replace(/\/+$/, '').split('/').filter(Boolean).pop() ?? '';
 }
