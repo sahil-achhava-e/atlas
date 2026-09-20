@@ -355,14 +355,20 @@ telemetry.onApiError((agentId) => breaker.recordError(agentId));
 const roster = new RosterStore(() => readConfig().harnessHome);
 function standingGoalFromRoster(agentId: string): string | null {
   const snap = roster.read();
-  if (!snap || !Array.isArray(snap.agents)) return null;
-  for (const entry of snap.agents) {
-    if (!entry || typeof entry !== 'object') continue;
-    const a = entry as { id?: unknown; goal?: unknown };
-    if (a.id !== agentId) continue;
-    return typeof a.goal === 'string' && a.goal.trim() ? a.goal.trim() : null;
+  if (snap && Array.isArray(snap.agents)) {
+    for (const entry of snap.agents) {
+      if (!entry || typeof entry !== 'object') continue;
+      const a = entry as { id?: unknown; goal?: unknown };
+      if (a.id !== agentId) continue;
+      // The roster knows this agent: what it says about the goal is the answer,
+      // including "cleared".
+      return typeof a.goal === 'string' && a.goal.trim() ? a.goal.trim() : null;
+    }
   }
-  return null;
+  // The roster has never heard of it — a fresh window, or a roster that was
+  // lost. The hive kept a copy of the briefing for exactly this.
+  const kept = hive.registry().agents?.[agentId]?.goal;
+  return typeof kept === 'string' && kept.trim() ? kept.trim() : null;
 }
 // Worker inbox-wake watchdog (#151): finds idle workers with undrained inbox mail
 // and types the same guarded nudge the renderer would have (so a throttled
