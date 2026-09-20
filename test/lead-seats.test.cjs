@@ -3,10 +3,10 @@
 // Where team leaders sit.
 //
 // The rule the floor promises: the two side rooms are the leaders' offices, and
-// they fill A ROOM AT A TIME rather than spreading out — two projects should put
-// both leads in one room talking to each other, not one each in two half-empty
-// offices. Past four leaders the overflow takes the boardroom table, never a
-// worker's desk on the open floor.
+// a leader gets their OWN room with the spare desk left empty. Two leads means
+// a room each, not a shared room and an empty one. The third and fourth double
+// up, because sharing an office still beats the open floor. Past four the
+// overflow takes the boardroom table, never a worker's desk.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -17,18 +17,21 @@ const loadTs = require('./load-ts.cjs');
 const { LEAD_SEAT_NAMES, nextLeadSlot, roomOf, roomOccupancy } =
   loadTs('src/renderer/src/scene/office/leadSeats.ts');
 
-test('four offices, two rooms, claimed in order', () => {
+test('four offices, two rooms, and the claim order alternates between them', () => {
   assert.equal(LEAD_SEAT_NAMES.length, 4);
   assert.equal(roomOf(0), 1);
-  assert.equal(roomOf(1), 1);
-  assert.equal(roomOf(2), 2);
+  assert.equal(roomOf(1), 2);
+  assert.equal(roomOf(2), 1);
   assert.equal(roomOf(3), 2);
+  // The first two claimed are the two rooms' FIRST desks, so neither lead is
+  // sat next to the other while a whole room stands empty.
+  assert.deepEqual(LEAD_SEAT_NAMES.slice(0, 2), ['desk-chief-architect', 'desk-agent-organizer']);
 });
 
-test('rooms fill one at a time', () => {
+test('each lead gets their own room before anyone shares', () => {
   assert.deepEqual(roomOccupancy(0), { roomOne: 0, roomTwo: 0, boardroom: 0 });
   assert.deepEqual(roomOccupancy(1), { roomOne: 1, roomTwo: 0, boardroom: 0 });
-  assert.deepEqual(roomOccupancy(2), { roomOne: 2, roomTwo: 0, boardroom: 0 });
+  assert.deepEqual(roomOccupancy(2), { roomOne: 1, roomTwo: 1, boardroom: 0 }, 'a room each, one empty desk each');
   assert.deepEqual(roomOccupancy(3), { roomOne: 2, roomTwo: 1, boardroom: 0 });
   assert.deepEqual(roomOccupancy(4), { roomOne: 2, roomTwo: 2, boardroom: 0 });
 });
