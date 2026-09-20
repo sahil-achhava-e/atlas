@@ -58,3 +58,31 @@ test('a working agent is never picked for a trip', () => {
   assert.match(body, /rt\.settleUntil && Date\.now\(\) < rt\.settleUntil/,
     'and not straight after coming back');
 });
+
+// Arrivals: Atlas opens the office, then everyone comes in TOGETHER.
+//
+// They used to file in one every two seconds. With three agents that was a
+// pause; with five it was a queue at the door on every refresh, and it got
+// worse with each hire.
+
+test('the door admits everyone in one pass, not one at a time', () => {
+  assert.doesNotMatch(floor, /ARRIVAL_GAP_S/, 'the per-agent gap is gone');
+  assert.doesNotMatch(floor, /sinceLastArrival/);
+  const pump = floor.slice(floor.indexOf('const updateArrivals'));
+  const body = pump.slice(0, pump.indexOf('\n      };'));
+  assert.match(body, /for \(const a of arrivalOrder\(agents\)\)/,
+    'every waiting agent is admitted in the same pass');
+});
+
+test('Atlas still goes first, and the doors still open three seconds after him', () => {
+  assert.match(floor, /const DOORS_OPEN_AFTER_S = 3;/);
+  const pump = floor.slice(floor.indexOf('const updateArrivals'));
+  const body = pump.slice(0, pump.indexOf('\n      };'));
+  assert.match(body, /if \(sinceGodArrived < DOORS_OPEN_AFTER_S\) return;/);
+  assert.match(body, /if \(a\.isGod \|\| runtimes\.has\(a\.id\) \|\| arriving\.has\(a\.id\)\) continue;/,
+    'the boss is not in the queue — he IS the gate');
+});
+
+test('leads still arrive before workers, so they claim their offices first', () => {
+  assert.match(floor, /const arrivalOrder = \(agents: Agent\[\]\): Agent\[\] => \[\s*\.\.\.agents\.filter\(\(a\) => a\.isLead\),/);
+});

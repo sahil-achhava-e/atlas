@@ -1919,14 +1919,13 @@ export function OfficeFloor() {
         }
       };
 
-      // ─── Arrivals: the boss opens the office, then everyone files in ───────
-      // On a cold load every restored agent used to pop onto the floor at once,
-      // which read as a glitch rather than a morning. Now Atlas walks in and
-      // sits first; two seconds after he is at his desk the rest come through
-      // the door one at a time — team leads before workers, a second apart.
+      // ─── Arrivals: the boss opens the office, then everyone comes in ──────
+      // Atlas walks in first. Three seconds later the doors open and the rest
+      // of the floor arrives TOGETHER — leads first in the ordering, but in one
+      // go, not one every couple of seconds. A queue at the door was a long
+      // wait to look at on every refresh, and it got worse with each hire.
       // Nothing about the agents' PROCESSES changes; this is the arrival on the
       // floor only, so an agent is working long before its avatar sits down.
-      const ARRIVAL_GAP_S = 2;
       /** From Atlas ARRIVING, not from him sitting down. */
       const DOORS_OPEN_AFTER_S = 3;
       const arriving = new Set<string>();      // addCharacter in flight
@@ -1941,7 +1940,7 @@ export function OfficeFloor() {
       // Already here: the doors are open, so breaks, errands and meetings are
       // not held behind an arrival that is not coming.
       let doorsOpen = !playArrivals;
-      let sinceLastArrival = 0;
+
 
       /** True once the office has opened AND everyone expected has walked in.
        *  Breaks, errands and visits all wait for it. */
@@ -1998,15 +1997,13 @@ export function OfficeFloor() {
           doorsOpen = true;
         }
 
-        sinceLastArrival += dt;
-        if (sinceLastArrival < ARRIVAL_GAP_S) return;
-
-        const next = arrivalOrder(agents)
-          .find((a) => !a.isGod && !runtimes.has(a.id) && !arriving.has(a.id));
-        if (!next) return;
-        sinceLastArrival = 0;
-        arriving.add(next.id);
-        void addCharacter(next).finally(() => arriving.delete(next.id));
+        // Everyone who is not already here, in one pass. Leads first, so the
+        // seating claim order still gives them their offices.
+        for (const a of arrivalOrder(agents)) {
+          if (a.isGod || runtimes.has(a.id) || arriving.has(a.id)) continue;
+          arriving.add(a.id);
+          void addCharacter(a).finally(() => arriving.delete(a.id));
+        }
       };
 
       const syncAgents = () => {
