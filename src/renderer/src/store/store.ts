@@ -440,29 +440,38 @@ const rosterMirror: {
   selectedId: string | null;
 } = { agents: [], archived: [], restorable: [], queues: {}, selectedId: null };
 
-/** Every agent id this window currently holds, across all three buckets. */
-let knownIds = new Set<string>();
-/** Agents this window HAD and no longer has — the only thing that deletes a row.
- *  Computed from our own previous state, never from the database, so a window
- *  that never knew about an agent can never ask for it to be removed. */
+/** Agents this window was TOLD to delete — the only thing that deletes a row.
+ *
+ *  Deliberately not inferred from "it used to be in the store and now it is
+ *  not". A card leaves the floor for reasons that are not a delete: a reload
+ *  reconciles against live PTYs, the orchestrator's terminal is not running
+ *  yet, a worker is between buckets. Inferring intent from an absence turned
+ *  every one of those into a deletion. Only the three remove* actions — which
+ *  are what the human's Delete button calls, and what a hive that has forgotten
+ *  an agent triggers — put an id in here. */
 const pendingRemovals = new Set<string>();
 
-/** Re-derive what we hold and what we dropped. An id that moved between buckets
- *  (a dead worker becoming restorable) is still held, so it is not a removal. */
-function trackRemovals(): void {
-  const now = new Set<string>();
+function markRemoved(id: string): void {
+  if (id) pendingRemovals.add(id);
+}
+
+/** Every agent id this window is holding right now, across all three buckets. */
+function heldIds(): Set<string> {
+  const held = new Set<string>();
   for (const list of [rosterMirror.agents, rosterMirror.archived, rosterMirror.restorable]) {
-    for (const a of list) if (a?.id) now.add(a.id);
+    for (const a of list) if (a?.id) held.add(a.id);
   }
-  for (const id of knownIds) if (!now.has(id)) pendingRemovals.add(id);
-  for (const id of now) pendingRemovals.delete(id);
-  knownIds = now;
+  return held;
 }
 
 let rosterFlush: ReturnType<typeof setTimeout> | null = null;
 
 function flushRosterNow(): void {
   if (rosterFlush) { clearTimeout(rosterFlush); rosterFlush = null; }
+  // An agent that was removed and then came back (a restore, a re-hire under
+  // the same id) is held again, and a held agent is never deleted.
+  const held = heldIds();
+  for (const id of held) pendingRemovals.delete(id);
   const removes = [...pendingRemovals];
   try {
     const p = window.cth?.rosterWrite?.({
@@ -504,7 +513,6 @@ function slimAgents(agents: Agent[]): PersistedAgent[] {
 function persistAgents(agents: Agent[], selectedId: string | null): void {
   rosterMirror.agents = slimAgents(agents);
   rosterMirror.selectedId = selectedId;
-  trackRemovals();
   scheduleRosterFlush();
 }
 
@@ -553,7 +561,6 @@ function loadPersistedAgents(): Agent[] {
 
 function persistArchived(archived: Agent[]): void {
   rosterMirror.archived = slimAgents(archived);
-  trackRemovals();
   scheduleRosterFlush();
 }
 
@@ -584,7 +591,6 @@ function persistRestorable(restorable: Agent[]): void {
     return rest;
   });
   rosterMirror.restorable = slim;
-  trackRemovals();
   scheduleRosterFlush();
 }
 
@@ -685,9 +691,7 @@ rosterMirror.restorable = slimAgents(initialRestorableAgents);
 rosterMirror.queues = initialQueues;
 rosterMirror.selectedId = initialSelectedId;
 
-// What we loaded is what we hold. Removals are measured against this, so an
-// agent we never loaded can never be reported as one we deleted.
-trackRemovals();
+
 
 let queuedSeq = 0;
 /** Process-unique id for a queued message (timestamp + counter avoids collisions
@@ -843,6 +847,7 @@ export const useStore = create<State>((set, get) => ({
     }),
   removeAgent: (id) =>
     set((s) => {
+      markRemoved(id);
       const agents = s.agents.filter(a => a.id !== id);
       const { [id]: _gone, ...feeds } = s.feeds;
       const { [id]: _queueGone, ...messageQueues } = s.messageQueues;
@@ -893,6 +898,7 @@ export const useStore = create<State>((set, get) => ({
   removeArchivedAgent: (id) =>
     set((s) => {
       if (!s.archivedAgents.some((a) => a.id === id)) return s;
+      markRemoved(id);
       const archivedAgents = s.archivedAgents.filter((a) => a.id !== id);
       persistArchived(archivedAgents);
       return { archivedAgents };
@@ -900,6 +906,7 @@ export const useStore = create<State>((set, get) => ({
   removeRestorableAgent: (id) =>
     set((s) => {
       if (!s.restorableAgents.some((a) => a.id === id)) return s;
+      markRemoved(id);
       const restorableAgents = s.restorableAgents.filter((a) => a.id !== id);
       persistRestorable(restorableAgents);
       return { restorableAgents };
