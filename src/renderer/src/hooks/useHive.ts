@@ -25,6 +25,7 @@ import { planFloor } from '../../../shared/floorReconcile';
 import { acquireTerminal, resetTerminal, isTerminalAutomationSafe } from '@/components/terminalPool';
 import { canDeliverToAgent, deliverWithAcknowledgement, checkPrecondition } from './queueDelivery';
 import { OFFICE_CAST, DEFAULT_CHARACTER } from '@/scene/office/cast';
+import { AVATAR_LIBRARY } from '@/scene/office/avatarLibrary';
 import { LIBRARY_BY_ID } from '@/scene/office/avatarLibrary';
 import { freeLibraryIdFor } from '@/scene/office/portraitArt';
 
@@ -38,19 +39,27 @@ const GOD_PTY = `pty-${GOD_ID}`;
  *  "is this agent's terminal running" and a second spelling would answer no. */
 const ptyIdFor = (agentId: string): string => `pty-${agentId}`;
 
-/** A stable face and colour for an agent whose own were never recorded. Derived
- *  from the id, so it is the same on every reload rather than random — and
- *  different per agent, which the single DEFAULT_CHARACTER was not. */
+/** A face and colour for an agent whose own were never recorded.
+ *
+ *  THE NAME FIRST. Faces come from the avatar library, and the library is
+ *  characters — an agent called Luffy should get Luffy's face, because that is
+ *  almost certainly the one the human picked when they named it that. Restoring
+ *  a floor from ids alone gave two leads a stranger's face each.
+ *
+ *  Failing a name match, one picked from the library by id: stable across
+ *  reloads rather than random, different per agent, and never the boss's. */
 const hashOf = (s: string): number => {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return h;
 };
 const FALLBACK_ACCENTS = ['sky', 'mint', 'lemon', 'lilac', 'coral'] as const;
-const faceForId = (id: string): string => {
-  // The orchestrator's own face is his alone — never hand it to a worker.
-  const cast = OFFICE_CAST.map((c) => c.name).filter((n) => n !== DEFAULT_CHARACTER);
-  return cast.length ? cast[hashOf(id) % cast.length] : DEFAULT_CHARACTER;
+const faceFor = (id: string, name: string): string => {
+  const byName = AVATAR_LIBRARY.find((f) => f.name.toLowerCase() === name.trim().toLowerCase());
+  if (byName) return byName.id;
+  return AVATAR_LIBRARY.length
+    ? AVATAR_LIBRARY[hashOf(id) % AVATAR_LIBRARY.length].id
+    : DEFAULT_CHARACTER;
 };
 const accentForId = (id: string): string => FALLBACK_ACCENTS[hashOf(id) % FALLBACK_ACCENTS.length];
 
@@ -432,7 +441,7 @@ export function useHive(config: HarnessConfig | null): void {
         // back to, and the fallback must not be the SAME face for everyone —
         // that is why a restored floor looked like three Atlases. Pick from the
         // cast by id, so each gets a different one and keeps it across reloads.
-        character: e.character || (e.isGod ? 'michael' : faceForId(e.id)),
+        character: e.character || (e.isGod ? 'michael' : faceFor(e.id, e.name || e.id)),
         accent: e.accent || accentForId(e.id),
         goal: e.goal,
         description: e.role || (e.isGod ? 'runs the floor' : 'restored from the hive'),
