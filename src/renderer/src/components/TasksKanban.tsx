@@ -19,6 +19,12 @@ import { getPref, setPref } from '../store/prefs';
 export interface HumanQA {
   q: string;
   a?: string;
+  /** Who wrote the ask. The orchestrator is the only agent that writes these —
+   *  everyone else raises it with them — so a missing `by` reads as the
+   *  orchestrator. Without it the board labelled the ask with the CARD'S
+   *  ASSIGNEE, which said "Luffy is asking" over a question Atlas had written
+   *  about Luffy's work, and made it look like the crew was going round him. */
+  by?: string;
   /** Optional multiple choice. An agent that already knows the alternatives
    *  should offer them: "develop or the release branch" is a question with two
    *  answers, not an invitation to type prose. Free text stays available

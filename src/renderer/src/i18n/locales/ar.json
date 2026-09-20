@@ -107,7 +107,8 @@
     "summary_other": "{{count}} وكلاء بانتظارك",
     "asks": "{{name}} يسأل",
     "anAgent": "أحد الوكلاء",
-    "openTask": "فتح المهمة"
+    "openTask": "فتح المهمة",
+    "blocks": "لا يزال {{name}} متوقفًا بانتظاره"
   },
   "agentStrip": {
     "privateNote": "ملاحظة خاصة · {{name}}",

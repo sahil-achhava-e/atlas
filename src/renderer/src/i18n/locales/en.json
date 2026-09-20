@@ -107,7 +107,8 @@
     "summary_other": "{{count}} agents are waiting on you",
     "asks": "{{name}} is asking",
     "anAgent": "An agent",
-    "openTask": "Open task"
+    "openTask": "Open task",
+    "blocks": "{{name}} is stuck on it"
   },
   "agentStrip": {
     "privateNote": "Private note · {{name}}",

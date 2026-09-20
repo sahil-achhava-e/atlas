@@ -309,7 +309,11 @@ export function AskMeTab() {
       {waiting.map((t) => {
         const open = openQuestion(t)!;
         const stuck = dependentsTree(t.id, tasks);
-        const asker = agentFor(t.assignee);
+        // The ask's AUTHOR, not the card's owner. Only the orchestrator writes
+        // these, so an entry with no `by` is theirs; the assignee is whoever is
+        // blocked by it, which is a different agent and shown as such.
+        const asker = agentFor(open.by) ?? agents.find((a) => a.isGod);
+        const blocked = agentFor(t.assignee);
         const age = waited(open.askedAt);
         return (
           // The asker's own colour down the left edge. Thirty identical white
@@ -351,13 +355,21 @@ export function AskMeTab() {
                   letterSpacing: '-0.1px', color: 'var(--cth-ink-900)',
                   minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                 }}>
-                  {translate('askMe.asks', { name: nameFor(t.assignee) ?? translate('askMe.anAgent') })}
+                  {translate('askMe.asks', {
+                    name: asker?.name ?? nameFor(open.by) ?? translate('askMe.anAgent')
+                  })}
                 </span>
                 <span style={{
                   display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
                   fontSize: 11.5, lineHeight: '16px', color: 'var(--cth-ink-500)'
                 }}>
                   {age && <span>{translate('askMe.waiting', { age })}</span>}
+                  {/* Who is stuck, which is the card's owner and usually NOT the
+                      agent who asked. Naming both is what stops the board
+                      reading as "your engineer went over the orchestrator". */}
+                  {blocked && blocked.id !== asker?.id && (
+                    <span>{translate('askMe.blocks', { name: blocked.name })}</span>
+                  )}
                   {stuck.length > 0 && (
                     <span style={{
                       padding: '0 7px', borderRadius: 'var(--cth-radius-input)',
