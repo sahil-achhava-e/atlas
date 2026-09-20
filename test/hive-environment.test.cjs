@@ -27,7 +27,7 @@ const ENV = {
   projects: ['/r/api', '/r/web'],
   mcpEnabled: ['git', 'db'],
   databases: [{ label: 'epicxp_venue', project: 'epicxp-events' }],
-  skills: ['azure-devops', 'ponytail'],
+  skills: [{ name: 'azure-devops' }, { name: 'create-migration', project: 'epicxp-events' }],
   semanticMemory: true,
   knowledgeGraph: false,
   missions: [{ id: 'ops-standup', enabled: true }]
@@ -40,7 +40,12 @@ test('the settings land where the crew is told to look', () => {
   assert.ok(existsSync(path), 'hive/environment.json is the documented path');
   const read = JSON.parse(readFileSync(path, 'utf8'));
   assert.equal(read.defaultModel, 'claude-sonnet-5');
-  assert.deepEqual(read.skills, ['azure-devops', 'ponytail']);
+  assert.deepEqual(read.skills,
+    [{ name: 'azure-devops' }, { name: 'create-migration', project: 'epicxp-events' }]);
+  // A skill with a project lives in that repo's .claude/skills and only an agent
+  // working there can invoke it. Listed flat, a lead planned around a migration
+  // skill that belonged to the other project.
+  assert.equal(read.skills[0].project, undefined, 'a machine-wide skill names no project');
   assert.deepEqual(read.databases, [{ label: 'epicxp_venue', project: 'epicxp-events' }]);
 });
 

@@ -5439,10 +5439,21 @@ ipcMain.handle('workers:stop', (_evt, workerId: string): { ok: boolean; error?: 
 function publishEnvironment(): void {
   if (!hive.enabled()) return;
   const cfg = readConfig();
-  let skills: string[] = [];
+  const repos = cfg.registeredRepos ?? [];
+  /** Which registered repo a skill's folder sits inside, by name — a project
+   *  skill is only available to an agent working in that repo, and a flat list
+   *  had a lead planning around one that belonged to the other project. */
+  const projectOfSkill = (path: string): string | undefined => {
+    const owner = repos.find((r) => r && path.startsWith(`${r.replace(/\/+$/, '')}/`));
+    return owner ? owner.replace(/\/+$/, '').split('/').filter(Boolean).pop() : undefined;
+  };
+  let skills: Array<{ name: string; project?: string }> = [];
   try {
-    skills = listLocalSkills({ cwds: cfg.registeredRepos ?? [], bundledDir: skillsResourceDir() })
-      .map((s) => s.name);
+    skills = listLocalSkills({ cwds: repos, bundledDir: skillsResourceDir() })
+      .map((s) => {
+        const project = s.scope === 'project' ? projectOfSkill(s.path) : undefined;
+        return project ? { name: s.name, project } : { name: s.name };
+      });
   } catch { /* a skills directory we cannot read is not a reason to publish nothing */ }
   hive.writeEnvironment({
     autoMode: cfg.autoMode !== false,
@@ -5452,7 +5463,7 @@ function publishEnvironment(): void {
     defaultWorkerTokenCap: cfg.defaultWorkerTokenCap,
     godProvider: cfg.godProvider,
     godModel: cfg.godModel,
-    projects: cfg.registeredRepos ?? [],
+    projects: repos,
     mcpEnabled: Object.entries(cfg.mcpDefaults ?? {})
       .filter(([, v]) => v?.enabled).map(([id]) => id),
     // Label and project only — the connection string stays in the encrypted

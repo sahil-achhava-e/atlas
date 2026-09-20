@@ -179,8 +179,12 @@ export interface HiveEnvironment {
   /** Databases an agent can query, by label and the project each belongs to.
    *  The connection string is deliberately absent. */
   databases: Array<{ label: string; project?: string }>;
-  /** Skills on this machine, by name — what an agent can invoke. */
-  skills: string[];
+  /** Skills an agent can invoke, by name. A `project` means the skill lives in
+   *  that repo's `.claude/skills` and ONLY an agent working in that repo has it;
+   *  without one it is installed for the machine and everybody has it. Listing
+   *  them flat had a lead planning around a migration skill that belonged to the
+   *  other project and that it could not invoke. */
+  skills: Array<{ name: string; project?: string }>;
   /** Semantic memory and the knowledge graph, on or off. */
   semanticMemory: boolean;
   knowledgeGraph: boolean;
@@ -1678,7 +1682,7 @@ export class HiveManager {
       : '';
     // One static line — the file behind it changes, this sentence does not, so
     // the prompt cache is untouched.
-    const envLine = `HOW THIS FLOOR IS SET UP: ${inRoot('environment.json')} is the human's settings as they affect you — autonomy, the model and token cap a new agent starts on, how many workers may run at once, which MCP servers every agent is given, which databases exist and which project each belongs to, the skills installed on this machine, whether semantic memory and the knowledge graph are on, and the scheduled missions. READ IT before you answer a question about what the floor can do, and re-read it rather than remembering — the human changes these while you are running. It never contains a secret: a database's connection string is not there, and you get one from the integration broker at run time. If something you need is off or missing, say which setting and where it lives (Settings → the tab) instead of guessing that it is impossible.`;
+    const envLine = `HOW THIS FLOOR IS SET UP: ${inRoot('environment.json')} is the human's settings as they affect you — autonomy, the model and token cap a new agent starts on, how many workers may run at once, which MCP servers every agent is given, which databases exist and which project each belongs to, the skills you can invoke (a skill with a \`project\` belongs to that repo alone — if you are not working in it, you do not have that skill), whether semantic memory and the knowledge graph are on, and the scheduled missions. READ IT before you answer a question about what the floor can do, and re-read it rather than remembering — the human changes these while you are running. It never contains a secret: a database's connection string is not there, and you get one from the integration broker at run time. If something you need is off or missing, say which setting and where it lives (Settings → the tab) instead of guessing that it is impossible.`;
     // WHAT COUNTS AS YOUR CREW.
     //
     // Claude Code keeps its own subagent definitions in ~/.claude/agents and in
