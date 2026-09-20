@@ -8,7 +8,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const loadTs = require('./load-ts.cjs');
 
-const { canDeleteWorkspace, WORKSPACE_DATA } = loadTs('src/shared/workspaceDelete.ts');
+const { canDeleteWorkspace, isManagedWorkspace, WORKSPACE_DATA } = loadTs('src/shared/workspaceDelete.ts');
 
 const ctx = { home: '/Users/me/Work', recents: ['/Users/me/Work', '/Users/me/Old', '/Users/me/Spike'] };
 
@@ -41,4 +41,28 @@ test('with no workspace open, a recent one is still deletable', () => {
 test('only Atlas-created data is named — never the workspace folder itself', () => {
   assert.deepEqual([...WORKSPACE_DATA],
     ['hive', 'palace', 'roster.db', 'roster.db-wal', 'roster.db-shm', 'roster-backups']);
+});
+
+// Deleting has to free the NAME, not just empty the folder. A workspace Atlas
+// created was scrubbed but left behind, so making one with the same name again
+// was refused as already taken — the human had deleted it and could not tell
+// why it was still in the way.
+
+test('a workspace Atlas created is deleted folder and all', () => {
+  assert.equal(isManagedWorkspace('/Users/x/Atlas/epicxp-workspace', '/Users/x'), true);
+});
+
+test("a folder the user pointed at keeps its folder", () => {
+  // It can sit inside a project, next to their own files. Only Atlas's own
+  // subdirectories come out of it.
+  assert.equal(isManagedWorkspace('/Users/x/Desktop/my-repo', '/Users/x'), false);
+  assert.equal(isManagedWorkspace('/Users/x/Atlas', '/Users/x'), false, '~/Atlas holds workspaces, it is not one');
+  assert.equal(isManagedWorkspace('/Users/x/Atlas/team/nested', '/Users/x'), false, 'only one level down is a workspace');
+});
+
+test('a path outside the home directory is never managed', () => {
+  assert.equal(isManagedWorkspace('/Atlas/thing', '/Users/x'), false);
+  assert.equal(isManagedWorkspace('/Users/other/Atlas/thing', '/Users/x'), false);
+  assert.equal(isManagedWorkspace('', '/Users/x'), false);
+  assert.equal(isManagedWorkspace('/Users/x/Atlas/thing', ''), false);
 });

@@ -19,13 +19,35 @@
  * tears everything down in order before it removes a file.
  */
 
-/** Subdirectories a workspace's crew lives in. Everything Atlas created, and
- *  NOTHING the user put there: a workspace folder can hold their own files, and
- *  a delete that took the folder itself would take those too. Mirrors what the
- *  app's own reset removes. */
+/** What Atlas puts inside a workspace. Used to clear out a folder the user
+ *  pointed at from somewhere else, where the folder itself is theirs and may
+ *  hold their own files. A workspace Atlas created goes entirely — see
+ *  `isManagedWorkspace`. Mirrors what the app's own reset removes. */
 export const WORKSPACE_DATA = [
   'hive', 'palace', 'roster.db', 'roster.db-wal', 'roster.db-shm', 'roster-backups'
 ] as const;
+
+/**
+ * Is this a workspace Atlas created, under `~/Atlas`?
+ *
+ * Deleting one means deleting the FOLDER, not just scrubbing the crew out of
+ * it: a folder left behind holds the name, so re-creating a workspace you just
+ * deleted was refused as already taken. `~/Atlas/<name>` only ever exists
+ * because the app made it, so taking the whole thing is what the human means
+ * by delete.
+ *
+ * A folder they chose themselves is a different promise — it can sit inside a
+ * project, next to their own files — so there only Atlas's own data is removed.
+ * `~/Atlas` itself is not a workspace, and neither is anything nested deeper
+ * than one level under it.
+ */
+export function isManagedWorkspace(target: string, homeDir: string): boolean {
+  if (!target || !homeDir) return false;
+  const root = `${homeDir.replace(/\/+$/, '')}/Atlas/`;
+  if (!target.startsWith(root)) return false;
+  const rest = target.slice(root.length).replace(/\/+$/, '');
+  return rest.length > 0 && !rest.includes('/');
+}
 
 export interface DeleteCheck { ok: boolean; error?: string }
 

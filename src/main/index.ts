@@ -1,6 +1,6 @@
 import { interruptedWork, restartBrief, briefSignature } from './restartBrief';
 import { readInstanceLock, writeInstanceLock, clearInstanceLock } from './instanceLock';
-import { canDeleteWorkspace, WORKSPACE_DATA } from '../shared/workspaceDelete';
+import { canDeleteWorkspace, isManagedWorkspace, WORKSPACE_DATA } from '../shared/workspaceDelete';
 import { mcpSecretRef, mcpSecretEnvKeys, dbSecretRef } from '../shared/mcpCatalog';
 import { activityRows } from '../shared/activityFeed';
 import { maskDbUrl } from '../shared/dbUrl';
@@ -3531,10 +3531,13 @@ ipcMain.handle('workspace:forget', (_evt, path: unknown) => {
   return { ok: true as const, recentHives: recents };
 });
 
-/** Delete a workspace's crew: every agent's memory and session history, the
- *  inboxes, the board, the hive's git repo, the semantic palace and the roster.
- *  Only the subdirectories Atlas created (WORKSPACE_DATA) — never the folder
- *  itself, which is the user's and can hold their own files.
+/** Delete a workspace: every agent's memory and session history, the inboxes,
+ *  the board, the hive's git repo, the semantic palace and the roster.
+ *
+ *  A workspace Atlas created under `~/Atlas` goes ENTIRELY, folder and all —
+ *  leaving the folder behind left the name taken, so re-creating a workspace
+ *  you had just deleted was refused. A folder the user pointed at from
+ *  somewhere else keeps its folder; only Atlas's own data is removed from it.
  *
  *  Refuses the OPEN workspace: its services are live and its agents hold PTYs.
  *  `app:resetAll` is that path, and it tears everything down in order first. */
@@ -3548,11 +3551,16 @@ ipcMain.handle('workspace:delete', (_evt, path: unknown) => {
   if (!allowed.ok) return allowed;
 
   const failed: string[] = [];
-  for (const sub of WORKSPACE_DATA) {
-    const p = join(target, sub);
-    if (!existsSync(p)) continue;
-    try { rmSync(p, { recursive: true, force: true }); }
-    catch (e) { console.error('[workspace] rm', p, e); failed.push(`${sub}: ${e instanceof Error ? e.message : String(e)}`); }
+  if (isManagedWorkspace(target, homedir())) {
+    try { rmSync(target, { recursive: true, force: true }); }
+    catch (e) { console.error('[workspace] rm', target, e); failed.push(e instanceof Error ? e.message : String(e)); }
+  } else {
+    for (const sub of WORKSPACE_DATA) {
+      const p = join(target, sub);
+      if (!existsSync(p)) continue;
+      try { rmSync(p, { recursive: true, force: true }); }
+      catch (e) { console.error('[workspace] rm', p, e); failed.push(`${sub}: ${e instanceof Error ? e.message : String(e)}`); }
+    }
   }
   if (failed.length > 0) return { ok: false, error: `Could not delete ${failed.join('; ')}` };
 
@@ -4132,20 +4140,27 @@ ipcMain.handle('app:resetAll', () => {
   try { persist.close(); } catch (e) { console.error('[reset] persist.close:', e); }
   try { ptyManager.killAll(); } catch (e) { console.error('[reset] killAll:', e); }
   try { hive.removeExposedCodexData(); } catch (e) { console.error('[reset] removeExposedCodexData:', e); }
-  // Erase the hive (Michael's + every agent's memory, inboxes, tasks, board,
-  // git history) and the semantic-memory palace. Only these harness-created
-  // subdirs are removed — never the user's whole harnessHome folder.
-  for (const dir of [hive.root(), memory.palacePath()]) {
-    if (!dir) continue;
-    try { rmSync(dir, { recursive: true, force: true }); }
-    catch (e) { console.error('[reset] rm', dir, e); }
-  }
   // The roster is the renderer's half of the same state, so it retires with the
-  // hive — archived into roster-backups/ rather than deleted, and cleared as the
-  // active file so re-selecting this folder later doesn't resurrect agents whose
-  // sessions and memory are gone.
+  // hive — copied into roster-backups/ first, then removed, so re-selecting
+  // this folder later cannot resurrect agents whose sessions and memory are
+  // gone. Done BEFORE the folder goes, since the backup lives inside it.
   try { roster.archive(); }
   catch (e) { console.error('[reset] roster.archive:', e); }
+  // Erase the crew. A workspace Atlas created under ~/Atlas goes entirely —
+  // a leftover folder keeps the name reserved, and the human who resets is
+  // asking to start over, name included. A folder they chose themselves keeps
+  // its folder; only the harness-created subdirs inside it are removed.
+  const resetHome = readConfig().harnessHome;
+  if (resetHome && isManagedWorkspace(resolve(expandTilde(resetHome)), homedir())) {
+    try { rmSync(resolve(expandTilde(resetHome)), { recursive: true, force: true }); }
+    catch (e) { console.error('[reset] rm', resetHome, e); }
+  } else {
+    for (const dir of [hive.root(), memory.palacePath()]) {
+      if (!dir) continue;
+      try { rmSync(dir, { recursive: true, force: true }); }
+      catch (e) { console.error('[reset] rm', dir, e); }
+    }
+  }
   // Back to first-run defaults, then relaunch clean so all in-memory services
   // re-bootstrap from scratch and the renderer lands on onboarding.
   resetConfig();

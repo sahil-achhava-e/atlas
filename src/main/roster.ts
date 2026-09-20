@@ -30,7 +30,7 @@
  *      it. That is the only copy anything keeps: one store, no mirrors to drift.
  */
 import Database from 'better-sqlite3';
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
 /** What the renderer loads at boot. The inner agent shape is deliberately opaque
@@ -305,9 +305,13 @@ export class RosterStore {
       // whatever is still sitting in the WAL.
       db.pragma('wal_checkpoint(TRUNCATE)');
       copyFileSync(rosterDbPath(home), join(dir, `roster-${stamp}-reset.db`));
-      db.transaction(() => {
-        db.exec('DELETE FROM agent; DELETE FROM queue; DELETE FROM meta;');
-      })();
+      // Remove the file rather than emptying it. An empty database left behind
+      // is a workspace that still looks occupied — the folder cannot be reused
+      // under the same name, and the app has to explain why.
+      this.close();
+      for (const suffix of ['', '-wal', '-shm']) {
+        rmSync(`${rosterDbPath(home)}${suffix}`, { force: true });
+      }
     } catch (e) {
       console.warn('[roster] archive failed:', e);
     }
