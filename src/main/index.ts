@@ -124,11 +124,12 @@ const BOOT_ID = randomBytes(8).toString('hex');
 const LEGACY_STATE_DIRS = ['munder-difflin'];
 (function adoptLegacyStateDir(): void {
   const current = app.getPath('userData');
-  if (existsSync(join(current, 'config.json'))) return;
+  if (existsSync(join(current, 'config.json')) || existsSync(join(current, 'harness.db'))) return;
   const parent = dirname(current);
   for (const name of LEGACY_STATE_DIRS) {
     const legacy = join(parent, name);
-    if (legacy !== current && existsSync(join(legacy, 'config.json'))) {
+    if (legacy !== current
+      && (existsSync(join(legacy, 'config.json')) || existsSync(join(legacy, 'harness.db')))) {
       app.setPath('userData', legacy);
       console.log(`[state] using ${legacy} — this build's own directory has no config yet`);
       return;

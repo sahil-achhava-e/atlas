@@ -49,7 +49,10 @@ function userDataDir(): string {
   // Same answer src/main's adoptLegacyStateDir() reaches, reached earlier: the
   // server checks the instance lock before it imports main.
   for (const name of ['Atlas', 'atlas', 'munder-difflin']) {
-    if (existsSync(join(parent, name, 'config.json'))) return join(parent, name);
+    // Either marker: the settings moved from config.json into harness.db, and an
+    // install that has only ever run the new build has no config.json at all.
+    if (existsSync(join(parent, name, 'config.json'))
+      || existsSync(join(parent, name, 'harness.db'))) return join(parent, name);
   }
   return join(parent, 'Atlas');
 }

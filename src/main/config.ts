@@ -1,4 +1,5 @@
 import { app } from 'electron';
+import Database from 'better-sqlite3';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
@@ -498,8 +499,89 @@ const DEFAULTS: HarnessConfig = {
   knowledgeGraph: { enabled: false }
 };
 
+/**
+ * WHERE THE CONFIG LIVES.
+ *
+ * In the app's database, as one row in `kv`. It used to be `config.json`, and
+ * the JSON file is still read ONCE — to import an existing install — and then
+ * left alone, unread. It is not deleted: the "which state directory is this
+ * install's" probe looks for it, and a file nobody writes is the cheapest
+ * possible safety net for a downgrade.
+ *
+ * Why move it at all: the settings, the registered projects, the workspace
+ * list and the orchestrator's engine are the same class of state as the roster,
+ * and the roster is in SQLite. One store, written in a transaction, is one
+ * fewer thing that can be half-written or quietly edited underneath the app.
+ */
+const CONFIG_KEY = 'config';
+
+function dbPath(): string {
+  return join(app.getPath('userData'), 'harness.db');
+}
+
+/** The legacy file. Read once at import, never written again. */
 function configPath(): string {
   return join(app.getPath('userData'), 'config.json');
+}
+
+let configDb: Database.Database | null = null;
+function conn(): Database.Database | null {
+  if (configDb) return configDb;
+  try {
+    mkdirSync(dirname(dbPath()), { recursive: true });
+    const db = new Database(dbPath());
+    db.pragma('journal_mode = WAL');
+    db.pragma('synchronous = FULL'); // settings are small and worth the fsync
+    db.pragma('busy_timeout = 5000');
+    // Same shape PersistStore's migration 1 creates. Whichever opens first wins
+    // and the other's CREATE IF NOT EXISTS is a no-op.
+    db.exec(`CREATE TABLE IF NOT EXISTS kv (
+      key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL)`);
+    configDb = db;
+    return db;
+  } catch (e) {
+    console.error('[config] could not open the database:', e);
+    return null;
+  }
+}
+
+/** Close the handle (tests, and app shutdown). */
+export function closeConfigDb(): void {
+  try { configDb?.close(); } catch { /* best-effort */ }
+  configDb = null;
+}
+
+/** The stored document, or null when this install has never saved one. */
+function readStored(): Partial<HarnessConfig> | null {
+  const db = conn();
+  if (!db) return null;
+  try {
+    const row = db.prepare('SELECT value FROM kv WHERE key = ?').get(CONFIG_KEY) as { value: string } | undefined;
+    if (row) {
+      try { return JSON.parse(row.value) as Partial<HarnessConfig>; } catch { return null; }
+    }
+    // Nothing stored: take the old file in, once, and save it straight away so
+    // the import cannot run twice with different results.
+    const p = configPath();
+    if (!existsSync(p)) return null;
+    const parsed = JSON.parse(readFileSync(p, 'utf8')) as Partial<HarnessConfig>;
+    if (!parsed || typeof parsed !== 'object') return null;
+    writeStored(parsed);
+    console.log('[config] imported config.json into the database');
+    return parsed;
+  } catch (e) {
+    console.error('[config] read failed:', e);
+    return null;
+  }
+}
+
+function writeStored(next: Partial<HarnessConfig>): void {
+  const db = conn();
+  if (!db) throw new Error('no config database');
+  db.prepare(
+    `INSERT INTO kv (key, value, updated_at) VALUES (?, ?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
+  ).run(CONFIG_KEY, JSON.stringify(next), Date.now());
 }
 
 /**
@@ -597,15 +679,13 @@ function migrateTriggersV1(cfg: HarnessConfig): HarnessConfig {
 }
 
 export function readConfig(): HarnessConfig {
-  const p = configPath();
-  // No file yet = a first run with nothing to migrate; the defaults ARE the
+  // Nothing stored = a first run with nothing to migrate; the defaults ARE the
   // post-migration shape. Deliberately does not persist — a bare read must not
-  // conjure a config.json before onboarding has written one.
-  if (!existsSync(p)) return withTriggerDefaults({ ...DEFAULTS });
+  // conjure a config before onboarding has written one.
+  const stored = readStored();
+  if (!stored) return withTriggerDefaults({ ...DEFAULTS });
   try {
-    const raw = readFileSync(p, 'utf8');
-    const parsed = JSON.parse(raw);
-    return normalizeStoredHomes(migrateTriggersV1(withTriggerDefaults({ ...DEFAULTS, ...parsed })));
+    return normalizeStoredHomes(migrateTriggersV1(withTriggerDefaults({ ...DEFAULTS, ...stored })));
   } catch {
     return withTriggerDefaults({ ...DEFAULTS });
   }
@@ -648,9 +728,7 @@ export function onConfigWritten(listener: ConfigWriteListener): () => void {
 }
 
 function persistConfig(next: HarnessConfig): HarnessConfig {
-  const p = configPath();
-  mkdirSync(dirname(p), { recursive: true });
-  writeFileSync(p, JSON.stringify(next, null, 2), 'utf8');
+  writeStored(next);
   // Saving one setting stores only that setting, so fill the rest back in first:
   // subscribers must see the same complete config a read gives them, never a
   // half-filled one. Skip the migration — it saves in its own right, and has
