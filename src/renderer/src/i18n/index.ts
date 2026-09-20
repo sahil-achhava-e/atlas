@@ -2,7 +2,8 @@
  * i18n bootstrap — react-i18next with inline JSON resources.
  *
  * English is the default language (and the fallback for any missing key).
- * The user's choice is persisted in localStorage (`cth.language`). With nothing
+ * The user's choice is persisted with the other preferences (`cth.language`,
+ * in the app database, shared by every window). With nothing
  * saved the app starts in English, ALWAYS — it deliberately does not read
  * navigator.language. Auto-detect would change the UI out from under every
  * existing user on a non-English machine, who never asked for a translation and
@@ -20,6 +21,7 @@ import { initReactI18next } from 'react-i18next';
 import { DEFAULT_GOD_NAME } from '@shared/godIdentity';
 import en from './locales/en.json';
 import ar from './locales/ar.json';
+import { getPref, setPref } from '../store/prefs';
 
 /**
  * The languages the Settings picker offers, in display order.
@@ -90,7 +92,7 @@ export function setGodName(name: string | undefined | null): void {
 /** The saved choice, or English. Never the OS locale — see the note above. */
 function detectLanguage(): string {
   try {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
+    const saved = getPref(STORAGE_KEY);
     if (saved && SUPPORTED.includes(saved as LanguageCode)) return saved;
   } catch { /* localStorage unavailable — English it is */ }
   return 'en';
@@ -99,7 +101,7 @@ function detectLanguage(): string {
 /** Switch language now and persist the choice for next launch. */
 export function setLanguage(lng: string): void {
   void i18n.changeLanguage(lng);
-  try { window.localStorage.setItem(STORAGE_KEY, lng); } catch { /* best-effort */ }
+  setPref(STORAGE_KEY, lng);
 }
 
 void i18n

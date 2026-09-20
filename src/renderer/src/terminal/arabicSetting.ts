@@ -1,4 +1,5 @@
 import i18n, { isRtlLanguage } from '@/i18n';
+import { clearPref, getPref, setPref } from '../store/prefs';
 
 /**
  * The renderer switch for RTL-script terminal support: ON keeps xterm on its
@@ -41,7 +42,7 @@ let override: Override = readOverride();
 
 function readOverride(): Override {
   try {
-    const stored = window.localStorage.getItem(KEY);
+    const stored = getPref(KEY);
     if (stored === '1') return true;
     if (stored === '0') return false;
   } catch { /* private mode — no override, so the language decides */ }
@@ -70,11 +71,11 @@ export function isArabicTerminalFollowingLanguage(): boolean {
  *  with the language today must still survive a switch away from it tomorrow. */
 export function setArabicTerminalEnabled(next: boolean): void {
   override = next;
-  try { window.localStorage.setItem(KEY, next ? '1' : '0'); } catch { /* private mode */ }
+  setPref(KEY, next ? '1' : '0');
 }
 
 /** Drop the override and go back to following the app language. */
 export function clearArabicTerminalOverride(): void {
   override = null;
-  try { window.localStorage.removeItem(KEY); } catch { /* private mode */ }
+  clearPref(KEY);
 }

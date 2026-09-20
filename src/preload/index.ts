@@ -29,7 +29,7 @@ export type IntegrationRecordView = Omit<IntegrationRecord, 'secretRef'> & { has
 // Injected at build time from package.json (see electron.vite.config.ts).
 declare const __APP_VERSION__: string;
 
-/** The renderer's roster as mirrored to `<harnessHome>/roster.json`. The agent
+/** The renderer's roster as stored in `<harnessHome>/roster.db`. The agent
  *  entries stay `unknown` here for the same reason main leaves them opaque: the
  *  store owns that shape, and repeating it in the bridge would mean editing two
  *  files every time an agent gains a field. */
@@ -41,6 +41,20 @@ export interface RosterSnapshot {
   restorable: unknown[];
   queues: Record<string, unknown[]>;
   selectedId: string | null;
+  /** True once this hive has ever saved a roster. An empty-but-seeded roster is
+   *  a real answer ("you deleted everyone"), not a missing one. */
+  seeded: boolean;
+}
+
+/** One window's save. Anything left out is left alone on disk; `removes` is the
+ *  only thing that deletes an agent. */
+export interface RosterSave {
+  agents?: unknown[];
+  archived?: unknown[];
+  restorable?: unknown[];
+  queues?: Record<string, unknown[]>;
+  selectedId?: string | null;
+  removes?: string[];
 }
 
 export interface HiveAgentMeta {
@@ -1432,21 +1446,29 @@ const api = {
     try { return ipcRenderer.sendSync('roster:readSync') ?? null; } catch { return null; }
   },
   /** Which hive is open, synchronously — same boot-time constraint as
-   *  `rosterReadSync`, and read in the same breath: the store has to know which
-   *  hive its localStorage keys belong to before it decides to trust them. */
+   *  `rosterReadSync`. */
   harnessHomeSync: (): string | null => {
     try { return ipcRenderer.sendSync('config:homeSync') ?? null; } catch { return null; }
   },
+  /** Every stored preference, synchronously. Theme and language decide the first
+   *  paint, so they cannot wait for a promise. */
+  prefsAllSync: (): Record<string, string> => {
+    try { return ipcRenderer.sendSync('prefs:allSync') ?? {}; } catch { return {}; }
+  },
+  /** Store one preference, or clear it with `null`. */
+  prefsSet: (name: string, value: string | null): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke('prefs:set', name, value),
   /** The id of THIS run of the main process. Synchronous for the same reason
    *  the two above are: the floor decides whether to play the morning before it
    *  places its first character. */
   bootIdSync: (): string | null => {
     try { return ipcRenderer.sendSync('app:bootIdSync') ?? null; } catch { return null; }
   },
-  /** Mirror the roster to disk. Debounced by the caller; main keeps the previous
-   *  contents as a backup and refuses a first write that would empty a full file. */
-  rosterWrite: (snap: RosterSnapshot): Promise<{ ok: boolean; skipped?: string; error?: string }> =>
-    ipcRenderer.invoke('roster:write', snap),
+  /** Save the roster. Debounced by the caller. Rows, not a snapshot: every agent
+   *  named is written, every agent NOT named is left alone, and the only way to
+   *  delete one is to list its id in `removes`. */
+  rosterWrite: (patch: RosterSave): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke('roster:write', patch),
 
   // ─── Auto-update (v0.3.4; full state model v0.3.7) ──────────────────────────
   /** Push channel from main's updater — every stage of the pipeline, so the

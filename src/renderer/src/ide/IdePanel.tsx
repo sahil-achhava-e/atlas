@@ -10,6 +10,7 @@ import { MarkdownPreview } from '@/markdown/MarkdownPreview';
 import { HistoryPane, ComparePane } from './GitPanes';
 import { isImagePath, isSvgPath } from '@shared/imageTypes';
 import { IDE_TONES, ideBarStyle, ideIconBtn as iconBtn, ideTextBtn as textBtn } from './chrome';
+import { getPref, setPref } from '../store/prefs';
 
 // v0.3.4 markdown preview: per-md-tab view mode, defaulted from the last choice.
 type MdView = 'code' | 'split' | 'preview';
@@ -17,7 +18,7 @@ const LS_MD_VIEW = 'cth.ide.mdView';
 const isMarkdown = (rel: string) => /\.(md|markdown)$/i.test(rel);
 function defaultMdView(): MdView {
   try {
-    const v = window.localStorage.getItem(LS_MD_VIEW);
+    const v = getPref(LS_MD_VIEW);
     if (v === 'code' || v === 'split' || v === 'preview') return v;
   } catch { /* noop */ }
   return 'split';
@@ -120,12 +121,12 @@ export function IdePanel() {
   // than `=== '1'`: with no stored value at all we must land on collapsed, and
   // `=== '1'` would have made "never set" mean expanded.
   const [gitCollapsed, setGitCollapsed] = useState<boolean>(() => {
-    try { return localStorage.getItem(GIT_RAIL_COLLAPSED_KEY) !== '0'; } catch { return true; }
+    return getPref(GIT_RAIL_COLLAPSED_KEY) !== '0';
   });
   const toggleGitRail = (): void => {
     setGitCollapsed((v) => {
       const next = !v;
-      try { localStorage.setItem(GIT_RAIL_COLLAPSED_KEY, next ? '1' : '0'); } catch { /* private mode */ }
+      setPref(GIT_RAIL_COLLAPSED_KEY, next ? '1' : '0');
       return next;
     });
   };
@@ -141,7 +142,7 @@ export function IdePanel() {
   const [mdViews, setMdViews] = useState<Record<string, MdView>>({});
   const setMdView = useCallback((rel: string, v: MdView) => {
     setMdViews((p) => ({ ...p, [rel]: v }));
-    try { window.localStorage.setItem(LS_MD_VIEW, v); } catch { /* noop */ }
+    setPref(LS_MD_VIEW, v);
   }, []);
 
   // Refs so window/editor handlers always see current values without rebinding.

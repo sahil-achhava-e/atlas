@@ -11,6 +11,7 @@ import { TasksIcon } from './TabIcons';
 import { SpritePortrait } from './SpritePortrait';
 import { MarkdownPreview } from '@/markdown/MarkdownPreview';
 import { useRtl } from '@/i18n/useDirection';
+import { getPref, setPref } from '../store/prefs';
 
 /** A card on the task kanban. Mirrors HiveTask in the main/preload process —
  *  re-declared locally so the renderer doesn't reach into the preload package
@@ -178,11 +179,11 @@ export function TasksKanban() {
   const [view, setView] = useState<'list' | 'board'>(() => {
     // The board is the default: it is what the tab is for, and the list is the
     // fallback for a narrow pane. A stored preference still wins.
-    try { return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'board'; } catch { return 'board'; }
+    return getPref(VIEW_KEY) === 'list' ? 'list' : 'board';
   });
   const pickView = (v: 'list' | 'board') => {
     setView(v);
-    try { localStorage.setItem(VIEW_KEY, v); } catch { /* private window */ }
+    setPref(VIEW_KEY, v);
   };
 
   const characterFor = (id?: string): string | undefined =>

@@ -19,7 +19,7 @@ import { preferredAgentRole } from '@shared/agentRole';
 import { coerceTabsForSimpleMode } from './simpleMode';
 import { isInboxNudge } from '@shared/hiveNudge';
 import { refocusAfterRemoval, focusOnLoad, restoreFocus } from './focusMode';
-import { chooseRosterSource } from './rosterSource';
+import { getPref, PREF_KEYS, setPref } from './prefs';
 
 export type ToolKind =
   | 'Read' | 'Edit' | 'Write' | 'Bash' | 'WebFetch' | 'WebSearch'
@@ -395,61 +395,37 @@ interface State {
   reconcileWithLivePtys: (livePtyIds: string[]) => void;
 }
 
-const LS_SIDEBAR_WIDTH = 'cth.sidebarWidth';
-const LS_SIDEBAR_TAB = 'cth.sidebarTab';
-const LS_AGENTS = 'cth.agents';
-const LS_ARCHIVED = 'cth.archivedAgents';
-const LS_RESTORABLE = 'cth.restorableAgents';
-const LS_SELECTED = 'cth.selectedId';
-const LS_QUEUES = 'cth.messageQueues';
-/** Which hive this origin's roster keys were last written for. See rosterSource.ts. */
-const LS_ROSTER_HOME = 'cth.rosterHome';
-const LS_FOCUS_MODE = 'cth.prefersFocusMode';
+const LS_SIDEBAR_WIDTH = PREF_KEYS.sidebarWidth;
+const LS_SIDEBAR_TAB = PREF_KEYS.sidebarTab;
+const LS_CC_TAB = PREF_KEYS.ccTab;
+const LS_FOCUS_MODE = PREF_KEYS.focusMode;
 
 // Fields that are large or transient — not worth persisting across reloads.
 // contextTokens/contextLimit describe a LIVE session; persisting them showed a
 // dead session's context gauge after a restart until the poll caught up.
 type PersistedAgent = Omit<Agent, 'recentAssistantText' | 'recentTextTs' | 'blockReason' | 'contextTokens' | 'contextLimit' | 'seedPrompt'>;
 
-// ─── The roster mirror ──────────────────────────────────────────────────────
+// ─── The roster ─────────────────────────────────────────────────────────────
 //
-// localStorage is partitioned by ORIGIN, and the two ways this app runs do not
-// share one: `npm run dev` serves the renderer from http://localhost:5173, a
-// packaged build loads it from file://. So the roster — agents, their private
-// notes, worktree paths, archived entries, parked queues — was invisible to
-// whichever of the two you were not currently in, even though the hive on disk
-// (sessions, memory, inboxes, tasks) was shared and intact the whole time.
+// The roster lives in <harnessHome>/roster.db, in main. It used to live here,
+// in localStorage, and localStorage is partitioned by ORIGIN: `npm run dev`
+// serves this renderer from http://localhost:5173, a packaged build from
+// file://, browser mode from http://127.0.0.1:5188. None of them see each
+// other's storage, so the same hive showed a different floor depending on how
+// you opened it — and the JSON mirror that bridged them was written as one
+// whole snapshot, so a window that knew about one agent could overwrite a file
+// holding three.
 //
-// So we also mirror it to <harnessHome>/roster.json, which both sides reach by
-// path. localStorage keeps being written byte-for-byte as before: it is the
-// fallback when there is no file yet, and a standing backup afterwards. Main
-// keeps every previous version of the file under roster-backups/.
+// Now every agent is a ROW. This store sends what it knows and names what it
+// removed; anything it does not mention is left alone. A window that boots
+// half-informed can no longer delete anything by being quiet.
+//
+// The roster is read once, synchronously, at module load: the store is built
+// before any async IPC could resolve, and an empty floor that fills in a moment
+// later is worse than one blocking round trip.
 const fileRoster = (() => {
   try { return window.cth?.rosterReadSync?.() ?? null; } catch { return null; }
 })();
-
-/** Which hive we are opening, and which one this origin's localStorage was last
- *  written for. Both read synchronously, for the same reason the roster is: the
- *  store is built at module load, so an async answer would arrive too late. */
-const currentHome = (() => {
-  try { return window.cth?.harnessHomeSync?.() ?? null; } catch { return null; }
-})();
-const storedHome = (() => {
-  try { return window.localStorage.getItem(LS_ROSTER_HOME); } catch { return null; }
-})();
-
-const { useFileRoster, useLocalFallback } = chooseRosterSource({
-  fileRoster,
-  currentHome,
-  storedHome
-});
-
-/** Claim this origin's roster keys for the hive we just opened. Written even
- *  when nothing loaded: from here on localStorage describes THIS hive, so the
- *  next hive we open knows not to adopt it. */
-try {
-  if (currentHome) window.localStorage.setItem(LS_ROSTER_HOME, currentHome);
-} catch { /* noop */ }
 
 /** The renderer's running copy of what should be on disk. Kept as a mutable
  *  mirror updated slice-by-slice rather than read back out of the store, because
@@ -464,21 +440,45 @@ const rosterMirror: {
   selectedId: string | null;
 } = { agents: [], archived: [], restorable: [], queues: {}, selectedId: null };
 
+/** Every agent id this window currently holds, across all three buckets. */
+let knownIds = new Set<string>();
+/** Agents this window HAD and no longer has — the only thing that deletes a row.
+ *  Computed from our own previous state, never from the database, so a window
+ *  that never knew about an agent can never ask for it to be removed. */
+const pendingRemovals = new Set<string>();
+
+/** Re-derive what we hold and what we dropped. An id that moved between buckets
+ *  (a dead worker becoming restorable) is still held, so it is not a removal. */
+function trackRemovals(): void {
+  const now = new Set<string>();
+  for (const list of [rosterMirror.agents, rosterMirror.archived, rosterMirror.restorable]) {
+    for (const a of list) if (a?.id) now.add(a.id);
+  }
+  for (const id of knownIds) if (!now.has(id)) pendingRemovals.add(id);
+  for (const id of now) pendingRemovals.delete(id);
+  knownIds = now;
+}
+
 let rosterFlush: ReturnType<typeof setTimeout> | null = null;
 
 function flushRosterNow(): void {
   if (rosterFlush) { clearTimeout(rosterFlush); rosterFlush = null; }
+  const removes = [...pendingRemovals];
   try {
-    void window.cth?.rosterWrite?.({
-      version: 1,
-      savedAt: new Date().toISOString(),
+    const p = window.cth?.rosterWrite?.({
       agents: rosterMirror.agents,
       archived: rosterMirror.archived,
       restorable: rosterMirror.restorable,
       queues: rosterMirror.queues,
-      selectedId: rosterMirror.selectedId
+      selectedId: rosterMirror.selectedId,
+      removes
     });
-  } catch { /* the file is a mirror — localStorage already took the write */ }
+    // Forget a removal only once main confirms the row is gone. Dropping it on
+    // send would mean a failed save quietly resurrects the agent at next boot.
+    void p?.then((res) => {
+      if (res?.ok) for (const id of removes) pendingRemovals.delete(id);
+    }).catch(() => { /* keep them pending; the next flush retries */ });
+  } catch { /* keep them pending; the next flush retries */ }
 }
 
 /** Coalesce a burst of persist* calls into one disk write. Agent edits arrive in
@@ -488,9 +488,8 @@ function scheduleRosterFlush(): void {
   rosterFlush = setTimeout(flushRosterNow, 500);
 }
 
-// Don't let a quit inside the debounce window drop the last edit. localStorage
-// would still have it, but only for THIS origin — and the whole point is that
-// the other origin can read it too.
+// Don't let a quit inside the debounce window drop the last edit. The database
+// is the only copy now, so an unflushed edit is a lost one.
 try {
   window.addEventListener('beforeunload', flushRosterNow);
 } catch { /* not a browser context (unit tests) */ }
@@ -503,13 +502,9 @@ function slimAgents(agents: Agent[]): PersistedAgent[] {
 }
 
 function persistAgents(agents: Agent[], selectedId: string | null): void {
-  const slim = slimAgents(agents);
-  try {
-    window.localStorage.setItem(LS_AGENTS, JSON.stringify(slim));
-    window.localStorage.setItem(LS_SELECTED, selectedId ?? '');
-  } catch { /* noop */ }
-  rosterMirror.agents = slim;
+  rosterMirror.agents = slimAgents(agents);
   rosterMirror.selectedId = selectedId;
+  trackRemovals();
   scheduleRosterFlush();
 }
 
@@ -527,28 +522,14 @@ function touchesDurableAgentField(patch: Partial<Agent>): boolean {
   return Object.keys(patch).some((k) => !VOLATILE_AGENT_FIELDS.has(k as keyof Agent));
 }
 
-/** The persisted list for one slice: the shared file when it has a roster,
- *  otherwise this origin's localStorage — but only when that localStorage was
- *  written for this hive. Returns [] on anything malformed. */
-function persistedSlice(
-  key: string,
-  fromFile: unknown[] | undefined
-): PersistedAgent[] {
-  if (useFileRoster) return Array.isArray(fromFile) ? (fromFile as PersistedAgent[]) : [];
-  if (!useLocalFallback) return [];
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as PersistedAgent[]) : [];
-  } catch {
-    return [];
-  }
+/** One slice of the stored roster. Returns [] on anything malformed. */
+function persistedSlice(fromDb: unknown[] | undefined): PersistedAgent[] {
+  return Array.isArray(fromDb) ? (fromDb as PersistedAgent[]) : [];
 }
 
 function loadPersistedAgents(): Agent[] {
   try {
-    const parsed = persistedSlice(LS_AGENTS, fileRoster?.agents);
+    const parsed = persistedSlice(fileRoster?.agents);
     if (!parsed.length) return [];
     // Reset volatile run-state; the PTY stream / mock loop will repopulate it.
     return parsed.map((a) => ({
@@ -571,17 +552,14 @@ function loadPersistedAgents(): Agent[] {
 }
 
 function persistArchived(archived: Agent[]): void {
-  const slim = slimAgents(archived);
-  try {
-    window.localStorage.setItem(LS_ARCHIVED, JSON.stringify(slim));
-  } catch { /* noop */ }
-  rosterMirror.archived = slim;
+  rosterMirror.archived = slimAgents(archived);
+  trackRemovals();
   scheduleRosterFlush();
 }
 
 function loadPersistedArchived(): Agent[] {
   try {
-    const parsed = persistedSlice(LS_ARCHIVED, fileRoster?.archived);
+    const parsed = persistedSlice(fileRoster?.archived);
     if (!parsed.length) return [];
     // Archived agents have no live process — force the flag + clear run-state.
     return parsed.map((a) => ({
@@ -605,16 +583,14 @@ function persistRestorable(restorable: Agent[]): void {
     void recentAssistantText; void recentTextTs; void blockReason; void seedPrompt;
     return rest;
   });
-  try {
-    window.localStorage.setItem(LS_RESTORABLE, JSON.stringify(slim));
-  } catch { /* noop */ }
   rosterMirror.restorable = slim;
+  trackRemovals();
   scheduleRosterFlush();
 }
 
 function loadPersistedRestorable(): Agent[] {
   try {
-    const parsed = persistedSlice(LS_RESTORABLE, fileRoster?.restorable);
+    const parsed = persistedSlice(fileRoster?.restorable);
     if (!parsed.length) return [];
     // No live process — clear run-state; the spawn recipe fields are what matter.
     return parsed.map((a) => ({
@@ -629,23 +605,17 @@ function loadPersistedRestorable(): Agent[] {
 }
 
 function persistQueues(queues: Record<string, QueuedMessage[]>): void {
-  try {
-    // Only keep non-empty queues so the key stays small.
-    const slim: Record<string, QueuedMessage[]> = {};
-    for (const [id, q] of Object.entries(queues)) if (q.length) slim[id] = q;
-    window.localStorage.setItem(LS_QUEUES, JSON.stringify(slim));
-    rosterMirror.queues = slim;
-    scheduleRosterFlush();
-  } catch { /* noop */ }
+  // Only the non-empty ones travel; main clears the queue of every agent this
+  // window knows about, so an emptied queue still lands as empty.
+  const slim: Record<string, QueuedMessage[]> = {};
+  for (const [id, q] of Object.entries(queues)) if (q.length) slim[id] = q;
+  rosterMirror.queues = slim;
+  scheduleRosterFlush();
 }
 
 function loadPersistedQueues(): Record<string, QueuedMessage[]> {
   try {
-    const parsed = useFileRoster
-      ? (fileRoster?.queues as Record<string, QueuedMessage[]> | undefined)
-      : useLocalFallback
-        ? JSON.parse(window.localStorage.getItem(LS_QUEUES) ?? 'null') as Record<string, QueuedMessage[]> | null
-        : null;
+    const parsed = fileRoster?.queues as Record<string, QueuedMessage[]> | undefined;
     if (!parsed || typeof parsed !== 'object') return {};
     // Defensively keep only well-formed entries.
     const out: Record<string, QueuedMessage[]> = {};
@@ -662,9 +632,7 @@ function loadPersistedQueues(): Record<string, QueuedMessage[]> {
 
 function loadPersistedSelectedId(agents: Agent[]): string | null {
   try {
-    const id = useFileRoster
-      ? fileRoster?.selectedId
-      : useLocalFallback ? window.localStorage.getItem(LS_SELECTED) : null;
+    const id = fileRoster?.selectedId;
     return id && agents.some((a) => a.id === id) ? id : (agents[0]?.id ?? null);
   } catch {
     return agents[0]?.id ?? null;
@@ -672,7 +640,7 @@ function loadPersistedSelectedId(agents: Agent[]): string | null {
 }
 const initialSidebarWidth = (() => {
   try {
-    const v = window.localStorage.getItem(LS_SIDEBAR_WIDTH);
+    const v = getPref(LS_SIDEBAR_WIDTH);
     const n = v ? parseInt(v, 10) : NaN;
     if (!Number.isNaN(n) && n >= 320 && n <= 1200) return n;
   } catch { /* noop */ }
@@ -680,7 +648,7 @@ const initialSidebarWidth = (() => {
 })();
 const initialSidebarTab: SidebarTab = (() => {
   try {
-    const v = window.localStorage.getItem(LS_SIDEBAR_TAB);
+    const v = getPref(LS_SIDEBAR_TAB);
     // 'traces' was a tab once; a stored one lands on terminal like any other
     // value this does not recognise.
     if (v === 'terminal' || v === 'messages' || v === 'git') return v;
@@ -697,7 +665,7 @@ const initialSidebarTab: SidebarTab = (() => {
  *  in focus mode", so on load we resolve it against whoever is selected now. */
 const initialPrefersFocusMode = (() => {
   try {
-    return window.localStorage.getItem(LS_FOCUS_MODE) === '1';
+    return getPref(LS_FOCUS_MODE) === '1';
   } catch { /* noop */ }
   return false;
 })();
@@ -710,19 +678,16 @@ const initialSelectedId = loadPersistedSelectedId(initialAgents);
 const initialQueues = loadPersistedQueues();
 
 // Prime the mirror with whatever we just loaded, so a later persist of ONE slice
-// writes a complete file rather than blanking the slices it didn't touch.
+// still sends the others as they stand rather than as empty.
 rosterMirror.agents = slimAgents(initialAgents);
 rosterMirror.archived = slimAgents(initialArchivedAgents);
 rosterMirror.restorable = slimAgents(initialRestorableAgents);
 rosterMirror.queues = initialQueues;
 rosterMirror.selectedId = initialSelectedId;
 
-// First run with the file: seed it from this origin's localStorage. Only when
-// there is something to seed — writing an empty file here would hand a blank
-// roster to the other side, which is precisely the outcome being designed out.
-if (useLocalFallback && rosterMirror.agents.length + rosterMirror.archived.length + rosterMirror.restorable.length > 0) {
-  scheduleRosterFlush();
-}
+// What we loaded is what we hold. Removals are measured against this, so an
+// agent we never loaded can never be reported as one we deleted.
+trackRemovals();
 
 let queuedSeq = 0;
 /** Process-unique id for a queued message (timestamp + counter avoids collisions
@@ -740,10 +705,10 @@ export const useStore = create<State>((set, get) => ({
   feeds: {},
   addAgentOpen: false,
   ccTab: (() => {
-    try { return localStorage.getItem('cth.ccTab') || 'terminal'; } catch { return 'terminal'; }
+    return getPref(LS_CC_TAB) || 'terminal';
   })(),
   setCcTab: (tab) => {
-    try { localStorage.setItem('cth.ccTab', tab); } catch { /* private window */ }
+    setPref(LS_CC_TAB, tab);
     set({ ccTab: tab });
   },
   ccTabRequest: null,
@@ -779,7 +744,7 @@ export const useStore = create<State>((set, get) => ({
       }
       // Persist only when something DURABLE changed. `updateAgent` is also the
       // pty parser's per-chunk write (status/action/progress), so persisting
-      // unconditionally would rewrite localStorage on every burst of terminal
+      // unconditionally would rewrite the roster on every burst of terminal
       // output. Persisting nothing was worse: a model or command change lived
       // only in memory, so the selector snapped back to the old model on reload
       // and restore relaunched the old command.
@@ -976,8 +941,8 @@ export const useStore = create<State>((set, get) => ({
     const ccTab = next.ccTab;
     const sidebarTab = next.sidebarTab as SidebarTab;
     try {
-      if (ccTab !== st.ccTab) window.localStorage.setItem('cth.ccTab', ccTab);
-      if (sidebarTab !== st.sidebarTab) window.localStorage.setItem(LS_SIDEBAR_TAB, sidebarTab);
+      if (ccTab !== st.ccTab) setPref(LS_CC_TAB, ccTab);
+      if (sidebarTab !== st.sidebarTab) setPref(LS_SIDEBAR_TAB, sidebarTab);
     } catch { /* private window — the coercion still holds for this session */ }
     return { simpleMode: true, ccTab, sidebarTab };
   }),
@@ -1128,7 +1093,7 @@ export const useStore = create<State>((set, get) => ({
     // Only an explicit toggle writes the preference, so an agent closing under
     // you never silently changes how the app opens next time. Every non-explicit
     // mover goes through `refocusFullscreen` instead.
-    try { window.localStorage.setItem(LS_FOCUS_MODE, id ? '1' : '0'); } catch { /* noop */ }
+    setPref(LS_FOCUS_MODE, id ? '1' : '0');
     set({ fullscreenAgentId: id, prefersFocusMode: !!id });
   },
   refocusFullscreen: (id) => set({ fullscreenAgentId: id }),
@@ -1152,11 +1117,11 @@ export const useStore = create<State>((set, get) => ({
   setIdeInitialFile: (path) => set({ ideInitialFile: path }),
   setSidebarWidth: (px) => {
     const clamped = Math.min(1200, Math.max(320, Math.round(px)));
-    try { window.localStorage.setItem(LS_SIDEBAR_WIDTH, String(clamped)); } catch { /* noop */ }
+    setPref(LS_SIDEBAR_WIDTH, String(clamped));
     set({ sidebarWidth: clamped });
   },
   setSidebarTab: (tab) => {
-    try { window.localStorage.setItem(LS_SIDEBAR_TAB, tab); } catch { /* noop */ }
+    setPref(LS_SIDEBAR_TAB, tab);
     set({ sidebarTab: tab });
   }
 }));

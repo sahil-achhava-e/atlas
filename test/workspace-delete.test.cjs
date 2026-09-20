@@ -39,5 +39,6 @@ test('with no workspace open, a recent one is still deletable', () => {
 });
 
 test('only Atlas-created data is named — never the workspace folder itself', () => {
-  assert.deepEqual([...WORKSPACE_DATA], ['hive', 'palace', 'roster.json', 'roster-backups']);
+  assert.deepEqual([...WORKSPACE_DATA],
+    ['hive', 'palace', 'roster.db', 'roster.db-wal', 'roster.db-shm', 'roster-backups']);
 });

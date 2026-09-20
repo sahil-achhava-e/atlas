@@ -91,7 +91,9 @@ const fieldLabelStyle: CSSProperties = {
   color: 'var(--cth-ink-600)',
 };
 
-/** Clear every renderer-side persisted key so a relaunch starts truly empty. */
+/** Clear this origin's leftover browser keys — the onboarding draft and the
+ *  pre-database copies of the preferences. The roster is not here: it belongs to
+ *  the workspace, in its own database. */
 function clearLocalState(): void {
   try {
     const keys: string[] = [];
@@ -519,9 +521,9 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
   const applyChangeHome = async () => {
     if (!changeHome) return;
     setChangeBusy(true); setChangeErr('');
-    // Moving copies the hive (incl. its .git) + palace, so the new home owns the
-    // same renderer-side roster - keep localStorage. A 'fresh' home starts empty,
-    // so clear the renderer cache to match.
+    // Moving copies the hive (incl. its .git), the palace and the roster
+    // database, so the new home owns the same floor. A 'fresh' home starts
+    // empty; clear this origin's leftovers so nothing stale reappears.
     if (changeMode === 'fresh') clearLocalState();
     try {
       const res = await window.cth.changeHome(changeHome, changeMode);

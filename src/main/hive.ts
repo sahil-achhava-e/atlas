@@ -1616,12 +1616,12 @@ export class HiveManager {
     const inRoot = (...parts: string[]): string => join(root, ...parts);
     // Resolved ONCE here, at THIS agent's own spawn — same prompt-cache-stable
     // shape as name/id/dir/root above it, not a live re-read on every turn.
-    // Needed only for the PREP ASSISTANT persona below, which refers to god by
-    // name in prose; god's own prompt already gets its name via `meta.name`.
-    const godRegistry = meta.isAssistant ? this.registry() : null;
-    const godNameForPrompt = godRegistry
-      ? resolveGodName(godRegistry.agents[godRegistry.godId ?? 'god']?.name)
-      : '';
+    // Two personas refer to the orchestrator by name in prose: the prep
+    // assistant, and anyone told to ask it to search the shared memory. It used
+    // to be resolved for the assistant alone, so every OTHER agent was told to
+    // "ask  to search the index".
+    const godRegistry = this.registry();
+    const godNameForPrompt = resolveGodName(godRegistry.agents[godRegistry.godId ?? 'god']?.name);
     const ctxLine = 'LIVE CONTEXT: each agent row in the LIVE ROSTER carries a `ctx NN%` tag — its live context-window occupancy. Treat it as the real headroom signal when routing: prefer an agent with a LOW `ctx` for a big task; treat a HIGH `ctx` (near 100%) as busy rather than idle, even if the cumulative token count looks modest.';
 
     // Memory is an index inside the app now, not a CLI to run. Saying so
@@ -1629,7 +1629,7 @@ export class HiveManager {
     // spends a turn discovering the command does not exist, and the honest
     // answer to "how do I recall" is "ask the human's app, or read the file".
     const memoryLine = semanticMemory
-      ? `SHARED MEMORY: every agent's notes live in \`agents/<id>/memory.md\`, and the app keeps a searchable index over ALL of them — yours and everyone else's. Write durable facts, decisions and gotchas into your own memory.md as you learn them; that is the only copy, and the index is rebuilt from it. To recall something the team learned earlier, read the relevant agent's memory.md directly (they are plain markdown in ${inRoot('agents')}), or ask ${godNameForPrompt} to search the index. There is NO memory CLI — \`mempalace\` and anything like it is gone, so do not try to run one.`
+      ? `SHARED MEMORY: every agent's notes live in \`agents/<id>/memory.md\`, and the app keeps a searchable index over ALL of them — yours and everyone else's. Write durable facts, decisions and gotchas into your own memory.md as you learn them; that is the only copy, and the index is rebuilt from it. To recall something the team learned earlier, read the relevant agent's memory.md directly (they are plain markdown in ${inRoot('agents')})${meta.isGod ? '' : `, or ask ${godNameForPrompt} to search the index`}. There is NO memory CLI — \`mempalace\` and anything like it is gone, so do not try to run one.`
       : '';
     // Enterprise Knowledge Graph (opt-in). Volatile-free: the bundled-node launcher
     // and the KG CLI are both fixed absolute paths for an install, so baking them

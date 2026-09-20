@@ -98,13 +98,13 @@ test('the override is three-valued, so a deliberate choice survives a language s
   const src = read('src/renderer/src/terminal/arabicSetting.ts');
   assert.match(src, /type Override = boolean \| null/,
     'unset must be distinguishable from an explicit false');
-  assert.match(src, /removeItem\(KEY\)/,
+  assert.match(src, /clearPref\(KEY\)/,
     'there must be a way back to following the language');
   // setArabicTerminalEnabled always WRITES, including when the new value
   // happens to equal today's language default — otherwise the choice would
   // evaporate the moment the language moved.
   const setter = src.slice(src.indexOf('export function setArabicTerminalEnabled'));
-  assert.match(setter.slice(0, 300), /setItem\(KEY/,
+  assert.match(setter.slice(0, 300), /setPref\(KEY/,
     'an explicit choice must be persisted unconditionally');
 });
 

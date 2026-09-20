@@ -169,6 +169,7 @@ export const INVOKE: Record<string, string> = {
   appInfo: 'app:info',
   forgetWorkspace: 'workspace:forget',
   deleteWorkspace: 'workspace:delete',
+  prefsSet: 'prefs:set',
   rosterWrite: 'roster:write',
   updateCurrent: 'update:current',
   updateRestartAndInstall: 'update:restartAndInstall',
@@ -183,6 +184,7 @@ export const SYNC: Record<string, string> = {
   readClipboardSync: 'app:readClipboardSync',
   rosterReadSync: 'roster:readSync',
   harnessHomeSync: 'config:homeSync',
+  prefsAllSync: 'prefs:allSync',
   bootIdSync: 'app:bootIdSync'
 };
 

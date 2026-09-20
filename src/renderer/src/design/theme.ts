@@ -12,6 +12,7 @@
  * read it with `useAppTheme()`; the ONE toggle lives in the title bar.
  */
 import { useSyncExternalStore } from 'react';
+import { getPref, setPref } from '../store/prefs';
 
 export type AppTheme = 'light' | 'dark';
 
@@ -21,7 +22,11 @@ const LEGACY_LS_KEY = 'cth.ptyTheme';
 
 function load(): AppTheme {
   try {
-    const v = window.localStorage.getItem(LS_KEY) ?? window.localStorage.getItem(LEGACY_LS_KEY);
+    const v = getPref(LS_KEY) ?? (() => {
+      // The key this setting had before it was renamed. Still read once so an
+      // install that predates the rename keeps the theme it was set to.
+      try { return window.localStorage.getItem(LEGACY_LS_KEY); } catch { return null; }
+    })();
     if (v === 'dark' || v === 'light') return v;
   } catch { /* noop */ }
   return 'light';
@@ -42,7 +47,7 @@ export function appTheme(): AppTheme {
 export function setAppTheme(next: AppTheme): void {
   if (next === theme) return;
   theme = next;
-  try { window.localStorage.setItem(LS_KEY, next); } catch { /* noop */ }
+  setPref(LS_KEY, next);
   apply();
   subscribers.forEach((fn) => fn());
 }

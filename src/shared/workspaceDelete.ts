@@ -23,7 +23,9 @@
  *  NOTHING the user put there: a workspace folder can hold their own files, and
  *  a delete that took the folder itself would take those too. Mirrors what the
  *  app's own reset removes. */
-export const WORKSPACE_DATA = ['hive', 'palace', 'roster.json', 'roster-backups'] as const;
+export const WORKSPACE_DATA = [
+  'hive', 'palace', 'roster.db', 'roster.db-wal', 'roster.db-shm', 'roster-backups'
+] as const;
 
 export interface DeleteCheck { ok: boolean; error?: string }
 

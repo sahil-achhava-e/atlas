@@ -1,39 +1,41 @@
 /**
  * The roster on disk — agents, their notes, worktree paths, archived and
- * restorable entries, and parked message queues, stored as one JSON file beside
- * the hive.
+ * restorable entries, and parked message queues, in a SQLite database beside
+ * the hive (`<harnessHome>/roster.db`).
  *
  * WHY THIS EXISTS. This is the UI floor (cards, notes, queues, worktrees).
  * Hive identity — id, role, cwd, session — lives in `<harnessHome>/hive/registry.json`
  * and is what agents read. The two must not drift: `description` here is the
  * same durable job string as registry `role`, never live status (pause/idle).
  *
- * All of that used to live only in the renderer's localStorage,
- * and localStorage is partitioned by ORIGIN. A dev run loads the renderer from
- * `http://localhost:5173` and a packaged build loads it from `file://`, so the
- * two never see each other's storage: switching between them showed an empty
- * floor and no notes, even though the hive on disk (sessions, memory, inboxes,
- * tasks) was right there and intact. A file keyed on `harnessHome` is shared by
- * both, because it is addressed by path rather than by page origin.
+ * It used to live in the renderer's localStorage, which is partitioned by
+ * ORIGIN: a dev run loads the renderer from `http://localhost:5173`, a packaged
+ * build from `file://`, and browser mode from `http://127.0.0.1:5188`. None of
+ * them see each other's storage, so the same hive showed a different floor
+ * depending on how you opened it. A JSON mirror bridged that, and brought its
+ * own failure: the mirror was written as ONE SNAPSHOT, so a window that knew
+ * about one agent wrote its whole roster over a file holding three.
  *
- * localStorage is still written exactly as before. This file is an ADDITION, not
- * a migration away from it — if anything here fails, the renderer falls back to
- * the storage it has always used and nothing is lost.
+ * ROWS, NOT SNAPSHOTS. That is the point of this file. An agent is a row. A
+ * window that knows less than the database does can only fail to mention rows,
+ * and a row nobody mentions is left alone. Deleting is a separate, explicit
+ * instruction naming the agent. There is no write shaped like "here is the
+ * whole world, replace it", so there is no write that can flatten the roster.
  *
- * Durability rules, in order of how much they matter:
- *   1. Never lose a roster. Every write first copies the previous file into
- *      `roster-backups/`, which is append-only — nothing in it is ever pruned,
- *      overwritten or deleted.
- *   2. Never write a truncated file. Writes go to a temp file and are renamed
- *      into place, so a crash mid-write leaves the previous file untouched.
- *   3. Never let an empty renderer erase a full roster. See `write`.
+ * Durability:
+ *   1. Every save is one transaction — it lands completely or not at all.
+ *   2. WAL journalling with synchronous=FULL, so a crash mid-write rolls back
+ *      rather than truncating.
+ *   3. A reset copies the whole database into `roster-backups/` before clearing
+ *      it. That is the only copy anything keeps: one store, no mirrors to drift.
  */
-import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import Database from 'better-sqlite3';
+import { copyFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-/** What the renderer mirrors to disk. The inner agent shape is deliberately
- *  opaque here — the renderer's store owns it, and repeating it would mean
- *  editing this file every time an agent gains a field. Main only counts. */
+/** What the renderer loads at boot. The inner agent shape is deliberately opaque
+ *  here — the renderer's store owns it, and repeating it would mean editing this
+ *  file every time an agent gains a field. */
 export interface RosterSnapshot {
   version: 1;
   savedAt: string;
@@ -42,56 +44,85 @@ export interface RosterSnapshot {
   restorable: unknown[];
   queues: Record<string, unknown[]>;
   selectedId: string | null;
+  /** True once anything has ever been saved for this hive. An EMPTY seeded
+   *  roster is a real answer — "you deleted everyone" — and the renderer must
+   *  not fall back to localStorage and resurrect them. */
+  seeded: boolean;
+}
+
+/** One save from a window: what it knows, and what it deliberately removed.
+ *  Every field is optional — a window sends the slices it touched. */
+export interface RosterSave {
+  agents?: unknown[];
+  archived?: unknown[];
+  restorable?: unknown[];
+  /** Keyed by agent id. Authoritative for the ids in it AND for any id in the
+   *  `agents`/`archived`/`restorable` arrays above (so emptying a queue clears
+   *  it), and silent about every other agent. */
+  queues?: Record<string, unknown[]>;
+  selectedId?: string | null;
+  /** Agents this window removed since it loaded. The ONLY way a row is deleted. */
+  removes?: string[];
 }
 
 export interface RosterWriteResult {
   ok: boolean;
-  /** Set when the write was deliberately declined; the file is unchanged. */
-  /** Why a write was declined. 'empty-first-write' is kept as the name for the
-   *  case it has always described — a fresh window offering nothing — and now
-   *  also covers a window offering LESS than the disk holds, which is the same
-   *  accident with a smaller number. */
-  skipped?: 'empty-first-write';
   error?: string;
 }
 
-export function rosterPath(home: string): string {
-  return join(home, 'roster.json');
+type Bucket = 'active' | 'archived' | 'restorable';
+
+export function rosterDbPath(home: string): string {
+  return join(home, 'roster.db');
 }
 
 export function rosterBackupDir(home: string): string {
   return join(home, 'roster-backups');
 }
 
-function isSnapshot(v: unknown): v is RosterSnapshot {
-  if (!v || typeof v !== 'object') return false;
-  const s = v as Partial<RosterSnapshot>;
-  return Array.isArray(s.agents) && Array.isArray(s.archived) && Array.isArray(s.restorable);
-}
+const MIGRATIONS: Array<(db: Database.Database) => void> = [
+  // → user_version 1: agents as rows, queues as rows, scalars in meta.
+  (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS agent (
+        id         TEXT PRIMARY KEY,
+        bucket     TEXT NOT NULL,
+        ord        INTEGER NOT NULL,
+        data       TEXT NOT NULL,      -- JSON: the renderer's agent card
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_agent_bucket ON agent(bucket, ord);
+      CREATE TABLE IF NOT EXISTS queue (
+        agent_id TEXT NOT NULL,
+        pos      INTEGER NOT NULL,
+        data     TEXT NOT NULL,        -- JSON: one queued message
+        PRIMARY KEY (agent_id, pos)
+      );
+      CREATE TABLE IF NOT EXISTS meta (
+        key   TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+    `);
+  }
+];
 
-function entryCount(s: RosterSnapshot): number {
-  return s.agents.length + s.archived.length + s.restorable.length;
+function idOf(entry: unknown): string | null {
+  if (!entry || typeof entry !== 'object') return null;
+  const id = (entry as { id?: unknown }).id;
+  return typeof id === 'string' && id ? id : null;
 }
 
 /**
  * Reads and writes one home folder's roster.
  *
- * A class rather than free functions because the empty-guard needs to know
- * whether THIS run has written yet, and a module-level flag would be invisible
- * shared state that no test could reset. One instance per process in `index.ts`;
- * tests make their own. The instance lives in MAIN, so a renderer reload reuses
- * it: the guard's state survives reloads (the 2026-08-16 incident was two
- * refusal-worthy writes in one run, minutes apart) and re-arms only on a fresh
- * app launch.
+ * A class because the handle is cached and has to be reopened when the user
+ * switches workspace. One instance per process in `index.ts`; tests make their
+ * own.
  */
 export class RosterStore {
-  /** Set once this store has written successfully. The empty-guard applies only
-   *  before that: see `write`. */
-  private wrote = false;
-  /** Disambiguates backups made inside the same millisecond. Two writes in one
-   *  tick used to produce the same filename, and the second silently replaced
-   *  the first — a backup folder that quietly loses backups is worse than none. */
-  private backupSeq = 0;
+  private db: Database.Database | null = null;
+  /** The home the open handle belongs to, so switching workspace reopens. */
+  private openFor: string | null = null;
 
   constructor(private readonly getHome: () => string | null) {}
 
@@ -99,120 +130,186 @@ export class RosterStore {
     try { return this.getHome(); } catch { return null; }
   }
 
-  /** The stored roster, or null when there isn't one (or it can't be parsed).
-   *  Null means "no opinion" — the renderer then keeps using localStorage, so a
-   *  corrupt file degrades to the old behaviour instead of to an empty floor. */
-  read(): RosterSnapshot | null {
+  /** Open (creating and migrating if needed) the database for the current home.
+   *  Null when there is no home yet, or when SQLite cannot be opened at all. */
+  private conn(): Database.Database | null {
     const home = this.home();
     if (!home) return null;
+    if (this.db && this.openFor === home) return this.db;
+    this.close();
     try {
-      const p = rosterPath(home);
-      if (!existsSync(p)) return null;
-      const parsed = JSON.parse(readFileSync(p, 'utf8'));
-      return isSnapshot(parsed) ? parsed : null;
-    } catch {
+      mkdirSync(home, { recursive: true });
+      const db = new Database(rosterDbPath(home));
+      db.pragma('journal_mode = WAL');
+      db.pragma('synchronous = FULL'); // a roster is worth the fsync
+      db.pragma('busy_timeout = 5000');
+      const version = db.pragma('user_version', { simple: true }) as number;
+      for (let i = version; i < MIGRATIONS.length; i++) {
+        db.transaction(() => {
+          MIGRATIONS[i](db);
+          db.pragma(`user_version = ${i + 1}`);
+        })();
+      }
+      this.db = db;
+      this.openFor = home;
+      return db;
+    } catch (e) {
+      console.error('[roster] could not open the database:', e);
+      return null;
+    }
+  }
+
+  close(): void {
+    try { this.db?.close(); } catch { /* best-effort */ }
+    this.db = null;
+    this.openFor = null;
+  }
+
+  private getMeta(key: string): string | null {
+    const row = this.db?.prepare('SELECT value FROM meta WHERE key = ?').get(key) as { value: string } | undefined;
+    return row?.value ?? null;
+  }
+
+  /** The stored roster, or null when this hive has none — which the renderer
+   *  reads as "no opinion" and answers from localStorage instead. */
+  read(): RosterSnapshot | null {
+    const db = this.conn();
+    if (!db) return null;
+    try {
+      const rows = db.prepare('SELECT id, bucket, data FROM agent ORDER BY bucket, ord').all() as
+        Array<{ id: string; bucket: string; data: string }>;
+      const seeded = this.getMeta('seeded') === '1';
+      if (!rows.length && !seeded) return null;
+
+      const out: RosterSnapshot = {
+        version: 1,
+        savedAt: this.getMeta('savedAt') ?? new Date(0).toISOString(),
+        agents: [], archived: [], restorable: [],
+        queues: {},
+        selectedId: this.getMeta('selectedId'),
+        seeded
+      };
+      for (const r of rows) {
+        let card: unknown;
+        try { card = JSON.parse(r.data); } catch { continue; }
+        if (r.bucket === 'archived') out.archived.push(card);
+        else if (r.bucket === 'restorable') out.restorable.push(card);
+        else out.agents.push(card);
+      }
+      const q = db.prepare('SELECT agent_id, data FROM queue ORDER BY agent_id, pos').all() as
+        Array<{ agent_id: string; data: string }>;
+      for (const r of q) {
+        try { (out.queues[r.agent_id] ??= []).push(JSON.parse(r.data)); } catch { /* skip one bad row */ }
+      }
+      return out;
+    } catch (e) {
+      console.error('[roster] read failed:', e);
       return null;
     }
   }
 
   /**
-   * Write the roster, keeping the previous contents as a backup.
+   * Apply one window's save.
    *
-   * THE EMPTY-GUARD. The dangerous sequence is: open the packaged build for the
-   * first time, its localStorage is empty (different origin), the store boots
-   * with zero agents, and the first mirror write flattens a file that holds a
-   * real roster. So an empty write is refused until this run has landed a
-   * NON-empty write — only then has the renderer proven it actually holds a
-   * roster, and a later empty write means the user really removed their agents
-   * (refusing those would make deletion impossible). The guard must survive a
-   * refusal: a renderer reload used to re-send the same empty snapshot, and
-   * because the first refusal disarmed the guard, the second empty write went
-   * through and flattened the file (seen live 2026-08-16 20:40:03). The previous
-   * file is backed up either way, so even a wrong call here is recoverable.
+   * Everything named is written; everything unnamed is left exactly as it is.
+   * The only deletions are the ids in `removes`, which the window has to ask for
+   * by name. That is what makes a half-informed window harmless: the worst it
+   * can do is repeat what it already knows.
    */
-  write(snap: unknown): RosterWriteResult {
-    const home = this.home();
-    if (!home) return { ok: false, error: 'no harnessHome' };
-    if (!isSnapshot(snap)) return { ok: false, error: 'invalid snapshot' };
-    const p = rosterPath(home);
+  save(patch: RosterSave): RosterWriteResult {
+    const db = this.conn();
+    if (!db) return { ok: false, error: 'no harnessHome' };
+    if (!patch || typeof patch !== 'object') return { ok: false, error: 'invalid save' };
     try {
-      mkdirSync(home, { recursive: true });
-      const existing = this.read();
+      const upsert = db.prepare(
+        `INSERT INTO agent (id, bucket, ord, data, updated_at) VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET bucket = excluded.bucket, ord = excluded.ord,
+           data = excluded.data, updated_at = excluded.updated_at`
+      );
+      const dropAgent = db.prepare('DELETE FROM agent WHERE id = ?');
+      const dropQueue = db.prepare('DELETE FROM queue WHERE agent_id = ?');
+      const addQueued = db.prepare('INSERT INTO queue (agent_id, pos, data) VALUES (?, ?, ?)');
+      const setMeta = db.prepare(
+        'INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
+      );
 
-      // A FIRST write from a window that knows less than the file does is not a
-      // save, it is a loss. The empty case was guarded; the PARTIAL one was not,
-      // and that is the one that happened: after a crash a fresh renderer knew
-      // about one agent, wrote its roster over a file holding three, and the
-      // other two existed nowhere the floor could find them. A window only ever
-      // starts with everything or with nothing, so a first write that has fewer
-      // agents than the disk is the same accident in both shapes.
-      if (!this.wrote && existing && entryCount(snap) < entryCount(existing)) {
-        // Back it up anyway: what is on disk right now is exactly what we are
-        // protecting, and a copy of it costs nothing. `wrote` stays false: the
-        // guard disarms only when a full write lands, never on a refusal.
-        this.backup(home, p, 'declined');
-        console.warn(
-          `[roster] refused a first write that would drop entries: `
-          + `${entryCount(existing)} on disk, ${entryCount(snap)} offered`
-        );
-        return { ok: false, skipped: 'empty-first-write' };
-      }
+      const run = db.transaction(() => {
+        const now = Date.now();
+        /** Every id this window mentioned — the scope its queue map speaks for. */
+        const mentioned = new Set<string>();
+        const writeBucket = (bucket: Bucket, list: unknown[] | undefined): void => {
+          if (!Array.isArray(list)) return;
+          list.forEach((entry, i) => {
+            const id = idOf(entry);
+            if (!id) return;
+            mentioned.add(id);
+            upsert.run(id, bucket, i, JSON.stringify(entry), now);
+          });
+        };
+        writeBucket('active', patch.agents);
+        writeBucket('archived', patch.archived);
+        writeBucket('restorable', patch.restorable);
 
-      this.backup(home, p, this.wrote ? 'write' : 'run-start');
+        for (const id of patch.removes ?? []) {
+          if (typeof id !== 'string' || !id) continue;
+          dropAgent.run(id);
+          dropQueue.run(id);
+        }
 
-      const body: RosterSnapshot = {
-        version: 1,
-        savedAt: new Date().toISOString(),
-        agents: snap.agents,
-        archived: snap.archived,
-        restorable: snap.restorable,
-        queues: snap.queues && typeof snap.queues === 'object' ? snap.queues : {},
-        selectedId: typeof snap.selectedId === 'string' ? snap.selectedId : null
-      };
-      // Temp + rename: `rename` is atomic within a filesystem, so a crash leaves
-      // either the old file or the new one, never half of either.
-      const tmp = `${p}.tmp`;
-      writeFileSync(tmp, JSON.stringify(body, null, 2), 'utf8');
-      renameSync(tmp, p);
-      this.wrote = true;
+        if (patch.queues && typeof patch.queues === 'object') {
+          for (const id of Object.keys(patch.queues)) mentioned.add(id);
+          for (const id of mentioned) {
+            dropQueue.run(id);
+            const list = patch.queues[id];
+            if (!Array.isArray(list)) continue;
+            list.forEach((msg, i) => addQueued.run(id, i, JSON.stringify(msg)));
+          }
+        }
+
+        if (patch.selectedId !== undefined) {
+          if (typeof patch.selectedId === 'string' && patch.selectedId) {
+            setMeta.run('selectedId', patch.selectedId);
+          } else {
+            db.prepare('DELETE FROM meta WHERE key = ?').run('selectedId');
+          }
+        }
+        setMeta.run('savedAt', new Date().toISOString());
+        setMeta.run('seeded', '1');
+      });
+      run();
       return { ok: true };
     } catch (e) {
-      try { rmSync(`${p}.tmp`, { force: true }); } catch { /* noop */ }
       return { ok: false, error: e instanceof Error ? e.message : String(e) };
     }
   }
 
   /**
-   * Retire the active roster during a full reset: copied into `roster-backups/`
-   * first, then the live file is removed.
+   * Retire the roster during a full reset: the database is copied into
+   * `roster-backups/` and then emptied.
    *
    * Reset wipes the hive, and the roster must not be left behind as the one
    * survivor — pointing the home folder back here afterwards would show a floor
    * full of agents whose sessions, memory and inboxes no longer exist. Archived
-   * rather than deleted, because a roster is never destroyed, only superseded.
+   * rather than destroyed, because a roster is never destroyed, only superseded.
    */
   archive(): void {
     const home = this.home();
     if (!home) return;
-    const p = rosterPath(home);
+    const db = this.conn();
+    if (!db) return;
     try {
-      if (!existsSync(p)) return;
-      this.backup(home, p, 'reset');
-      rmSync(p, { force: true });
-    } catch { /* a reset must never fail on this */ }
-  }
-
-  /** Copy the current roster into the append-only backup folder. Never prunes:
-   *  these files are the last line of defence, and a few KB per write is a price
-   *  worth paying for that. */
-  private backup(home: string, p: string, reason: string): void {
-    try {
-      if (!existsSync(p)) return;
       const dir = rosterBackupDir(home);
       mkdirSync(dir, { recursive: true });
       const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-      this.backupSeq += 1;
-      copyFileSync(p, join(dir, `roster-${stamp}-${this.backupSeq}-${reason}.json`));
-    } catch { /* a failed backup must never block the write */ }
+      // Checkpoint first so the copy is a complete database, not one missing
+      // whatever is still sitting in the WAL.
+      db.pragma('wal_checkpoint(TRUNCATE)');
+      copyFileSync(rosterDbPath(home), join(dir, `roster-${stamp}-reset.db`));
+      db.transaction(() => {
+        db.exec('DELETE FROM agent; DELETE FROM queue; DELETE FROM meta;');
+      })();
+    } catch (e) {
+      console.warn('[roster] archive failed:', e);
+    }
   }
 }

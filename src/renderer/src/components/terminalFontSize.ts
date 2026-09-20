@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { getPref, setPref } from '../store/prefs';
 
 /** The terminal zoom level, shared by every component that should scale with it.
  *
@@ -18,7 +19,7 @@ const LS_FONT_SIZE = 'cth.ptyFontSize';
 
 function load(): number {
   try {
-    const n = parseInt(window.localStorage.getItem(LS_FONT_SIZE) ?? '', 10);
+    const n = parseInt(getPref(LS_FONT_SIZE) ?? '', 10);
     if (!Number.isNaN(n) && n >= MIN_TERMINAL_FONT_SIZE && n <= MAX_TERMINAL_FONT_SIZE) return n;
   } catch { /* noop */ }
   return DEFAULT_TERMINAL_FONT_SIZE;
@@ -37,7 +38,7 @@ export function setTerminalFontSize(next: number): number {
   const clamped = Math.min(MAX_TERMINAL_FONT_SIZE, Math.max(MIN_TERMINAL_FONT_SIZE, Math.round(next)));
   if (clamped === current) return current;
   current = clamped;
-  try { window.localStorage.setItem(LS_FONT_SIZE, String(clamped)); } catch { /* noop */ }
+  setPref(LS_FONT_SIZE, String(clamped));
   for (const l of [...listeners]) l();
   return clamped;
 }

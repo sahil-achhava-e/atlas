@@ -67,7 +67,7 @@ import type { SpawnFailReason } from './analytics';
 import { IntegrationBroker } from './integrationBroker';
 import * as integrations from './integrations';
 import { validateBaseUrl, buildAuthHeaders, resolveUpstreamUrl, secretRefFor, INTEGRATION_TEMPLATES } from '../shared/integrations';
-import { RosterStore } from './roster';
+import { RosterStore, type RosterSave } from './roster';
 import { buildWorkerLaunch } from './workerLaunch';
 import { ControlRegistry } from './control';
 import { WorkerWakeWatchdog, type WorkerWakeFacts } from './workerWake';
@@ -3484,11 +3484,13 @@ ipcMain.handle('config:changeHome', async (_evt, payload: unknown) => {
 
   if (mode === 'move' && oldHome) {
     try {
-      // roster.json + its backups ride along with hive/palace: the roster is the
-      // renderer's half of the same state, and leaving it behind would move the
-      // agents' sessions and memory to the new home while their names, notes and
-      // worktree paths stayed at the old one.
-      for (const sub of ['hive', 'palace', 'roster.json', 'roster-backups']) {
+      // The roster database rides along with hive/palace: it is the renderer's
+      // half of the same state, and leaving it behind would move the agents'
+      // sessions and memory to the new home while their names, notes and
+      // worktree paths stayed at the old one. Its handle is closed first, which
+      // checkpoints the WAL — copying an open WAL database copies a stale one.
+      try { roster.close(); } catch { /* not open */ }
+      for (const sub of WORKSPACE_DATA) {
         const src = join(oldHome, sub);
         if (!existsSync(src)) continue;
         // cpSync copies the whole tree incl. .git and is cross-device safe (unlike
@@ -3718,6 +3720,20 @@ ipcMain.handle('git:checkout', async (_evt, cwd: unknown, ref: unknown, detach: 
 // (`roster` itself is constructed earlier so HookServer can read standing goals.)
 ipcMain.on('roster:readSync', (evt) => { evt.returnValue = roster.read(); });
 ipcMain.on('config:homeSync', (evt) => { evt.returnValue = readConfig().harnessHome ?? null; });
+/** Preferences, synchronously — theme and language decide the FIRST paint, so
+ *  an async answer arrives after the app has already drawn itself wrong. */
+ipcMain.on('prefs:allSync', (evt) => {
+  try { evt.returnValue = persist.prefs(); } catch { evt.returnValue = {}; }
+});
+ipcMain.handle('prefs:set', (_evt, name: unknown, value: unknown) => {
+  if (typeof name !== 'string' || !name) return { ok: false as const };
+  try {
+    persist.setPref(name, typeof value === 'string' ? value : null);
+    return { ok: true as const };
+  } catch (e) {
+    return { ok: false as const, error: e instanceof Error ? e.message : String(e) };
+  }
+});
 /** This run of the main process, SYNCHRONOUSLY — the office floor needs it
  *  before it places a single character, to tell a page reload (everyone is
  *  already at their desks) from an app start (walk them in). An async answer
@@ -3725,7 +3741,7 @@ ipcMain.on('config:homeSync', (evt) => { evt.returnValue = readConfig().harnessH
  *  decision governs. */
 ipcMain.on('app:bootIdSync', (evt) => { evt.returnValue = BOOT_ID; });
 ipcMain.handle('roster:read', () => roster.read());
-ipcMain.handle('roster:write', (_evt, snap: unknown) => roster.write(snap));
+ipcMain.handle('roster:write', (_evt, patch: unknown) => roster.save(patch as RosterSave));
 
 // ─── IPC: hive (multi-agent coordination) ───────────────────────────────────
 ipcMain.handle('hive:registry', () => hive.registry());

@@ -128,6 +128,40 @@ export class PersistStore {
     ).run(key, JSON.stringify(value), Date.now());
   }
 
+  // ─── preferences ───────────────────────────────────────────────────────────
+  //
+  // Theme, language, terminal font size, which pane you had open. These used to
+  // be localStorage, which is partitioned by ORIGIN: the desktop app and the
+  // browser tab are two different origins onto the SAME hive, so setting dark
+  // mode in one left the other in light. They are app-wide (not per-workspace),
+  // so they live here in the app's own database rather than beside a hive.
+  //
+  // Stored under a `pref.` prefix in kv, as strings — the renderer's settings
+  // are strings on both sides, and a JSON-typed pref would only mean two shapes
+  // to keep in step.
+
+  /** Every preference, keyed without the storage prefix. */
+  prefs(): Record<string, string> {
+    if (!this.db) return {};
+    const rows = this.db.prepare("SELECT key, value FROM kv WHERE key LIKE 'pref.%'").all() as
+      Array<{ key: string; value: string }>;
+    const out: Record<string, string> = {};
+    for (const r of rows) {
+      try {
+        const v = JSON.parse(r.value);
+        if (typeof v === 'string') out[r.key.slice('pref.'.length)] = v;
+      } catch { /* skip one unreadable pref rather than losing the rest */ }
+    }
+    return out;
+  }
+
+  /** Set one preference, or delete it when `value` is null. */
+  setPref(name: string, value: string | null): void {
+    if (!this.db || !name) return;
+    if (value === null) this.db.prepare('DELETE FROM kv WHERE key = ?').run(`pref.${name}`);
+    else this.setKv(`pref.${name}`, value);
+  }
+
   // ─── command history (net-new) ─────────────────────────────────────────────
 
   /** Record one submitted prompt. Empty text or missing agent id are ignored. */
