@@ -504,9 +504,13 @@ export function useHive(config: HarnessConfig | null): void {
             useStore.getState().addAgent({
               id: GOD_ID,
               name: resolveGodName(entry?.name),
-              character: 'michael',
-              accent: 'coral',
-              description: 'runs the floor',
+              // From the record, not from defaults. The orchestrator has a
+              // briefing the human wrote, and rebuilding his card out of
+              // constants silently threw it away on every boot.
+              character: entry?.character || 'michael',
+              accent: entry?.accent || 'coral',
+              goal: entry?.goal,
+              description: entry?.role || 'runs the floor',
               project: 'hive',
               tmuxTarget: '',
               cwd: entry?.cwd ?? config.harnessHome!,
@@ -528,7 +532,6 @@ export function useHive(config: HarnessConfig | null): void {
       // Synchronous guard (no await between check and set) → exactly one spawn.
       if (cancelled || godSpawning.current) return;
       godSpawning.current = true;
-      useStore.getState().removeAgent(GOD_ID); // clear any stale restored entry
 
       // A prior rename (Edit Agent panel → renameAgent() → hive.ts's renameAgent())
       // persists straight into registry.json, so read it back here rather than
@@ -559,15 +562,24 @@ export function useHive(config: HarnessConfig | null): void {
       });
       if (cancelled) { godSpawning.current = false; return; }
       if (!res.ok) { godSpawning.current = false; useStore.getState().setGodStatus('failed'); return; }
+      // What the orchestrator already is: his own card first, then the hive's
+      // copy. Only fall back to constants for a floor that has never had him.
+      // This card USED to be built from defaults alone, so every restart wrote
+      // a goal-less Atlas over the briefing the human had written.
+      const prevGod = useStore.getState().agents.find((a) => a.id === GOD_ID);
+      const godEntry = reg?.agents?.[GOD_ID];
       const god: Agent = {
         id: GOD_ID,
         name: godName,
-        character: 'michael',
+        character: prevGod?.character || godEntry?.character || 'michael',
         // Red, like every hire's default. Lemon read as a warning strip on the
         // one card that is always on the floor.
-        accent: 'coral',
+        accent: prevGod?.accent || godEntry?.accent || 'coral',
+        goal: prevGod?.goal || godEntry?.goal,
+        seat: prevGod?.seat,
+        note: prevGod?.note,
         // Short: it is the line under his name on a dock tile, not a job spec.
-        description: 'runs the floor',
+        description: prevGod?.description || godEntry?.role || 'runs the floor',
         project: 'hive',
         tmuxTarget: '',
         cwd: config.harnessHome!,
@@ -582,6 +594,10 @@ export function useHive(config: HarnessConfig | null): void {
         isGod: true,
         recentTextTs: Date.now()
       };
+      // Clear the stale restored entry HERE, not before the spawn: a spawn that
+      // failed used to leave the floor with no orchestrator card at all, and
+      // the delete is what makes the fresh card land at the head.
+      useStore.getState().removeAgent(GOD_ID);
       useStore.getState().addAgent(god);
       useStore.getState().setGodStatus('ready');
 
