@@ -69,3 +69,19 @@ test('no hive, no file — and no throw', () => {
   const hive = new HiveManager(() => null, () => true);
   assert.doesNotThrow(() => hive.writeEnvironment(ENV));
 });
+
+// Atlas dispatches work; he needs to know a skill is the FLOOR's, not just his.
+// The line used to read "the skills you can invoke", which is true and useless
+// to an orchestrator deciding whether to write "use the pre-commit-review skill"
+// into a dispatch.
+
+test('the prompt tells the orchestrator that every agent has the untagged skills', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'hive-'));
+  const hive = new HiveManager(() => home);
+  const inj = await hive.ensureAgent(
+    { id: 'god', name: 'Atlas', provider: 'claude', cwd: home, isGod: true }, {});
+  const prompt = inj.args[inj.args.indexOf('--append-system-prompt') + 1];
+  assert.match(prompt, /skills THE WHOLE FLOOR has/);
+  assert.match(prompt, /name one in a dispatch and the agent will have it/);
+  assert.match(prompt, /belongs to that repo alone/);
+});
