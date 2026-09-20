@@ -463,6 +463,15 @@ export function useHive(config: HarnessConfig | null): void {
         console.log('[hive] adopting a running agent with no card:', e.id);
         useStore.getState().addAgent(cardFor(e, ptyIdFor(e.id)));
       }
+      // Deleted elsewhere: the hive has forgotten it and nothing is running
+      // under its name. Dropping it here is what makes a delete stick, instead
+      // of the browser's own copy putting it back on the next load.
+      for (const id of plan.drop) {
+        console.log('[hive] dropping an agent the hive no longer has:', id);
+        useStore.getState().removeAgent(id);
+        useStore.getState().removeRestorableAgent(id);
+        useStore.getState().removeArchivedAgent(id);
+      }
       if (plan.adoptRestorable.length) {
         console.log('[hive] handing lost agents to restore:', plan.adoptRestorable.map((x) => x.id));
         useStore.getState().adoptRestorable(

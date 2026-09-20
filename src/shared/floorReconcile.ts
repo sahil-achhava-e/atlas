@@ -30,6 +30,15 @@ export interface FloorPlan<T extends RegistryView> {
   adoptLive: T[];
   /** No card and no terminal: hand to restore, which spawns it with its own id. */
   adoptRestorable: T[];
+  /** The renderer remembers it, the hive does not, and nothing is running under
+   *  its name: it was deleted. Drop it.
+   *
+   *  Without this the registry is authoritative for what EXISTS only in one
+   *  direction — it can put an agent back, but never take one away — so a
+   *  deleted agent was resurrected from the browser's own copy on the next
+   *  load, and re-registered itself on respawn. Deleting had to be done in
+   *  every place at once or it did not happen at all. */
+  drop: string[];
 }
 
 /**
@@ -45,7 +54,17 @@ export function planFloor<T extends RegistryView>(
   ptyIdFor: (agentId: string) => string
 ): FloorPlan<T> {
   const live = new Set(livePtyIds);
-  const plan: FloorPlan<T> = { adoptLive: [], adoptRestorable: [] };
+  const plan: FloorPlan<T> = { adoptLive: [], adoptRestorable: [], drop: [] };
+  const inRegistry = new Set(registry.map((e) => e.id));
+
+  // Gone from the hive, and nothing running under its name. A live terminal is
+  // the one thing that stays its own evidence: an agent mid-spawn is not yet in
+  // the registry and must not be swept away by this.
+  for (const id of known) {
+    if (inRegistry.has(id)) continue;
+    if (live.has(ptyIdFor(id))) continue;
+    plan.drop.push(id);
+  }
 
   for (const entry of registry) {
     // Archived is the human's decision, and the only thing that removes an

@@ -77,7 +77,20 @@ export function useRestoreTeam(config?: HarnessConfig | null): RestoreTeamState 
     note = null;
     emit();
     const prevSel = useStore.getState().selectedId;
-    const restorableAgents = useStore.getState().restorableAgents;
+    // THE HIVE DECIDES WHO EXISTS. The restorable list is the browser's own
+    // memory, and it outlives a deletion: an agent removed from the registry
+    // was respawned from it on the next load and re-registered itself on the
+    // way, so deleting had to happen in every place at once or it did not
+    // happen at all. Anything the hive has forgotten is not restored.
+    const registry = await window.cth.hiveRegistry().catch(() => null);
+    const known = registry?.agents ? new Set(Object.keys(registry.agents)) : null;
+    const restorableAgents = useStore.getState().restorableAgents
+      .filter((a) => {
+        if (!known || known.has(a.id)) return true;
+        console.log('[restore] skipping an agent the hive no longer has:', a.id);
+        useStore.getState().removeRestorableAgent(a.id);
+        return false;
+      });
     // Tally every agent's outcome so the run ALWAYS leaves a visible trace — the
     // original bug was that every failure path was console-only, so a click that
     // couldn't spawn anything looked like a dead button.

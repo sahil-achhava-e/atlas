@@ -49,7 +49,28 @@ test('a mixed floor is sorted into the two buckets in one pass', () => {
   assert.deepEqual(p.adoptRestorable.map((a) => a.id), ['luffy']);
 });
 
-test('an empty registry plans nothing', () => {
+test('an empty registry plans nothing when the renderer knows nothing either', () => {
   const p = plan([], ['pty-god']);
-  assert.deepEqual(p, { adoptLive: [], adoptRestorable: [] });
+  assert.deepEqual(p, { adoptLive: [], adoptRestorable: [], drop: [] });
+});
+
+// The registry has to be authoritative in BOTH directions. It could put an
+// agent back and never take one away, so a deleted agent was resurrected from
+// the browser's own copy on the next load and re-registered itself on respawn —
+// deleting had to happen everywhere at once or it did not happen at all.
+
+test('an agent the hive no longer has, with nothing running, is dropped', () => {
+  const p = plan([{ id: 'god', isGod: true }], ['pty-god'], ['god', 'luffy']);
+  assert.deepEqual(p.drop, ['luffy']);
+});
+
+test('a live terminal protects an agent the registry has not caught up with', () => {
+  // Mid-spawn: the pty exists before the registry entry does.
+  const p = plan([], ['pty-naruto'], ['naruto']);
+  assert.deepEqual(p.drop, []);
+});
+
+test('nothing is dropped when the registry still lists it', () => {
+  const p = plan([{ id: 'luffy' }], [], ['luffy']);
+  assert.deepEqual(p.drop, []);
 });
