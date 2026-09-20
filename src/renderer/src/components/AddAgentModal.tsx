@@ -6,6 +6,9 @@ import { SpritePortrait } from './SpritePortrait';
 import { Icon } from './Icon';
 import { canOpenSection, sectionsFor, type SectionKey } from './addAgentGate';
 import { DeskPicker } from './DeskPicker';
+
+/** Mirrors main's projects.ts — a folder an agent can work in. */
+interface ProjectEntry { path: string; name: string; isRepo: boolean; parent?: string }
 import { Switch } from './Switch';
 import { DESK_MAP } from '@/scene/office/deskDirectory';
 import { ProviderLogo } from './ProviderLogo';
@@ -208,6 +211,18 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // Local mirror of the registered projects so one added from here shows as a
   // quick-pick immediately (the `config` prop is a snapshot taken at open time).
   const [repos, setRepos] = useState<string[]>(config.registeredRepos);
+  /** Each registered project AND the repos inside it. A container folder like
+   *  Ethara-VMS holds three, and offering only the container meant an agent for
+   *  vms-backend could not be pointed at vms-backend. */
+  const [tree, setTree] = useState<ProjectEntry[]>([]);
+  useEffect(() => {
+    void window.cth.projectTree?.().then(setTree).catch(() => setTree([]));
+  }, [repos]);
+  /** The list to render: the scan when we have it, the flat registered list
+   *  until then, so the picker is never empty while it loads. */
+  const choices: ProjectEntry[] = tree.length
+    ? tree
+    : repos.map((r) => ({ path: r, name: r.split('/').filter(Boolean).pop() ?? r, isRepo: true }));
   /** Does the chosen folder have git in it? A folder that is not a repository
    *  has no branch to work on, and main already degrades `isolate` to "work in
    *  place" for one (spawnAgentCore gates the worktree on isRepo). So the
@@ -931,7 +946,8 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                         </div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          {repos.map((r) => {
+                          {choices.map((entry) => {
+                            const r = entry.path;
                             const active = cwd === r;
                             return (
                               <button
@@ -941,7 +957,11 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                                 className="cth-choice"
                                 style={{
                                   display: 'flex', alignItems: 'center', gap: 12,
-                                  padding: '12px 14px', border: 'none', cursor: 'pointer',
+                                  // A repo found inside a registered folder is
+                                  // indented under it, so the list reads as a
+                                  // tree rather than five unrelated folders.
+                                  padding: '12px 14px', marginLeft: entry.parent ? 20 : 0,
+                                  border: 'none', cursor: 'pointer',
                                   textAlign: 'left', borderRadius: 'var(--cth-radius-card)',
                                   background: active ? 'var(--cth-lilac-light)' : 'var(--cth-paper-100)',
                                   boxShadow: active
@@ -962,7 +982,25 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
                                   flex: 1, minWidth: 0,
                                   fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 13.5, lineHeight: '18px',
                                   color: active ? 'var(--cth-lilac-text)' : 'var(--cth-ink-900)'
-                                }}>{basename(r)}</span>
+                                }}>
+                                  {entry.name}
+                                  {/* A repo inside a registered folder. Saying
+                                      which folder it came from is what stops
+                                      three same-named repos reading as three
+                                      unrelated projects. */}
+                                  {entry.parent && (
+                                    <span style={{
+                                      marginLeft: 8, fontWeight: 500, fontSize: 11.5,
+                                      color: 'var(--cth-ink-500)'
+                                    }}>in {entry.parent.split('/').filter(Boolean).pop()}</span>
+                                  )}
+                                  {!entry.isRepo && (
+                                    <span style={{
+                                      marginLeft: 8, fontWeight: 500, fontSize: 11.5,
+                                      color: 'var(--cth-ink-500)'
+                                    }}>{tr('addAgent.notARepo')}</span>
+                                  )}
+                                </span>
                                 {active && (
                                   <span style={{
                                     fontSize: 11, fontWeight: 600, padding: '2px 9px', borderRadius: 999,

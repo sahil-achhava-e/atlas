@@ -1,6 +1,7 @@
 import { interruptedWork, restartBrief, briefSignature } from './restartBrief';
 import { readInstanceLock, writeInstanceLock, clearInstanceLock } from './instanceLock';
 import { canDeleteWorkspace, isManagedWorkspace, WORKSPACE_DATA } from '../shared/workspaceDelete';
+import { listProjectTree, type ProjectEntry } from './projects';
 import { mcpSecretRef, mcpSecretEnvKeys, dbSecretRef } from '../shared/mcpCatalog';
 import { activityRows } from '../shared/activityFeed';
 import { maskDbUrl } from '../shared/dbUrl';
@@ -3574,6 +3575,13 @@ ipcMain.handle('workspace:delete', (_evt, path: unknown) => {
 /** The user's home directory. The browser-mode folder picker starts here; it
  *  has no other way to know where "~" is on the machine running the server. */
 ipcMain.handle('app:homeDir', () => homedir());
+
+/** Every folder an agent can be given as a working directory: each registered
+ *  project, plus the repositories directly inside it. A container folder like
+ *  Ethara-VMS holds three repos, and the hire dialog could only offer the
+ *  container — so an agent for vms-backend could not be pointed at it, and git
+ *  isolation had no repo to make a worktree from. */
+ipcMain.handle('projects:tree', () => listProjectTree(readConfig().registeredRepos ?? []));
 
 ipcMain.handle('fs:listDir', (_evt, root: unknown, rel: unknown) => {
   if (typeof root !== 'string' || typeof rel !== 'string') return { ok: false, error: 'invalid args' };

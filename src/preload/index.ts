@@ -1442,6 +1442,10 @@ const api = {
    *  Refused for the workspace that is currently open; `resetAll` covers that one. */
   deleteWorkspace: (path: string): Promise<{ ok: boolean; error?: string; recentHives?: string[] }> =>
     ipcRenderer.invoke('workspace:delete', path),
+  /** Each registered project, plus the git repos directly inside it — what a
+   *  new agent can be given as its working directory. */
+  projectTree: (): Promise<Array<{ path: string; name: string; isRepo: boolean; parent?: string }>> =>
+    ipcRenderer.invoke('projects:tree'),
   rosterReadSync: (): RosterSnapshot | null => {
     try { return ipcRenderer.sendSync('roster:readSync') ?? null; } catch { return null; }
   },
