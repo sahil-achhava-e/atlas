@@ -732,7 +732,7 @@ export function OfficeFloor() {
           c.sitAtDesk(false);
         } else {
           c.hideThought();
-          c.startWandering();
+          c.sitAtDesk(false);   // home, not off into the room
         }
       };
 
@@ -906,7 +906,7 @@ export function OfficeFloor() {
         if (!arrived) {
           // Never made it to the café (watchdog) — a held mug still goes home.
           if (c.isCarryingCup()) { rt.cupCarryHome = true; c.sitAtDesk(false); }
-          else c.startWandering();
+          else c.sitAtDesk(false);
           return;
         }
         if (c.isCarryingCup()) {
@@ -916,7 +916,7 @@ export function OfficeFloor() {
         } else if (!c.hasCupOnDesk() && Math.random() < 0.75) {
           startRunLeg(rt, 'toTray'); // fetch a clean mug, then brew
         } else {
-          c.startWandering();
+          c.sitAtDesk(false);
         }
       };
 
@@ -990,7 +990,12 @@ export function OfficeFloor() {
         // break, and the sitting check does not apply because he is seated
         // whenever he is idle.
         if (agent.isGod) return Math.random() < 0.06;
-        return !rt.character.isSitting();   // already parked at a desk → leave it
+        // Seated is the NORMAL state now, so it cannot be a reason to skip
+        // someone. It used to be: an agent had to be standing to qualify, which
+        // meant the floor stood everyone up after they arrived and left them
+        // wandering as a waiting room for coffee. The desk is where you are;
+        // the trip is what interrupts it, the way it does for the boss.
+        return true;
       };
 
       let cafeCooldown = 5;
@@ -1139,7 +1144,7 @@ export function OfficeFloor() {
           err.timer += dt;
           const spot = ERRAND_SPOTS[err.idx];
           if (err.phase === 'walking') {
-            if (err.timer > 20) { releaseErrand(rt); rt.character.startWandering(); }
+            if (err.timer > 20) { releaseErrand(rt); rt.character.sitAtDesk(false); }
             continue;
           }
           // doing: animate the spot; watering + smoking complete via their
@@ -1148,7 +1153,7 @@ export function OfficeFloor() {
           if (spot.kind !== 'water' && spot.kind !== 'smoke' && err.timer >= spot.duration) {
             releaseErrand(rt);
             rt.character.hideThought();
-            rt.character.startWandering();
+            rt.character.sitAtDesk(false);
           }
         }
         errCooldown -= dt;
@@ -1205,8 +1210,8 @@ export function OfficeFloor() {
             const wasGod = !!agent!.isGod;
             releaseErrand(rt!);
             c.hideThought();
-            if (wasGod) c.sitAtDesk(true);  // the boss returns to his throne
-            else c.startWandering();
+            // Everyone returns to their own desk, boss included.
+            c.sitAtDesk(!wasGod ? false : true);
           };
           if (spot.kind === 'water') c.startWatering(spot.duration, finish);
           else if (spot.kind === 'smoke') c.startSmoking(spot.duration, finish);
@@ -1278,10 +1283,8 @@ export function OfficeFloor() {
             rt.cupCarryHome = false;
             rt.character.setCarryingCup(false);
             rt.character.setCupOnDesk(true);
-            const agent = agentById(id);
-            if (agent && !agent.isGod && (agent.status === 'idle' || agent.status === 'success')) {
-              rt.character.startWandering();
-            }
+            // Stays in the chair with the coffee. It used to stand up and
+            // wander off the moment the mug was parked.
           }
           // The monitor lights up whenever its owner is in the chair.
           if (rt.screen) {
@@ -1708,7 +1711,8 @@ export function OfficeFloor() {
         if (playArrivals) {
           character.showThought(t(ARRIVE_LINES[Math.floor(Math.random() * ARRIVE_LINES.length)]));
         }
-        // Everyone but Atlas stays out of his cabin while roaming.
+        // Kept although nothing wanders any more: the sprite library still owns
+        // idle drift, and the boss's office is not a place to drift into.
         if (!agent.isGod) character.setNoWanderTiles(godRoomTiles);
         const rt: Runtime = {
           character, seatIndex, waitTile, charName,
@@ -1870,8 +1874,7 @@ export function OfficeFloor() {
           case 'success':
             c.setStatusGlyph('success');
             if (agent.isGod) { c.hideThought(); if (!rt.walkingIn) c.sitAtDesk(true); break; }
-            if (rt.settleUntil && Date.now() < rt.settleUntil) c.sitAtDesk(false);
-            else c.startWandering();
+            c.sitAtDesk(false);
             if (finishedWork) {
               c.cheer();
               c.showThought(t(CHEER_KEYS[Math.floor(Math.random() * CHEER_KEYS.length)]));
@@ -1893,17 +1896,17 @@ export function OfficeFloor() {
               c.showThought(liveActivity(agent, t('office.activity.runningFloor')));
             }
             else if (finishedWork) {
-              // Task done → a quick cheer on the spot, then back to roaming.
-              c.startWandering();
+              // Task done → a cheer in the chair, then back to work.
+              c.sitAtDesk(false);
               c.cheer();
               c.showThought(t(CHEER_KEYS[Math.floor(Math.random() * CHEER_KEYS.length)]));
             }
-            else if (rt.settleUntil && Date.now() < rt.settleUntil) {
-              // Just arrived: sit at your own desk first.
-              c.sitAtDesk(false);
-            }
             else {
-              c.startWandering();
+              // Idle means AT YOUR DESK. The floor used to stand everyone up
+              // and let the sprite library walk them around, which is what made
+              // an idle office look like an aimless one. Leaving the desk is
+              // now something with a reason: coffee, an errand, a meeting.
+              c.sitAtDesk(false);
               // An idle agent used to say "idle", which is the floor telling you
               // what you can already see — it is standing up and wandering off.
               // Say something a person would say instead, and never in the first
@@ -1969,14 +1972,13 @@ export function OfficeFloor() {
        */
       const releaseSettled = (): void => {
         const now = Date.now();
-        for (const [id, rt] of runtimes) {
+        for (const [, rt] of runtimes) {
           if (!rt.settleUntil || now < rt.settleUntil) continue;
+          // Just clears the dwell. It used to stand the agent UP — that was the
+          // only way to qualify for coffee back when eligibility required
+          // standing, and it is why an idle floor was a floor of people milling
+          // about. They stay in their chairs; the café picks them from there.
           rt.settleUntil = undefined;
-          const agent = agentById(id);
-          if (!agent || agent.isGod) continue;                  // the boss works from his desk
-          if (agent.status !== 'idle' && agent.status !== 'success') continue;
-          if (rt.brk || rt.err || rt.run || rt.mtg || rt.visit) continue;
-          rt.character.startWandering();
         }
       };
 
