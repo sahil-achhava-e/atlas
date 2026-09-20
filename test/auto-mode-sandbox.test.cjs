@@ -54,3 +54,38 @@ test('a Claude agent gets a native sandbox that still allows its agent dir and t
   // No bypass of the sandbox anywhere in the injected args.
   assert.ok(!inj.args.some((a) => /dangerously/.test(a)));
 });
+
+// The team is the floor, not a session. Claude Code's own subagents have no
+// desk, no inbox, no memory and no card on the board the human reads, and they
+// vanish with the session that spawned them. Left available they became the
+// answer to "do we need to hire anyone": a lead offered to run backend,
+// frontend and review itself, which is a whole team's work happening where the
+// human cannot see it.
+
+test('every agent is denied the Task tool, so a session cannot grow its own team', async () => {
+  const home = tmpHome();
+  const hive = new HiveManager(() => home);
+  const inj = await hive.ensureAgent({ id: 'pam-1', name: 'Pam', provider: 'claude', cwd: home }, {});
+  const settings = JSON.parse(fs.readFileSync(inj.args[inj.args.indexOf('--settings') + 1], 'utf8'));
+  assert.ok(settings.permissions.deny.includes('Task'), 'Task must be denied');
+});
+
+test('denying Task does not disturb the skills that were already denied', async () => {
+  const home = tmpHome();
+  const hive = new HiveManager(() => home);
+  const inj = await hive.ensureAgent(
+    { id: 'pam-2', name: 'Pam', provider: 'claude', cwd: home },
+    { disabledSkills: ['pdf', 'xlsx'] }
+  );
+  const settings = JSON.parse(fs.readFileSync(inj.args[inj.args.indexOf('--settings') + 1], 'utf8'));
+  assert.deepEqual(settings.permissions.deny, ['Task', 'Skill(pdf)', 'Skill(xlsx)']);
+});
+
+test('the prompt says why, not just that it is off', async () => {
+  const home = tmpHome();
+  const hive = new HiveManager(() => home);
+  const inj = await hive.ensureAgent({ id: 'pam-3', name: 'Pam', provider: 'claude', cwd: home }, {});
+  const prompt = inj.args[inj.args.indexOf('--append-system-prompt') + 1];
+  assert.match(prompt, /in-session subagents are OFF on this floor/i);
+  assert.match(prompt, /ask for the hire/i);
+});
