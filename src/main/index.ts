@@ -3828,9 +3828,10 @@ ipcMain.handle('hive:patchAgentCard', (_evt, id: unknown, patch: unknown) => {
   if (typeof id !== 'string' || !patch || typeof patch !== 'object') {
     return { ok: false, error: 'invalid args' };
   }
-  const p = patch as { goal?: unknown; character?: unknown; accent?: unknown; isLead?: unknown };
+  const p = patch as { goal?: unknown; character?: unknown; accent?: unknown; isLead?: unknown; seat?: unknown };
   const next: Record<string, unknown> = {};
   if (typeof p.goal === 'string') next.goal = p.goal;
+  if (typeof p.seat === 'string') next.seat = p.seat;
   if (typeof p.character === 'string') next.character = p.character;
   if (typeof p.accent === 'string') next.accent = p.accent;
   if (typeof p.isLead === 'boolean') next.isLead = p.isLead;

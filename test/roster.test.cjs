@@ -208,3 +208,63 @@ test('a bad row is skipped rather than failing the whole read', () => {
   db.close();
   assert.deepEqual(storeAt(home).read().agents.map((x) => x.id), ['b']);
 });
+
+// Rows stopped us losing AGENTS. They did not stop us losing FIELDS: a row is
+// one JSON blob, so a writer that rebuilds a card without the desk erases the
+// desk. That is how every agent lost its seat — the floor card is rebuilt from
+// the hive record on adopt and restore, and the hive record had no seat.
+
+test('a save that forgets the desk does not erase it', () => {
+  const home = tmpHome();
+  const store = storeAt(home);
+  store.save({ agents: [card('a', { seat: 'warroom-seat', character: 'lib-hinata' })] });
+
+  // A rebuilt card: same agent, same id, no placement fields.
+  store.save({ agents: [{ id: 'a', name: 'a', status: 'idle' }] });
+
+  const back = store.read().agents[0];
+  assert.equal(back.seat, 'warroom-seat');
+  assert.equal(back.character, 'lib-hinata');
+});
+
+test('sticky fields survive across runs, not just within one', () => {
+  const home = tmpHome();
+  storeAt(home).save({ agents: [card('a', { seat: 'pc-1', worktreePath: '/w/a', isLead: true })] });
+  storeAt(home).save({ agents: [{ id: 'a', name: 'a' }] });
+
+  const back = storeAt(home).read().agents[0];
+  assert.equal(back.seat, 'pc-1');
+  assert.equal(back.worktreePath, '/w/a');
+  assert.equal(back.isLead, true);
+});
+
+test('a save that CHANGES a sticky field still changes it', () => {
+  // The guard is about absence, never about disagreement. Moving an agent's
+  // desk has to work.
+  const home = tmpHome();
+  const store = storeAt(home);
+  store.save({ agents: [card('a', { seat: 'pc-1' })] });
+  store.save({ agents: [card('a', { seat: 'desk-ui-ux-expert' })] });
+  assert.equal(store.read().agents[0].seat, 'desk-ui-ux-expert');
+});
+
+test('the fields the human empties on purpose are NOT sticky', () => {
+  // Clearing a goal or a note from the editor arrives as an absent key, and it
+  // has to mean cleared.
+  const home = tmpHome();
+  const store = storeAt(home);
+  store.save({ agents: [card('a', { goal: 'old briefing', note: 'old note', description: 'old' })] });
+  store.save({ agents: [card('a')] });
+
+  const back = store.read().agents[0];
+  assert.equal(back.goal, undefined);
+  assert.equal(back.note, undefined);
+  assert.equal(back.description, undefined);
+});
+
+test('a brand new agent with no stored row is written as sent', () => {
+  const home = tmpHome();
+  const store = storeAt(home);
+  store.save({ agents: [{ id: 'new', name: 'New' }] });
+  assert.deepEqual(store.read().agents[0], { id: 'new', name: 'New' });
+});

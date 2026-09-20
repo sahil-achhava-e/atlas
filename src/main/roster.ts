@@ -106,6 +106,45 @@ const MIGRATIONS: Array<(db: Database.Database) => void> = [
   }
 ];
 
+/**
+ * Fields a save may not silently drop.
+ *
+ * A row is one JSON blob, so an upsert replaces it whole: a writer that
+ * rebuilds a card without a field erases that field, and the database is doing
+ * exactly what it was told. That is how every agent lost its desk — the floor
+ * card is rebuilt from the hive record on adopt and restore, and `seat` is not
+ * in the hive record.
+ *
+ * These are the fields nothing clears on purpose. Identity, placement, and how
+ * to start the thing again. If a save does not mention one and the stored row
+ * has it, the stored value stays and the drop is logged.
+ *
+ * Deliberately NOT here: goal, note, description. The human empties those from
+ * the editor, and "absent" is the only way that arrives.
+ */
+const STICKY_FIELDS = [
+  'seat', 'character', 'accent', 'isLead', 'isGod', 'isAssistant',
+  'cwd', 'worktreePath', 'command', 'provider', 'model', 'project'
+] as const;
+
+/** Carry forward any sticky field the incoming card does not mention. */
+function keepSticky(next: Record<string, unknown>, prevJson: string | undefined, id: string): Record<string, unknown> {
+  if (!prevJson) return next;
+  let prev: Record<string, unknown>;
+  try { prev = JSON.parse(prevJson) as Record<string, unknown>; } catch { return next; }
+  const kept: string[] = [];
+  for (const field of STICKY_FIELDS) {
+    if (next[field] === undefined && prev[field] !== undefined) {
+      next[field] = prev[field];
+      kept.push(field);
+    }
+  }
+  if (kept.length) {
+    console.warn(`[roster] ${id}: a save left out ${kept.join(', ')} — keeping what was stored`);
+  }
+  return next;
+}
+
 function idOf(entry: unknown): string | null {
   if (!entry || typeof entry !== 'object') return null;
   const id = (entry as { id?: unknown }).id;
@@ -226,6 +265,7 @@ export class RosterStore {
          ON CONFLICT(id) DO UPDATE SET bucket = excluded.bucket, ord = excluded.ord,
            data = excluded.data, updated_at = excluded.updated_at`
       );
+      const readOne = db.prepare('SELECT data FROM agent WHERE id = ?');
       const dropAgent = db.prepare('DELETE FROM agent WHERE id = ?');
       const dropQueue = db.prepare('DELETE FROM queue WHERE agent_id = ?');
       const addQueued = db.prepare('INSERT INTO queue (agent_id, pos, data) VALUES (?, ?, ?)');
@@ -243,7 +283,9 @@ export class RosterStore {
             const id = idOf(entry);
             if (!id) return;
             mentioned.add(id);
-            upsert.run(id, bucket, i, JSON.stringify(entry), now);
+            const stored = readOne.get(id) as { data: string } | undefined;
+            const card = keepSticky({ ...(entry as Record<string, unknown>) }, stored?.data, id);
+            upsert.run(id, bucket, i, JSON.stringify(card), now);
           });
         };
         writeBucket('active', patch.agents);

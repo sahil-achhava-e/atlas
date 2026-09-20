@@ -124,7 +124,8 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
       goal: trimmedGoal,
       character: agent.character,
       accent,
-      isLead
+      isLead,
+      seat: seat || undefined
     })?.catch(() => { /* the store write already happened */ });
     onClose();
   };

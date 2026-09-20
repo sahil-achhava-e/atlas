@@ -510,6 +510,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
         goal: composedGoal.trim() || undefined,
         character: effectiveCharacter,
         accent,
+        seat: seat || undefined,
         // A hire manifest may carry validated capability tags (routing hints).
         capabilities: hireMeta?.capabilities
       }

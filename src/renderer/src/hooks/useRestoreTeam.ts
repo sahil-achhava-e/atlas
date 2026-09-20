@@ -171,7 +171,8 @@ export function useRestoreTeam(config?: HarnessConfig | null): RestoreTeamState 
               isLead: a.isLead,
               goal: a.goal,
               character: a.character,
-              accent: a.accent
+              accent: a.accent,
+              seat: a.seat
             }
           });
           if (res.ok) {

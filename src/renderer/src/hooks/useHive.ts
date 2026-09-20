@@ -444,6 +444,10 @@ export function useHive(config: HarnessConfig | null): void {
         character: e.character || (e.isGod ? 'michael' : faceFor(e.id, e.name || e.id)),
         accent: e.accent || accentForId(e.id),
         goal: e.goal,
+        // The desk the human chose. Without it a restored agent is re-seated
+        // by the floor, which is how the reviewer ended up outside the lead's
+        // office after a restart.
+        seat: e.seat,
         description: e.role || (e.isGod ? 'runs the floor' : 'restored from the hive'),
         project: (e.cwd ?? '').replace(/\/+$/, '').split('/').filter(Boolean).pop() ?? '',
         tmuxTarget: '',

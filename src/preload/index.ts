@@ -76,6 +76,9 @@ export interface HiveAgentMeta {
   goal?: string;
   character?: string;
   accent?: string;
+  /** Which desk on the office floor. Durable for the same reason: a rebuilt
+   *  card that forgets it gets re-seated somewhere the human did not choose. */
+  seat?: string;
 }
 
 export interface HiveMessage {
@@ -784,7 +787,7 @@ const api = {
    *  an agent comes back nameless-in-spirit — same id, no goal, default face. */
   hivePatchAgentCard: (
     id: string,
-    patch: { goal?: string; character?: string; accent?: string; isLead?: boolean }
+    patch: { goal?: string; character?: string; accent?: string; isLead?: boolean; seat?: string }
   ): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke('hive:patchAgentCard', id, patch),
   hivePatchAgentRole: (id: string, role: string): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke('hive:patchAgentRole', id, role),

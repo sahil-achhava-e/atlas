@@ -149,6 +149,11 @@ export interface AgentMeta {
    *  agent that comes back without its briefing is a different agent wearing
    *  the same name. The registry survives what the roster does not. */
   goal?: string;
+  /** Which desk on the office floor. Kept here for the same reason the briefing
+   *  is: the renderer's roster can be rebuilt from this record, and an agent
+   *  that comes back without its desk is re-seated somewhere else — the human
+   *  put the reviewer next to the lead on purpose. */
+  seat?: string;
   character?: string;
   accent?: string;
   isGod?: boolean;
@@ -854,6 +859,7 @@ export class HiveManager {
       // Changing any of these deliberately goes through `hive:patchAgentCard`
       // (Edit agent), which is a human saying so rather than a respawn guessing.
       goal: prev?.goal ?? meta.goal,
+      seat: prev?.seat ?? meta.seat,
       character: prev?.character ?? meta.character,
       accent: prev?.accent ?? meta.accent,
       isLead: prev?.isLead ?? meta.isLead,
