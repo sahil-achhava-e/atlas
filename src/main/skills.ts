@@ -579,3 +579,119 @@ export function uninstallSkill(
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
+
+// ─── Atlas's own skills ─────────────────────────────────────────────────────
+//
+// A skill the human writes for their crew lives in `~/Atlas/skills/<name>/`,
+// beside the workspaces rather than inside one, so deleting a workspace does not
+// delete the crew's skills with it.
+//
+// Claude Code will not look there. It reads `~/.claude/skills` and the working
+// directory's own `.claude/skills`, and an agent's working directory is its
+// project, never the Atlas folder. So a skill written for the whole floor has to
+// be copied to the one place every agent reads, and kept in step when the human
+// edits it.
+//
+// Copies are MARKED. Anything we install carries a marker file naming its
+// source, and only a marked directory is ever refreshed or removed. A skill the
+// human installed themselves, or one that happens to share a name, is left
+// exactly as it is and reported as skipped — the alternative is this feature
+// quietly eating somebody else's work.
+
+/** Written inside each installed copy: the source it came from. Its presence is
+ *  what makes a directory ours to overwrite or delete. */
+export const ATLAS_SKILL_MARKER = '.atlas-skill';
+
+export interface SkillSyncPlan {
+  /** Sources to copy into place (new, or a marked copy to refresh). */
+  install: string[];
+  /** Marked copies whose source is gone. */
+  remove: string[];
+  /** Names that exist in both but are not ours — left untouched. */
+  skipped: string[];
+}
+
+/**
+ * What syncing would do. Pure, so the rules are testable without a filesystem.
+ *
+ * @param sources  skill names under `~/Atlas/skills`
+ * @param installed  what is in `~/.claude/skills`, and whether we put it there
+ */
+export function planSkillSync(
+  sources: readonly string[],
+  installed: ReadonlyArray<{ name: string; ours: boolean }>
+): SkillSyncPlan {
+  const byName = new Map(installed.map((e) => [e.name, e]));
+  const plan: SkillSyncPlan = { install: [], remove: [], skipped: [] };
+  for (const name of sources) {
+    const there = byName.get(name);
+    if (!there) plan.install.push(name);
+    else if (there.ours) plan.install.push(name);
+    else plan.skipped.push(name);
+  }
+  const wanted = new Set(sources);
+  for (const e of installed) {
+    if (e.ours && !wanted.has(e.name)) plan.remove.push(e.name);
+  }
+  return plan;
+}
+
+/** `~/Atlas/skills` — where the human writes skills for their crew. */
+export function atlasSkillsDir(home = homedir()): string {
+  return join(home, 'Atlas', 'skills');
+}
+
+function isOurs(dir: string): boolean {
+  return existsSync(join(dir, ATLAS_SKILL_MARKER));
+}
+
+/** Folders directly under `dir` that hold a SKILL.md. */
+function skillNamesIn(dir: string): string[] {
+  try {
+    if (!existsSync(dir)) return [];
+    return readdirSync(dir).filter((name) => {
+      try {
+        return statSync(join(dir, name)).isDirectory()
+          && existsSync(join(dir, name, 'SKILL.md'));
+      } catch { return false; }
+    });
+  } catch { return []; }
+}
+
+/**
+ * Copy `~/Atlas/skills` into `~/.claude/skills`, so every agent has them
+ * wherever it is working. Idempotent, and safe to call on every boot.
+ *
+ * Returns what it did, for the log — silence about a skill that did not install
+ * is how the human ends up asking an agent to use something it has never seen.
+ */
+export function syncAtlasSkills(
+  sourceRoot = atlasSkillsDir(),
+  destRoot = join(homedir(), '.claude', 'skills')
+): SkillSyncPlan {
+  const sources = skillNamesIn(sourceRoot);
+  const installed = skillNamesIn(destRoot).map((name) => ({
+    name, ours: isOurs(join(destRoot, name))
+  }));
+  const plan = planSkillSync(sources, installed);
+  if (!plan.install.length && !plan.remove.length) return plan;
+
+  try { mkdirSync(destRoot, { recursive: true }); } catch { /* handled below */ }
+  for (const name of plan.install) {
+    const to = join(destRoot, name);
+    try {
+      // Remove first: a straight copy leaves behind files the human deleted
+      // from the source, and a stale instruction is worse than a missing one.
+      rmSync(to, { recursive: true, force: true });
+      cpSync(join(sourceRoot, name), to, { recursive: true });
+      writeFileSync(join(to, ATLAS_SKILL_MARKER), join(sourceRoot, name), 'utf8');
+    } catch (e) {
+      console.error(`[skills] could not install ${name}:`, e);
+    }
+  }
+  for (const name of plan.remove) {
+    try { rmSync(join(destRoot, name), { recursive: true, force: true }); }
+    catch (e) { console.error(`[skills] could not remove ${name}:`, e); }
+  }
+  return plan;
+}

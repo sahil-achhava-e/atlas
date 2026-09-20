@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url';
 import {
   rmSync, existsSync, readFileSync, readdirSync, statSync, cpSync, writeFileSync,
   unlinkSync, mkdirSync, renameSync, createWriteStream, copyFileSync, lstatSync,
-  readlinkSync, symlinkSync, openSync, readSync, closeSync
+  readlinkSync, symlinkSync, openSync, readSync, closeSync, watch, type FSWatcher
 } from 'node:fs';
 import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { join, resolve, sep, basename, dirname, isAbsolute, normalize, extname } from 'node:path';
@@ -88,7 +88,7 @@ import {
 import { buildMissingCliScript, chooseInstallRung } from './cliInstall';
 import { detectNodeVersion, nodeIsUsable, resolveNodeInstaller } from './nodeInstall';
 import { toolCatalog, type ToolStatus } from '../shared/toolCatalog';
-import { listLocalSkills, loadCatalog, installSkill, uninstallSkill, type LocalSkill , addLocalSkill } from './skills';
+import { listLocalSkills, loadCatalog, installSkill, uninstallSkill, type LocalSkill , addLocalSkill, atlasSkillsDir, syncAtlasSkills } from './skills';
 import { loadModelCatalog } from './modelCatalog';
 import {
   CODEX_REMOTE_SOCKET_RELATIVE,
@@ -5436,6 +5436,45 @@ ipcMain.handle('workers:stop', (_evt, workerId: string): { ok: boolean; error?: 
  *  Called at bootstrap and after every config write, because the orchestrator's
  *  prompt is built once per spawn and cannot carry anything that changes. See
  *  HiveManager.writeEnvironment for why this is a file. */
+/** Copy `~/Atlas/skills` into `~/.claude/skills`, and say what happened. A skill
+ *  that silently failed to install is a skill the human will ask an agent to use
+ *  and be told it does not exist. */
+function installAtlasSkills(): void {
+  try {
+    const plan = syncAtlasSkills();
+    if (plan.install.length) console.log(`[skills] installed from ~/Atlas/skills: ${plan.install.join(', ')}`);
+    if (plan.remove.length) console.log(`[skills] removed (no longer in ~/Atlas/skills): ${plan.remove.join(', ')}`);
+    for (const name of plan.skipped) {
+      console.warn(`[skills] NOT installing ${name}: ~/.claude/skills/${name} already exists and Atlas did not put it there`);
+    }
+  } catch (e) {
+    console.error('[skills] sync failed:', e);
+  }
+}
+
+/** Re-install on edit. The human writes a skill in their editor and expects the
+ *  floor to have it; waiting for a restart is the kind of gap that gets read as
+ *  "the feature does not work". Debounced, because a save is several events. */
+let atlasSkillWatch: FSWatcher | null = null;
+let atlasSkillTimer: NodeJS.Timeout | null = null;
+function watchAtlasSkills(): void {
+  const dir = atlasSkillsDir();
+  if (atlasSkillWatch || !existsSync(dir)) return;
+  try {
+    atlasSkillWatch = watch(dir, { recursive: true }, () => {
+      if (atlasSkillTimer) clearTimeout(atlasSkillTimer);
+      atlasSkillTimer = setTimeout(() => {
+        installAtlasSkills();
+        publishEnvironment();
+      }, 500);
+    });
+    atlasSkillWatch.unref?.();
+  } catch (e) {
+    // Not every platform supports recursive watching; boot-time sync still works.
+    console.warn('[skills] not watching ~/Atlas/skills:', e);
+  }
+}
+
 function publishEnvironment(): void {
   if (!hive.enabled()) return;
   const cfg = readConfig();
@@ -5492,6 +5531,11 @@ function bootstrapHiveServices(): void {
   // The repositories this crew exists for. Mirrored like the flag above, so the
   // prompt builder can name them without hive.ts importing the config module.
   hive.setProjects(readConfig().registeredRepos ?? []);
+  // The human's own skills for the crew, from ~/Atlas/skills into the one
+  // directory every agent reads. Before publishEnvironment, so the list the
+  // agents are given already includes them.
+  installAtlasSkills();
+  watchAtlasSkills();
   publishEnvironment();
   // An app-start marker in the event log. log.jsonl had twelve event kinds and
   // none of them meant "the app restarted", so a relaunch, and more importantly a
