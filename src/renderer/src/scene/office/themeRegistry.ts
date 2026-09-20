@@ -156,6 +156,12 @@ export const OFFICE_THEME: ThemeConfig = {
     'desk-chief-architect', 'desk-product-manager', 'desk-team-lead',
     'desk-backend-engineer', 'desk-ui-ux-expert', 'desk-data-engineer',
     'desk-project-manager', 'desk-market-researcher', 'desk-agent-organizer',
+    // The second desk in the right-hand office. It was missing, so the desk
+    // picker offered a seat the floor could not place anyone at: an agent given
+    // it silently fell through to an open-floor desk, and the fourth leader's
+    // office did not exist. Every LEAD_SEAT_NAMES entry has to be in here —
+    // pinned by test/lead-seats.test.cjs.
+    'warroom-seat',
   ],
   cafeSeatNames: ['cafe-seat-1', 'cafe-seat-2', 'cafe-seat-3', 'cafe-seat-4'],
   cafeStands: [

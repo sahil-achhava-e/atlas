@@ -17,7 +17,7 @@
  */
 
 import officeMapRaw from '@/assets/maps/office.tmj?raw';
-import { LEAD_SEAT_NAMES } from './leadSeats';
+import { LEAD_SEAT_NAMES, roomOf } from './leadSeats';
 
 export interface Desk {
   /** The spawn-point name — what gets stored on the agent. */
@@ -76,14 +76,18 @@ function build(): DeskMap {
 
   const desks: Desk[] = [];
 
-  // The two side offices, in the order leaders claim them.
+  // The two side offices. The label comes from roomOf(), NOT from the claim
+  // index: leaders now take the first desk of each room before anyone doubles
+  // up, so index 1 is the other room's first desk, and the old
+  // `i < 2 ? 1 : 2` arithmetic started naming the wrong office. Picking "Lead
+  // office 2" and being seated in office 1 is the kind of wrong that looks like
+  // the floor is broken.
   LEAD_SEAT_NAMES.forEach((name, i) => {
     const s = spawns.find((o) => o.name === name);
     if (!s) return;
-    desks.push({
-      name, x: s.x, y: s.y, group: 'lead',
-      label: `Lead office ${i < 2 ? 1 : 2} · ${i % 2 === 0 ? 'left' : 'right'}`
-    });
+    const room = roomOf(i);
+    const nth = LEAD_SEAT_NAMES.slice(0, i).filter((_, j) => roomOf(j) === room).length + 1;
+    desks.push({ name, x: s.x, y: s.y, group: 'lead', label: `Lead office ${room} · desk ${nth}` });
   });
 
   // Everything else, grouped into rows by y so "Row 2 · desk 4" means what it

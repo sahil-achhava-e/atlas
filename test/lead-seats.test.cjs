@@ -68,3 +68,37 @@ test('every leader desk exists in the office map', () => {
     assert.ok(spawns.has(name), `${name} is not a spawn point — leaders would fall back to the floor`);
   }
 });
+
+// THE ONE THAT BIT. `warroom-seat` was in LEAD_SEAT_NAMES and in the desk
+// picker, but NOT in the theme's primarySeatNames — which is the list the floor
+// turns into actual seats. So the picker offered the second desk in the
+// right-hand office, the human assigned their reviewer to it, and the floor
+// could not resolve the name: she silently fell through to an open-plan desk
+// and the fourth leader's office did not exist at all.
+
+test('every leader desk is a seat the floor can actually place someone at', () => {
+  const theme = fs.readFileSync(
+    path.join(__dirname, '..', 'src/renderer/src/scene/office/themeRegistry.ts'), 'utf8');
+  const block = theme.slice(theme.indexOf('primarySeatNames: ['),
+    theme.indexOf(']', theme.indexOf('primarySeatNames: [')));
+  for (const name of LEAD_SEAT_NAMES) {
+    assert.ok(block.includes(`'${name}'`),
+      `${name} is offered as a desk but the floor has no seat for it`);
+  }
+});
+
+test('the desk picker names the room a desk is really in', () => {
+  // The label used to be computed from the claim index (`i < 2 ? 1 : 2`). Once
+  // leaders started taking the first desk of each room, index 1 became the
+  // OTHER room and the label was a lie.
+  const dir = fs.readFileSync(
+    path.join(__dirname, '..', 'src/renderer/src/scene/office/deskDirectory.ts'), 'utf8');
+  assert.match(dir, /const room = roomOf\(i\)/);
+  const label = dir.slice(dir.indexOf('LEAD_SEAT_NAMES.forEach'));
+  assert.doesNotMatch(label.slice(0, label.indexOf('});')), /i < 2 \? 1 : 2/,
+    'the label must not be computed from the claim index');
+  // room one holds slots 0 and 2, room two holds 1 and 3
+  assert.equal(roomOf(0), roomOf(2));
+  assert.equal(roomOf(1), roomOf(3));
+  assert.notEqual(roomOf(0), roomOf(1));
+});
