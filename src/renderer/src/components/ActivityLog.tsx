@@ -244,30 +244,38 @@ function Said({ row, name, accent }: { row: ActivityRow; name: string; accent: s
 function Asked({ row, label }: { row: ActivityRow; label: string }) {
   return (
     <div style={{
-      margin: '14px 0 14px 28px',
-      background: 'var(--cth-paper-100)',
+      // The human's turn, mirrored: the same card as the agent's, on the other
+      // side of the feed, in the app's own accent rather than the agent's. A
+      // conversation reads as one when both turns look like turns; before this
+      // the human's words sat naked on the page between two bordered cards.
+      margin: '14px 0',
+      marginInlineStart: 'auto',
+      maxWidth: '86%',
+      background: 'var(--cth-lilac-light)',
       boxShadow: 'inset 0 0 0 1px var(--cth-ink-200)',
+      borderInlineEnd: '3px solid var(--cth-lilac)',
       borderRadius: 'var(--cth-radius-input)',
       overflow: 'hidden'
     }}>
       <div style={{
         display: 'flex', alignItems: 'baseline', gap: 8,
+        // Name against the edge the card is anchored to.
+        justifyContent: 'flex-end',
         padding: '8px 14px 0',
         fontFamily: 'var(--cth-font-ui)', fontSize: 11.5, fontWeight: 700,
-        letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--cth-ink-500)'
+        letterSpacing: '0.04em', textTransform: 'uppercase',
+        color: 'var(--cth-lilac-text)'
       }}>
-        <span>{label}</span>
         {row.at && (
-          <span style={{ fontWeight: 500, letterSpacing: 0, textTransform: 'none', color: 'var(--cth-ink-400)' }}>
+          <span style={{ fontWeight: 500, letterSpacing: 0, textTransform: 'none', color: 'var(--cth-ink-500)' }}>
             {new Date(row.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         )}
+        <span>{label}</span>
       </div>
-      <div style={{
-        padding: '2px 14px 10px',
-        fontFamily: 'var(--cth-font-ui)', fontSize: 13.5, lineHeight: '21px',
-        color: 'var(--cth-ink-700)'
-      }}>
+      {/* The words stay left-aligned. Right-aligned prose is harder to read,
+          and the card's position already says who is speaking. */}
+      <div style={{ padding: '2px 14px 10px', fontFamily: 'var(--cth-font-ui)', fontSize: 13.5, lineHeight: '21px' }}>
         <MarkdownPreview source={row.text} variant="card" />
       </div>
     </div>

@@ -90,6 +90,15 @@ const INJECTED_PROMPT = [
   /^\[?Heartbeat/i,
   // The CLI's own preamble when a skill runs — not something anyone typed.
   /^Base directory for this skill:/i,
+  // The engine talking to itself when a tool call comes back malformed. It
+  // arrives as a user turn and reads exactly like an instruction, which is how
+  // "Please retry the tool call now" ended up on screen as the owner's words.
+  /^The previous response failed to produce a valid tool call/i,
+  // Anchored on the engine's exact wording, not on politeness: "please
+  // continue with the other repo" is a real instruction from a real person.
+  /^Please retry the tool call/i,
+  /^\[Request interrupted/i,
+  /^Tool (call )?(failed|error)\b/i,
   /inbox\/\.done\//,
   /Act autonomously; only message/i
 ];

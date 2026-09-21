@@ -85,3 +85,26 @@ test('the one-line summary still quotes the AGENT, never the human', () => {
 test('an empty or whitespace message is not a turn', () => {
   assert.deepEqual(activityRows([userLine('   '), userLine('')]), []);
 });
+
+// THE ENGINE TALKING TO ITSELF. A malformed tool call comes back as a user
+// turn phrased as an instruction — "The previous response failed to produce a
+// valid tool call. Please retry the tool call now." — and it appeared on screen
+// as the owner's words, which is both wrong and alarming.
+
+test("the engine's own retry prompts are not the owner", () => {
+  for (const text of [
+    'The previous response failed to produce a valid tool call. Please retry the tool call now.',
+    'Please retry the tool call now.',
+    '[Request interrupted by user]',
+    'Tool call failed: timeout'
+  ]) {
+    assert.equal(isOwnerPrompt(text), false, `attributed to the owner: ${text.slice(0, 40)}`);
+  }
+});
+
+test('a real message that happens to start with "please" survives', () => {
+  // The filter is anchored on the engine's exact phrasings, not on politeness.
+  assert.equal(isOwnerPrompt('please fix the failing test'), true);
+  assert.equal(isOwnerPrompt('Please tell me what you found'), true);
+  assert.equal(isOwnerPrompt('please continue with the other repo'), true);
+});
