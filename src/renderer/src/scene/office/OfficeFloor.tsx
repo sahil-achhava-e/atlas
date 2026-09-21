@@ -1165,11 +1165,13 @@ export function OfficeFloor() {
             if (b.chat.beat <= 0) {
               if (b.chat.idx < b.chat.lines.length) {
                 const speaker = (b.chat.idx % 2 === 0) ? rt : runtimes.get(b.chat.partnerId);
+                const listener = (b.chat.idx % 2 === 0) ? runtimes.get(b.chat.partnerId) : rt;
                 const line = b.chat.lines[b.chat.idx];
-                // TWO BUBBLES, NEVER MORE: the line being replied to, and the
-                // reply. Speakers alternate and showThought replaces a speaker's
-                // own previous line, so beat 3 pushes out beat 1 and the pair on
-                // screen is always the last one and the current one.
+                // ONE BUBBLE ON THE FLOOR AT A TIME. The reply drops the line it
+                // is replying to, so the only cloud in the room belongs to
+                // whoever is speaking right now and there is never a question
+                // about who said what.
+                listener?.character.hideThought();
                 speaker?.character.showThought(line);
                 // A laugh is a laugh: the speaker bobs, and their partner joins
                 // in half the time — laughing alone at your own joke is a

@@ -144,14 +144,12 @@ test('everyone else in the room goes quiet while two are talking', () => {
     'and their existing bubble has to go when a conversation starts');
 });
 
-test('the last line and the current one — never a third', () => {
-  // Beats alternate speakers and a speaker's new line replaces their own old
-  // one, so the room holds exactly two bubbles: what was just said, and the
-  // reply to it. Nothing may hide the line being replied to.
+test('only the current speaker has a bubble', () => {
+  // Not the last line plus the current one — just the current one. The reply
+  // must clear the line it is replying to BEFORE it goes up.
   const beat = floor.slice(floor.indexOf('const speaker = (b.chat.idx % 2 === 0)'));
   const body = beat.slice(0, beat.indexOf('b.chat.idx++'));
-  assert.match(body, /speaker\?\.character\.showThought\(line\)/);
-  assert.doesNotMatch(body, /listener/, 'the previous line stays up so the exchange reads');
-  assert.match(body, /const speaker = \(b\.chat\.idx % 2 === 0\) \? rt : runtimes\.get\(b\.chat\.partnerId\)/,
-    'alternating speakers is what caps it at two');
+  assert.match(body, /const listener = /);
+  assert.ok(body.indexOf('listener?.character.hideThought()') < body.indexOf('speaker?.character.showThought'),
+    'drop the old bubble before showing the new one');
 });
