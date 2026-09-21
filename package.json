@@ -17,6 +17,7 @@
     "preview": "electron-vite preview",
     "postinstall": "node tools/postinstall.cjs",
     "setup:serve": "node tools/setup-serve.cjs",
+    "update": "node tools/update.cjs",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",

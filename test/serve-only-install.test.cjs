@@ -89,3 +89,37 @@ test('the sheet says the CLI is the user\'s own, signed in by them', () => {
   assert.match(doc, /does not bundle a model or a CLI/);
   assert.match(doc, /Run it once on its own first/);
 });
+
+// Updating. There is no auto-updater in the tab — that is Electron's — so it is
+// a git pull and a rebuild. The only judgement is whether dependencies moved:
+// reinstalling when they did not wastes a minute, and not reinstalling when
+// they did is a confusing crash.
+
+test('there is one command to update, and the doc says so', () => {
+  assert.equal(pkg.scripts.update, 'node tools/update.cjs');
+  const doc = read('docs/BROWSER-MODE.md');
+  assert.match(doc, /npm run update/);
+  assert.match(doc, /no update notification/i, 'the tab does not tell you — say so');
+});
+
+test('it reinstalls only when the lockfile moved', () => {
+  const src = read('tools/update.cjs');
+  assert.match(src, /HEAD:package-lock\.json/);
+  assert.match(src, /Dependencies unchanged — no reinstall needed/);
+});
+
+test('it refuses on local changes rather than clobbering them', () => {
+  const src = read('tools/update.cjs');
+  assert.match(src, /You have local changes/);
+  assert.match(src, /--ff-only/, 'a merge commit in a colleague\'s clone is nobody\'s idea of an update');
+});
+
+test('it does not restart the server for you', () => {
+  // Stopping the server stops every agent. That moment is the human's to pick.
+  const src = read('tools/update.cjs');
+  // It NAMES the command for the human to run; it must not run one itself.
+  // Anchored so it does not trip over setup-serve.cjs, which is the INSTALLER.
+  assert.doesNotMatch(src, /['/]serve\.cjs/, 'never launches tools/serve.cjs');
+  assert.doesNotMatch(src, /'npm run serve'|\['serve'\]/, 'never runs the serve script');
+  assert.match(src, /Stop the running server/);
+});

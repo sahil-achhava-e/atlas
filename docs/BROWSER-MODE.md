@@ -90,7 +90,20 @@ to stop deliberately.
 ## Day to day
 
 - **Open it again**: `npm run serve` in the same folder, then the same URL.
-- **Update**: `git pull && npm run setup:serve`, then run it again.
+- **Update**: `npm run update`, then stop the server and `npm run serve` again.
+  It pulls, works out whether dependencies actually moved, and only reinstalls
+  if they did. It refuses if you have local changes, and it does not stop your
+  agents — that is deliberate, since stopping the server stops them and the
+  moment is yours to pick.
+
+  There is **no update notification** in browser mode. The auto-updater belongs
+  to the desktop app; in the tab, nothing tells you a new version exists, so run
+  `npm run update` when you want one. Your version is in Settings, and the
+  releases are at `github.com/sahilethara/atlas/releases`.
+
+  Restarting does not lose anything. The workspace, the agents, their briefings
+  and desks are on disk, and each agent resumes its own CLI session, so a
+  restart costs the turn in flight and nothing else.
 - **Only one at a time.** The browser server and the desktop app share one
   workspace, so whichever starts second refuses with "Atlas is already
   running". That is the guard working, not a bug.
