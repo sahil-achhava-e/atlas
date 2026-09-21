@@ -141,6 +141,26 @@ release on `sahilethara/atlas`. The updater reads those channel files, not the
 release body — the toast's "what's new" comes from `build/release-notes.md`, baked
 into `latest*.yml` at package time.
 
+## Running it in a browser instead of the app
+
+The tab and the desktop app are the same program over the same files. On a
+managed laptop the tab is usually the only practical route: nothing to install,
+no signed installer for an endpoint agent to block, and no Electron framework to
+get approved.
+
+```bash
+npm run setup:serve   # installs without the desktop build — no compiler needed
+npm run serve         # → http://127.0.0.1:5188
+```
+
+`setup:serve` skips `electron-rebuild`, which is the only step that wants a C++
+toolchain. Both native pieces ship prebuilt for macOS and Windows, Intel and ARM.
+Loopback only, one person per server, and the server and the app cannot hold the
+same workspace at once.
+
+Full instructions, including the Windows differences and what to ask an endpoint
+administrator for: **[docs/BROWSER-MODE.md](docs/BROWSER-MODE.md)**.
+
 ## Previewing the UI without Electron
 
 Vite serves the renderer from a Linux container, your browser is the window, and
