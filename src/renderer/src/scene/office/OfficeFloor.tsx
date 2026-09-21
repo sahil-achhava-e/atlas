@@ -26,6 +26,7 @@ function glowFor(charName: string, member?: { shirt: string }): number {
   return hexToNumber(DEFAULT_ACCENT_HEX);
 }
 import { pickSoloLine, pickExchange, pickAboutPerson, type BreakSpot } from './cafeteriaLines';
+import { isLaughBeat } from '@shared/gossipPool';
 import { colors, accentNumber, DEFAULT_ACCENT_HEX } from '@/design/tokens';
 import { loadTheme, resolveThemeMap, themeTilesetUrls } from './themeLoader';
 import {
@@ -888,7 +889,29 @@ export function OfficeFloor() {
         return seniors.length ? seniors[0] : undefined;
       };
 
-      /** The script two agents will run: work, or somebody who is not there. */
+      /**
+       * Exchanges written from the real floor, fetched while people are on a
+       * break. Empty until the first batch lands, and empty forever if the
+       * model is unavailable — which costs nothing, because the hand-written
+       * pool is the fallback on every path below.
+       */
+      let written: { work: string[][]; about: string[][] } = { work: [], about: [] };
+      let gossipAskedAt = 0;
+      const refreshWritten = (): void => {
+        // Only while somebody is actually out: no floor watcher, no generation.
+        if (Date.now() - gossipAskedAt < 60_000) return;
+        gossipAskedAt = Date.now();
+        void window.cth.gossipPool?.().then((pool) => {
+          if (pool && Array.isArray(pool.work) && Array.isArray(pool.about)) written = pool;
+        }).catch(() => { /* decoration — never surface this */ });
+      };
+
+      const anyOf = <T,>(arr: readonly T[]): T | undefined =>
+        arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined;
+
+      /** The script two agents will run: work, or somebody who is not there.
+       *  Prefers a written exchange when one is available, because it is about
+       *  today; falls back to the pool that ships with the app. */
       const chatScript = (speakerId: string, x: number, y: number): readonly string[] => {
         const character = agentById(speakerId)?.character ?? DEFAULT_CHARACTER;
         const seed = Math.floor(Math.random() * 1e6);
@@ -896,9 +919,13 @@ export function OfficeFloor() {
         // left the room.
         if (Math.random() < 0.4) {
           const who = gossipAbout(speakerId, x, y);
-          if (who) return pickAboutPerson(who.name, seed);
+          if (who) {
+            const live = anyOf(written.about);
+            if (live) return live.map((line) => line.replace(/\{name\}/g, who.name));
+            return pickAboutPerson(who.name, seed);
+          }
         }
-        return pickExchange(character, seed);
+        return anyOf(written.work) ?? pickExchange(character, seed);
       };
 
       const maybePairChat = (id: string, rt: Runtime, spotIdx: number): boolean => {
@@ -1010,6 +1037,7 @@ export function OfficeFloor() {
       };
 
       const startBreak = (id: string, rt: Runtime): void => {
+        refreshWritten();
         // Prefer (≈half the time) a seat whose table-mate is already there, so
         // pairs form and chat; otherwise any free spot.
         const free: number[] = [];
@@ -1045,7 +1073,10 @@ export function OfficeFloor() {
           if (spot.seated) c.sitInPlace(spot.facing);
           else { c.setIdle(); c.faceDirection(spot.facing); }
           rt.brk.phase = 'lingering';
-          rt.brk.timer = 8 + Math.random() * 8;   // 8–16s of lingering
+          // Long enough to actually have the conversation. A three-beat
+          // exchange is 7s on its own, so at 8–16s people were walking out
+          // mid-sentence — and two agents almost never overlapped.
+          rt.brk.timer = 18 + Math.random() * 14;  // 18–32s of lingering
           rt.brk.quipTimer = 4 + Math.random() * 4;
           // Start a conversation if the table-mate is here; otherwise a solo quip.
           if (!maybePairChat(id, rt, idx)) emitQuip(id, rt, idx);
@@ -1118,9 +1149,23 @@ export function OfficeFloor() {
             if (b.chat.beat <= 0) {
               if (b.chat.idx < b.chat.lines.length) {
                 const speaker = (b.chat.idx % 2 === 0) ? rt : runtimes.get(b.chat.partnerId);
-                speaker?.character.showThought(b.chat.lines[b.chat.idx]);
+                const line = b.chat.lines[b.chat.idx];
+                speaker?.character.showThought(line);
+                // A laugh is a laugh: the speaker bobs, and their partner joins
+                // in half the time — laughing alone at your own joke is a
+                // different kind of office.
+                if (isLaughBeat(line)) {
+                  speaker?.character.laugh();
+                  if (Math.random() < 0.5) {
+                    const other = (b.chat.idx % 2 === 0) ? runtimes.get(b.chat.partnerId) : rt;
+                    other?.character.laugh();
+                  }
+                }
                 b.chat.idx++;
-                b.chat.beat = 2.4;                // seconds per line
+                // Timed by length, not a flat 2.4s. A one-word reaction that
+                // sits on screen as long as a sentence is what made these read
+                // as a slideshow rather than a conversation.
+                b.chat.beat = line.length <= 12 ? 1.1 : line.length <= 28 ? 1.8 : 2.6;
                 b.timer = Math.max(b.timer, 3.5); // keep both around to finish
                 const prt = runtimes.get(b.chat.partnerId);
                 if (prt?.brk) prt.brk.timer = Math.max(prt.brk.timer, 3.5);
@@ -1154,13 +1199,14 @@ export function OfficeFloor() {
           if (b.timer <= 0) endBreak(id, rt);
         }
 
-        // Periodically send one idle agent on a break — but cap the room at 4.
+        // Time to send people for coffee.
         cafeCooldown -= dt;
         if (cafeCooldown > 0) return;
         cafeCooldown = CAFE_WINDOW_MIN_S + Math.random() * CAFE_WINDOW_SPREAD_S;
+        const alreadyOut = cafeTaken.filter(Boolean).length;
         // A cap, not a queue: a break room with half the floor in it means the
         // desks behind it are empty, which is the opposite of what this shows.
-        if (cafeTaken.filter(Boolean).length >= CAFE_SEATS_AT_ONCE) return;
+        if (alreadyOut >= CAFE_SEATS_AT_ONCE) return;
         if (Math.random() >= CAFE_CHANCE) return;
         const candidates: Array<[Agent, Runtime]> = [];
         for (const agent of useStore.getState().agents) {
@@ -1168,8 +1214,30 @@ export function OfficeFloor() {
           if (rt && breakEligible(agent, rt)) candidates.push([agent, rt]);
         }
         if (candidates.length === 0) return;
-        const [agent, rt] = candidates[Math.floor(Math.random() * candidates.length)];
-        startBreak(agent.id, rt);
+
+        // THEY GO TOGETHER. One at a time never overlapped: a break lasts under
+        // half a minute and the next one is a minute away, so the first was
+        // back at their desk before the second stood up — the room was never
+        // shared and nobody ever had anyone to talk to. People fetch coffee in
+        // twos and threes anyway.
+        const room = CAFE_SEATS_AT_ONCE - alreadyOut;
+        const wanted = Math.min(room, candidates.length, Math.random() < 0.6 ? 2 : 3);
+        for (let i = candidates.length - 1; i > 0; i--) {   // shuffle, so it is not always the same desk
+          const j = Math.floor(Math.random() * (i + 1));
+          [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+        }
+        candidates.slice(0, Math.max(1, wanted)).forEach(([agent, rt], i) => {
+          // A short stagger so they leave their desks a beat apart instead of
+          // marching off in lockstep.
+          if (i === 0) startBreak(agent.id, rt);
+          else window.setTimeout(() => {
+            // Still idle, still free, still room — a lot can change in a second.
+            if (runtimes.get(agent.id) === rt && breakEligible(agent, rt)
+              && cafeTaken.filter(Boolean).length < CAFE_SEATS_AT_ONCE) {
+              startBreak(agent.id, rt);
+            }
+          }, 700 + i * 600);
+        });
       };
 
       // ─── Idle errands: small purposeful busywork for a quiet floor ─────────

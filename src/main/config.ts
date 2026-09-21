@@ -224,6 +224,11 @@ export interface HarnessConfig {
   dbConnections?: DbConnection[];
   /** Enable the searchable memory index over every agent's memory.md. */
   semanticMemory: boolean;
+  /** Break-room chatter written from the real board by a cheap model, rather
+   *  than only the exchanges that ship with the app. Costs one short headless
+   *  call every 45 minutes while an office is on screen; off means the floor
+   *  uses its own hand-written pool and nothing calls a model. */
+  gossipWriter: boolean;
   /** Embedding model for the palace: lightweight 'minilm' or multilingual 'embeddinggemma'. */
   embeddingModel: 'minilm' | 'embeddinggemma';
   /** Recurring auto-dispatch missions handled by the scheduler. */
@@ -450,6 +455,7 @@ const DEFAULTS: HarnessConfig = {
   integrations: [],
   defaultWorkerTokenCap: 0, // 0 = unlimited (human directive: NO per-worker cap)
   semanticMemory: true,
+  gossipWriter: true,
   embeddingModel: 'minilm',
   missions: [OPS_STANDUP_MISSION],
   notifications: false,

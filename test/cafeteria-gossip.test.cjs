@@ -64,7 +64,10 @@ test('work talk is still the default', () => {
   const fn = floor.slice(floor.indexOf('const chatScript'));
   const body = fn.slice(0, fn.indexOf('\n      };'));
   assert.match(body, /Math\.random\(\) < 0\.4/, 'a minority of conversations are about people');
-  assert.match(body, /return pickExchange\(character, seed\)/, 'the rest are about the work');
+  // Written-from-the-floor exchanges are preferred, with the hand-written pool
+  // behind them — see test/gossip-pool.test.cjs.
+  assert.match(body, /anyOf\(written\.work\) \?\? pickExchange\(character, seed\)/,
+    'the rest are about the work');
   // And the work pool is unchanged: short, closed, about builds and cards.
   assert.ok(pickExchange('michael', 3).length >= 2);
   assert.ok(pickSoloLine('lib-nami', 'coffee', 1).length > 0);
@@ -84,4 +87,37 @@ test('silence does not set in — a chat is attempted every second and a half', 
   const body = loop.slice(0, loop.indexOf('b.timer -= dt;'));
   assert.ok(body.indexOf('maybePairChat') < body.indexOf('emitQuip'),
     'try to start a conversation BEFORE muttering to yourself');
+});
+
+// NOBODY WAS EVER IN THERE TOGETHER. The floor sent one agent per window, a
+// break lasted 8-16s, and the next window was ~75s away — so the first was
+// back at their desk long before the second stood up. The room was never
+// shared, which meant the conversation system had nobody to talk to.
+
+test('people are sent in twos and threes, not one at a time', () => {
+  const send = floor.slice(floor.indexOf('// THEY GO TOGETHER'));
+  const body = send.slice(0, send.indexOf('\n      };'));
+  assert.match(body, /Math\.random\(\) < 0\.6 \? 2 : 3/, 'usually two, sometimes three');
+  assert.match(body, /CAFE_SEATS_AT_ONCE - alreadyOut/, 'and never more than the room holds');
+  assert.match(body, /\[candidates\[i\], candidates\[j\]\] = \[candidates\[j\], candidates\[i\]\]/,
+    'shuffled, so it is not the same two desks every time');
+});
+
+test('the second and third leave a beat later, and re-check before they go', () => {
+  // A lot can change in a second: the agent may have been given work, or the
+  // room may have filled.
+  const send = floor.slice(floor.indexOf('// THEY GO TOGETHER'));
+  const body = send.slice(0, send.indexOf('\n      };'));
+  assert.match(body, /window\.setTimeout/);
+  assert.match(body, /breakEligible\(agent, rt\)\s*\n?\s*&& cafeTaken\.filter\(Boolean\)\.length < CAFE_SEATS_AT_ONCE/);
+});
+
+test('a break lasts long enough to hold the conversation', () => {
+  // A three-beat exchange at 2.4s a line is over 7 seconds, and people used to
+  // walk out mid-sentence.
+  const m = /rt\.brk\.timer = (\d+) \+ Math\.random\(\) \* (\d+);/.exec(floor);
+  assert.ok(m, 'the linger length moved');
+  const [min, spread] = [Number(m[1]), Number(m[2])];
+  assert.ok(min >= 12, `a ${min}s minimum is not long enough for a conversation`);
+  assert.ok(min + spread <= 40, 'but it is a coffee break, not a lunch hour');
 });

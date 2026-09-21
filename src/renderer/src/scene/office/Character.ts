@@ -113,6 +113,7 @@ export class Character {
   private fx: Graphics;
   private fxDirty = false;            // fx drew last frame → needs a clear when idle
   private cheerT = -1;                // -1 = not cheering
+  private laughT = -1;                // -1 = not laughing
   private confetti: Array<{ x: number; y: number; vx: number; vy: number; c: number }> = [];
   private carryingCup = false;
   /** The cup parked on this agent's desk (world-positioned, lives in the char
@@ -249,6 +250,20 @@ export class Character {
     }
     this.sprite.setPosition(this.px + dx, this.py + dy);
     this.sprite.setSeatedCrop(dir === 'down' ? SEAT_LEG_CROP : SEAT_BACK_CROP);
+  }
+
+  /** The tuck applied while seated, so an effect that moves the sprite (the
+   *  laugh bob) can be added on top instead of teleporting the avatar out of
+   *  its chair when it finishes. Zero when standing. */
+  private seatOffset(): { dx: number; dy: number } {
+    if (!this.sitting) return { dx: 0, dy: 0 };
+    switch (this.direction) {
+      case 'down':  return { dx: 0, dy: SIT_OFFSET_DOWN };
+      case 'up':    return { dx: 0, dy: SIT_OFFSET_UP };
+      case 'left':  return { dx: -SIT_OFFSET, dy: SIT_OFFSET_SIDE };
+      case 'right': return { dx: SIT_OFFSET, dy: SIT_OFFSET_SIDE };
+      default:      return { dx: 0, dy: 0 };
+    }
   }
 
   /** Sit on a café seat at the CURRENT tile, facing `dir`. The agent must have
@@ -420,6 +435,27 @@ export class Character {
   /** True while the cheer animation holds the avatar in place. */
   isCheering(): boolean {
     return this.cheerT >= 0;
+  }
+
+  /**
+   * A laugh: two quick bobs, no confetti, and it works SEATED.
+   *
+   * Not a cheer. A cheer is hops plus a confetti burst and it refuses while
+   * sitting, so at a café table it did nothing — and where it did fire it read
+   * as celebration rather than two people finding something funny. This is
+   * small and quiet enough to land on a line of dialogue: the head dips twice
+   * over about half a second and nothing else about the avatar changes.
+   *
+   * Deliberately does NOT clear the path or interrupt a walk. Somebody can
+   * laugh on their way back to their desk.
+   */
+  laugh(): void {
+    this.laughT = 0;
+  }
+
+  /** True while the laugh bob is playing. */
+  isLaughing(): boolean {
+    return this.laughT >= 0;
   }
 
   // ── Coffee cup ─────────────────────────────────────────────────────────────
@@ -675,6 +711,22 @@ export class Character {
           const alpha = Math.max(0, Math.min(1, (1.45 - t) / 0.5));
           this.fx.rect(Math.round(p.x), Math.round(p.y), 2, 2).fill({ color: p.c, alpha });
         }
+      }
+    }
+
+    // Laugh: two small bobs over ~0.55s. Applied on top of wherever the sprite
+    // already is, so it works in a chair as well as on foot — unlike the cheer
+    // above, which owns the sprite position for its whole duration.
+    if (this.laughT >= 0 && this.cheerT < 0) {
+      this.laughT += dt;
+      const t = this.laughT;
+      const seat = this.seatOffset();
+      if (t >= 0.55) {
+        this.laughT = -1;
+        this.sprite.setPosition(this.px + seat.dx, this.py + seat.dy);
+      } else {
+        const bob = Math.abs(Math.sin(t * Math.PI * 3.6)) * 2;
+        this.sprite.setPosition(this.px + seat.dx, this.py + seat.dy - bob);
       }
     }
 

@@ -189,7 +189,7 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
   // ─── v0.3.4 redesign: settings that were onboarding-trapped or UI-less ────
   const cfgX = config as HarnessConfig & {
     strongKeepalive?: boolean; audience?: string; autoMode?: boolean;
-    defaultModel?: string; maxTurns?: number; semanticMemory?: boolean;
+    defaultModel?: string; maxTurns?: number; semanticMemory?: boolean; gossipWriter?: boolean;
   };
   /**
    * ONE SAVE BUTTON.
@@ -273,6 +273,15 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
     const next = !orchSpawnOn;
     setOrchSpawnOn(next);
     stage({ orchestratorMaySpawn: next } as Partial<HarnessConfig>);
+  };
+  /** Break-room chatter written from the real board by a cheap model. On by
+   *  default; off means the floor uses only the exchanges that ship with it and
+   *  nothing calls a model. */
+  const [gossipOn, setGossipOn] = useState<boolean>(cfgX.gossipWriter !== false);
+  const toggleGossip = async () => {
+    const next = !gossipOn;
+    setGossipOn(next);
+    stage({ gossipWriter: next } as Partial<HarnessConfig>);
   };
   // The fallback has to be the one a spawn ACTUALLY uses when nothing is
   // configured, which is the provider preset's recommendation. It said
@@ -967,6 +976,17 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
                             </span>
                           </div>
                           <Switch on={autoCompactOn} label={t('settings.general.autoCompact')} onChange={toggleAutoCompact} />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <span style={{ fontSize: 13.5, lineHeight: '20px', color: 'var(--cth-ink-900)', fontWeight: 600 }}>
+                              {t('settings.general.gossipWriter')}
+                            </span>
+                            <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
+                              {t('settings.general.gossipWriterDesc')}
+                            </span>
+                          </div>
+                          <Switch on={gossipOn} label={t('settings.general.gossipWriter')} onChange={toggleGossip} />
                         </div>
                         {/* No auto-update row: releases come from the
                             upstream project, not this fork. No telemetry row

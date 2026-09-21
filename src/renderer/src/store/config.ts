@@ -99,6 +99,9 @@ export interface HarnessConfig {
   /** Databases agents may query. URLs live in the encrypted store, not here. */
   dbConnections?: DbConnection[];
   semanticMemory: boolean;
+  /** Break-room chatter written from the real board, rather than only the
+   *  exchanges that ship with the app. */
+  gossipWriter: boolean;
   embeddingModel: 'minilm' | 'embeddinggemma';
   missions?: ScheduledMission[];
   opsStandupSeeded?: boolean;

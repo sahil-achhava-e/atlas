@@ -300,6 +300,8 @@ export interface HarnessConfig {
    *  src/main/config.ts. */
   mcpDefaults?: { [id: string]: { enabled: boolean } };
   semanticMemory: boolean;
+  /** Break-room chatter written from the real board by a cheap model. */
+  gossipWriter: boolean;
   embeddingModel: 'minilm' | 'embeddinggemma';
   missions?: ScheduledMission[];
   opsStandupSeeded?: boolean;
@@ -1449,6 +1451,11 @@ const api = {
    *  new agent can be given as its working directory. */
   projectTree: (): Promise<Array<{ path: string; name: string; isRepo: boolean; parent?: string }>> =>
     ipcRenderer.invoke('projects:tree'),
+  /** Break-room exchanges written from the real floor — work talk, and talk
+   *  about one person carrying a `{name}` the floor fills with somebody out of
+   *  earshot. Empty is normal: the office has its own hand-written pool. */
+  gossipPool: (): Promise<{ work: string[][]; about: string[][]; at: number }> =>
+    ipcRenderer.invoke('gossip:pool'),
   rosterReadSync: (): RosterSnapshot | null => {
     try { return ipcRenderer.sendSync('roster:readSync') ?? null; } catch { return null; }
   },

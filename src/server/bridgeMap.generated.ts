@@ -170,6 +170,7 @@ export const INVOKE: Record<string, string> = {
   forgetWorkspace: 'workspace:forget',
   deleteWorkspace: 'workspace:delete',
   projectTree: 'projects:tree',
+  gossipPool: 'gossip:pool',
   prefsSet: 'prefs:set',
   rosterWrite: 'roster:write',
   updateCurrent: 'update:current',

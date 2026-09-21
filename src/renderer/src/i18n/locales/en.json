@@ -254,7 +254,9 @@
       "workspacesOpen": "Workspaces",
       "keepAwakeMac": "Keep the Mac awake while agents run",
       "keepAwakeWindows": "Keep the PC awake while agents run",
-      "keepAwakeLinux": "Keep the machine awake while agents run"
+      "keepAwakeLinux": "Keep the machine awake while agents run",
+      "gossipWriter": "Break-room chatter",
+      "gossipWriterDesc": "Agents at the coffee machine talk about the actual board — a stuck card, a review nobody picked up. Written by a cheap model every 45 minutes while an office is on screen. Off uses only the lines that ship with the app."
     },
     "agentsModels": {
       "defaultModel": "Default agent model",

@@ -2,6 +2,7 @@ import { interruptedWork, restartBrief, briefSignature } from './restartBrief';
 import { readInstanceLock, writeInstanceLock, clearInstanceLock } from './instanceLock';
 import { canDeleteWorkspace, isManagedWorkspace, WORKSPACE_DATA } from '../shared/workspaceDelete';
 import { listProjectTree, type ProjectEntry } from './projects';
+import { GossipWriter } from './gossip';
 import { mcpSecretRef, mcpSecretEnvKeys, dbSecretRef } from '../shared/mcpCatalog';
 import { activityRows } from '../shared/activityFeed';
 import { maskDbUrl } from '../shared/dbUrl';
@@ -416,6 +417,64 @@ const reflector = new MemoryReflector(
   reflectSettings,
   (event) => { try { hive.appendLog(event); } catch { /* best-effort */ } }
 );
+/**
+ * Break-room chatter, written from the real floor.
+ *
+ * The office has forty hand-written exchanges and they never change. This asks
+ * a cheap model for a dozen more, grounded in the roster and the board, so two
+ * agents at the coffee machine can grumble about a review that has actually
+ * been sitting for two days. Queued, not per-conversation: a generation takes
+ * seconds and a conversation starts the instant they meet.
+ */
+const gossip = new GossipWriter(() => {
+  const reg = hive.registry();
+  const crew = Object.values(reg.agents ?? {})
+    .filter((a) => a && !a.archived)
+    .map((a) => ({
+      name: a.name || a.id,
+      role: a.role,
+      project: a.cwd ? a.cwd.replace(/\/+$/, '').split('/').filter(Boolean).pop() : undefined,
+      isGod: !!a.isGod,
+      isLead: !!a.isLead
+    }));
+  const cfg = readConfig();
+  return {
+    enabled: cfg.gossipWriter !== false,
+    root: hive.root(),
+    command: cfg.defaultCommand ?? 'claude',
+    crew,
+    happenings: floorHappenings()
+  };
+});
+
+/**
+ * A few true things about today, for the gossip writer.
+ *
+ * Deliberately shallow — card titles, who owns what, what is waiting on the
+ * human. Enough for a line like "still nothing on vms-sec-1" to be about
+ * something real, and not so much that a break room starts quoting the board.
+ */
+function floorHappenings(): string[] {
+  const out: string[] = [];
+  try {
+    const ledger = hive.tasks() as { tasks?: HiveTask[] };
+    for (const task of (ledger.tasks ?? []).slice(-8)) {
+      const owner = task.assignee ? ` — ${task.assignee}` : ' — nobody';
+      if (task.status === 'blocked') out.push(`"${task.title}" is blocked waiting on the human${owner}`);
+      else if (task.status === 'doing') out.push(`"${task.title}" is in progress${owner}`);
+      else if (task.status === 'todo') out.push(`"${task.title}" is queued${owner}`);
+      if (!task.description) out.push(`the card "${task.title}" has no description`);
+    }
+  } catch { /* no board yet */ }
+  try {
+    const idle = Object.values(hive.registry().agents ?? {})
+      .filter((a) => a && !a.archived && !a.isGod && a.status === 'idle')
+      .map((a) => a.name || a.id);
+    if (idle.length > 2) out.push(`${idle.length} of the crew have nothing named to do`);
+  } catch { /* no registry yet */ }
+  return out.slice(0, 10);
+}
+
 // Durable harness state (SQLite, main process). Phase A: window bounds (kv) +
 // net-new command history. Opened in whenReady, closed in the teardown blocks.
 const persist = new PersistStore();
@@ -3584,6 +3643,14 @@ ipcMain.handle('app:homeDir', () => homedir());
  *  isolation had no repo to make a worktree from. */
 ipcMain.handle('projects:tree', () => listProjectTree(readConfig().registeredRepos ?? []));
 
+/** Break-room exchanges written from the real floor. The floor polls this while
+ *  somebody is on a break; the ask is also what triggers a background top-up,
+ *  so nothing generates while nobody is looking at an office. */
+ipcMain.handle('gossip:pool', () => {
+  gossip.maybeRefresh();
+  return gossip.current();
+});
+
 ipcMain.handle('fs:listDir', (_evt, root: unknown, rel: unknown) => {
   if (typeof root !== 'string' || typeof rel !== 'string') return { ok: false, error: 'invalid args' };
   return listDir(root, rel);
@@ -5571,6 +5638,9 @@ function bootstrapHiveServices(): void {
   // agents are given already includes them.
   installAtlasSkills();
   watchAtlasSkills();
+  // Whatever the last run wrote, so a restart does not start with a silent
+  // break room. A top-up happens on the first ask from the floor.
+  gossip.load();
   publishEnvironment();
   // An app-start marker in the event log. log.jsonl had twelve event kinds and
   // none of them meant "the app restarted", so a relaunch, and more importantly a
