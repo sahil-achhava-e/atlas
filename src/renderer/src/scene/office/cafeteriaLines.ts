@@ -127,3 +127,73 @@ export function pickExchange(speaker: string, seed: number): Exchange {
   if (keyed && seed % 4 === 0) return keyed;
   return pick(PAIR_POOL, seed);
 }
+
+// ─── talking ABOUT someone who is not there ─────────────────────────────────
+//
+// The oldest rule of a break room: you talk about the person who has just left.
+// So these carry a `{name}`, and the director only ever fills it with someone
+// who is OUT OF EARSHOT — the orchestrator in his office, a lead in theirs, a
+// colleague at the far end of the floor. Say it while they are standing there
+// and it stops being gossip and starts being rude, which is a different floor
+// from the one this is.
+//
+// Kept affectionate rather than cutting. These are colleagues who like each
+// other, and a break room where people are unkind about the absent is not a
+// nice place to watch.
+
+const ABOUT_PERSON: readonly Exchange[] = [
+  ['{name} has been quiet today.', 'deep in something.', 'or asleep.'],
+  ['did {name} read the spec?', 'there is a spec?'],
+  ['{name} reviewed it in four minutes.', 'read it?', 'reviewed it.'],
+  ['{name} says it is a one line change.', 'it is never a one line change.'],
+  ['{name} is on their third branch.', 'of the same fix?', 'yes.'],
+  ['ask {name}, they wrote it.', 'they said they did not.', 'git says otherwise.'],
+  ['{name} opened a card for that.', 'a good one?', 'it has a description.', 'oh.'],
+  ['{name} has been in that repo all morning.', 'winning?', 'unclear.'],
+  ['{name} would know.', 'do we want {name} to know?'],
+  ['I owe {name} a review.', 'how long?', 'do not ask.'],
+  ['{name} merged at 2am.', 'why.', 'nobody knows.'],
+  ['{name} is very calm about this.', 'that worries me.'],
+  ['{name} said it was fine.', 'and was it?', 'it was fine.', '...huh.'],
+  ['do not tell {name} I said that.', 'tell {name} what?', 'exactly.']
+];
+
+/**
+ * The sharper half: actual complaining.
+ *
+ * A break room where nobody ever grumbles is not a break room. These are the
+ * lines people only say when the subject has left — a review that sat for two
+ * days, a card with no description, being told to hold. Same rule as above,
+ * harder: the director will not choose one of these unless the person named is
+ * out of earshot.
+ *
+ * The line it stops at: colleagues who are annoyed with each other, not
+ * colleagues who are nasty about each other. Nothing here is about anybody's
+ * character.
+ */
+const COMPLAINING: readonly Exchange[] = [
+  ['my review has been sitting with {name} for two days.', 'join the queue.'],
+  ['{name} sent me a card with no description.', 'again?', 'again.'],
+  ['{name} reassigned it without telling me.', 'classic.'],
+  ['I asked {name} twice.', 'and?', 'still waiting.'],
+  ['{name} said hold. no reason.', 'so we hold.', 'so we sit here.'],
+  ['{name} rewrote my branch.', 'ask first, surely.', 'you would think.'],
+  ['that was {name}\'s call, not mine.', 'and we are cleaning it up.'],
+  ['{name} has three cards open and none moving.', 'do not say it to them.'],
+  ['I get pinged, {name} gets the credit.', 'that is the job.', 'it should not be.'],
+  ['{name} changed the spec mid-run.', 'after you built it?', 'after I built it.'],
+  ['nobody told {name} it was blocked.', 'who was supposed to?', 'exactly.'],
+  ['{name} closed it as done.', 'was it done?', 'define done.']
+];
+
+/**
+ * An exchange about somebody who is not in the room. `{name}` is filled in for
+ * both speakers, so the whole conversation stays about one person.
+ *
+ * Two in five are the complaining pool — enough that the floor has a bit of
+ * friction in it, not so much that the crew sounds miserable.
+ */
+export function pickAboutPerson(name: string, seed: number): Exchange {
+  const pool = seed % 5 < 2 ? COMPLAINING : ABOUT_PERSON;
+  return pick(pool, Math.floor(seed / 5)).map((line) => line.replace(/\{name\}/g, name));
+}

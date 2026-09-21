@@ -25,7 +25,7 @@ function glowFor(charName: string, member?: { shirt: string }): number {
   if (Array.isArray(c1) && c1.length >= 3) return (c1[0] << 16) | (c1[1] << 8) | c1[2];
   return hexToNumber(DEFAULT_ACCENT_HEX);
 }
-import { pickSoloLine, pickExchange, type BreakSpot } from './cafeteriaLines';
+import { pickSoloLine, pickExchange, pickAboutPerson, type BreakSpot } from './cafeteriaLines';
 import { colors, accentNumber, DEFAULT_ACCENT_HEX } from '@/design/tokens';
 import { loadTheme, resolveThemeMap, themeTilesetUrls } from './themeLoader';
 import {
@@ -52,6 +52,9 @@ interface CafeBreak {
   phase: 'walking' | 'lingering';
   timer: number;                   // walking → elapsed watchdog; lingering → countdown
   quipTimer: number;               // until the next solo quip swap
+  /** Seconds until the next attempt to start a conversation. People in a break
+   *  room together talk; this is what stops four of them muttering alone. */
+  chatTry?: number;
   chat?: CafeChat;                 // set on the conversation's initiator
   chattingWith?: string;           // set on the partner: stays put & stays quiet
 }
@@ -842,18 +845,92 @@ export function OfficeFloor() {
       // conversation), start a multi-beat exchange. The newcomer is the
       // initiator and owns the script; the partner just gets marked engaged.
       // Returns true if a chat was started.
+      /** Far enough away not to hear it. Roughly the width of the break room,
+       *  so someone at the next table counts as present and someone at a desk
+       *  across the floor does not. */
+      const EARSHOT_PX = 170;
+
+      /** Is this agent out of earshot of a point — or not on the floor at all? */
+      const outOfEarshot = (targetId: string, x: number, y: number): boolean => {
+        const rt = runtimes.get(targetId);
+        if (!rt) return true;                       // not placed: cannot overhear
+        const p = rt.character.getPixelPosition();
+        return Math.hypot(p.x - x, p.y - y) > EARSHOT_PX;
+      };
+
+      /**
+       * Somebody to talk about, or nobody.
+       *
+       * The rule the human asked for, and the only rule a break room needs: you
+       * may talk about the orchestrator, your lead, or a colleague — but only
+       * while they are not in the room. Everyone within earshot is filtered out
+       * before a name is picked, so a conversation cannot start about someone
+       * who is standing there.
+       *
+       * Leans towards the boss and the speaker's own lead, because that is who
+       * a break room actually talks about, and falls back to a peer.
+       */
+      const gossipAbout = (speakerId: string, x: number, y: number): Agent | undefined => {
+        const agents = useStore.getState().agents;
+        const me = agents.find((a) => a.id === speakerId);
+        const away = (a: Agent | undefined): a is Agent =>
+          !!a && a.id !== speakerId && outOfEarshot(a.id, x, y);
+
+        const boss = agents.find((a) => a.isGod);
+        const lead = me ? agents.find((a) => a.isLead && a.project === me.project && a.id !== me.id) : undefined;
+        const seniors = [boss, lead].filter(away);
+        // Two in three about the people above you; otherwise a peer.
+        if (seniors.length && Math.random() < 0.66) {
+          return seniors[Math.floor(Math.random() * seniors.length)];
+        }
+        const peers = agents.filter((a) => !a.isGod && away(a));
+        if (peers.length) return peers[Math.floor(Math.random() * peers.length)];
+        return seniors.length ? seniors[0] : undefined;
+      };
+
+      /** The script two agents will run: work, or somebody who is not there. */
+      const chatScript = (speakerId: string, x: number, y: number): readonly string[] => {
+        const character = agentById(speakerId)?.character ?? DEFAULT_CHARACTER;
+        const seed = Math.floor(Math.random() * 1e6);
+        // Work talk is the default; roughly two in five turn to whoever just
+        // left the room.
+        if (Math.random() < 0.4) {
+          const who = gossipAbout(speakerId, x, y);
+          if (who) return pickAboutPerson(who.name, seed);
+        }
+        return pickExchange(character, seed);
+      };
+
       const maybePairChat = (id: string, rt: Runtime, spotIdx: number): boolean => {
-        const spot = cafeSpots[spotIdx];
-        if (spot.partner < 0 || !rt.brk) return false;
-        const partnerId = cafeTaken[spot.partner];
-        if (!partnerId) return false;
-        const prt = runtimes.get(partnerId);
-        if (!prt?.brk || prt.brk.phase !== 'lingering') return false;
-        if (rt.brk.chat || rt.brk.chattingWith || prt.brk.chat || prt.brk.chattingWith) return false;
-        const character = agentById(id)?.character ?? DEFAULT_CHARACTER;
-        const lines = pickExchange(character, Math.floor(Math.random() * 1e6));
-        rt.brk.chat = { lines, partnerId, idx: 0, beat: 0 };
+        if (!rt.brk) return false;
+        // ANYONE in the room, not just the other chair at this table. With four
+        // spots and two of them standing at machines, the table-mate rule left
+        // people drinking coffee in silence next to each other.
+        const free = (other: Runtime | undefined): boolean =>
+          !!other?.brk && other.brk.phase === 'lingering'
+          && !other.brk.chat && !other.brk.chattingWith;
+        if (rt.brk.chat || rt.brk.chattingWith) return false;
+
+        const here = cafeTaken
+          .map((who, i) => ({ who, i }))
+          .filter((x): x is { who: string; i: number } => !!x.who && x.who !== id)
+          .filter((x) => free(runtimes.get(x.who)));
+        if (!here.length) return false;
+        // The nearest one, so the bubbles read as a conversation rather than
+        // two people shouting across the room.
+        const me = rt.character.getPixelPosition();
+        here.sort((a, b) => {
+          const pa = runtimes.get(a.who)!.character.getPixelPosition();
+          const pb = runtimes.get(b.who)!.character.getPixelPosition();
+          return Math.hypot(pa.x - me.x, pa.y - me.y) - Math.hypot(pb.x - me.x, pb.y - me.y);
+        });
+        const partnerId = here[0].who;
+        const prt = runtimes.get(partnerId)!;
+        if (!prt.brk) return false;
+
+        rt.brk.chat = { lines: chatScript(id, me.x, me.y), partnerId, idx: 0, beat: 0 };
         prt.brk.chattingWith = id;
+        void spotIdx;   // the seat no longer decides who you talk to
         return true;
       };
 
@@ -1021,7 +1098,7 @@ export function OfficeFloor() {
       const CAFE_WINDOW_MIN_S = 25;
       const CAFE_WINDOW_SPREAD_S = 35;
       const CAFE_CHANCE = 0.55;
-      const CAFE_SEATS_AT_ONCE = 3;
+      const CAFE_SEATS_AT_ONCE = 4;
 
       let cafeCooldown = 5;
       const updateCafeteria = (dt: number): void => {
@@ -1055,14 +1132,23 @@ export function OfficeFloor() {
               }
             }
           } else if (!b.chattingWith) {
-            // Not in a conversation (and not being spoken to) — swap a solo quip.
+            // Not in a conversation and not being spoken to. Try to START one
+            // first: people in a break room together talk, and four of them
+            // standing around muttering to themselves was the old behaviour —
+            // a table-mate had to arrive at the one paired seat for anything to
+            // happen. Every 1.5s is quick enough that silence never sets in and
+            // slow enough that it does not fire the instant someone sits.
+            b.chatTry = (b.chatTry ?? 0) - dt;
+            if (b.chatTry <= 0) {
+              b.chatTry = 1.5;
+              if (maybePairChat(id, rt, b.spotIdx)) continue;
+            }
+            // Nobody free to talk to — mutter to yourself instead.
             b.quipTimer -= dt;
             if (b.quipTimer <= 0) {
               b.quipTimer = 4 + Math.random() * 4;
               emitQuip(id, rt, b.spotIdx);
             }
-            // Occasionally strike up a chat with a table-mate who arrived too.
-            else if (Math.random() < 0.004) maybePairChat(id, rt, b.spotIdx);
           }
           b.timer -= dt;
           if (b.timer <= 0) endBreak(id, rt);
