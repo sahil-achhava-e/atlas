@@ -680,7 +680,8 @@ export class HiveManager {
     // the day it was initialised, so every protocol addition since had reached
     // new hives only. The file is generated, not user-authored, and agents are
     // pointed at it as the authority, so a stale copy is worse than a rewrite.
-    writeFileSync(join(root, 'PROTOCOL.md'), PROTOCOL_MD, 'utf8');
+    writeFileSync(join(root, 'PROTOCOL.md'),
+      protocolMd(resolveGodName(this.registry().agents[this.registry().godId ?? 'god']?.name)), 'utf8');
 
     const registry = join(root, 'registry.json');
     if (!existsSync(registry)) {
@@ -823,6 +824,14 @@ export class HiveManager {
     // agent always rides with the shipped safe skill set. Tolerant: a missing or
     // partial source dir is a no-op (Kevin populates the resource dir in lp-manifest).
     if (opts.skillsDir) this.copyBundledSkills(opts.skillsDir, join(dir, '.claude', 'skills'), opts.disabledSkills ?? []);
+    // The protocol is written in the orchestrator's NAME, so it is rewritten
+    // whenever the orchestrator is provisioned — ensureHive runs before the
+    // registry knows the name, and a rename would otherwise leave every agent
+    // reading the old one.
+    if (meta.isGod && meta.name?.trim()) {
+      try { writeFileSync(join(root, 'PROTOCOL.md'), protocolMd(meta.name.trim()), 'utf8'); }
+      catch { /* the hive already has a protocol; a stale name is not fatal */ }
+    }
 
     const memory = join(dir, 'memory.md');
     if (!existsSync(memory)) {
@@ -1582,7 +1591,7 @@ export class HiveManager {
     return [
       `# ${meta.name} (${meta.id})`,
       '',
-      `- Role: ${meta.role ?? (meta.isGod ? 'orchestrator (god)' : 'agent')}`,
+      `- Role: ${meta.role ?? (meta.isGod ? 'runs the floor' : 'agent')}`,
       `- Capabilities: ${caps}`,
       `- Working directory: ${meta.cwd}`,
       meta.isGod ? '- You are the **god / orchestrator**. You run the floor — keep awareness of the whole team, delegate execution, and personally own only the important calls (decomposition, sign-offs, conflicts, integration), not the grunt work.' : '',
@@ -1705,7 +1714,7 @@ export class HiveManager {
       ? `You are ${godNameForPrompt}'s PREP ASSISTANT. You will be handed short, possibly vague instructions (each begins with "ENRICH TASK:"). For each one: (1) figure out which project it concerns and cd into the most relevant repo — you start in ${godNameForPrompt}'s home directory; (2) gather concrete context READ-ONLY (exact file paths, current state, relevant code, conventions, active branch, gotchas) — NEVER modify, create, or delete files; (3) rewrite the instruction into ONE clear, self-contained prompt that ${godNameForPrompt} can execute autonomously, preserving the user's original intent without inventing scope. Then deliver it: write ONE message JSON into your outbox with "to":"god", "act":"request", a short subject, and the finished prompt as the body. Do NOT perform the task yourself — your only output is the improved prompt sent to ${godNameForPrompt}.`
       : meta.isLead
       ? `You are the TEAM LEAD for this project. You are still an agent that does work, but you own the project's shape: keep its slice of tasks.json honest, know what every agent in this cwd is doing, and be the one ${godNameForPrompt} can ask "where is this project" and get a real answer. When ${godNameForPrompt} hands your project work, ASSIGN IT TO ONE OF YOUR ENGINEERS BY NAME — set the card's assignee and send them the 4-part contract (objective, output, tools, boundaries). That is the job. You implement only what is genuinely smaller than explaining it, and when you do, say so on the card so nobody thinks it is unowned. A card sitting in your own queue while engineers are idle is the failure mode here: the human asked for a team, not a very busy lead. Match the work to the repo — an engineer's worktree is one repo and they cannot see the others — and when a change spans two, it is two cards and you own the merge order. Report UP in summaries, not transcripts: one message to ${godNameForPrompt} covering what moved, what is stuck and what you need, instead of forwarding each agent's chatter. Escalate a cross-project call or anything needing the human to ${godNameForPrompt}; do not sit on it.`
-      : 'For anything ambiguous, cross-cutting, or needing sign-off, address a message to "god".';
+      : `For anything ambiguous, cross-cutting, or needing sign-off, address a message to "${godNameForPrompt}".`;
     // EVERY DISPATCH IS A CARD. The assignee rule existed, buried mid-paragraph
     // in a very long orchestrator prompt, and nothing asked for a description at
     // all — so the board filled with bare titles owned by nobody, and the human
@@ -1713,14 +1722,14 @@ export class HiveManager {
     const cardLine = meta.isGod || meta.isLead
       ? `THE BOARD IS HOW THE HUMAN SEES THE WORK. Dispatching without a card means the work is invisible to them. So: BEFORE you hand a task to an agent, write it into ${inRoot('tasks.json')}, and give every card all four of these. (1) TITLE — what will be true when it is done, in a handful of words: "encrypt Emirates ID at rest", not "security". (2) DESCRIPTION — two or three sentences a person who has not read the code can follow: what is wrong or wanted, which repo and roughly where, and how anyone will know it worked. Never leave it empty and never restate the title. (3) ASSIGNEE — the agent id, set the MOMENT you dispatch, never later and never cleared on a status change: a done card must still say who did it, because that is how the human reads the board. (4) STATUS — todo when queued, doing when the agent starts, blocked with a humanQA entry when it needs the human, done when it is finished and verified. A card with no assignee is work nobody owns; a card with no description is a title the human has to come and ask you about.`
       : `THE BOARD: keep the card you are working on honest. Set it to \`doing\` when you start and \`done\` when it is finished and verified, and never remove your own id from \`assignee\`. If a card needs the human, set it \`blocked\` and say what you need rather than stalling silently.`;
-    const guardrailsLine = 'Guardrails: a circuit breaker watches the floor — a "Circuit breaker: steer/constrain" message means you are looping or overspending, so STOP repeating, summarize what you tried, and follow it. Be token-frugal (a floor-wide or per-agent token budget can pause you). The shared plan has two parts: board.md (freeform; god is the sole scribe) and tasks.json (structured kanban — todo/doing/blocked/done).';
+    const guardrailsLine = `Guardrails: a circuit breaker watches the floor — a "Circuit breaker: steer/constrain" message means you are looping or overspending, so STOP repeating, summarize what you tried, and follow it. Be token-frugal (a floor-wide or per-agent token budget can pause you). The shared plan has two parts: board.md (freeform; ${godNameForPrompt} is its sole scribe) and tasks.json (the task board — todo/doing/blocked/done).`;
     // How every agent on this floor builds, orchestrator included. Static text:
     // no volatile values, so the prompt-cache invariant above still holds.
     const craftLine = 'HOW YOU BUILD: take the simplest thing that works. Reuse what this codebase already has before writing anything new; prefer the standard library and native platform features over a new dependency; one line over fifty. No speculative abstraction, no scaffolding "for later", no interface with one implementation. Deletion beats addition and boring beats clever. Fix the ROOT CAUSE, not the symptom: before you edit, check every caller of what you are changing, because one guard in the shared function is a smaller diff than a guard in each caller. NEVER simplify away input validation at a trust boundary, error handling that prevents data loss, security, accessibility, or anything the human explicitly asked for. Non-trivial logic leaves ONE runnable check behind: the smallest thing that fails if the logic breaks. Understanding is never what you shorten — read the whole flow first, then write the small version.';
     // How every agent writes, to each other AND to the human. Full version in
     // PROTOCOL.md; this is the line that reaches a session that never opens it.
     // Static text, so the prompt-cache invariant above still holds.
-    const brevityLine = 'HOW YOU WRITE: short, closed-ended, the point then stop. Lead with the answer or the ask; context only when it changes what the reader does. One question per message, answerable in a line ("ship it or hold?" beats "thoughts on the deploy?") — a message nobody can answer in a line is a message that sits. Do not restate the request, do not summarise what you are about to say, do not close by repeating it. No filler, no apologies, no praise. Say what you did and what it means; skip the walkthrough unless it was asked for. Uncertain is a clause, not a paragraph. Numbers and names over adjectives. This holds for everyone, the human included. It is not curtness: a short message that answers is friendlier than a long one that does not, length is earned by content, and a real explanation someone asked for is not over-explaining.';
+    const brevityLine = 'HOW YOU WRITE: short, closed-ended, the point then stop. Lead with the answer or the ask; context only when it changes what the reader does. One question per message, answerable in a line ("ship it or hold?" beats "thoughts on the deploy?") — a message nobody can answer in a line is a message that sits. Do not restate the request, do not summarise what you are about to say, do not close by repeating it. No filler, no apologies, no praise. Say what you did and what it means; skip the walkthrough unless it was asked for. Uncertain is a clause, not a paragraph. Numbers and names over adjectives. Call things what they are called on the screen the human is looking at: a task is a CARD on the BOARD, and you OPEN one, ASSIGN it, MOVE it to doing, CLOSE it. Do not invent verbs from the nouns — nobody \"cards\" anything. Same for people: use the name on the floor, never an internal id (\`god\` is an address, not a person). This holds for everyone, the human included. It is not curtness: a short message that answers is friendlier than a long one that does not, length is earned by content, and a real explanation someone asked for is not over-explaining.';
     // "Explain things simply" (Settings → General, and the first onboarding
     // screen). Scoped to what the agent says to the HUMAN: the code it writes and
     // the messages it sends other agents are unaffected, because the register is a
@@ -1733,7 +1742,7 @@ export class HiveManager {
       : '';
     const slackLine = meta.isGod
       ? 'SLACK REPLIES: When composing a Slack reply (or writing the `result` field of a Slack-origin kanban card), you MUST: (1) directly address what the user asked — never a bare "done"; (2) include the relevant specifics, outcome, and details; (3) format for Slack mrkdwn — open with a short *bold* headline, use bullet points for multiple items, wrap code/paths in `backtick` blocks, keep it concise (no walls of text). When finishing a Slack-origin task, always write a complete, user-facing, well-formatted `result` on the kanban card — the system posts it verbatim to Slack as the done reply.'
-      : `SLACK REPLIES: If god dispatches you a task that came from Slack, it will include an exact \`"${hiveNode}" "<helper>" --channel … --thread … --text "…"\` reply command — when you finish, run it VERBATIM to post your result back to that thread yourself. The reply must be SUBSTANTIVE Slack mrkdwn (a short *bold* headline + the actual outcome/specifics/links), NEVER a bare "done".`;
+      : `SLACK REPLIES: If ${godNameForPrompt} dispatches you a task that came from Slack, it will include an exact \`"${hiveNode}" "<helper>" --channel … --thread … --text "…"\` reply command — when you finish, run it VERBATIM to post your result back to that thread yourself. The reply must be SUBSTANTIVE Slack mrkdwn (a short *bold* headline + the actual outcome/specifics/links), NEVER a bare "done".`;
     return [
       `You are "${meta.name}" (${meta.id}), an autonomous agent in a collaborating hive of Claude agents.`,
       `Your private workspace is ${dir}. The shared hive is ${root}. Full protocol: ${inRoot('PROTOCOL.md')}.`,
@@ -1814,7 +1823,16 @@ export class HiveManager {
     // The hive has no separate human-approval queue — approvals are native to
     // each agent's Claude Code session (and approvable remotely). A message aimed
     // at "human" is handled by the god/orchestrator, the human's proxy here.
-    const resolveTo = (to: string): string => (to === 'human' || to === 'god' ? godId : to);
+    // "god" is the ID, not a word anyone should have to type or read. Agents
+    // address the orchestrator BY NAME — "atlas" — and the name resolves here,
+    // alongside the id and "human" (there is no separate approval queue; the
+    // orchestrator is the human's proxy on the floor).
+    const orchestratorName = (reg.agents[godId]?.name ?? '').trim().toLowerCase();
+    const resolveTo = (to: string): string => {
+      const t = (to ?? '').trim().toLowerCase();
+      if (t === 'human' || t === 'god' || (orchestratorName && t === orchestratorName)) return godId;
+      return to;
+    };
     const targets = msg.to === 'broadcast'
       // The roster for fan-out is the ACTIVE registry: skip the send-only prep
       // assistant and any archived agent (closed tab). Hookless providers are
@@ -3080,7 +3098,11 @@ function renderCommandsMd(): string {
 }
 const COMMANDS_MD = renderCommandsMd();
 
-const PROTOCOL_MD = `# Hive protocol
+/** The shared protocol, written into the hive root. Takes the orchestrator's
+ *  NAME because "god" is an id, not a word anyone should read: agents were
+ *  repeating it back to the human ("God already carded it"), which is both
+ *  jargon and the wrong name for the agent on their floor. */
+const protocolMd = (orchestrator: string): string => `# Hive protocol
 
 You are one of several Claude agents sharing this hive. Coordination is entirely
 file-based; the harness (main process) is the only thing that runs git and the
@@ -3101,7 +3123,7 @@ Write one JSON file into \`outbox/\` (any filename ending in \`.json\`):
 
 \`\`\`json
 {
-  "to": "<agent-id> | god | broadcast",
+  "to": "<agent-id> | ${orchestrator.toLowerCase()} | broadcast",
   "act": "request | inform | propose | query | agree | refuse | done",
   "subject": "one-line summary",
   "body": "the details",
@@ -3125,6 +3147,10 @@ Short. Closed-ended. The point, then stop.
 - Say what you did and what it means. Skip the walkthrough unless it was asked for.
 - Uncertain? Say so in a clause, not a paragraph: "probably the cache — not checked".
 - Numbers and names over adjectives. "3 tests fail" beats "a few issues remain".
+- Call things what the human calls them on screen: a task is a CARD on the BOARD. You OPEN
+  one, ASSIGN it, MOVE it to doing, CLOSE it. Do not make verbs out of the nouns — nobody
+  "cards" anything. Use people's names, never an internal id: \`god\` is an address, and the
+  agent it points at is called ${orchestrator}.
 
 This is how you talk to EVERYONE, including the human. It is not about being
 curt: a short message that answers is friendlier than a long one that does not.
@@ -3134,23 +3160,23 @@ over-explaining, and never cut the thing that makes an answer usable.
 ## Rules of the road
 - Only \`request\`, \`query\`, and \`propose\` expect a reply. \`inform\` and \`done\` are terminal —
   don't reply to them, or two agents will loop forever.
-- For anything ambiguous, cross-cutting, or needing sign-off, message \`god\` — the
-  god agent clarifies answers for you so you rarely need the human directly.
+- For anything ambiguous, cross-cutting, or needing sign-off, message \`${orchestrator.toLowerCase()}\` —
+  ${orchestrator} clarifies answers for you so you rarely need the human directly.
 - There is NO separate human-approval queue. Human-in-the-loop is native to Claude
   Code: a tool you run that needs permission prompts in your own session (the human
   can approve it remotely from their phone via \`/remote-control\`). If you genuinely
-  need a human decision, raise it with \`god\` (a message \`"to": "human"\` is routed to
-  the god/orchestrator, the human's proxy on the floor).
-- \`board.md\` is the shared plan. Don't edit it directly — \`propose\` changes to \`god\`,
-  who is its sole scribe.
+  need a human decision, raise it with ${orchestrator} (a message \`"to": "human"\` is routed to
+  them — they are the human's proxy on the floor).
+- \`board.md\` is the shared plan. Don't edit it directly — \`propose\` changes to
+  ${orchestrator}, who is its sole scribe.
 - Re-reading a message you already moved to \`.done/\` is a no-op. Don't reprocess.
 
 ## The work: board.md vs tasks.json
 There are two shared surfaces, both in the hive root:
-- \`board.md\` — the freeform narrative plan. The god agent is its sole scribe; others \`propose\` edits.
+- \`board.md\` — the freeform narrative plan. ${orchestrator} is its sole scribe; others \`propose\` edits.
 - \`tasks.json\` — the structured task ledger (a kanban: \`todo / doing / blocked / done\`).
 
-Every card carries four things, and the god or the project lead writes them when the work is
+Every card carries four things, and ${orchestrator} or the project lead writes them when the work is
 dispatched — not afterwards:
 
 | field | what goes in it |
@@ -3165,7 +3191,7 @@ come and ask about. If you are working a card, keep its status honest as you go.
 
 ## Asking the human (the ASK ME card)
 When a card can only move with the human — a question to answer, or an action only they can do
-(create an account, approve a spend, hand over credentials, test on their device) — the god sets the
+(create an account, approve a spend, hand over credentials, test on their device) — ${orchestrator} sets the
 card \`"status": "blocked"\` and appends the ask to its \`humanQA\` array:
 
 \`\`\`json
@@ -3176,7 +3202,7 @@ card \`"status": "blocked"\` and appends the ask to its \`humanQA\` array:
 so a question you wrote about someone else's card reads as that agent going round you to the human.
 
 The harness shows the open ask on the ASK ME board and in the ASK ME tab, and the human's reply lands
-in the same entry as \`"a"\` plus an inbox message to god. Every past entry stays on the card — that
+in the same entry as \`"a"\` plus an inbox message to ${orchestrator}. Every past entry stays on the card — that
 trail is the decision history.
 
 YOU ARE THE ONLY ONE WHO WRITES THESE. An agent that needs the human messages you; you decide whether it
@@ -3201,12 +3227,12 @@ A circuit breaker watches every agent for runaway behavior (looping on the same 
 overspending). It escalates gently: \`steer\` → \`constrain\` → \`stop\`. If a \`Circuit breaker: steer\`
 or \`Circuit breaker: constrain\` message lands in your inbox, you ARE the problem it caught — stop
 repeating, summarize what you've tried, and do exactly what the message says (constrain = go read-only
-and get god's sign-off before more tool calls). Be **token-frugal**: the floor has a token budget and
+and get ${orchestrator}'s sign-off before more tool calls). Be **token-frugal**: the floor has a token budget and
 each agent can have its own token limit; crossing it trips the breaker. Prefer references over pasted
 content, and \`/compact\` your own session when context gets heavy.
 
 ## Fleet monitoring (orchestrator)
-You (god) are responsible for situational awareness. To see the live state of every agent, read
+You, ${orchestrator}, are responsible for situational awareness. To see the live state of every agent, read
 \`fleet.json\` in the hive root — it is refreshed continuously with each agent's tokens, cost, status,
 breaker level, last tool, last-active time, and inbox backlog. Pair it with \`registry.json\` (the roster)
 and \`log.jsonl\` (the event feed). IMPORTANT: \`claude agents\` will NOT show your hive's sibling

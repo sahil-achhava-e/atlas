@@ -32,7 +32,8 @@ export function preferredAgentRole(
   if (isDurableRole(existing)) return existing;
   if (incoming) return incoming;
   if (existing) return existing;
-  return isGod ? 'orchestrator (god)' : 'agent';
+  // "god" is the routing id, never a word the human or another agent reads.
+  return isGod ? 'runs the floor' : 'agent';
 }
 
 /** Role to send on spawn/restart. Omit a transient roster caption so the hive
@@ -42,7 +43,7 @@ export function roleForHiveSpawn(agent: {
   isGod?: boolean;
   isAssistant?: boolean;
 }): string | undefined {
-  if (agent.isGod) return preferredAgentRole(agent.description, 'orchestrator (god)', true);
+  if (agent.isGod) return preferredAgentRole(agent.description, 'runs the floor', true);
   if (agent.isAssistant) {
     return preferredAgentRole(agent.description, `${DEFAULT_GOD_NAME}'s prep assistant`);
   }
