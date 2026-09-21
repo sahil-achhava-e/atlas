@@ -81,3 +81,22 @@ test('the orchestrator is not described to itself as "orchestrator (god)"', asyn
   const identity = fs.readFileSync(path.join(home, 'hive', 'agents', 'god', 'identity.md'), 'utf8');
   assert.doesNotMatch(identity, /orchestrator \(god\)/);
 });
+
+// UPGRADING INSTALLS. The registry keeps an agent's prior role, so a floor
+// created before this change has "orchestrator (god)" stored. It has to
+// converge on its own — nobody is going to hand-edit registry.json.
+
+test('an existing floor loses the old caption on the next spawn', async () => {
+  const { preferredAgentRole, roleForHiveSpawn } = loadTs('src/shared/agentRole.ts');
+  // What the renderer sends for the orchestrator now...
+  const offered = roleForHiveSpawn({ description: 'runs the floor', isGod: true });
+  // ...beats what an old registry holds.
+  assert.equal(preferredAgentRole(offered, 'orchestrator (god)', true), 'runs the floor');
+});
+
+test('the protocol is rewritten on provision, not only when the hive is created', async () => {
+  // ensureHive runs before the registry knows the name, so a protocol written
+  // only there would be stuck with the default for every renamed orchestrator.
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src/main/hive.ts'), 'utf8');
+  assert.match(src, /if \(meta\.isGod && meta\.name\?\.trim\(\)\) \{[\s\S]{0,200}protocolMd\(meta\.name\.trim\(\)\)/);
+});
