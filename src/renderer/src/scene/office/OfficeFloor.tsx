@@ -998,6 +998,31 @@ export function OfficeFloor() {
         return true;
       };
 
+      /**
+       * How often the floor considers sending someone for coffee.
+       *
+       * Three numbers decide the rate, and they are here together rather than
+       * buried in the loop because "more coffee" is a thing the human asks for
+       * and it should be one edit.
+       *
+       *   window   how often the question is asked at all
+       *   CHANCE   how often asking leads to a trip
+       *   SEATS    how many may be out at once
+       *
+       * At 25–60s and 55%, a trip starts roughly every 75 seconds on a floor
+       * with idle agents — about two and a half times the old 45–90s at 35%,
+       * which worked out at one every three minutes and read as an office where
+       * nobody ever took a break.
+       *
+       * The per-agent desk dwell (60–150s after ANY trip) is deliberately NOT
+       * shortened. It is what keeps one person from pacing back and forth: the
+       * floor gets busier, an individual still mostly sits.
+       */
+      const CAFE_WINDOW_MIN_S = 25;
+      const CAFE_WINDOW_SPREAD_S = 35;
+      const CAFE_CHANCE = 0.55;
+      const CAFE_SEATS_AT_ONCE = 3;
+
       let cafeCooldown = 5;
       const updateCafeteria = (dt: number): void => {
         // Advance every in-progress break.
@@ -1046,11 +1071,11 @@ export function OfficeFloor() {
         // Periodically send one idle agent on a break — but cap the room at 4.
         cafeCooldown -= dt;
         if (cafeCooldown > 0) return;
-        cafeCooldown = 45 + Math.random() * 45;
-        // Two in the café at once, not four: a room with half the floor in it
-        // is a break room, and the desks behind it are empty.
-        if (cafeTaken.filter(Boolean).length >= 2) return;
-        if (Math.random() >= 0.35) return;          // not every window — keep it rare
+        cafeCooldown = CAFE_WINDOW_MIN_S + Math.random() * CAFE_WINDOW_SPREAD_S;
+        // A cap, not a queue: a break room with half the floor in it means the
+        // desks behind it are empty, which is the opposite of what this shows.
+        if (cafeTaken.filter(Boolean).length >= CAFE_SEATS_AT_ONCE) return;
+        if (Math.random() >= CAFE_CHANCE) return;
         const candidates: Array<[Agent, Runtime]> = [];
         for (const agent of useStore.getState().agents) {
           const rt = runtimes.get(agent.id);

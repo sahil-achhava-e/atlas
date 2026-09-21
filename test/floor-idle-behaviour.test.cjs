@@ -86,3 +86,37 @@ test('Atlas still goes first, and the doors still open three seconds after him',
 test('leads still arrive before workers, so they claim their offices first', () => {
   assert.match(floor, /const arrivalOrder = \(agents: Agent\[\]\): Agent\[\] => \[\s*\.\.\.agents\.filter\(\(a\) => a\.isLead\),/);
 });
+
+// How often coffee happens. Three numbers decide it, and they sit together at
+// the top of the café director so "more coffee" is one edit rather than a hunt
+// through the loop. At 45-90s and 35% a trip started about every three minutes,
+// which read as an office where nobody ever took a break.
+
+test('the coffee rate is three named constants, not numbers buried in the loop', () => {
+  for (const name of ['CAFE_WINDOW_MIN_S', 'CAFE_WINDOW_SPREAD_S', 'CAFE_CHANCE', 'CAFE_SEATS_AT_ONCE']) {
+    assert.match(floor, new RegExp(`const ${name} = `), `${name} is not declared`);
+    assert.ok(floor.includes(name + ';') || floor.includes(name + ')') || floor.includes(name + ' '),
+      `${name} is declared but never used`);
+  }
+  // And the loop reads them rather than its own literals.
+  const loop = floor.slice(floor.indexOf('cafeCooldown -= dt'));
+  const body = loop.slice(0, loop.indexOf('startBreak('));
+  assert.match(body, /cafeCooldown = CAFE_WINDOW_MIN_S \+ Math\.random\(\) \* CAFE_WINDOW_SPREAD_S/);
+  assert.match(body, />= CAFE_SEATS_AT_ONCE\) return/);
+  assert.match(body, /Math\.random\(\) >= CAFE_CHANCE\) return/);
+});
+
+test('a trip starts roughly every 80 seconds, not every three minutes', () => {
+  const num = (name) => Number(new RegExp(`const ${name} = ([0-9.]+)`).exec(floor)[1]);
+  const avgWindow = num('CAFE_WINDOW_MIN_S') + num('CAFE_WINDOW_SPREAD_S') / 2;
+  const everySeconds = avgWindow / num('CAFE_CHANCE');
+  assert.ok(everySeconds > 45 && everySeconds < 110,
+    `a trip every ${Math.round(everySeconds)}s — too ${everySeconds <= 45 ? 'busy' : 'rare'}`);
+  assert.ok(num('CAFE_SEATS_AT_ONCE') <= 4, 'the café must not hold half the floor');
+});
+
+test('the per-agent dwell is untouched, so one person still mostly sits', () => {
+  // The floor gets busier by asking more often, NOT by letting the same agent
+  // go back and forth.
+  assert.match(floor, /const deskDwellMs = \(\): number => 60_000 \+ Math\.random\(\) \* 90_000/);
+});
