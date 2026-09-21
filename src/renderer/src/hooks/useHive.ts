@@ -18,7 +18,7 @@ import {
 import { DEFAULT_CONTEXT_TRIGGER, type ContextRule } from '../../../shared/triggers';
 import type { AgentProvider } from '../../../shared/agentProvider';
 import { bridgeOf, providerPreset } from '../../../shared/agentProvider';
-import { isDurableRole, preferredAgentRole, roleForHiveSpawn } from '../../../shared/agentRole';
+import { isDurableRole, liveRole, preferredAgentRole, roleForHiveSpawn } from '../../../shared/agentRole';
 import { inboxNudgeText } from '../../../shared/hiveNudge';
 import { resolveGodName } from '../../../shared/godIdentity';
 import { planFloor } from '../../../shared/floorReconcile';
@@ -583,7 +583,7 @@ export function useHive(config: HarnessConfig | null): void {
         seat: prevGod?.seat,
         note: prevGod?.note,
         // Short: it is the line under his name on a dock tile, not a job spec.
-        description: prevGod?.description || godEntry?.role || 'runs the floor',
+        description: liveRole(prevGod?.description) || liveRole(godEntry?.role) || 'runs the floor',
         project: 'hive',
         tmuxTarget: '',
         cwd: config.harnessHome!,

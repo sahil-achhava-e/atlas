@@ -100,3 +100,28 @@ test('the protocol is rewritten on provision, not only when the hive is created'
   const src = fs.readFileSync(path.join(__dirname, '..', 'src/main/hive.ts'), 'utf8');
   assert.match(src, /if \(meta\.isGod && meta\.name\?\.trim\(\)\) \{[\s\S]{0,200}protocolMd\(meta\.name\.trim\(\)\)/);
 });
+
+// IT WROTE ITSELF BACK. Removing the caption from the code was not enough.
+// "orchestrator (god)" is stored in every existing registry AND on every
+// existing floor card, and the spawn copies the card's description into the
+// registry — so a restart put it straight back. Watched it happen: the role
+// read "runs the floor" before the restart and "orchestrator (god)" after.
+
+test('a retired caption reads as absent, wherever it is stored', () => {
+  const { liveRole } = loadTs('src/shared/agentRole.ts');
+  assert.equal(liveRole('orchestrator (god)'), undefined);
+  assert.equal(liveRole('Orchestrator (God)'), undefined, 'case does not rescue it');
+  assert.equal(liveRole('Lead - EpicXP Events'), 'Lead - EpicXP Events', 'real roles are untouched');
+});
+
+test('it cannot come back from the registry or from the floor card', () => {
+  const { preferredAgentRole, roleForHiveSpawn } = loadTs('src/shared/agentRole.ts');
+  assert.equal(preferredAgentRole(undefined, 'orchestrator (god)', true), 'runs the floor');
+  assert.equal(roleForHiveSpawn({ description: 'orchestrator (god)', isGod: true }), 'runs the floor');
+});
+
+test('the orchestrator card is rebuilt without it', () => {
+  const src = fs.readFileSync(
+    path.join(__dirname, '..', 'src/renderer/src/hooks/useHive.ts'), 'utf8');
+  assert.match(src, /description: liveRole\(prevGod\?\.description\) \|\| liveRole\(godEntry\?\.role\) \|\| 'runs the floor'/);
+});

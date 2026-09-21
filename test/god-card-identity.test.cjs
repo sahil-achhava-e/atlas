@@ -41,7 +41,9 @@ test('his face, colour and description are his, not constants', () => {
   const card = spawnCard();
   assert.match(card, /character: prevGod\?\.character \|\| godEntry\?\.character \|\| 'michael'/);
   assert.match(card, /accent: prevGod\?\.accent \|\| godEntry\?\.accent \|\| 'coral'/);
-  assert.match(card, /description: prevGod\?\.description \|\| godEntry\?\.role \|\| 'runs the floor'/);
+  // liveRole() wraps both, so the retired "orchestrator (god)" caption cannot
+  // come back from the card or the registry — see orchestrator-language.test.cjs.
+  assert.match(card, /description: liveRole\(prevGod\?\.description\) \|\| liveRole\(godEntry\?\.role\) \|\| 'runs the floor'/);
 });
 
 test('a failed spawn cannot leave the floor with no orchestrator', () => {

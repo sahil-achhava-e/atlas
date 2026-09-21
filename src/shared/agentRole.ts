@@ -10,6 +10,25 @@ import { DEFAULT_GOD_NAME } from './godIdentity';
 
 const TRANSIENT_ROLE_RE = /^(on\s+)?standby$|^(idle|awaiting|paused|resumed|working|thinking|archived|starting up|reconnecting…?|running the floor|a fresh harness)$/i;
 
+/**
+ * Captions this app used to write and no longer should.
+ *
+ * "orchestrator (god)" leaked an internal id into the one line agents read off
+ * the roster, and one of them started calling the orchestrator God to the
+ * human. Removing it from the code was not enough: it is stored in every
+ * existing registry and on every existing floor card, and the spawn copies the
+ * card's description into the registry — so it wrote itself back on the next
+ * restart. Treated as empty here, it is replaced by the current default the
+ * first time an agent respawns, with nobody editing a JSON file.
+ */
+const RETIRED_ROLES = new Set(['orchestrator (god)']);
+
+/** A stored role, or undefined when it is one we have retired. */
+export function liveRole(text: string | undefined | null): string | undefined {
+  const value = (text ?? '').trim();
+  return value && !RETIRED_ROLES.has(value.toLowerCase()) ? value : undefined;
+}
+
 export function isDurableRole(text: string | undefined | null): boolean {
   const value = (text ?? '').trim();
   if (!value) return false;
@@ -26,8 +45,8 @@ export function preferredAgentRole(
   fallback: string | undefined | null,
   isGod = false
 ): string {
-  const incoming = (candidate ?? '').trim();
-  const existing = (fallback ?? '').trim();
+  const incoming = liveRole(candidate) ?? '';
+  const existing = liveRole(fallback) ?? '';
   if (isDurableRole(incoming)) return incoming;
   if (isDurableRole(existing)) return existing;
   if (incoming) return incoming;
