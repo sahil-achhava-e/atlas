@@ -74,11 +74,6 @@ extraResources:
   # repo resources/skills). Directory copy preserves the <id>/SKILL.md tree.
   - from: resources/skills
     to: skills
-  # The MemPalace Dockerfile. Built on this machine on first use (there is no
-  # registry to pull from), so it has to leave the asar — a docker build reads
-  # its context off the real filesystem.
-  - from: resources/mempalace
-    to: mempalace
 
 asarUnpack:
   - "**/node_modules/node-pty/**"
