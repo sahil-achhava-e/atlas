@@ -4220,17 +4220,34 @@ function activityTranscript(agentId: string): string | null {
   const dir = projectDir(agent.cwd);
   if (!existsSync(dir)) return null;
 
-  if (agent.sessionId) {
-    const byId = join(dir, `${agent.sessionId}.jsonl`);
-    if (existsSync(byId)) return byId;
-  }
+  let newest: { path: string; at: number } | null = null;
   try {
-    const newest = readdirSync(dir)
-      .filter((f) => f.endsWith('.jsonl'))
-      .map((f) => ({ f, at: statSync(join(dir, f)).mtimeMs }))
-      .sort((a, b) => b.at - a.at)[0];
-    return newest ? join(dir, newest.f) : null;
-  } catch { return null; }
+    for (const f of readdirSync(dir)) {
+      if (!f.endsWith('.jsonl')) continue;
+      const path = join(dir, f);
+      const at = statSync(path).mtimeMs;
+      if (!newest || at > newest.at) newest = { path, at };
+    }
+  } catch { /* unreadable directory — fall through to the pinned id */ }
+
+  const pinned = agent.sessionId ? join(dir, `${agent.sessionId}.jsonl`) : null;
+  if (pinned && existsSync(pinned)) {
+    // RESUMING STARTS A NEW FILE. The registry's session id is updated by a
+    // hook, and the first hook of a resumed session lands seconds to minutes
+    // after the process does — until then the pinned file is the PREVIOUS
+    // session, which never changes again, and the activity view reads as an
+    // agent that has gone quiet.
+    //
+    // Only overtaken by a newer file when this agent is the only one working in
+    // that directory. Two agents sharing a cwd share a transcript folder, and
+    // there the newest file is as likely to be the other one's.
+    const sharing = Object.values(hive.registry().agents ?? {})
+      .filter((a) => a?.cwd && projectDir(a.cwd) === dir).length;
+    if (sharing > 1 || !newest || newest.path === pinned
+      || newest.at <= statSync(pinned).mtimeMs) return pinned;
+    return newest.path;
+  }
+  return newest?.path ?? null;
 }
 
 ipcMain.handle('agent:activity', (_evt, agentId: unknown, limit: unknown) => {
