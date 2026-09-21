@@ -15,8 +15,10 @@
  */
 
 export interface ActivityRow {
-  /** `say` is the agent talking. `do` is it working. */
-  kind: 'say' | 'do';
+  /** `say` is the agent talking, `do` is it working, `ask` is the HUMAN — what
+   *  they typed into the message box. Without it the view was one side of a
+   *  conversation: answers with the questions cut out. */
+  kind: 'say' | 'do' | 'ask';
   /** One line, already in plain words. */
   text: string;
   /** For a `do` row: the file, command or pattern it acted on. */
@@ -66,6 +68,41 @@ interface RawBlock { type?: string; text?: string; name?: string; input?: Record
 interface RawEntry { type?: string; timestamp?: string; message?: { content?: RawBlock[] | string } }
 
 /**
+ * Prompts the APP wrote, not the human.
+ *
+ * Everything typed at an agent lands in the transcript as a `user` entry, and
+ * so does everything the harness types on the human's behalf: the orientation
+ * seed on a fresh spawn, the resume nudge, the inbox wake, a circuit-breaker
+ * warning. Showing those as the owner's words would be a lie — and the inbox
+ * nudge alone accounts for 37 of the 61 user entries in a day's transcript,
+ * so it would bury the four things the human actually said.
+ *
+ * Matched against the START of the text, plus a couple of phrases that only
+ * ever appear inside a nudge (a long one arrives split across lines, so the
+ * head is not always there).
+ */
+const INJECTED_PROMPT = [
+  /^You have new hive inbox message/i,
+  /^Continue from where you left off/i,
+  /^<pasted_content/i,
+  /^ENRICH TASK:/i,
+  /^Circuit breaker:/i,
+  /^\[?Heartbeat/i,
+  // The CLI's own preamble when a skill runs — not something anyone typed.
+  /^Base directory for this skill:/i,
+  /inbox\/\.done\//,
+  /Act autonomously; only message/i
+];
+
+/** Did the human type this, or did the app? */
+export function isOwnerPrompt(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (SKIP_TEXT.some((re) => re.test(t))) return false;
+  return !INJECTED_PROMPT.some((re) => re.test(t));
+}
+
+/**
  * Turn transcript lines into readable rows, newest last.
  *
  * @param lines  raw JSONL lines, in file order
@@ -78,13 +115,27 @@ export function activityRows(lines: readonly string[], limit = 200): ActivityRow
     if (!line.trim()) continue;
     let entry: RawEntry;
     try { entry = JSON.parse(line) as RawEntry; } catch { continue; }
-    if (entry.type !== 'assistant') continue;
+    if (entry.type !== 'assistant' && entry.type !== 'user') continue;
 
     const at = entry.timestamp ? Date.parse(entry.timestamp) || undefined : undefined;
     const content = entry.message?.content;
     const blocks: RawBlock[] = typeof content === 'string'
       ? [{ type: 'text', text: content }]
       : Array.isArray(content) ? content : [];
+
+    // The human's side. A `user` entry is either what they typed or a tool
+    // result coming back from the engine — the latter is machinery, and it is
+    // most of them, so only text blocks count.
+    if (entry.type === 'user') {
+      const said = blocks
+        .filter((b) => (b.type ?? 'text') === 'text')
+        .map((b) => (b.text ?? '').trim())
+        .filter(Boolean)
+        .join('\n')
+        .trim();
+      if (said && isOwnerPrompt(said)) rows.push({ kind: 'ask', text: said, at });
+      continue;
+    }
 
     for (const block of blocks) {
       if (block.type === 'text') {

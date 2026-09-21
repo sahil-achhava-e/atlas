@@ -1733,6 +1733,7 @@
     "looping": "{{name}} عالق في حلقة",
     "workingLabel": "يعمل",
     "working": "{{name}} يعمل",
-    "sentWaiting": "أُرسلت — في انتظار أن يلتقطها {{name}}"
+    "sentWaiting": "أُرسلت — في انتظار أن يلتقطها {{name}}",
+    "ownerLabel": "المالك"
   }
 }

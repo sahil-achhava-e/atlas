@@ -47,12 +47,16 @@ const TONES: Record<ActivityTone, { icon: IconName; color: string; tint: string 
  *  forty lines of tool calls into one readable block. */
 type Chunk =
   | { kind: 'say'; row: ActivityRow; key: string }
+  | { kind: 'ask'; row: ActivityRow; key: string }
   | { kind: 'did'; rows: ActivityRow[]; key: string };
 
 function chunk(rows: readonly ActivityRow[]): Chunk[] {
   const out: Chunk[] = [];
   rows.forEach((row, i) => {
     if (row.kind === 'say') { out.push({ kind: 'say', row, key: `s${i}` }); return; }
+    // The human's own message stands alone, like the agent's — it is half the
+    // conversation, not a step in a run of work.
+    if (row.kind === 'ask') { out.push({ kind: 'ask', row, key: `a${i}` }); return; }
     const last = out[out.length - 1];
     if (last && last.kind === 'did') last.rows.push(row);
     else out.push({ kind: 'did', rows: [row], key: `d${i}` });
@@ -118,7 +122,9 @@ export function ActivityLog({ agent }: { agent: Agent }) {
         )}
         {chunks.map((c) => (c.kind === 'say'
           ? <Said key={c.key} row={c.row} name={agent.name} accent={accent} />
-          : <Did key={c.key} rows={c.rows} label={t('activity.workingLabel')} />))}
+          : c.kind === 'ask'
+            ? <Asked key={c.key} row={c.row} label={t('activity.ownerLabel')} />
+            : <Did key={c.key} rows={c.rows} label={t('activity.workingLabel')} />))}
         {/* THE GAP BETWEEN SENDING AND HEARING BACK.
             Everything above is history — it only appears once the agent has
             written it down. Press Send and, until the first line lands, the
@@ -220,6 +226,48 @@ function Said({ row, name, accent }: { row: ActivityRow; name: string; accent: s
         )}
       </div>
       <div style={{ padding: '2px 14px 10px', fontFamily: 'var(--cth-font-ui)', fontSize: 13.5, lineHeight: '21px' }}>
+        <MarkdownPreview source={row.text} variant="card" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * What the human said.
+ *
+ * The view used to show only the agent's side: answers with the questions cut
+ * out, which reads as a monologue and makes a short reply look like a non
+ * sequitur. Deliberately the plainer card of the two — inset from the margin,
+ * no accent bar, the agent is the one being watched here — but unmistakably a
+ * turn in the same conversation.
+ */
+function Asked({ row, label }: { row: ActivityRow; label: string }) {
+  return (
+    <div style={{
+      margin: '14px 0 14px 28px',
+      background: 'var(--cth-paper-100)',
+      boxShadow: 'inset 0 0 0 1px var(--cth-ink-200)',
+      borderRadius: 'var(--cth-radius-input)',
+      overflow: 'hidden'
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'baseline', gap: 8,
+        padding: '8px 14px 0',
+        fontFamily: 'var(--cth-font-ui)', fontSize: 11.5, fontWeight: 700,
+        letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--cth-ink-500)'
+      }}>
+        <span>{label}</span>
+        {row.at && (
+          <span style={{ fontWeight: 500, letterSpacing: 0, textTransform: 'none', color: 'var(--cth-ink-400)' }}>
+            {new Date(row.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        )}
+      </div>
+      <div style={{
+        padding: '2px 14px 10px',
+        fontFamily: 'var(--cth-font-ui)', fontSize: 13.5, lineHeight: '21px',
+        color: 'var(--cth-ink-700)'
+      }}>
         <MarkdownPreview source={row.text} variant="card" />
       </div>
     </div>

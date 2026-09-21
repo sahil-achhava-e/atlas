@@ -72,14 +72,17 @@ test('the engine talking to itself is dropped', () => {
   assert.deepEqual(rows.map((r) => r.text), ['Right, that is done.']);
 });
 
-test('only the assistant is read — not the user, not the bookkeeping', () => {
+test("the engine's bookkeeping is skipped, and the human's turn is kept", () => {
+  // The human's own message became a row of its own — see
+  // test/activity-owner-side.test.cjs for which user entries count and why.
+  // Everything else the engine writes about itself still goes.
   const rows = activityRows([
     line({ type: 'user', message: { content: [{ type: 'text', text: 'please fix it' }] } }),
     line({ type: 'mode', mode: 'normal' }),
     line({ type: 'file-history-snapshot' }),
     assistant({ type: 'text', text: 'On it.' })
   ]);
-  assert.deepEqual(rows.map((r) => r.text), ['On it.']);
+  assert.deepEqual(rows.map((r) => `${r.kind}:${r.text}`), ['ask:please fix it', 'say:On it.']);
 });
 
 test('a half-written line does not lose the rest of the file', () => {

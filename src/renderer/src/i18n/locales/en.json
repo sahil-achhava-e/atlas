@@ -1733,6 +1733,7 @@
     "looping": "{{name}} is stuck in a loop",
     "workingLabel": "Working",
     "working": "{{name}} is working",
-    "sentWaiting": "sent — waiting for {{name}} to pick it up"
+    "sentWaiting": "sent — waiting for {{name}} to pick it up",
+    "ownerLabel": "Owner"
   }
 }
