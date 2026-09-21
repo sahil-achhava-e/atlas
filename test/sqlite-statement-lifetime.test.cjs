@@ -70,5 +70,7 @@ test('the roster still works when its statements are cached', () => {
   assert.equal(back.selectedId, 'a');
   store.close();
   // And a closed store reopens cleanly rather than using dead statements.
-  assert.equal(new RosterStore(() => home).read().agents.length, 1);
+  const reopened = new RosterStore(() => home);
+  assert.equal(reopened.read().agents.length, 1);
+  reopened.close();   // never leave a handle to the collector — see the header
 });

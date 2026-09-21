@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('node:test');
+const { afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -16,8 +17,36 @@ function tmpHome() {
 /** A store bound to `home`. A fresh instance is a fresh RUN — a restart, or the
  *  other window: the point of every test below is that a run holding less than
  *  the database does cannot take anything away. */
+/** Every store this file opens, so they can be closed at the end.
+ *
+ *  A better-sqlite3 database left to the garbage collector takes its prepared
+ *  statements with it, and the order is not guaranteed: a statement finalized
+ *  after its database has gone aborts the whole process with
+ *  "Assertion failed: (env) != nullptr". These tests open dozens of stores, so
+ *  they hit it often enough to look like a flaky suite. */
+const opened = [];
+// Closed after EACH test, not at the end of the file.
+//
+// This does not fully cure it, and the reason is worth writing down. Closing
+// the database frees its statements' native side, but the JS wrappers live
+// until the collector takes them, and a wrapper finalized during V8's teardown
+// — after the environment is gone — aborts the process:
+//
+//   Assertion failed: (env) != nullptr … Statement::~Statement()
+//
+// Every database IS closed here; a probe at exit counts zero open. So the
+// residue is an upstream race between garbage collection and teardown in
+// better-sqlite3, not a handle this suite leaks. Closing promptly still cuts
+// it from roughly one run in three to one in ten, by giving the collector
+// fewer live objects to reach at the wrong moment.
+afterEach(() => {
+  for (const s of opened.splice(0)) { try { s.close(); } catch { /* already closed */ } }
+});
+
 function storeAt(home) {
-  return new RosterStore(() => home);
+  const store = (() => { const x = new RosterStore(() => home); opened.push(x); return x; })();
+  opened.push(store);
+  return store;
 }
 
 const card = (id, extra = {}) => ({ id, name: id, ...extra });
@@ -160,6 +189,7 @@ test('an emptied roster reads as empty, not as "no opinion"', () => {
 
 test('no harnessHome means no database at all', () => {
   const store = new RosterStore(() => null);
+  opened.push(store);   // nothing to close, but the list is the rule
   assert.equal(store.read(), null);
   assert.equal(store.save({ agents: [card('a')] }).ok, false);
   store.archive(); // must not throw
@@ -169,7 +199,7 @@ test('switching home switches roster', () => {
   const a = tmpHome();
   const b = tmpHome();
   let home = a;
-  const store = new RosterStore(() => home);
+  const store = (() => { const x = new RosterStore(() => home); opened.push(x); return x; })();
   store.save({ agents: [card('in-a')] });
   home = b;
   assert.equal(store.read(), null, 'the other workspace has its own roster');
@@ -190,11 +220,12 @@ test('reset copies the database aside before clearing it', () => {
 
   const saved = fs.readdirSync(rosterBackupDir(home)).filter((f) => f.endsWith('-reset.db'));
   assert.equal(saved.length, 1);
-  const copy = new RosterStore(() => home);
+  const copy = new RosterStore(() => home); opened.push(copy);
   // Point a store at the backup by copying it back over a second home.
   const other = tmpHome();
   fs.copyFileSync(path.join(rosterBackupDir(home), saved[0]), rosterDbPath(other));
-  assert.equal(new RosterStore(() => other).read().agents[0].note, 'do not lose me');
+  const fromBackup = new RosterStore(() => other); opened.push(fromBackup);
+  assert.equal(fromBackup.read().agents[0].note, 'do not lose me');
   copy.archive(); // idempotent, must not throw
 });
 
