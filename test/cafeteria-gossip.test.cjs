@@ -121,3 +121,37 @@ test('a break lasts long enough to hold the conversation', () => {
   assert.ok(min >= 12, `a ${min}s minimum is not long enough for a conversation`);
   assert.ok(min + spread <= 40, 'but it is a coffee break, not a lunch hour');
 });
+
+// ALL FOUR AT ONCE AND YOU COULD NOT READ A WORD. Two pairs in the pantry ran
+// two scripts at the same time, and within each script both speakers kept their
+// bubble up — four clouds over four avatars packed into one corner, beats from
+// two unrelated conversations interleaved. One voice at a time.
+
+test('only one conversation runs in the break room at a time', () => {
+  assert.match(floor, /const roomChatRunning = \(\): boolean =>/);
+  const fn = floor.slice(floor.indexOf('const maybePairChat'));
+  const body = fn.slice(0, fn.indexOf('\n      };'));
+  assert.match(body, /if \(roomChatRunning\(\)\) return false;/,
+    'a second pair must not start talking over the first');
+});
+
+test('everyone else in the room goes quiet while two are talking', () => {
+  const loop = floor.slice(floor.indexOf('} else if (!b.chattingWith) {'));
+  const body = loop.slice(0, loop.indexOf('b.timer -= dt;'));
+  assert.match(body, /if \(!roomChatRunning\(\)\) \{/, 'bystanders must not mutter over a conversation');
+  const start = floor.slice(floor.indexOf('prt.brk.chattingWith = id;'));
+  assert.match(start.slice(0, 400), /hideThought\(\)/,
+    'and their existing bubble has to go when a conversation starts');
+});
+
+test('the last line and the current one — never a third', () => {
+  // Beats alternate speakers and a speaker's new line replaces their own old
+  // one, so the room holds exactly two bubbles: what was just said, and the
+  // reply to it. Nothing may hide the line being replied to.
+  const beat = floor.slice(floor.indexOf('const speaker = (b.chat.idx % 2 === 0)'));
+  const body = beat.slice(0, beat.indexOf('b.chat.idx++'));
+  assert.match(body, /speaker\?\.character\.showThought\(line\)/);
+  assert.doesNotMatch(body, /listener/, 'the previous line stays up so the exchange reads');
+  assert.match(body, /const speaker = \(b\.chat\.idx % 2 === 0\) \? rt : runtimes\.get\(b\.chat\.partnerId\)/,
+    'alternating speakers is what caps it at two');
+});

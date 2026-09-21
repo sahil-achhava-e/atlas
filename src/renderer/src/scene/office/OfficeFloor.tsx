@@ -928,8 +928,19 @@ export function OfficeFloor() {
         return anyOf(written.work) ?? pickExchange(character, seed);
       };
 
+      /** Is a conversation already running in the break room?
+       *
+       *  FOUR PEOPLE IN A SMALL PANTRY HAVE ONE CONVERSATION, NOT TWO. Two
+       *  scripts playing at once put four bubbles in the air over a 2x2 block
+       *  of avatars, interleaved beats from two unrelated exchanges, and you
+       *  cannot tell who is saying what. One voice at a time, and the room
+       *  reads like a comic strip. */
+      const roomChatRunning = (): boolean =>
+        cafeTaken.some((who) => !!who && !!runtimes.get(who)?.brk?.chat);
+
       const maybePairChat = (id: string, rt: Runtime, spotIdx: number): boolean => {
         if (!rt.brk) return false;
+        if (roomChatRunning()) return false;   // somebody already has the floor
         // ANYONE in the room, not just the other chair at this table. With four
         // spots and two of them standing at machines, the table-mate rule left
         // people drinking coffee in silence next to each other.
@@ -957,6 +968,11 @@ export function OfficeFloor() {
 
         rt.brk.chat = { lines: chatScript(id, me.x, me.y), partnerId, idx: 0, beat: 0 };
         prt.brk.chattingWith = id;
+        // Everyone else in the room stops muttering and listens: their solo
+        // bubbles fade so the only two bubbles left belong to the talkers.
+        for (const who of cafeTaken) {
+          if (who && who !== id && who !== partnerId) runtimes.get(who)?.character.hideThought();
+        }
         void spotIdx;   // the seat no longer decides who you talk to
         return true;
       };
@@ -1150,6 +1166,10 @@ export function OfficeFloor() {
               if (b.chat.idx < b.chat.lines.length) {
                 const speaker = (b.chat.idx % 2 === 0) ? rt : runtimes.get(b.chat.partnerId);
                 const line = b.chat.lines[b.chat.idx];
+                // TWO BUBBLES, NEVER MORE: the line being replied to, and the
+                // reply. Speakers alternate and showThought replaces a speaker's
+                // own previous line, so beat 3 pushes out beat 1 and the pair on
+                // screen is always the last one and the current one.
                 speaker?.character.showThought(line);
                 // A laugh is a laugh: the speaker bobs, and their partner joins
                 // in half the time — laughing alone at your own joke is a
@@ -1173,6 +1193,8 @@ export function OfficeFloor() {
                 // Conversation over — release the partner and resume solo quips.
                 const prt = runtimes.get(b.chat.partnerId);
                 if (prt?.brk) prt.brk.chattingWith = undefined;
+                rt.character.hideThought();
+                prt?.character.hideThought();
                 b.chat = undefined;
               }
             }
@@ -1188,11 +1210,14 @@ export function OfficeFloor() {
               b.chatTry = 1.5;
               if (maybePairChat(id, rt, b.spotIdx)) continue;
             }
-            // Nobody free to talk to — mutter to yourself instead.
-            b.quipTimer -= dt;
-            if (b.quipTimer <= 0) {
-              b.quipTimer = 4 + Math.random() * 4;
-              emitQuip(id, rt, b.spotIdx);
+            // Nobody free to talk to — mutter to yourself instead, unless two
+            // others are mid-conversation, in which case you are listening.
+            if (!roomChatRunning()) {
+              b.quipTimer -= dt;
+              if (b.quipTimer <= 0) {
+                b.quipTimer = 4 + Math.random() * 4;
+                emitQuip(id, rt, b.spotIdx);
+              }
             }
           }
           b.timer -= dt;
