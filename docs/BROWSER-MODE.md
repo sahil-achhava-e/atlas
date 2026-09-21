@@ -21,12 +21,37 @@ Two people cannot share one of these. Each person runs their own.
 
 ## What you need first
 
-1. **Node 20 or newer.** `node --version` to check. No C++ toolchain, no Visual
-   Studio Build Tools, no Xcode command line tools.
-2. **The agent CLI you intend to use, signed in.** Atlas starts `claude` (or
-   another provider's CLI) as you — it does not bundle one, and it cannot sign
-   in for you. Check with `claude --version`.
-3. **Git**, to get the code.
+**1. Node 20 or newer.** `node --version` to check. No C++ toolchain, no Visual
+Studio Build Tools, no Xcode command line tools.
+
+**2. Git**, to get the code.
+
+**3. An agent CLI, installed and signed in.** This is the part people miss.
+Atlas does not bundle a model or a CLI — it starts the one you already use, as
+you, with your account. Pick one:
+
+| | install | then |
+| --- | --- | --- |
+| **Claude Code** | `npm install -g @anthropic-ai/claude-code` | `claude` |
+| **Codex** | `npm install -g @openai/codex` | `codex` |
+| **Gemini CLI** | `npm install -g @google/gemini-cli` | `gemini` |
+
+Run it once on its own first — `claude`, `codex` or `gemini` — and complete the
+sign-in. If it cannot start for you in a terminal, it cannot start for Atlas
+either, and every agent's terminal will die immediately.
+
+Claude Code also has a native installer if you would rather not use npm:
+
+```
+# macOS
+curl -fsSL https://claude.ai/install.sh | bash
+# Windows (PowerShell)
+irm https://claude.ai/install.ps1 | iex
+```
+
+Those three are what setup offers. Atlas knows thirteen CLIs in total —
+OpenCode, Crush, Copilot, Pi and others — and every agent on the floor can run
+a different one, set per agent after setup.
 
 ## Install
 
@@ -79,7 +104,8 @@ prints the URL when it is ready.
 workspace. Quit it, then start the server.
 
 **An agent's terminal dies immediately.** Its CLI is missing or not signed in.
-Run `claude --version` yourself in the same folder.
+Run that CLI by itself in the same folder — `claude`, `codex` or `gemini` — and
+see what it says. Atlas starts it exactly as you would.
 
 **Your endpoint agent blocks something.** Browser mode avoids the big one — no
 Electron framework, no signed installer — but `node` and the two prebuilt

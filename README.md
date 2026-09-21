@@ -149,6 +149,9 @@ no signed installer for an endpoint agent to block, and no Electron framework to
 get approved.
 
 ```bash
+# once: the CLI Atlas will run as you — claude, codex or gemini
+npm install -g @anthropic-ai/claude-code && claude   # sign in
+
 npm run setup:serve   # installs without the desktop build — no compiler needed
 npm run serve         # → http://127.0.0.1:5188
 ```

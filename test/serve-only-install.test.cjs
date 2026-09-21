@@ -64,3 +64,28 @@ test('the instructions exist and tell the truth about the trap', () => {
   assert.match(doc, /signed in/, 'the agent CLI is the user\'s, not ours');
   assert.match(read('README.md'), /docs\/BROWSER-MODE\.md/, 'linked from the README');
 });
+
+// The install sheet names the three CLIs setup offers, with their install
+// commands. Those commands live in agentProvider.ts, so the doc is checked
+// against the code: a package rename would otherwise leave a colleague pasting
+// a command that installs nothing.
+
+test('the documented CLI install commands are the ones the app knows', () => {
+  const loadTs = require('./load-ts.cjs');
+  const { AGENT_PROVIDER_PRESETS } = loadTs('src/shared/agentProvider.ts');
+  const doc = read('docs/BROWSER-MODE.md');
+  for (const id of ['claude', 'codex', 'gemini']) {
+    const preset = Object.values(AGENT_PROVIDER_PRESETS).find((p) => p.id === id);
+    assert.ok(preset, `${id} is no longer a preset`);
+    assert.ok(doc.includes(preset.installCommand),
+      `${id}: the doc does not carry "${preset.installCommand}"`);
+    assert.ok(doc.includes(`\`${preset.defaultCommand}\``),
+      `${id}: the doc never names the binary "${preset.defaultCommand}"`);
+  }
+});
+
+test('the sheet says the CLI is the user\'s own, signed in by them', () => {
+  const doc = read('docs/BROWSER-MODE.md');
+  assert.match(doc, /does not bundle a model or a CLI/);
+  assert.match(doc, /Run it once on its own first/);
+});
