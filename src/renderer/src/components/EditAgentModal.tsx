@@ -7,6 +7,7 @@ import { SpritePortrait } from './SpritePortrait';
 import { ProviderLogo } from './ProviderLogo';
 import { Switch } from './Switch';
 import { DeskPicker } from './DeskPicker';
+import { composeBrief, splitBrief } from '@shared/agentBrief';
 import { useStore, type Agent } from '@/store/store';
 import { type AccentColorName, DEFAULT_ACCENT_HEX } from '@/design/tokens';
 import {
@@ -63,7 +64,19 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
   );
   const [model, setModel] = useState<string | undefined>(agent.model);
   const [description, setDescription] = useState(agent.description);
+  /** The briefing, taken back apart into the three questions the hire dialog
+   *  asked. A briefing that is not in that shape (pasted in whole, or from a
+   *  hire manifest) comes back as `raw` and is edited as one box — guessing
+   *  where to cut it would lose a paragraph. */
+  const [brief, setBrief] = useState(() => splitBrief(agent.goal));
   const [goal, setGoal] = useState(agent.goal ?? '');
+  const [jobText, setJobText] = useState(brief.job);
+  const [doneText, setDoneText] = useState(brief.done ?? '');
+  const structured = !brief.raw;
+  /** What will be saved: recomposed from the parts, or the raw box as typed. */
+  const nextGoal = structured
+    ? composeBrief({ job: jobText, project: brief.project, done: doneText, ask: brief.ask })
+    : goal;
 
   useEffect(() => {
     void window.cth.getConfig().then(setConfig).catch(() => setConfig(null));
@@ -76,7 +89,11 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
     setProvider(inferAgentProvider(agent.command, agent.provider));
     setModel(agent.model);
     setDescription(agent.description);
+    const next = splitBrief(agent.goal);
+    setBrief(next);
     setGoal(agent.goal ?? '');
+    setJobText(next.job);
+    setDoneText(next.done ?? '');
   }, [agent.id]);
 
   const preset = providerPreset(provider);
@@ -95,7 +112,7 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
   const save = () => {
     const trimmedName = name.trim() || agent.name;
     const trimmedDescription = description.trim() || 'a fresh harness';
-    const trimmedGoal = goal.trim();
+    const trimmedGoal = nextGoal.trim();
     const command = config
       ? buildSpawnCommand(config, model, provider)
       : agent.command;
@@ -312,16 +329,43 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
                 </Row>
               )}
 
-              <Row label="Goal (optional)">
-                <textarea
-                  className="cth-input"
-                  value={goal}
-                  onChange={(e) => setGoal(e.target.value)}
-                  placeholder="long-running directive injected on every prompt"
-                  rows={4}
-                  style={{ ...inputStyle, fontFamily: 'var(--cth-font-ui)', resize: 'vertical', minHeight: 200 }}
-                />
-              </Row>
+              {structured ? (
+                <>
+                  {/* The same two questions the hire dialog asks, so what was
+                      written under each is editable where it was written. They
+                      used to be concatenated into one "Goal" box, and "When is
+                      it finished?" looked like it had been thrown away. */}
+                  <Row label="What does it do?">
+                    <textarea
+                      className="cth-input"
+                      value={jobText}
+                      onChange={(e) => setJobText(e.target.value)}
+                      placeholder="The work it repeats, not one task. Added to every prompt it ever gets."
+                      style={{ ...inputStyle, fontFamily: 'var(--cth-font-ui)', resize: 'vertical', minHeight: 200 }}
+                    />
+                  </Row>
+                  <Row label="When is it finished?">
+                    <textarea
+                      className="cth-input"
+                      value={doneText}
+                      onChange={(e) => setDoneText(e.target.value)}
+                      placeholder="What it hands you before it stops."
+                      style={{ ...inputStyle, fontFamily: 'var(--cth-font-ui)', resize: 'vertical', minHeight: 72 }}
+                    />
+                  </Row>
+                </>
+              ) : (
+                <Row label="Goal (optional)">
+                  <textarea
+                    className="cth-input"
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value)}
+                    placeholder="long-running directive injected on every prompt"
+                    rows={4}
+                    style={{ ...inputStyle, fontFamily: 'var(--cth-font-ui)', resize: 'vertical', minHeight: 200 }}
+                  />
+                </Row>
+              )}
             </Section>
               </div>
             </div>

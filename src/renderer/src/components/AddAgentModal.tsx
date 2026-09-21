@@ -6,6 +6,7 @@ import { SpritePortrait } from './SpritePortrait';
 import { Icon } from './Icon';
 import { canOpenSection, sectionsFor, type SectionKey } from './addAgentGate';
 import { DeskPicker } from './DeskPicker';
+import { composeBrief, DEFAULT_DONE } from '@shared/agentBrief';
 
 /** Mirrors main's projects.ts — a folder an agent can work in. */
 interface ProjectEntry { path: string; name: string; isRepo: boolean; parent?: string }
@@ -51,8 +52,6 @@ const DEFAULT_ACCENT: AccentColorName = 'coral';
 
 /** Sensible answers already filled in, because most agents want these and a
  *  first-time user has no idea they are the right answers. Both are editable. */
-const DEFAULT_DONE = 'a pushed branch and an open pull request, never merged, with a note on what you verified';
-const DEFAULT_ASK = 'something destructive, a schema change against real data, spending money, or a conflict you cannot resolve';
 
 // OSS quick-pick chip styling (ondev-c) — mirrors the model-picker chips.
 const ossChip = (active: boolean): CSSProperties => ({
@@ -305,12 +304,14 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   /** A hire manifest arrives with a goal already written; keep it verbatim
    *  rather than trying to take it apart. */
   const [rawGoal, setRawGoal] = useState(pendingHire?.goal ?? '');
-  const composedGoal = rawGoal.trim() || [
-    jobText.trim(),
-    cwd ? `You work only in ${basename(cwd)}. If something belongs to another project, send it to Atlas rather than doing it yourself.` : '',
-    doneText.trim() ? `Done means: ${doneText.trim()}` : '',
-    `Ask the human when: ${DEFAULT_ASK}`,
-  ].filter(Boolean).join('\n\n');
+  // Composed in shared/agentBrief so Edit Agent can take it apart again and
+  // show the same three questions. Two copies of this format would drift, and
+  // the drift would silently cost the human a section of their briefing.
+  const composedGoal = rawGoal.trim() || composeBrief({
+    job: jobText,
+    project: cwd ? basename(cwd) : undefined,
+    done: doneText
+  });
   const [isolate, setIsolate] = useState(pendingHire?.isolate ?? false);
   // #2 — optional Claude session id to continue. When set, the spawn seeds that
   // session's transcript into the cwd's project dir and launches `--resume`.
