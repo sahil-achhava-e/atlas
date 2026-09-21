@@ -158,8 +158,36 @@ function idOf(entry: unknown): string | null {
  * switches workspace. One instance per process in `index.ts`; tests make their
  * own.
  */
+/** The statements one connection uses, prepared once.
+ *
+ *  Not an optimisation. A prepared statement is a native object whose
+ *  destructor unregisters an environment cleanup hook, and preparing nine of
+ *  them on every save meant thousands of them queued for garbage collection.
+ *  When one is collected after its database has gone, node aborts the whole
+ *  process:
+ *
+ *    Assertion failed: (env) != nullptr
+ *    Statement::~Statement() [better_sqlite3.node]
+ *
+ *  which is the crash that had been killing the server at random for weeks.
+ *  Prepared once and held for the life of the connection, they are freed with
+ *  it, in order. */
+interface Statements {
+  readAll: Database.Statement;
+  readQueues: Database.Statement;
+  readOne: Database.Statement;
+  upsert: Database.Statement;
+  dropAgent: Database.Statement;
+  dropQueue: Database.Statement;
+  addQueued: Database.Statement;
+  setMeta: Database.Statement;
+  dropMeta: Database.Statement;
+  getMeta: Database.Statement;
+}
+
 export class RosterStore {
   private db: Database.Database | null = null;
+  private stmts: Statements | null = null;
   /** The home the open handle belongs to, so switching workspace reopens. */
   private openFor: string | null = null;
 
@@ -191,6 +219,24 @@ export class RosterStore {
       }
       this.db = db;
       this.openFor = home;
+      this.stmts = {
+        readAll: db.prepare('SELECT id, bucket, data FROM agent ORDER BY bucket, ord'),
+        readQueues: db.prepare('SELECT agent_id, data FROM queue ORDER BY agent_id, pos'),
+        readOne: db.prepare('SELECT data FROM agent WHERE id = ?'),
+        upsert: db.prepare(
+          `INSERT INTO agent (id, bucket, ord, data, updated_at) VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET bucket = excluded.bucket, ord = excluded.ord,
+             data = excluded.data, updated_at = excluded.updated_at`
+        ),
+        dropAgent: db.prepare('DELETE FROM agent WHERE id = ?'),
+        dropQueue: db.prepare('DELETE FROM queue WHERE agent_id = ?'),
+        addQueued: db.prepare('INSERT INTO queue (agent_id, pos, data) VALUES (?, ?, ?)'),
+        setMeta: db.prepare(
+          'INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
+        ),
+        dropMeta: db.prepare('DELETE FROM meta WHERE key = ?'),
+        getMeta: db.prepare('SELECT value FROM meta WHERE key = ?')
+      };
       return db;
     } catch (e) {
       console.error('[roster] could not open the database:', e);
@@ -199,13 +245,17 @@ export class RosterStore {
   }
 
   close(): void {
+    // Drop the statements BEFORE the database. They are freed with it either
+    // way, but holding a reference to a statement whose database has gone is
+    // the shape that aborts the process when the collector reaches it.
+    this.stmts = null;
     try { this.db?.close(); } catch { /* best-effort */ }
     this.db = null;
     this.openFor = null;
   }
 
   private getMeta(key: string): string | null {
-    const row = this.db?.prepare('SELECT value FROM meta WHERE key = ?').get(key) as { value: string } | undefined;
+    const row = this.stmts?.getMeta.get(key) as { value: string } | undefined;
     return row?.value ?? null;
   }
 
@@ -213,10 +263,10 @@ export class RosterStore {
    *  reads as "no opinion" and answers from localStorage instead. */
   read(): RosterSnapshot | null {
     const db = this.conn();
-    if (!db) return null;
+    const st = this.stmts;
+    if (!db || !st) return null;
     try {
-      const rows = db.prepare('SELECT id, bucket, data FROM agent ORDER BY bucket, ord').all() as
-        Array<{ id: string; bucket: string; data: string }>;
+      const rows = st.readAll.all() as Array<{ id: string; bucket: string; data: string }>;
       const seeded = this.getMeta('seeded') === '1';
       if (!rows.length && !seeded) return null;
 
@@ -235,8 +285,7 @@ export class RosterStore {
         else if (r.bucket === 'restorable') out.restorable.push(card);
         else out.agents.push(card);
       }
-      const q = db.prepare('SELECT agent_id, data FROM queue ORDER BY agent_id, pos').all() as
-        Array<{ agent_id: string; data: string }>;
+      const q = st.readQueues.all() as Array<{ agent_id: string; data: string }>;
       for (const r of q) {
         try { (out.queues[r.agent_id] ??= []).push(JSON.parse(r.data)); } catch { /* skip one bad row */ }
       }
@@ -257,21 +306,11 @@ export class RosterStore {
    */
   save(patch: RosterSave): RosterWriteResult {
     const db = this.conn();
-    if (!db) return { ok: false, error: 'no harnessHome' };
+    const st = this.stmts;
+    if (!db || !st) return { ok: false, error: 'no harnessHome' };
     if (!patch || typeof patch !== 'object') return { ok: false, error: 'invalid save' };
     try {
-      const upsert = db.prepare(
-        `INSERT INTO agent (id, bucket, ord, data, updated_at) VALUES (?, ?, ?, ?, ?)
-         ON CONFLICT(id) DO UPDATE SET bucket = excluded.bucket, ord = excluded.ord,
-           data = excluded.data, updated_at = excluded.updated_at`
-      );
-      const readOne = db.prepare('SELECT data FROM agent WHERE id = ?');
-      const dropAgent = db.prepare('DELETE FROM agent WHERE id = ?');
-      const dropQueue = db.prepare('DELETE FROM queue WHERE agent_id = ?');
-      const addQueued = db.prepare('INSERT INTO queue (agent_id, pos, data) VALUES (?, ?, ?)');
-      const setMeta = db.prepare(
-        'INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
-      );
+      const { upsert, readOne, dropAgent, dropQueue, addQueued, setMeta, dropMeta } = st;
 
       const run = db.transaction(() => {
         const now = Date.now();
@@ -312,7 +351,7 @@ export class RosterStore {
           if (typeof patch.selectedId === 'string' && patch.selectedId) {
             setMeta.run('selectedId', patch.selectedId);
           } else {
-            db.prepare('DELETE FROM meta WHERE key = ?').run('selectedId');
+            dropMeta.run('selectedId');
           }
         }
         setMeta.run('savedAt', new Date().toISOString());

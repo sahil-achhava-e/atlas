@@ -27,8 +27,8 @@ test('an existing install is imported once, and the file is never rewritten', ()
   // two different answers.
   const read = src.slice(src.indexOf('function readStored'), src.indexOf('function writeStored'));
   assert.match(read, /writeStored\(parsed\)/);
-  assert.match(read, /SELECT value FROM kv WHERE key = \?/);
-  assert.ok(read.indexOf('SELECT value FROM kv') < read.indexOf('readFileSync'),
+  assert.match(read, /configRead\?\.get\(CONFIG_KEY\)/);
+  assert.ok(read.indexOf('configRead?.get') < read.indexOf('readFileSync'),
     'the database is checked BEFORE the legacy file, or the import repeats forever');
 });
 

@@ -525,6 +525,15 @@ function configPath(): string {
 }
 
 let configDb: Database.Database | null = null;
+/** Prepared once per connection, never per call. A prepared statement is a
+ *  native object whose destructor unregisters an environment cleanup hook, and
+ *  readConfig runs on nearly every IPC — preparing a fresh SELECT each time
+ *  produced a stream of them for the collector, and one collected after its
+ *  database has gone aborts the process outright ("Assertion failed: (env) !=
+ *  nullptr" in Statement::~Statement). */
+let configRead: Database.Statement | null = null;
+let configWrite: Database.Statement | null = null;
+
 function conn(): Database.Database | null {
   if (configDb) return configDb;
   try {
@@ -538,6 +547,11 @@ function conn(): Database.Database | null {
     db.exec(`CREATE TABLE IF NOT EXISTS kv (
       key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL)`);
     configDb = db;
+    configRead = db.prepare('SELECT value FROM kv WHERE key = ?');
+    configWrite = db.prepare(
+      `INSERT INTO kv (key, value, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
+    );
     return db;
   } catch (e) {
     console.error('[config] could not open the database:', e);
@@ -547,6 +561,10 @@ function conn(): Database.Database | null {
 
 /** Close the handle (tests, and app shutdown). */
 export function closeConfigDb(): void {
+  // Statements first: a reference to one whose database has gone is what the
+  // collector trips over.
+  configRead = null;
+  configWrite = null;
   try { configDb?.close(); } catch { /* best-effort */ }
   configDb = null;
 }
@@ -556,7 +574,7 @@ function readStored(): Partial<HarnessConfig> | null {
   const db = conn();
   if (!db) return null;
   try {
-    const row = db.prepare('SELECT value FROM kv WHERE key = ?').get(CONFIG_KEY) as { value: string } | undefined;
+    const row = configRead?.get(CONFIG_KEY) as { value: string } | undefined;
     if (row) {
       try { return JSON.parse(row.value) as Partial<HarnessConfig>; } catch { return null; }
     }
@@ -577,11 +595,8 @@ function readStored(): Partial<HarnessConfig> | null {
 
 function writeStored(next: Partial<HarnessConfig>): void {
   const db = conn();
-  if (!db) throw new Error('no config database');
-  db.prepare(
-    `INSERT INTO kv (key, value, updated_at) VALUES (?, ?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
-  ).run(CONFIG_KEY, JSON.stringify(next), Date.now());
+  if (!db || !configWrite) throw new Error('no config database');
+  configWrite.run(CONFIG_KEY, JSON.stringify(next), Date.now());
 }
 
 /**
