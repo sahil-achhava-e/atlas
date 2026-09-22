@@ -97,8 +97,43 @@ const MIGRATIONS: Array<(db: Database.Database) => void> = [
   }
 ];
 
+/**
+ * Every statement this store runs, prepared once per connection.
+ *
+ * THE CRASH THIS EXISTS FOR. `db.prepare(...)` inside a method makes a NEW
+ * native Statement on every call, and better-sqlite3's destructor calls
+ * `RemoveEnvironmentCleanupHook`. When one of those is finalized at the wrong
+ * moment the process ABORTS:
+ *
+ *   node[36452]: void node::RemoveEnvironmentCleanupHook(...) at hooks.cc:142
+ *   Assertion failed: (env) != nullptr
+ *
+ * It was survivable while this store was read twice at boot. It became a hard
+ * crash loop — six deaths a minute, the browser-mode supervisor giving up —
+ * the moment the conversation ingest started calling it hundreds of times a
+ * minute. roster.ts and config.ts were fixed the same way; this was the last
+ * store still preparing per call.
+ */
+interface Statements {
+  getKv: Database.Statement;
+  setKv: Database.Statement;
+  prefs: Database.Statement;
+  delPref: Database.Statement;
+  addHistory: Database.Statement;
+  listHistoryAll: Database.Statement;
+  listHistoryAgent: Database.Statement;
+  searchHistory: Database.Statement;
+  addActivity: Database.Statement;
+  readActivity: Database.Statement;
+  trimActivity: Database.Statement;
+  forgetActivity: Database.Statement;
+}
+
 export class PersistStore {
   private db: Database.Database | null = null;
+  /** Nulled BEFORE the handle closes: a statement outliving its database is
+   *  exactly the finalize-order that aborts. */
+  private stmts: Statements | null = null;
 
   /** @param dbPath  Override the DB location (tests). Defaults to userData/harness.db. */
   constructor(private dbPath?: string) {}
@@ -116,6 +151,30 @@ export class PersistStore {
     db.pragma('foreign_keys = ON');
     this.migrate(db);
     this.db = db;
+    this.stmts = {
+      getKv: db.prepare('SELECT value FROM kv WHERE key = ?'),
+      setKv: db.prepare(
+        `INSERT INTO kv (key, value, updated_at) VALUES (?, ?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`),
+      prefs: db.prepare("SELECT key, value FROM kv WHERE key LIKE 'pref.%'"),
+      delPref: db.prepare('DELETE FROM kv WHERE key = ?'),
+      addHistory: db.prepare('INSERT INTO command_history (agent_id, cwd, text, ts) VALUES (?, ?, ?, ?)'),
+      listHistoryAll: db.prepare(
+        'SELECT id, agent_id AS agentId, cwd, text, ts FROM command_history ORDER BY ts DESC, id DESC LIMIT ?'),
+      listHistoryAgent: db.prepare(
+        'SELECT id, agent_id AS agentId, cwd, text, ts FROM command_history WHERE agent_id = ? ORDER BY ts DESC, id DESC LIMIT ?'),
+      searchHistory: db.prepare(
+        "SELECT id, agent_id AS agentId, cwd, text, ts FROM command_history WHERE text LIKE ? ESCAPE '\\' ORDER BY ts DESC, id DESC LIMIT ?"),
+      addActivity: db.prepare(
+        'INSERT OR IGNORE INTO activity (agent_id, kind, text, ts, dedupe) VALUES (?, ?, ?, ?, ?)'),
+      readActivity: db.prepare(
+        'SELECT kind, text, ts FROM activity WHERE agent_id = ? ORDER BY ts DESC, id DESC LIMIT ?'),
+      trimActivity: db.prepare(
+        `DELETE FROM activity WHERE agent_id = ? AND id NOT IN (
+           SELECT id FROM activity WHERE agent_id = ? ORDER BY ts DESC, id DESC LIMIT ?
+         )`),
+      forgetActivity: db.prepare('DELETE FROM activity WHERE agent_id = ?')
+    };
   }
 
   private migrate(db: Database.Database): void {
@@ -133,6 +192,8 @@ export class PersistStore {
 
   /** Close the handle (checkpoints WAL). Safe to call when already closed. */
   close(): void {
+    // Drop the statements first — see the Statements comment above.
+    this.stmts = null;
     try { this.db?.close(); } catch { /* best-effort on shutdown */ }
     this.db = null;
   }
@@ -143,19 +204,16 @@ export class PersistStore {
 
   /** Read a JSON-decoded scalar, or undefined if absent/unparseable. */
   getKv<T = unknown>(key: string): T | undefined {
-    if (!this.db) return undefined;
-    const row = this.db.prepare('SELECT value FROM kv WHERE key = ?').get(key) as { value: string } | undefined;
+    if (!this.stmts) return undefined;
+    const row = this.stmts.getKv.get(key) as { value: string } | undefined;
     if (!row) return undefined;
     try { return JSON.parse(row.value) as T; } catch { return undefined; }
   }
 
   /** Upsert a JSON-encoded scalar. */
   setKv(key: string, value: unknown): void {
-    if (!this.db) return;
-    this.db.prepare(
-      `INSERT INTO kv (key, value, updated_at) VALUES (?, ?, ?)
-       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
-    ).run(key, JSON.stringify(value), Date.now());
+    if (!this.stmts) return;
+    this.stmts.setKv.run(key, JSON.stringify(value), Date.now());
   }
 
   // ─── preferences ───────────────────────────────────────────────────────────
@@ -172,9 +230,8 @@ export class PersistStore {
 
   /** Every preference, keyed without the storage prefix. */
   prefs(): Record<string, string> {
-    if (!this.db) return {};
-    const rows = this.db.prepare("SELECT key, value FROM kv WHERE key LIKE 'pref.%'").all() as
-      Array<{ key: string; value: string }>;
+    if (!this.stmts) return {};
+    const rows = this.stmts.prefs.all() as Array<{ key: string; value: string }>;
     const out: Record<string, string> = {};
     for (const r of rows) {
       try {
@@ -187,8 +244,8 @@ export class PersistStore {
 
   /** Set one preference, or delete it when `value` is null. */
   setPref(name: string, value: string | null): void {
-    if (!this.db || !name) return;
-    if (value === null) this.db.prepare('DELETE FROM kv WHERE key = ?').run(`pref.${name}`);
+    if (!this.stmts || !name) return;
+    if (value === null) this.stmts.delPref.run(`pref.${name}`);
     else this.setKv(`pref.${name}`, value);
   }
 
@@ -196,24 +253,19 @@ export class PersistStore {
 
   /** Record one submitted prompt. Empty text or missing agent id are ignored. */
   addHistory(entry: { agentId: string; cwd?: string | null; text: string }): void {
-    if (!this.db) return;
+    if (!this.stmts) return;
     const text = (entry.text ?? '').trim();
     if (!text || !entry.agentId) return;
-    this.db.prepare('INSERT INTO command_history (agent_id, cwd, text, ts) VALUES (?, ?, ?, ?)')
-      .run(entry.agentId, entry.cwd ?? null, text, Date.now());
+    this.stmts.addHistory.run(entry.agentId, entry.cwd ?? null, text, Date.now());
   }
 
   /** Most-recent-first history, optionally scoped to one agent. */
   listHistory(agentId?: string, limit = 100): CommandHistoryRow[] {
-    if (!this.db) return [];
+    if (!this.stmts) return [];
     const lim = clampLimit(limit, 100);
     const rows = agentId
-      ? this.db.prepare(
-          'SELECT id, agent_id AS agentId, cwd, text, ts FROM command_history WHERE agent_id = ? ORDER BY ts DESC, id DESC LIMIT ?'
-        ).all(agentId, lim)
-      : this.db.prepare(
-          'SELECT id, agent_id AS agentId, cwd, text, ts FROM command_history ORDER BY ts DESC, id DESC LIMIT ?'
-        ).all(lim);
+      ? this.stmts.listHistoryAgent.all(agentId, lim)
+      : this.stmts.listHistoryAll.all(lim);
     return rows as CommandHistoryRow[];
   }
 
@@ -235,10 +287,8 @@ export class PersistStore {
    * @returns how many rows were new
    */
   addActivity(agentId: string, rows: readonly { kind: 'say' | 'ask'; text: string; at?: number }[]): number {
-    if (!this.db || !agentId || !rows.length) return 0;
-    const insert = this.db.prepare(
-      'INSERT OR IGNORE INTO activity (agent_id, kind, text, ts, dedupe) VALUES (?, ?, ?, ?, ?)'
-    );
+    if (!this.db || !this.stmts || !agentId || !rows.length) return 0;
+    const insert = this.stmts.addActivity;
     const run = this.db.transaction((list: readonly { kind: 'say' | 'ask'; text: string; at?: number }[]) => {
       let added = 0;
       for (const r of list) {
@@ -256,13 +306,12 @@ export class PersistStore {
 
   /** One agent's conversation, oldest first — the order it is read in. */
   activity(agentId: string, limit = PersistStore.ACTIVITY_CAP): Array<{ kind: 'say' | 'ask'; text: string; at: number }> {
-    if (!this.db || !agentId) return [];
+    if (!this.stmts || !agentId) return [];
     // Not clampLimit: that caps at 1000, which is the right ceiling for a
     // history SEARCH and the wrong one for a conversation whose cap is 5000.
     const want = Math.min(PersistStore.ACTIVITY_CAP, Math.max(1, Math.floor(Number(limit) || 200)));
-    const rows = this.db.prepare(
-      'SELECT kind, text, ts FROM activity WHERE agent_id = ? ORDER BY ts DESC, id DESC LIMIT ?'
-    ).all(agentId, want) as Array<{ kind: string; text: string; ts: number }>;
+    const rows = this.stmts.readActivity.all(agentId, want) as
+      Array<{ kind: string; text: string; ts: number }>;
     return rows
       .reverse()
       .map((r) => ({ kind: r.kind === 'ask' ? 'ask' as const : 'say' as const, text: r.text, at: r.ts }));
@@ -270,31 +319,25 @@ export class PersistStore {
 
   /** Drop everything past the cap for one agent, oldest first. */
   private trimActivity(agentId: string): void {
-    if (!this.db) return;
-    this.db.prepare(
-      `DELETE FROM activity WHERE agent_id = ? AND id NOT IN (
-         SELECT id FROM activity WHERE agent_id = ? ORDER BY ts DESC, id DESC LIMIT ?
-       )`
-    ).run(agentId, agentId, PersistStore.ACTIVITY_CAP);
+    if (!this.stmts) return;
+    this.stmts.trimActivity.run(agentId, agentId, PersistStore.ACTIVITY_CAP);
   }
 
   /** Forget one agent's conversation — for a deleted agent, or a reset. */
   forgetActivity(agentId: string): void {
-    if (!this.db || !agentId) return;
-    this.db.prepare('DELETE FROM activity WHERE agent_id = ?').run(agentId);
+    if (!this.stmts || !agentId) return;
+    this.stmts.forgetActivity.run(agentId);
   }
 
   /** Substring search over prompt text, most-recent-first. */
   searchHistory(query: string, limit = 50): CommandHistoryRow[] {
-    if (!this.db) return [];
+    if (!this.stmts) return [];
     const q = (query ?? '').trim();
     if (!q) return [];
     const lim = clampLimit(limit, 50);
     // Escape LIKE wildcards so a literal % or _ in the query isn't a metachar.
     const needle = `%${q.replace(/[\\%_]/g, '\\$&')}%`;
-    return this.db.prepare(
-      "SELECT id, agent_id AS agentId, cwd, text, ts FROM command_history WHERE text LIKE ? ESCAPE '\\' ORDER BY ts DESC, id DESC LIMIT ?"
-    ).all(needle, lim) as CommandHistoryRow[];
+    return this.stmts.searchHistory.all(needle, lim) as CommandHistoryRow[];
   }
 }
 
