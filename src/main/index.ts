@@ -4,7 +4,7 @@ import { canDeleteWorkspace, isManagedWorkspace, WORKSPACE_DATA } from '../share
 import { listProjectTree, type ProjectEntry } from './projects';
 import { GossipWriter } from './gossip';
 import { mcpSecretRef, mcpSecretEnvKeys, dbSecretRef } from '../shared/mcpCatalog';
-import { activityRows } from '../shared/activityFeed';
+import { activityRows, isOwnerPrompt, type ActivityRow } from '../shared/activityFeed';
 import { maskDbUrl } from '../shared/dbUrl';
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, net, powerMonitor, powerSaveBlocker, protocol, screen, shell, Notification } from 'electron';
 import { spawn } from 'node:child_process';
@@ -4168,6 +4168,11 @@ function teardownAndQuit(): void {
   try { stopWebhookServer(); } catch (e) { console.error('[quit] webhook.stop:', e); }
   try { memory.stop(); } catch (e) { console.error('[quit] memory.stop:', e); }
   try { reflector.stop(); } catch (e) { console.error('[quit] reflector.stop:', e); }
+  // The last thing anyone said, before the store closes. A resume starts a new
+  // transcript, so whatever the 20s sweep has not picked up yet would otherwise
+  // sit in a file the next launch never opens.
+  try { clearInterval(activitySweep); ingestAllActivity(); }
+  catch (e) { console.error('[quit] activity ingest:', e); }
   try { persist.close(); } catch (e) { console.error('[quit] persist.close:', e); }
   // Close the other two databases as well. A statement finalized after its
   // environment has gone aborts the process — "Assertion failed: (env) !=
@@ -4339,14 +4344,24 @@ function activityTranscript(agentId: string): string | null {
   return newest?.path ?? null;
 }
 
-ipcMain.handle('agent:activity', (_evt, agentId: unknown, limit: unknown) => {
-  if (typeof agentId !== 'string') return [];
+/** How much of a transcript is read at once. A resumed session starts a fresh
+ *  file, so this is a window onto the CURRENT session only — the conversation
+ *  before a restart comes from the store, not from here. */
+const ACTIVITY_TAIL = 2 * 1024 * 1024;
+
+/** The rows a transcript's tail currently gives, newest last.
+ *
+ *  `whole` reads the entire file instead of the tail. Used once per agent, the
+ *  first time its conversation is stored: a transcript that has been running
+ *  for days is larger than any window, and the point of the store is to keep
+ *  what the window cannot show. Afterwards the tail is enough, because
+ *  everything older is already kept. */
+function transcriptRows(agentId: string, limit: number, whole = false): ActivityRow[] {
   const tp = activityTranscript(agentId);
   if (!tp) return [];
   try {
     const size = statSync(tp).size;
-    const TAIL = 512 * 1024;   // enough for a few hundred entries
-    const from = Math.max(0, size - TAIL);
+    const from = whole ? 0 : Math.max(0, size - ACTIVITY_TAIL);
     const fd = openSync(tp, 'r');
     try {
       const buf = Buffer.alloc(size - from);
@@ -4355,11 +4370,97 @@ ipcMain.handle('agent:activity', (_evt, agentId: unknown, limit: unknown) => {
       // A partial first line when we started mid-file; activityRows drops it
       // anyway, but slicing keeps the intent obvious.
       const lines = (from > 0 ? text.slice(text.indexOf('\n') + 1) : text).split('\n');
-      return activityRows(lines, typeof limit === 'number' ? limit : 200);
+      return activityRows(lines, limit);
     } finally { closeSync(fd); }
   } catch (e) {
     console.error('[activity] could not read transcript:', e);
     return [];
+  }
+}
+
+/**
+ * Keep what was SAID.
+ *
+ * The read-only view was a pure function of the engine's session transcript,
+ * and a resume starts a new one: the whole conversation up to the restart stayed
+ * in a file the app no longer reads. The human's side looked erased (they have
+ * nothing new to add) while the agent's side looked fine (it keeps talking).
+ *
+ * So the conversation is INGESTED as it happens — say and ask rows into
+ * `activity` in harness.db — and reads merge the store with the live transcript.
+ * Ingest is idempotent (see PersistStore.addActivity), which is what lets it run
+ * from three places without coordination: this sweep, every read of the view,
+ * and the moment an owner message is sent.
+ */
+/** Agents whose transcript has been read in full since launch. The FIRST read
+ *  of an agent reads the whole file, because a session that has been running
+ *  for days is bigger than any window and this is the pass that has to keep it;
+ *  every read after that is a tail. Per-process rather than "is the store
+ *  empty", because the view's own poll would otherwise store the tail first and
+ *  make the file look already-captured. */
+const activityBackfilled = new Set<string>();
+
+function ingestActivity(agentId: string): void {
+  try {
+    const whole = !activityBackfilled.has(agentId);
+    activityBackfilled.add(agentId);
+    const rows = transcriptRows(agentId, whole ? PersistStore.ACTIVITY_CAP : 2000, whole)
+      .filter((r): r is ActivityRow & { kind: 'say' | 'ask' } => r.kind === 'say' || r.kind === 'ask');
+    if (rows.length) persist.addActivity(agentId, rows);
+  } catch (e) { console.error('[activity] ingest failed:', e); }
+}
+
+/** Every live agent's conversation, swept on a timer so history is kept whether
+ *  or not anyone has the view open. Cheap: one tail read per agent. */
+function ingestAllActivity(): void {
+  try {
+    for (const a of Object.values(hive.registry().agents ?? {})) {
+      if (a?.id && !a.archived) ingestActivity(a.id);
+    }
+  } catch (e) { console.error('[activity] sweep failed:', e); }
+}
+const activitySweep = setInterval(ingestAllActivity, 20_000);
+activitySweep.unref?.();
+
+ipcMain.handle('agent:activity', (_evt, agentId: unknown, limit: unknown) => {
+  if (typeof agentId !== 'string') return [];
+  const want = typeof limit === 'number' && limit > 0 ? Math.floor(limit) : 200;
+  // Store what there is to store before reading back, so the history keeps up
+  // even if the 20s sweep has not run since the last thing was said.
+  ingestActivity(agentId);
+  const live = transcriptRows(agentId, want);
+
+  let stored: Array<{ kind: 'say' | 'ask'; text: string; at: number }> = [];
+  try { stored = persist.activity(agentId, want); } catch { stored = []; }
+  if (!stored.length) return live;
+
+  // The live window is the authority for anything inside it: it carries the
+  // tool rows too, and the store holds the same conversation lines. Drop a
+  // stored row the transcript is already showing, keep the rest in front.
+  const shown = new Set(live.map((r) => `${r.kind}|${Math.floor((r.at ?? 0) / 1000)}|${r.text}`));
+  const history = stored
+    .filter((r) => !shown.has(`${r.kind}|${Math.floor(r.at / 1000)}|${r.text}`))
+    .map((r) => ({ kind: r.kind, text: r.text, at: r.at }) as ActivityRow);
+  return [...history, ...live].slice(-want);
+});
+
+/** One owner message, stored at the moment it is sent.
+ *
+ *  Ingest would catch it from the transcript a few seconds later, but only
+ *  while this session's file is still the one being read: quit before the next
+ *  sweep and the message is in a file the next launch never opens, because the
+ *  agent resumes into a new one. This is the only path that cannot lose it. */
+ipcMain.handle('activity:owner', (_evt, payload: unknown) => {
+  const p = (payload ?? {}) as { agentId?: unknown; text?: unknown; at?: unknown };
+  if (typeof p.agentId !== 'string' || typeof p.text !== 'string') return { ok: false };
+  const text = p.text.trim();
+  if (!text || !isOwnerPrompt(text)) return { ok: false };
+  try {
+    persist.addActivity(p.agentId, [{ kind: 'ask', text, at: typeof p.at === 'number' ? p.at : Date.now() }]);
+    return { ok: true };
+  } catch (e) {
+    console.error('[activity] could not store an owner message:', e);
+    return { ok: false };
   }
 });
 

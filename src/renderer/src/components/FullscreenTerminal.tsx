@@ -352,6 +352,9 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
                             updateAgent(agent.id, { contextTokens: 0, contextLimit: undefined, progress: 0 });
                           }
                           void window.cth.historyAdd({ agentId: agent.id, cwd: agent.cwd, text: t });
+                          // …and into the conversation history, which is what
+                          // the read-only view reads back after a restart.
+                          void window.cth.activityOwner?.({ agentId: agent.id, text: t, at: Date.now() });
                         }}
                         onToggleFullscreen={() => setFullscreen(null)}
                         fullscreen

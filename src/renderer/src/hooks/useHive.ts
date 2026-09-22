@@ -1016,6 +1016,15 @@ export function useHive(config: HarnessConfig | null): void {
           ),
           () => {
             removeQueuedMessage(srcId, next.id);
+            // KEEP WHAT WAS SAID. The read-only view used to be a pure read of
+            // the engine's transcript, and a resume starts a new transcript —
+            // so every message sent before a restart was in a file the app no
+            // longer opens, and the human's side of the conversation read as
+            // erased. Stored here, at the one point delivery is confirmed, so
+            // it survives whatever happens to the session afterwards. Main
+            // drops anything the app wrote on the human's behalf (the inbox
+            // nudge, a breaker warning) via isOwnerPrompt.
+            void window.cth.activityOwner?.({ agentId: target.id, text: next.text, at: Date.now() });
             // Zero the gauge on a DELIVERED /clear — the new session's context
             // isn't known until statusLine fires after the first post-clear
             // response, so leaving it at the old value shows a stale-full bar.

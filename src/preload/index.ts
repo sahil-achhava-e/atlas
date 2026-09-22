@@ -902,6 +902,14 @@ const api = {
   /** Record one submitted prompt. Fire-and-forget from the prompt-detection hook. */
   historyAdd: (entry: { agentId: string; cwd?: string; text: string }): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke('history:add', entry),
+  /** Store one owner message in the durable conversation history.
+   *
+   *  The read-only view used to be a pure read of the engine's transcript, and
+   *  a resume starts a new transcript — so everything the human said before a
+   *  restart was in a file the app no longer opens. Called at the moment a
+   *  message is sent, which is the only point that cannot lose it. */
+  activityOwner: (entry: { agentId: string; text: string; at?: number }): Promise<{ ok: boolean }> =>
+    ipcRenderer.invoke('activity:owner', entry),
   /** Most-recent-first history, optionally scoped to one agent. */
   historyList: (agentId?: string, limit?: number): Promise<CommandHistoryEntry[]> =>
     ipcRenderer.invoke('history:list', agentId, limit),

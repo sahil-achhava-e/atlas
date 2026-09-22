@@ -80,6 +80,7 @@ export const INVOKE: Record<string, string> = {
   attachFiles: 'dialog:attachFiles',
   saveClipboardImage: 'clipboard:saveImage',
   historyAdd: 'history:add',
+  activityOwner: 'activity:owner',
   historyList: 'history:list',
   historySearch: 'history:search',
   hiveSend: 'hive:send',

@@ -64,6 +64,36 @@ const MIGRATIONS: Array<(db: Database.Database) => void> = [
       );
       CREATE INDEX IF NOT EXISTS idx_ch_agent_ts ON command_history(agent_id, ts DESC);
     `);
+  },
+  // → user_version 2: the conversation, so it survives a restart.
+  //
+  // WHY. The read-only activity view was built entirely from the engine's
+  // session transcript, and a resume starts a NEW transcript: everything said
+  // before the restart stayed in a file the app no longer reads. The human's
+  // side looked wiped (they had nothing new to add) while the agent's side
+  // looked fine (it kept talking). On top of that, only the last 512 KB of the
+  // file was ever read, so on a 4 MB transcript 2 of 25 owner messages were
+  // visible even without a restart.
+  //
+  // `say` and `ask` only — the conversation, not the tool rows. Tool work is
+  // dense (ten rows per exchange, with paths and commands) and reading it back
+  // after a restart is not what anyone wants from a message history.
+  (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS activity (
+        id       INTEGER PRIMARY KEY AUTOINCREMENT,
+        agent_id TEXT NOT NULL,
+        kind     TEXT NOT NULL,      -- 'say' (the agent) | 'ask' (the human)
+        text     TEXT NOT NULL,
+        ts       INTEGER NOT NULL,
+        -- Ingest is idempotent: the same transcript window is re-read every
+        -- poll and after every restart, so a row has to be recognisable as one
+        -- already stored. Same agent, kind, second and text = same line.
+        dedupe   TEXT NOT NULL,
+        UNIQUE(agent_id, dedupe)
+      );
+      CREATE INDEX IF NOT EXISTS idx_activity_agent ON activity(agent_id, ts, id);
+    `);
   }
 ];
 
@@ -187,6 +217,73 @@ export class PersistStore {
     return rows as CommandHistoryRow[];
   }
 
+  // ─── conversation history (say/ask, across sessions) ──────────────────────
+
+  /** How many rows of one agent's conversation are kept. Chosen with the human:
+   *  weeks of a busy agent, a few MB for a floor of ten, and no unbounded
+   *  growth. Trimmed oldest-first as new rows land. */
+  static readonly ACTIVITY_CAP = 5000;
+
+  /**
+   * Store conversation rows, ignoring any already held.
+   *
+   * Idempotent by (agent, kind, second, text): callers re-read the same
+   * transcript window on every poll and after every restart, and the owner's
+   * side is ALSO written at the moment it is sent, so the same line legitimately
+   * arrives twice from two directions.
+   *
+   * @returns how many rows were new
+   */
+  addActivity(agentId: string, rows: readonly { kind: 'say' | 'ask'; text: string; at?: number }[]): number {
+    if (!this.db || !agentId || !rows.length) return 0;
+    const insert = this.db.prepare(
+      'INSERT OR IGNORE INTO activity (agent_id, kind, text, ts, dedupe) VALUES (?, ?, ?, ?, ?)'
+    );
+    const run = this.db.transaction((list: readonly { kind: 'say' | 'ask'; text: string; at?: number }[]) => {
+      let added = 0;
+      for (const r of list) {
+        const text = (r.text ?? '').trim();
+        if (!text || (r.kind !== 'say' && r.kind !== 'ask')) continue;
+        const ts = Number.isFinite(r.at) ? Math.floor(r.at as number) : Date.now();
+        added += insert.run(agentId, r.kind, text, ts, dedupeKey(r.kind, ts, text)).changes;
+      }
+      return added;
+    });
+    const added = run(rows);
+    if (added) this.trimActivity(agentId);
+    return added;
+  }
+
+  /** One agent's conversation, oldest first — the order it is read in. */
+  activity(agentId: string, limit = PersistStore.ACTIVITY_CAP): Array<{ kind: 'say' | 'ask'; text: string; at: number }> {
+    if (!this.db || !agentId) return [];
+    // Not clampLimit: that caps at 1000, which is the right ceiling for a
+    // history SEARCH and the wrong one for a conversation whose cap is 5000.
+    const want = Math.min(PersistStore.ACTIVITY_CAP, Math.max(1, Math.floor(Number(limit) || 200)));
+    const rows = this.db.prepare(
+      'SELECT kind, text, ts FROM activity WHERE agent_id = ? ORDER BY ts DESC, id DESC LIMIT ?'
+    ).all(agentId, want) as Array<{ kind: string; text: string; ts: number }>;
+    return rows
+      .reverse()
+      .map((r) => ({ kind: r.kind === 'ask' ? 'ask' as const : 'say' as const, text: r.text, at: r.ts }));
+  }
+
+  /** Drop everything past the cap for one agent, oldest first. */
+  private trimActivity(agentId: string): void {
+    if (!this.db) return;
+    this.db.prepare(
+      `DELETE FROM activity WHERE agent_id = ? AND id NOT IN (
+         SELECT id FROM activity WHERE agent_id = ? ORDER BY ts DESC, id DESC LIMIT ?
+       )`
+    ).run(agentId, agentId, PersistStore.ACTIVITY_CAP);
+  }
+
+  /** Forget one agent's conversation — for a deleted agent, or a reset. */
+  forgetActivity(agentId: string): void {
+    if (!this.db || !agentId) return;
+    this.db.prepare('DELETE FROM activity WHERE agent_id = ?').run(agentId);
+  }
+
   /** Substring search over prompt text, most-recent-first. */
   searchHistory(query: string, limit = 50): CommandHistoryRow[] {
     if (!this.db) return [];
@@ -199,6 +296,17 @@ export class PersistStore {
       "SELECT id, agent_id AS agentId, cwd, text, ts FROM command_history WHERE text LIKE ? ESCAPE '\\' ORDER BY ts DESC, id DESC LIMIT ?"
     ).all(needle, lim) as CommandHistoryRow[];
   }
+}
+
+/** The identity of one conversation line: who said it, when (to the second,
+ *  because two reads of the same file can differ in nothing else) and what.
+ *  Long text is hashed rather than stored twice — the row already has it. */
+function dedupeKey(kind: string, ts: number, text: string): string {
+  const second = Math.floor(ts / 1000);
+  const head = text.slice(0, 64);
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = (((h << 5) + h) ^ text.charCodeAt(i)) | 0;
+  return `${kind}|${second}|${(h >>> 0).toString(36)}|${head}`;
 }
 
 /** Coerce an untrusted limit into [1, 1000] with a sane fallback. */
