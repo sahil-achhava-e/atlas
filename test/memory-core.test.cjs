@@ -224,3 +224,49 @@ test('a broken sqlite driver falls back instead of throwing', () => {
     assert.ok(store.search('deploy key').length > 0, 'the fallback must actually work');
   } finally { store.close(); }
 });
+
+// THE ABORT. `db.prepare(...)` makes a native Statement whose destructor calls
+// RemoveEnvironmentCleanupHook, and finalizing one at the wrong moment kills the
+// process outright:
+//
+//   node[36452]: void node::RemoveEnvironmentCleanupHook(...) at hooks.cc:142
+//   Assertion failed: (env) != nullptr
+//
+// This indexer re-prepared nine statements for every memory.md it touched, on a
+// timer. That is what took the browser-mode server down.
+
+test('the indexer prepares its statements once, not per file', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src/main/memory-core.cjs'), 'utf8');
+  const store = src.slice(src.indexOf('function sqliteStore'), src.indexOf('function jsonlStore'));
+  const inside = store.slice(store.indexOf('const replace = db.transaction'));
+  assert.doesNotMatch(inside, /db\.prepare\(/,
+    'nothing past the statement cache may prepare — see the abort above');
+  assert.match(store, /const q = \{/);
+});
+
+test('indexing the same file repeatedly stays correct with cached statements', () => {
+  // The rewrite reused one set of statements across sources and passes; this is
+  // the behaviour that would break if a cached statement held stale state.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mem-cached-'));
+  const a = path.join(dir, 'a.md');
+  const b = path.join(dir, 'b.md');
+  fs.writeFileSync(a, '# One\n\nalphaoriginal wording\n');
+  fs.writeFileSync(b, '# Two\n\nbetaword wording\n');
+  const store = openStore(path.join(dir, 'index'));
+  const sources = [{ path: a, agentId: 'ana' }, { path: b, agentId: 'bo' }];
+
+  assert.equal(store.index(sources).indexed, 2);
+  assert.equal(store.index(sources).skipped, 2, 'unchanged files are skipped on the second pass');
+
+  fs.writeFileSync(a, '# One\n\nalpharewritten entirely\n');
+  const again = store.index(sources);
+  assert.equal(again.indexed, 1);
+  assert.equal(again.skipped, 1);
+
+  assert.equal(store.search('alpharewritten').length, 1);
+  assert.equal(store.search('alphaoriginal').length, 0, 'the replaced chunk is really gone');
+  assert.equal(store.search('betaword', { agentId: 'bo' }).length, 1, 'the filtered query works too');
+  assert.equal(store.search('betaword', { agentId: 'ana' }).length, 0);
+  assert.equal(store.stats().agents, 2);
+  store.close();
+});

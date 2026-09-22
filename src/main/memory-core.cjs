@@ -153,24 +153,49 @@ function openSqlite(root, deps = {}) {
 }
 
 function sqliteStore(db, root) {
+  // PREPARED ONCE, NOT PER CALL. `db.prepare(...)` makes a native Statement
+  // whose destructor calls RemoveEnvironmentCleanupHook; finalize one at the
+  // wrong moment and the process ABORTS with
+  //   Assertion failed: (env) != nullptr
+  // This indexer re-prepared nine statements for every memory.md it touched, on
+  // a timer, which made that lottery run hundreds of times an hour and took the
+  // browser-mode server down with it. Same fix as roster.ts, config.ts and db.ts.
+  const q = {
+    olds: db.prepare('SELECT id FROM chunks WHERE source = ?'),
+    delFts: db.prepare("INSERT INTO chunks_fts(chunks_fts, rowid, text, title) VALUES('delete', ?, ?, ?)"),
+    getRow: db.prepare('SELECT id, text, title FROM chunks WHERE id = ?'),
+    delChunks: db.prepare('DELETE FROM chunks WHERE source = ?'),
+    ins: db.prepare('INSERT INTO chunks (agentId, title, text, chunkIdx, source) VALUES (?, ?, ?, ?, ?)'),
+    insFts: db.prepare('INSERT INTO chunks_fts(rowid, text, title) VALUES (?, ?, ?)'),
+    upsertSource: db.prepare('INSERT OR REPLACE INTO sources (path, agentId, mtime, size) VALUES (?, ?, ?, ?)'),
+    prevSource: db.prepare('SELECT mtime, size FROM sources WHERE path = ?'),
+    countChunks: db.prepare('SELECT COUNT(*) AS n FROM chunks'),
+    countAgents: db.prepare('SELECT COUNT(DISTINCT agentId) AS n FROM chunks')
+  };
+  // Search has two shapes — with and without the agent filter — so it is two
+  // statements rather than one built per call. Safe to prepare here: a database
+  // without FTS5 never reaches this function (openSqlite falls back to jsonl
+  // when the virtual table cannot be created).
+  const searchSql = (byAgent) => `
+    SELECT c.agentId, c.title, c.text, c.chunkIdx, c.source, bm25(chunks_fts) AS rank
+    FROM chunks_fts JOIN chunks c ON c.id = chunks_fts.rowid
+    WHERE chunks_fts MATCH ? ${byAgent ? 'AND c.agentId = ?' : ''}
+    ORDER BY rank LIMIT ?
+  `;
+  q.searchAll = db.prepare(searchSql(false));
+  q.searchAgent = db.prepare(searchSql(true));
+
   const replace = db.transaction((source, recs, st) => {
-    const olds = db.prepare('SELECT id FROM chunks WHERE source = ?').all(source.path);
-    const delFts = db.prepare("INSERT INTO chunks_fts(chunks_fts, rowid, text, title) VALUES('delete', ?, ?, ?)");
-    const getRow = db.prepare('SELECT id, text, title FROM chunks WHERE id = ?');
-    for (const { id } of olds) {
-      const row = getRow.get(id);
-      if (row) delFts.run(row.id, row.text, row.title);
+    for (const { id } of q.olds.all(source.path)) {
+      const row = q.getRow.get(id);
+      if (row) q.delFts.run(row.id, row.text, row.title);
     }
-    db.prepare('DELETE FROM chunks WHERE source = ?').run(source.path);
-    const ins = db.prepare(
-      'INSERT INTO chunks (agentId, title, text, chunkIdx, source) VALUES (?, ?, ?, ?, ?)');
-    const insFts = db.prepare('INSERT INTO chunks_fts(rowid, text, title) VALUES (?, ?, ?)');
+    q.delChunks.run(source.path);
     for (const r of recs) {
-      const info = ins.run(r.agentId, r.title, r.text, r.chunkIdx, r.source);
-      insFts.run(info.lastInsertRowid, r.text, r.title);
+      const info = q.ins.run(r.agentId, r.title, r.text, r.chunkIdx, r.source);
+      q.insFts.run(info.lastInsertRowid, r.text, r.title);
     }
-    db.prepare('INSERT OR REPLACE INTO sources (path, agentId, mtime, size) VALUES (?, ?, ?, ?)')
-      .run(source.path, source.agentId, st ? st.mtime : 0, st ? st.size : 0);
+    q.upsertSource.run(source.path, source.agentId, st ? st.mtime : 0, st ? st.size : 0);
   });
 
   return {
@@ -183,7 +208,7 @@ function sqliteStore(db, root) {
       for (const source of sources) {
         const st = statOf(source.path);
         if (!st) continue;
-        const prev = db.prepare('SELECT mtime, size FROM sources WHERE path = ?').get(source.path);
+        const prev = q.prevSource.get(source.path);
         if (prev && prev.mtime === st.mtime && prev.size === st.size) { skipped++; continue; }
         replace(source, chunksFor(source), st);
         indexed++;
@@ -200,12 +225,9 @@ function sqliteStore(db, root) {
       const match = terms.map((t) => `${t}*`).join(' OR ');
       let rows;
       try {
-        rows = db.prepare(`
-          SELECT c.agentId, c.title, c.text, c.chunkIdx, c.source, bm25(chunks_fts) AS rank
-          FROM chunks_fts JOIN chunks c ON c.id = chunks_fts.rowid
-          WHERE chunks_fts MATCH ? ${opts.agentId ? 'AND c.agentId = ?' : ''}
-          ORDER BY rank LIMIT ?
-        `).all(...(opts.agentId ? [match, opts.agentId, limit] : [match, limit]));
+        rows = opts.agentId
+          ? q.searchAgent.all(match, opts.agentId, limit)
+          : q.searchAll.all(match, limit);
       } catch {
         return [];
       }
@@ -218,8 +240,8 @@ function sqliteStore(db, root) {
     },
 
     stats() {
-      const c = db.prepare('SELECT COUNT(*) AS n FROM chunks').get();
-      const a = db.prepare('SELECT COUNT(DISTINCT agentId) AS n FROM chunks').get();
+      const c = q.countChunks.get();
+      const a = q.countAgents.get();
       return { backend: 'sqlite', chunks: c ? c.n : 0, agents: a ? a.n : 0, root };
     }
   };
