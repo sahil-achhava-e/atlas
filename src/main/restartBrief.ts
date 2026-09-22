@@ -6,8 +6,8 @@
  * agent's memory.md, the mailboxes — and the crew is respawned with `sessionId`
  * preserved, so each one resumes its own thread. The hole is that nobody TELLS
  * them to carry on: WorkerWakeWatchdog only wakes an agent with undrained inbox
- * mail, and an agent killed mid-turn has none. Its card still says "doing" and it
- * sits at its prompt.
+ * mail, and an agent killed mid-turn has none. Its card still says "in progress"
+ * and it sits at its prompt.
  *
  * WHY THIS GOES TO GOD AND NOT TO EACH AGENT. Nudging every interrupted agent
  * directly would have them all resume at once with nobody reconciling the board,
@@ -23,12 +23,15 @@
  * a hive, a PTY or an Electron app.
  */
 
+import { normalizeStatus } from '../shared/taskStatus';
+
 /** The fields this reads off a task card. The ledger carries more. */
 export interface BriefTask {
   id?: unknown;
   title?: unknown;
   status?: unknown;
   assignee?: unknown;
+  reviewer?: unknown;
 }
 
 /** The fields this reads off the registry. */
@@ -51,10 +54,16 @@ const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
 /**
  * The cards that were in flight, paired with the agent holding them.
  *
- * Only 'doing' counts. 'todo' was never started, 'blocked' is parked on a human
- * and resuming it would just re-ask the question, and 'done' is done. A card
- * whose assignee is gone from the roster (agent deleted while the app was shut)
- * is dropped rather than reported against a name that no longer exists.
+ * Only 'in-progress' and 'in-review' count. 'todo' was never started, 'blocked'
+ * is parked on a human and resuming it would just re-ask the question, and
+ * 'done' is done. A card whose holder is gone from the roster (agent deleted
+ * while the app was shut) is dropped rather than reported against a name that
+ * no longer exists.
+ *
+ * An 'in-review' card is reported against its REVIEWER, not its assignee: the
+ * engineer's part finished when the PR went up, and the interrupted turn is the
+ * review. A review card with no reviewer named yet is nobody's interrupted work
+ * — it is waiting on the lead, which the lead's own board read will catch.
  */
 export function interruptedWork(
   tasksDoc: unknown,
@@ -67,8 +76,9 @@ export function interruptedWork(
   const out: InterruptedItem[] = [];
   const seen = new Set<string>();
   for (const raw of list as BriefTask[]) {
-    if (str(raw?.status) !== 'doing') continue;
-    const assignee = str(raw?.assignee);
+    const status = normalizeStatus(raw?.status);
+    if (status !== 'in-progress' && status !== 'in-review') continue;
+    const assignee = status === 'in-review' ? str(raw?.reviewer) : str(raw?.assignee);
     if (!assignee) continue;
     const agent = byId.get(assignee);
     if (!agent) continue;
@@ -107,7 +117,7 @@ export function restartBrief(items: readonly InterruptedItem[]): string | null {
     ...lines,
     '',
     'Before re-engaging anyone: check each card against what is actually on disk. A card can '
-      + 'read "doing" because the work finished and the agent died before marking it, or because '
+      + 'read "in progress" because the work finished and the agent died before marking it, or because '
       + 'an edit landed half-written. Correct the ledger first, then dispatch whoever still has '
       + 'work left — and tell them what was interrupted rather than restating the whole task.'
   ].join('\n');

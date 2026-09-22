@@ -256,7 +256,11 @@
       "keepAwakeWindows": "Keep the PC awake while agents run",
       "keepAwakeLinux": "Keep the machine awake while agents run",
       "gossipWriter": "Break-room chatter",
-      "gossipWriterDesc": "Agents at the coffee machine talk about the actual board — a stuck card, a review nobody picked up. Written by a cheap model every 45 minutes while an office is on screen. Off uses only the lines that ship with the app."
+      "gossipWriterDesc": "Agents at the coffee machine talk about the actual board — a stuck card, a review nobody picked up. Written by a cheap model every 45 minutes while an office is on screen. Off uses only the lines that ship with the app.",
+      "cardCodes": "Card ids",
+      "cardCodesDesc": "The short code in front of every card id for each project. Two to twelve letters or digits, and no two projects may share one.",
+      "cardCodeExample": "Cards are numbered in order per project: TASK-{{code}}-1, TASK-{{code}}-2.",
+      "cardCodeRejected": "Not saved: a code is 2-12 letters or digits, starts with a letter, and cannot already belong to another project."
     },
     "agentsModels": {
       "defaultModel": "Default agent model",
@@ -1431,7 +1435,8 @@
     "count": "{{count}} tasks",
     "newWorkHint": "new work? dispatch it to {{godName}} (monitor tab)",
     "colTodo": "To do",
-    "colDoing": "Doing",
+    "colInProgress": "In Progress",
+    "colInReview": "In Review",
     "colBlocked": "Blocked",
     "colDone": "Done",
     "openTaskDetails": "Open task details",
@@ -1464,7 +1469,9 @@
     "priority_high": "High",
     "priority_normal": "Normal",
     "priority_low": "Low",
-    "priority_lowest": "Lowest"
+    "priority_lowest": "Lowest",
+    "reviewedBy": "· review: {{name}}",
+    "noReviewerYet": "· no reviewer yet"
   },
   "terminal": {
     "live": "live"

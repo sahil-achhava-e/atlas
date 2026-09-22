@@ -23,6 +23,7 @@
  * lifecycle in session.ts is tool-agnostic, so it survives the swap unchanged.
  */
 import { tool } from '@openai/agents-realtime';
+import { normalizeStatus } from '@shared/taskStatus';
 
 // ─── spoken-prose formatting helpers ────────────────────────────────────────
 
@@ -149,13 +150,13 @@ export function realtimeReadTools(): ReturnType<typeof tool>[] {
     tool({
       name: 'get_tasks',
       description:
-        'The current task board: how many tasks are todo, in progress, blocked, and done, plus the titles and owners of the in-progress and blocked ones. Optionally filter by a single status. Call this when the user asks what the team is working on, what is blocked, or about progress.',
+        'The current task board: how many tasks are todo, in progress, in review, blocked, and done, plus the titles and owners of the in-progress, in-review and blocked ones. Optionally filter by a single status. Call this when the user asks what the team is working on, what is waiting on a review, what is blocked, or about progress.',
       parameters: {
         type: 'object',
         properties: {
           status: {
             type: 'string',
-            enum: ['todo', 'doing', 'blocked', 'done'],
+            enum: ['todo', 'in-progress', 'in-review', 'blocked', 'done'],
             description: 'Optional. Restrict the answer to one status.'
           }
         },
@@ -170,11 +171,12 @@ export function realtimeReadTools(): ReturnType<typeof tool>[] {
           const list = Array.isArray(obj(raw).tasks) ? (obj(raw).tasks as unknown[]) : [];
           if (!list.length) return 'The task board is empty.';
           const tasks = list.map(obj);
-          const by = (s: string): Record<string, unknown>[] => tasks.filter((t) => str(t.status) === s);
-          const counts = `${plural(by('todo').length, 'to do')}, ${by('doing').length} in progress, ${plural(
-            by('blocked').length,
-            'blocked'
-          )}, and ${by('done').length} done`;
+          // Match on the normalized status: a card still saying "doing" belongs
+          // in the in-progress count, not missing from every count.
+          const by = (s: string): Record<string, unknown>[] =>
+            tasks.filter((t) => normalizeStatus(t.status) === normalizeStatus(s));
+          const counts = `${plural(by('todo').length, 'to do')}, ${by('in-progress').length} in progress, ${
+            by('in-review').length} in review, ${plural(by('blocked').length, 'blocked')}, and ${by('done').length} done`;
           const describe = (t: Record<string, unknown>): string => {
             const who = str(t.assignee);
             return `"${clip(str(t.title) || str(t.id) || 'untitled', 90)}"${who ? ` (${who})` : ''}`;
@@ -184,10 +186,12 @@ export function realtimeReadTools(): ReturnType<typeof tool>[] {
             if (!sel.length) return `Nothing is ${filter} right now. Overall: ${counts}.`;
             return `${plural(sel.length, 'task')} ${filter}: ${sel.slice(0, 12).map(describe).join('; ')}.`;
           }
-          const doing = by('doing');
+          const doing = by('in-progress');
+          const review = by('in-review');
           const blocked = by('blocked');
           const detail = [
             doing.length ? `In progress: ${doing.slice(0, 8).map(describe).join('; ')}.` : '',
+            review.length ? `In review: ${review.slice(0, 8).map(describe).join('; ')}.` : '',
             blocked.length ? `Blocked: ${blocked.slice(0, 8).map(describe).join('; ')}.` : ''
           ]
             .filter(Boolean)
@@ -588,7 +592,7 @@ export function realtimeReadTools(): ReturnType<typeof tool>[] {
               breaker: str(a.breaker) && str(a.breaker) !== 'healthy' ? str(a.breaker) : undefined,
               inbox: typeof a.inboxBacklog === 'number' && a.inboxBacklog > 0 ? a.inboxBacklog : undefined
             }));
-          const doing = tasks.filter((t) => str(t.status) === 'doing').map((t) => ({ title: str(t.title), owner: str(t.assignee) || undefined }));
+          const doing = tasks.filter((t) => normalizeStatus(t.status) === 'in-progress').map((t) => ({ title: str(t.title), owner: str(t.assignee) || undefined }));
           const blocked = tasks.filter((t) => str(t.status) === 'blocked').map((t) => ({ title: str(t.title), owner: str(t.assignee) || undefined }));
           const summary = `${plural(rows.length, 'agent')} on the floor, ${doing.length} in progress, ${blocked.length} blocked.`;
           // Flagged JSON per the Realtime prompting guidance: precise fields the
@@ -642,7 +646,7 @@ export async function realtimeSessionSummary(): Promise<string> {
       return bits.join(', ');
     });
     const list = Array.isArray(obj(tasksRaw).tasks) ? (obj(tasksRaw).tasks as unknown[]).map(obj) : [];
-    const doing = list.filter((t) => str(t.status) === 'doing');
+    const doing = list.filter((t) => normalizeStatus(t.status) === 'in-progress');
     const blocked = list.filter((t) => str(t.status) === 'blocked');
     const taskLine = [
       doing.length

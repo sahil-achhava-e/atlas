@@ -70,6 +70,7 @@ import { IntegrationBroker } from './integrationBroker';
 import * as integrations from './integrations';
 import { validateBaseUrl, buildAuthHeaders, resolveUpstreamUrl, secretRefFor, INTEGRATION_TEMPLATES } from '../shared/integrations';
 import { RosterStore, type RosterSave } from './roster';
+import { cleanCode, defaultCode } from '../shared/cardId';
 import { buildWorkerLaunch } from './workerLaunch';
 import { ControlRegistry } from './control';
 import { WorkerWakeWatchdog, type WorkerWakeFacts } from './workerWake';
@@ -461,7 +462,11 @@ function floorHappenings(): string[] {
     for (const task of (ledger.tasks ?? []).slice(-8)) {
       const owner = task.assignee ? ` — ${task.assignee}` : ' — nobody';
       if (task.status === 'blocked') out.push(`"${task.title}" is blocked waiting on the human${owner}`);
-      else if (task.status === 'doing') out.push(`"${task.title}" is in progress${owner}`);
+      else if (task.status === 'in-progress') out.push(`"${task.title}" is in progress${owner}`);
+      else if (task.status === 'in-review') {
+        const who = task.reviewer ? ` — ${task.reviewer} is reviewing it` : ' — nobody is reviewing it yet';
+        out.push(`"${task.title}" is waiting on a review${who}`);
+      }
       else if (task.status === 'todo') out.push(`"${task.title}" is queued${owner}`);
       if (!task.description) out.push(`the card "${task.title}" has no description`);
     }
@@ -1560,6 +1565,14 @@ function slackReplyScriptPath(): string {
   return app.isPackaged
     ? join(process.resourcesPath, 'md-slack-reply.cjs')
     : join(app.getAppPath(), 'resources', 'md-slack-reply.cjs');
+}
+
+/** Absolute path to the bundled `open-card.cjs` — the allocator every agent
+ *  calls to open a card. Same packaged/dev resolution as the Slack helper. */
+function openCardScriptPath(): string {
+  return app.isPackaged
+    ? join(process.resourcesPath, 'open-card.cjs')
+    : join(app.getAppPath(), 'resources', 'open-card.cjs');
 }
 
 /** W3 — the bundled read-only `skills/` source dir copied into each agent's
@@ -3468,6 +3481,7 @@ ipcMain.handle('config:update', (_evt, patch: Partial<HarnessConfig>) => {
     const before = hive.projects();
     const after = next.registeredRepos ?? [];
     hive.setProjects(after);
+    hive.setProjectCodes(projectCodeMap());
     if (hive.enabled() && before.join('\u0000') !== after.join('\u0000')) {
       try {
         hive.send({
@@ -5623,6 +5637,51 @@ function publishEnvironment(): void {
 /** Start every hive-bound background service against the current harnessHome.
  *  Called on boot, and again to recover in place if a folder-change copy fails
  *  (config:changeHome tears these down before copying). No-op without a home. */
+/**
+ * Card-id code for every registered project: what the human set in Settings,
+ * with a folder-derived fallback so a project is never without one.
+ *
+ * A code claimed by an earlier project wins — two projects on one number line
+ * would hand out the same id twice, which the ledger resolves by merging two
+ * different cards into one.
+ */
+function projectCodeMap(): Record<string, string> {
+  const cfg = readConfig();
+  const set = cfg.projectCodes ?? {};
+  const out: Record<string, string> = {};
+  const used = new Set<string>();
+  // Explicit codes first, so a fallback can never squat on a chosen one.
+  for (const path of cfg.registeredRepos ?? []) {
+    const code = cleanCode(set[path]);
+    if (code && !used.has(code)) { out[path] = code; used.add(code); }
+  }
+  for (const path of cfg.registeredRepos ?? []) {
+    if (out[path]) continue;
+    let code = defaultCode(path);
+    for (let n = 2; used.has(code) && n < 100; n++) code = `${defaultCode(path).slice(0, 10)}${n}`;
+    if (!used.has(code)) { out[path] = code; used.add(code); }
+  }
+  return out;
+}
+
+/** The code a card belongs to, from whoever holds it: the agent's project on
+ *  the roster, mapped through the code table. Used by the migration to renumber
+ *  a legacy id into the right project's number line. */
+function cardCodeForAgent(agentId: string): string | null {
+  const codes = projectCodeMap();
+  const snap = roster.read();
+  const list = Array.isArray(snap?.agents) ? snap.agents : [];
+  const agent = list.find((a) => (a as { id?: unknown })?.id === agentId) as
+    { cwd?: unknown; project?: unknown } | undefined;
+  const cwd = typeof agent?.cwd === 'string' ? agent.cwd : '';
+  const project = typeof agent?.project === 'string' ? agent.project : '';
+  for (const [path, code] of Object.entries(codes)) {
+    if (project && (path.endsWith(`/${project}`) || path === project)) return code;
+    if (cwd && (cwd === path || cwd.startsWith(`${path}/`))) return code;
+  }
+  return null;
+}
+
 function bootstrapHiveServices(): void {
   if (!hive.enabled()) return;
   hive.ensureHive();
@@ -5633,6 +5692,16 @@ function bootstrapHiveServices(): void {
   // The repositories this crew exists for. Mirrored like the flag above, so the
   // prompt builder can name them without hive.ts importing the config module.
   hive.setProjects(readConfig().registeredRepos ?? []);
+  // Card ids: the per-project codes and the helper that hands them out. Both
+  // reach the agents only through the prompt, so they are set before any spawn.
+  hive.setProjectCodes(projectCodeMap());
+  hive.setCardHelper(openCardScriptPath());
+  // Bring an older board up to the five columns and the TASK-<CODE>-<n> ids.
+  // Runs at most once per workspace; see hive.migrateBoard().
+  try {
+    const moved = hive.migrateBoard(cardCodeForAgent);
+    if (moved) console.log(`[hive] board migrated — ${moved} card(s) renumbered`);
+  } catch (e) { console.error('[hive] board migration:', e); }
   // The human's own skills for the crew, from ~/Atlas/skills into the one
   // directory every agent reads. Before publishEnvironment, so the list the
   // agents are given already includes them.

@@ -82,6 +82,8 @@ export interface HarnessConfig {
    *  Mirrors src/main/config.ts. */
   recentHives?: string[];
   registeredRepos: string[];
+  /** Card-id prefix per project path: { "/…/epicxp-events": "EVENTS" }. */
+  projectCodes?: Record<string, string>;
   autoMode: boolean;
   /** May the orchestrator ("Michael") spin up agents on its own? Default FALSE,
    *  so an absent value reads as off. Mirrors src/main/config.ts. */

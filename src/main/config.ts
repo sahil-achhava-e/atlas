@@ -1,5 +1,6 @@
 import { app } from 'electron';
 import Database from 'better-sqlite3';
+import { cleanCode } from '../shared/cardId';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
@@ -189,6 +190,11 @@ export interface HarnessConfig {
   recentHives?: string[];
   /** Folders the user registered during onboarding (used as quick-picks). */
   registeredRepos: string[];
+  /** Card-id prefix per registered project, keyed by absolute path:
+   *  `{ "/Users/me/Desktop/epicxp-events": "EVENTS" }` → `TASK-EVENTS-1`.
+   *  A project with no entry falls back to a code derived from its folder name
+   *  (see shared/cardId.ts), so the board is never without ids. */
+  projectCodes?: Record<string, string>;
   /** Skill names switched OFF in the Skills tab. Stored by name because that is
    *  what `Skill(<name>)` deny rules match and what the CLI calls the skill —
    *  a path would break the moment a skill moved scope. */
@@ -438,6 +444,7 @@ const DEFAULTS: HarnessConfig = {
   harnessHome: null,
   recentHives: [],
   registeredRepos: [],
+  projectCodes: {},
   autoMode: true,
   orchestratorMaySpawn: false,
   defaultCommand: 'claude',
@@ -774,6 +781,21 @@ export function writeConfig(patch: Partial<HarnessConfig>): HarnessConfig {
     next.disabledSkills = [...new Set(
       patch.disabledSkills.filter((n): n is string => typeof n === 'string' && !!n.trim()).map((n) => n.trim())
     )];
+  }
+  // Card-id codes. Cleaned (uppercase, A-Z0-9, 2-12 chars) and de-duplicated:
+  // two projects sharing a code would share one number line, so a clash keeps
+  // the entry that came first and drops the later one.
+  if (patch.projectCodes && typeof patch.projectCodes === 'object') {
+    const used = new Set<string>();
+    const out: Record<string, string> = {};
+    for (const [path, raw] of Object.entries(patch.projectCodes)) {
+      const code = cleanCode(raw);
+      const dir = expandTilde(path);
+      if (!code || !dir || used.has(code)) continue;
+      used.add(code);
+      out[dir] = code;
+    }
+    next.projectCodes = out;
   }
   if (Array.isArray(patch.registeredRepos)) {
     const seen = new Set<string>();

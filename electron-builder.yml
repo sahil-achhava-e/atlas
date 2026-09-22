@@ -61,6 +61,10 @@ files:
 extraResources:
   - from: resources/md-slack-reply.cjs
     to: md-slack-reply.cjs
+  # The card-id allocator. Agents run `node <resources>/open-card.cjs` to open a
+  # card, so it has to sit outside the asar like the helpers above.
+  - from: resources/open-card.cjs
+    to: open-card.cjs
   # Knowledge Graph agent CLI + its pure-JS core. Agents invoke `node
   # <resources>/kg.cjs` out-of-process; kg-core.cjs ships beside it so the CLI's
   # `require('./kg-core.cjs')` resolves outside the asar.

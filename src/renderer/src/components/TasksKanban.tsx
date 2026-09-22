@@ -12,6 +12,7 @@ import { SpritePortrait } from './SpritePortrait';
 import { MarkdownPreview } from '@/markdown/MarkdownPreview';
 import { useRtl } from '@/i18n/useDirection';
 import { getPref, setPref } from '../store/prefs';
+import { normalizeStatus, type TaskStatus } from '@shared/taskStatus';
 
 /** A card on the task kanban. Mirrors HiveTask in the main/preload process —
  *  re-declared locally so the renderer doesn't reach into the preload package
@@ -40,12 +41,17 @@ export interface HumanQA {
   dismissedAt?: string;
 }
 
+export type { TaskStatus };
+
 export interface HiveTask {
   id: string;
   title: string;
   description?: string;
   assignee?: string;
-  status: 'todo' | 'doing' | 'blocked' | 'done';
+  /** Set by the lead when the card goes to review. The engineer stays in
+   *  `assignee`, so a done card still says who built it. */
+  reviewer?: string;
+  status: TaskStatus;
   dependsOn: string[];
   priority: number;
   createdAt: string;
@@ -75,10 +81,11 @@ type Status = HiveTask['status'];
 const VIEW_KEY = 'cth.tasks.view';
 
 const COLUMNS: { key: Status; labelKey: string; accent: string }[] = [
-  { key: 'todo',    labelKey: 'kanban.colTodo',    accent: 'var(--cth-sky)' },
-  { key: 'doing',   labelKey: 'kanban.colDoing',   accent: 'var(--cth-lemon)' },
-  { key: 'blocked', labelKey: 'kanban.colBlocked', accent: 'var(--cth-coral)' },
-  { key: 'done',    labelKey: 'kanban.colDone',    accent: 'var(--cth-mint)' }
+  { key: 'todo',        labelKey: 'kanban.colTodo',       accent: 'var(--cth-sky)' },
+  { key: 'in-progress', labelKey: 'kanban.colInProgress', accent: 'var(--cth-lemon)' },
+  { key: 'in-review',   labelKey: 'kanban.colInReview',   accent: 'var(--cth-lilac)' },
+  { key: 'blocked',     labelKey: 'kanban.colBlocked',    accent: 'var(--cth-coral)' },
+  { key: 'done',        labelKey: 'kanban.colDone',       accent: 'var(--cth-mint)' }
 ];
 
 const POLL_MS = 5000;
@@ -110,8 +117,10 @@ export function parseTasks(raw: unknown): HiveTask[] {
       title: typeof t.title === 'string' ? t.title : '(untitled)',
       description: typeof t.description === 'string' ? t.description : undefined,
       assignee: typeof t.assignee === 'string' ? t.assignee : undefined,
-      status: (['todo', 'doing', 'blocked', 'done'] as const).includes(t.status as Status)
-        ? (t.status as Status) : 'todo',
+      reviewer: typeof t.reviewer === 'string' ? t.reviewer : undefined,
+      // Never a whitelist test. Agents write this file by hand and the old word
+      // for in-progress is "doing" — see shared/taskStatus.ts.
+      status: normalizeStatus(t.status),
       dependsOn: Array.isArray(t.dependsOn) ? t.dependsOn.filter((d): d is string => typeof d === 'string') : [],
       priority: typeof t.priority === 'number' ? t.priority : 3,
       createdAt: typeof t.createdAt === 'string' ? t.createdAt : new Date().toISOString(),
@@ -301,6 +310,7 @@ export function TasksKanban() {
                       accent={col.accent}
                       assigneeName={nameFor(x.assignee)}
                       assigneeCharacter={characterFor(x.assignee)}
+                      reviewerName={nameFor(x.reviewer)}
                       onOpen={() => openTaskDetail(x.id)}
                       onDismiss={() => dismissTask(x.id)}
                     />
@@ -354,6 +364,7 @@ export function TasksKanban() {
                   accent={col.accent}
                   assigneeName={nameFor(x.assignee)}
                   assigneeCharacter={characterFor(x.assignee)}
+                  reviewerName={nameFor(x.reviewer)}
                   onOpen={() => openTaskDetail(x.id)}
                   onDismiss={() => dismissTask(x.id)}
                 />
@@ -394,12 +405,14 @@ export function TasksKanban() {
 // lives in the detail view a click away: a kanban card can carry little more
 // than a title.
 
-function TaskCard({ task, accent, assigneeName, assigneeCharacter, onOpen, onDismiss }: {
+function TaskCard({ task, accent, assigneeName, assigneeCharacter, reviewerName, onOpen, onDismiss }: {
   task: HiveTask;
   accent: string;
   assigneeName?: string;
   /** The agent's sprite, so a card shows the same face as the floor. */
   assigneeCharacter?: string;
+  /** Who is reading the PR, shown only while the card is in review. */
+  reviewerName?: string;
   onOpen: () => void;
   onDismiss: () => void;
 }) {
@@ -489,6 +502,18 @@ function TaskCard({ task, accent, assigneeName, assigneeCharacter, onOpen, onDis
             <span style={{
               fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-400)'
             }}>{t('kanban.unassignedShort')}</span>
+          )}
+          {/* Who has it stays the engineer; the reviewer rides alongside, so a
+              card in review says both without the work changing hands. */}
+          {task.status === 'in-review' && (
+            <span style={{
+              fontFamily: 'var(--cth-font-ui)', fontSize: 11.5, color: 'var(--cth-ink-500)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+            }}>
+              {reviewerName
+                ? t('kanban.reviewedBy', { name: reviewerName })
+                : t('kanban.noReviewerYet')}
+            </span>
           )}
         </span>
       </button>

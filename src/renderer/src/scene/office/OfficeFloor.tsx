@@ -27,6 +27,7 @@ function glowFor(charName: string, member?: { shirt: string }): number {
 }
 import { pickSoloLine, pickExchange, pickAboutPerson, type BreakSpot } from './cafeteriaLines';
 import { isLaughBeat } from '@shared/gossipPool';
+import { normalizeStatus } from '@shared/taskStatus';
 import { colors, accentNumber, DEFAULT_ACCENT_HEX } from '@/design/tokens';
 import { loadTheme, resolveThemeMap, themeTilesetUrls } from './themeLoader';
 import {
@@ -1512,7 +1513,7 @@ export function OfficeFloor() {
       // between the two doorways spans tiles 6..12 (112px) — center it.
       const BOARD_CENTER_PAD = 15;
       const NOTE_COLORS: Record<string, number> = theme.palette.noteColors;
-      interface BoardTask { status: string; assignee?: string }
+      interface BoardTask { status: string; assignee?: string; reviewer?: string }
       const tsB = mapRenderer.tileSize;
       const boardG = new Graphics();
       boardG.eventMode = 'static';
@@ -1559,28 +1560,32 @@ export function OfficeFloor() {
         const blocked = tasks.filter((t) => t.status === 'blocked').map(() => 'blocked');
         const todoNotes: string[] = tasks.filter((t) => t.status === 'todo').map(() => 'todo');
         let done = 0;
-        // doing → taken off the wall: pin it to the assignee's desk. Without a
-        // resolvable desk (no assignee / not on the floor) it falls back onto
-        // the TODO board as a blue note, so nothing ever silently disappears.
+        // in-progress → taken off the wall: pin it to the desk of whoever is
+        // holding it. For a card in review that is the REVIEWER, because the
+        // engineer's part ended when the PR went up — a review note sitting on
+        // the engineer's desk reads as work they still owe. Without a resolvable
+        // desk (nobody named / not on the floor) it falls back onto the TODO
+        // board, so nothing ever silently disappears.
         for (const t of tasks) {
           if (t.status === 'done') { done++; continue; }
-          if (t.status !== 'doing') continue;
-          const rt = t.assignee ? runtimes.get(t.assignee) : undefined;
-          if (!rt) { todoNotes.push('doing'); continue; }
+          if (t.status !== 'in-progress' && t.status !== 'in-review') continue;
+          const holder = t.status === 'in-review' ? (t.reviewer ?? t.assignee) : t.assignee;
+          const rt = holder ? runtimes.get(holder) : undefined;
+          if (!rt) { todoNotes.push(t.status); continue; }
           const desk = rt.character.getDeskTile();
-          let g = deskNoteG.get(t.assignee!);
+          let g = deskNoteG.get(holder!);
           if (!g) {
             g = new Graphics();
             g.eventMode = 'none';
             g.position.set((desk.x - 1) * tsB + 3, (desk.y - 1) * tsB + 8);
             g.zIndex = desk.y * tsB - 1;
             charLayer.addChild(g);
-            deskNoteG.set(t.assignee!, g);
+            deskNoteG.set(holder!, g);
           }
           // stack multiple taken notes side by side on the same desk
           const idx = (g as any).__count ?? 0;
           (g as any).__count = idx + 1;
-          g.rect(idx * 7, -(idx % 2), 5, 4).fill(NOTE_COLORS.doing);
+          g.rect(idx * 7, -(idx % 2), 5, 4).fill(NOTE_COLORS[t.status] ?? NOTE_COLORS['in-progress']);
           g.rect(idx * 7 + 2, -(idx % 2), 1, 1).fill(0x4a3b52);
         }
         drawCork(0, NOTE_COLORS.blocked, blocked);   // left: what's burning
@@ -1674,7 +1679,7 @@ export function OfficeFloor() {
       // simply redraw — animation is sugar, the ledger stays the truth.
       interface LedgerTask extends BoardTask { id: string }
       interface BoardMove {
-        kind: 'pin' | 'take' | 'archive';
+        kind: 'pin' | 'take' | 'archive' | 'handover';
         taskId: string;
         actorId: string;
         /** What this card should look like in visualTasks once the move lands. */
@@ -1724,7 +1729,7 @@ export function OfficeFloor() {
         if (!rt) { finishMove(mv, undefined); return; }
         busyActors.add(mv.actorId);
         const c = rt.character;
-        if (mv.kind === 'archive') {
+        if (mv.kind === 'archive' || mv.kind === 'handover') {
           // picks the note up at its desk before walking — in hand, off the desk
           attachCarriedNote(mv.actorId, mv.carryColor);
           visualTasks.set(mv.taskId, { status: '__carried__' });
@@ -1736,7 +1741,16 @@ export function OfficeFloor() {
           if (mv.kind === 'take') attachCarriedNote(mv.actorId, mv.carryColor);
           // brief acting beat, then the boards update under their hands
           setTimeout(() => {
-            if (mv.kind === 'take') {
+            if (mv.kind === 'handover') {
+              // The note is now on the reviewer's desk; walk home empty-handed.
+              const rt2 = runtimes.get(mv.actorId);
+              const g = carriedNotes.get(mv.actorId);
+              if (g) { g.parent?.removeChild(g); g.destroy(); carriedNotes.delete(mv.actorId); }
+              visualTasks.set(mv.taskId, mv.after);
+              redrawVisual();
+              if (!rt2) { finishMove(mv, undefined); return; }
+              rt2.character.walkToAndThen(rt2.character.getDeskTile(), () => finishMove(mv, rt2));
+            } else if (mv.kind === 'take') {
               // carry it home: the desk note appears on arrival via finishMove
               const rt2 = runtimes.get(mv.actorId);
               if (!rt2) { finishMove(mv, undefined); return; }
@@ -1780,7 +1794,7 @@ export function OfficeFloor() {
             const g = carriedNotes.get(id);
             if (g) { g.parent?.removeChild(g); g.destroy(); carriedNotes.delete(id); }
           }
-          visualTasks = new Map(lastLedger.map((t) => [t.id, { status: t.status, assignee: t.assignee }]));
+          visualTasks = new Map(lastLedger.map((t) => [t.id, { status: t.status, assignee: t.assignee, reviewer: t.reviewer }]));
           redrawVisual();
         }
       };
@@ -1797,12 +1811,13 @@ export function OfficeFloor() {
       let firstPoll = true;
       const pollTaskBoard = async (): Promise<void> => {
         try {
-          const raw = await window.cth.hiveTasks() as { tasks?: Array<{ id?: string; status?: string; assignee?: string; humanQA?: Array<{ q?: string; a?: string }> }> } | null;
+          const raw = await window.cth.hiveTasks() as { tasks?: Array<{ id?: string; status?: string; assignee?: string; reviewer?: string; humanQA?: Array<{ q?: string; a?: string }> }> } | null;
           const arr = (raw && Array.isArray(raw.tasks)) ? raw.tasks : [];
           const ledger: LedgerTask[] = arr.map((t, i) => ({
             id: typeof t?.id === 'string' && t.id ? t.id : `idx-${i}`,
-            status: String(t?.status ?? 'todo'),
-            assignee: typeof t?.assignee === 'string' && t.assignee ? t.assignee : undefined
+            status: normalizeStatus(t?.status),
+            assignee: typeof t?.assignee === 'string' && t.assignee ? t.assignee : undefined,
+            reviewer: typeof t?.reviewer === 'string' && t.reviewer ? t.reviewer : undefined
           }));
           // tasks waiting on the HUMAN feed the ASK ME board's note count
           const newAsk = arr.filter((t) =>
@@ -1817,7 +1832,7 @@ export function OfficeFloor() {
           if (firstPoll) {
             // cold start: no theatre, just show the truth
             firstPoll = false;
-            visualTasks = new Map(ledger.map((t) => [t.id, { status: t.status, assignee: t.assignee }]));
+            visualTasks = new Map(ledger.map((t) => [t.id, { status: t.status, assignee: t.assignee, reviewer: t.reviewer }]));
             redrawVisual();
             lastLedger = ledger;
             return;
@@ -1827,15 +1842,23 @@ export function OfficeFloor() {
           for (const t of ledger) {
             const old = prev.get(t.id);
             const oldS = old?.status;
-            if (oldS === t.status && old?.assignee === t.assignee) continue;
-            const after: BoardTask = { status: t.status, assignee: t.assignee };
+            if (oldS === t.status && old?.assignee === t.assignee && old?.reviewer === t.reviewer) continue;
+            const after: BoardTask = { status: t.status, assignee: t.assignee, reviewer: t.reviewer };
             let mv: BoardMove | null = null;
             if (!old && (t.status === 'todo' || t.status === 'blocked')) {
               const actor = actorFor(undefined, true);
               if (actor) mv = { kind: 'pin', taskId: t.id, actorId: actor, after, carryColor: NOTE_COLORS[t.status], stand: t.status === 'blocked' ? PIN_STAND : TAKE_STAND, thought: 'pinning a new task 📌' };
-            } else if (oldS !== 'doing' && t.status === 'doing') {
+            } else if (oldS !== 'in-progress' && t.status === 'in-progress') {
               const actor = actorFor(t.assignee, false);
-              if (actor && actor === t.assignee) mv = { kind: 'take', taskId: t.id, actorId: actor, after, carryColor: NOTE_COLORS.doing, stand: TAKE_STAND, thought: 'grabbing my task' };
+              if (actor && actor === t.assignee) mv = { kind: 'take', taskId: t.id, actorId: actor, after, carryColor: NOTE_COLORS['in-progress'], stand: TAKE_STAND, thought: 'grabbing my task' };
+            } else if (t.status === 'in-review' && t.reviewer && t.reviewer !== old?.reviewer
+                       && t.assignee && t.assignee !== t.reviewer
+                       && runtimes.has(t.assignee) && runtimes.has(t.reviewer)) {
+              // The lead named a reviewer: the engineer walks the note over to
+              // their desk. Until one is named the card just turns lilac on the
+              // engineer's own desk, which is exactly what it means.
+              const desk = runtimes.get(t.reviewer)!.character.getDeskTile();
+              mv = { kind: 'handover', taskId: t.id, actorId: t.assignee, after, carryColor: NOTE_COLORS['in-review'], stand: desk, thought: 'over to you 🔍' };
             } else if (t.status === 'done' && oldS !== 'done') {
               const actor = actorFor(old?.assignee ?? t.assignee, false);
               if (actor) mv = { kind: 'archive', taskId: t.id, actorId: actor, after, carryColor: NOTE_COLORS.done, stand: ARCHIVE_STAND, thought: 'filing it as done ✔' };

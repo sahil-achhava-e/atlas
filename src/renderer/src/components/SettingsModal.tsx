@@ -31,6 +31,7 @@ import { RealtimeDevicePicker } from '@/realtime/DevicePicker';
 import { isComposingKey } from '@shared/imeGuard';
 import { LANGUAGES, setLanguage } from '@/i18n';
 import { useNativeDialog } from '@/hooks/useNativeDialog';
+import { cleanCode, defaultCode } from '@shared/cardId';
 
 export interface SettingsModalProps {
   config: HarnessConfig;
@@ -222,6 +223,28 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
   const dirty = Object.keys(pending).length > 0 || autoCompactPending !== null;
   const stage = (patch: Partial<HarnessConfig>): void =>
     setPending((prev) => ({ ...prev, ...patch }));
+
+  // Card-id codes, typed per project. Staged on blur rather than per keystroke:
+  // a half-typed "EV" is a legal code, and saving it would renumber nothing but
+  // would put the wrong prefix on the next card opened while you were typing.
+  const [codeDraft, setCodeDraft] = useState<Record<string, string>>({});
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const saveProjectCode = async (repo: string): Promise<void> => {
+    const typed = codeDraft[repo];
+    if (typed === undefined) return;
+    const code = cleanCode(typed);
+    const taken = Object.entries(config.projectCodes ?? {})
+      .some(([path, c]) => path !== repo && c === code);
+    if (!code || taken) {
+      // Refused: drop the draft so the field snaps back to what is stored.
+      setCodeError(repo);
+      setCodeDraft((d) => { const next = { ...d }; delete next[repo]; return next; });
+      return;
+    }
+    setCodeError(null);
+    setCodeDraft((d) => { const next = { ...d }; delete next[repo]; return next; });
+    stage({ projectCodes: { ...(config.projectCodes ?? {}), [repo]: code } } as Partial<HarnessConfig>);
+  };
 
   const [keepAwake, setKeepAwake] = useState<boolean>(cfgX.strongKeepalive === true);
   const toggleKeepAwake = async () => {
@@ -992,6 +1015,51 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
                             upstream project, not this fork. No telemetry row
                             either — this build ships without an analytics key,
                             so the switch governed nothing. */}
+                      </div>
+                      )}
+
+                      {/* CARD IDS. Every card is TASK-<CODE>-<n>, and the code
+                          is the only part a person chooses. Without this the
+                          fallback is the folder name in capitals, which reads
+                          TASK-EPICXPEVENTS-14 — legible, but nobody says that
+                          out loud. */}
+                      {!simpleMode && (config.registeredRepos ?? []).length > 0 && (
+                      <div style={groupCard}>
+                        <div style={sectionHead}>
+                          {t('settings.general.cardCodes')}
+                        </div>
+                        <span style={{ fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-500)' }}>
+                          {t('settings.general.cardCodesDesc')}
+                        </span>
+                        {(config.registeredRepos ?? []).map((repo) => (
+                          <div key={repo} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                            <span style={{
+                              fontSize: 12.5, lineHeight: '18px', color: 'var(--cth-ink-700)',
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: 'ltr'
+                            }} title={repo}>{repo.split('/').pop()}</span>
+                            <input
+                              value={codeDraft[repo] ?? (config.projectCodes ?? {})[repo] ?? defaultCode(repo)}
+                              onChange={(e) => setCodeDraft((d) => ({ ...d, [repo]: e.target.value.toUpperCase().slice(0, 12) }))}
+                              onBlur={() => { void saveProjectCode(repo); }}
+                              onKeyDown={(e) => { if (e.key === 'Enter' && !isComposingKey(e)) (e.target as HTMLInputElement).blur(); }}
+                              spellCheck={false}
+                              aria-label={t('settings.general.cardCodes')}
+                              style={{
+                                width: 140, height: 30, flexShrink: 0, textAlign: 'center',
+                                fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, fontWeight: 600,
+                                letterSpacing: '0.04em', direction: 'ltr',
+                                border: 'none', borderRadius: 'var(--cth-radius-input)',
+                                background: 'var(--cth-cream-100)', color: 'var(--cth-ink-900)',
+                                boxShadow: `inset 0 0 0 1.5px ${codeError === repo ? 'var(--cth-coral)' : 'var(--cth-ink-100)'}`
+                              }}
+                            />
+                          </div>
+                        ))}
+                        <span style={{ fontSize: 12, lineHeight: '17px', color: codeError ? 'var(--cth-coral)' : 'var(--cth-ink-500)' }}>
+                          {codeError ? t('settings.general.cardCodeRejected') : t('settings.general.cardCodeExample', {
+                            code: (config.projectCodes ?? {})[(config.registeredRepos ?? [])[0]] ?? defaultCode((config.registeredRepos ?? [])[0] ?? '')
+                          })}
+                        </span>
                       </div>
                       )}
 

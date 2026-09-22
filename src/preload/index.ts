@@ -179,7 +179,10 @@ export interface HiveTask {
   title: string;
   description?: string;
   assignee?: string;
-  status: 'todo' | 'doing' | 'blocked' | 'done';
+  /** Who reviews the PR, set by the lead when the card enters `in-review`.
+   *  `assignee` stays the engineer who did the work. */
+  reviewer?: string;
+  status: 'todo' | 'in-progress' | 'in-review' | 'blocked' | 'done';
   dependsOn: string[];
   priority: number;
   createdAt: string;

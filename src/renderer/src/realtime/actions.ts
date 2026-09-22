@@ -136,9 +136,10 @@ export function realtimeActionTools(): ReturnType<typeof tool>[] {
         type: 'object',
         properties: {
           taskId: { type: 'string', description: 'Task id or title to update.' },
-          status: { type: 'string', enum: ['todo', 'doing', 'blocked', 'done'], description: 'Optional new status.' },
+          status: { type: 'string', enum: ['todo', 'in-progress', 'in-review', 'blocked', 'done'], description: 'Optional new status.' },
           result: { type: 'string', description: 'Optional outcome note.' },
-          assignee: { type: 'string', description: 'Optional new owner.' }
+          assignee: { type: 'string', description: 'Optional new owner.' },
+          reviewer: { type: 'string', description: 'Optional reviewer, for a card in review.' }
         },
         required: ['taskId'],
         additionalProperties: false

@@ -38,6 +38,7 @@ import { ipcMain } from 'electron';
 import type { HiveMessage, HiveTask, Registry } from './hive';
 import type { ScheduledMission } from './config';
 import { inferAgentProvider } from '../shared/agentProvider';
+import { matchStatus } from '../shared/taskStatus';
 import { clearCommandForProvider } from '../shared/providerAutomation';
 import { resolveGodName } from '../shared/godIdentity';
 
@@ -445,13 +446,16 @@ function execUpdateTask(deps: RealtimeActionDeps, a: Record<string, unknown>): A
     return { ok: false, spoken: `Which one — ${ambiguous.map((c) => `"${c.title}"`).join(', or ')}?` };
   }
   if (!card) return { ok: false, spoken: `I couldn't find a task matching "${ref}".` };
-  const status = str(a.status);
-  const valid = ['todo', 'doing', 'blocked', 'done'];
-  if (status && !valid.includes(status)) return { ok: false, spoken: `"${status}" isn't a valid status.` };
+  const said = str(a.status);
+  // Spoken, so "in review", "code review" and the old "doing" all arrive here.
+  // Match rather than whitelist; only refuse what means nothing at all.
+  const status = said ? matchStatus(said) : '';
+  if (said && !status) return { ok: false, spoken: `"${said}" isn't a valid status.` };
   const patch: Partial<Omit<HiveTask, 'id'>> = {};
   if (status) patch.status = status as HiveTask['status'];
   if (str(a.result)) patch.result = str(a.result);
   if (str(a.assignee)) patch.assignee = str(a.assignee);
+  if (str(a.reviewer)) patch.reviewer = str(a.reviewer);
   if (!deps.hivePatchTask(card.id, patch)) {
     return { ok: false, spoken: `I couldn't update "${card.title}" right now.` };
   }

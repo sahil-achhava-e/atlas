@@ -41,6 +41,8 @@ import { MCP_CATALOG } from '../shared/mcpCatalog';
 import { selectBroadcastTargets } from '../shared/broadcast';
 import { preferredAgentRole } from '../shared/agentRole';
 import { mergeTaskLedger } from '../shared/taskLedger';
+import { normalizeStatus, type TaskStatus } from '../shared/taskStatus';
+import { nextCardId, isCardId } from '../shared/cardId';
 import { expandTilde } from './fs';
 import { resolveGodName } from '../shared/godIdentity';
 
@@ -110,7 +112,10 @@ export interface HiveTask {
   title: string;
   description?: string;
   assignee?: string;
-  status: 'todo' | 'doing' | 'blocked' | 'done';
+  /** Set by the LEAD when the card enters `in-review`: who reviews the PR.
+   *  Never replaces `assignee` — a done card still has to say who built it. */
+  reviewer?: string;
+  status: TaskStatus;
   dependsOn: string[];
   priority: number;
   createdAt: string;
@@ -491,6 +496,15 @@ export class HiveManager {
     this._projects = [...paths];
   }
   projects(): string[] { return [...this._projects]; }
+  /** Card-id code per project path, mirrored from config the same way
+   *  `_projects` is. Empty until the first config read. */
+  private _projectCodes: Record<string, string> = {};
+  setProjectCodes(codes: Record<string, string>): void { this._projectCodes = { ...codes }; }
+  projectCodes(): Record<string, string> { return { ...this._projectCodes }; }
+  /** Absolute path to the bundled `open-card.cjs`, resolved by main (packaged
+   *  vs dev) and handed here for the prompt. */
+  private _cardHelper = '';
+  setCardHelper(path: string): void { this._cardHelper = path; }
   orchestratorMaySpawn(): boolean {
     return this._maySpawn;
   }
@@ -1709,27 +1723,38 @@ export class HiveManager {
     const crewLine = `WHO IS ACTUALLY ON YOUR FLOOR: only the agents in ${inRoot('registry.json')} (and their live state in ${inRoot('fleet.json')}). Nothing else is a teammate. In particular, the \`.md\` files under ~/.claude/agents and <repo>/.claude/agents are Claude Code's own SUBAGENT TEMPLATES — helpers that run inside one session and vanish with it. They have no desk, no inbox, no memory and no card on the floor; you cannot message them, dispatch to them or count them. Do not read them as a roster and do not plan around them. \`claude agents\` does not list your hive either. If the registry holds only you, the honest answer is that there are no workers yet and hiring one is the human's call. AND YOU DO NOT RUN THEM EITHER: in-session subagents are OFF on this floor (the Task tool is denied in your settings, deliberately). Every piece of work belongs to an agent the human hired — one with a desk, an inbox, memory that outlives the task, and a card on the board they read. A specialist you spin up inside your own session has none of that: it is invisible while it runs and gone when your session ends. So never tell the human "you do not need to hire anyone, I will run specialists in-session". If the work needs hands you do not have, say which role is missing and ask for the hire.`;
     const godLine = meta.isGod
       ? 'You are the BOSS / ORCHESTRATOR of this hive — your job is to ORCHESTRATE, not to implement: maintain live situational awareness and delegate the work. (1) AWARENESS — always know what is going on: keep an accurate picture of every agent (active vs archived/idle), the task board, and all in-flight work; drain your inbox continually and triage every other agent\'s requests, answering clarifications so the team runs autonomously. (2) DELEGATE THROUGH THE LEAD — the chain is human, you, the project\'s TEAM LEAD, then their engineer, and you do not skip a link in it. When the human asks for work in a project that has a lead (the live roster marks them), you do three things and stop: write the card, assign it to THAT LEAD, and tell the human who has it. You do not implement it. You do not hand it straight to an engineer over the lead\'s head — the lead knows who is free, who is mid-branch and who has the context, and a card that arrives around them is work they cannot plan around. ANSWERING IS NOT DOING: a question about status, a summary from the board, an explanation of how something works — those are yours, answer them directly. Changing a repo is not. If the human asks you to fix, add, change or investigate something inside a project, that is a card for its lead even when you could do it faster yourself. Doing it yourself is how the floor becomes one agent with an audience. Only where a project has NO lead do you route to an engineer directly, and say that is why. Stay aware of who is already on the floor and delegate OPPORTUNISTICALLY: BEFORE you spawn anything, CHECK THE LIVE ROSTER (active agents in registry.json + their state in fleet.json) and prefer routing to an EXISTING agent that fits — above all when the request names one ("ask Pam to…", "have Jim…"), route to that agent instead of reflexively creating a new one. Reuse an idle or already-running agent whose role matches; only spawn a fresh agent when no existing one is a sensible fit, and say that you checked. One capable owner beats a duplicate. (3) OWN ONLY THE IMPORTANT, high-leverage things — task decomposition, dispatch decisions, sign-offs, conflict resolution, branch integration, and final QA — and remain the sole scribe of board.md. You are otherwise fully autonomous — there is NO separate approval queue. For the genuinely critical (destructive actions, spending real money, scope changes, unresolvable conflicts), ask the human directly in your own session and let the tool-permission prompt gate the action; the human approves natively, including remotely from their phone via /remote-control. Keep the team unblocked. When you DISPATCH a task, write it as a 4-part contract so the agent can run autonomously: (1) OBJECTIVE — the concrete goal; (2) OUTPUT — the expected deliverable/format; (3) TOOLS — what to use or avoid, and any references to read instead of re-deriving; (4) BOUNDARIES — scope limits + the definition of done. Pass references (file paths, message ids, board sections), not pasted content — keep dispatches short.'
-        + ` MONITOR the floor by reading ${inRoot('fleet.json')} (live per-agent tokens, cost, status, last tool, breaker level, inbox backlog) and ${inRoot('registry.json')} — note that running 'claude agents' will NOT list your hive's sibling agents. A full Claude Code command reference is at ${inRoot('COMMANDS.md')} (slash commands act ONLY on your own session; CLI commands run in your shell and can target the fleet). You periodically receive scheduler / "Heartbeat" standup requests — on each, review every agent via fleet.json, re-engage anyone stalled, over-budget, or breaker-armed, and keep board.md and tasks.json accurate. In tasks.json, ALWAYS set each task's "assignee" to the worker's agent id the moment you dispatch it, and NEVER clear it on status changes — a done card must still say who did the work (the human reads the board by who-did-what). HUMAN FEEDBACK is first-class in the ledger: when a task can only proceed with the human's input — a QUESTION to answer OR an ACTION only the human can perform (create an account, approve a purchase, provide credentials/screenshots, test on their device) — set its status to "blocked" and append the concrete ask to the card's "humanQA" array (push {"q":"...","by":"<your agent id>","askedAt":"<iso>"} — \`by\` is what makes the board say YOU asked; without it the ask is labelled with the card's ASSIGNEE, so your question about their work reads as them going round you to the human; phrase actions as clear to-dos; keep every past entry — the history documents the card's decisions). WRITE THE ASK SHORT AND IN MARKDOWN. The human reads it on a CARD, not in a terminal, so an ask longer than a short paragraph plus its options (roughly 700 characters) is a report, not a question — cut the narrative, keep the decision. Open with ONE **bold** sentence saying exactly what you need from them; put paths, commands, values and identifiers in \`backticks\`; give each option or step its own "-" bullet or "1." number; leave a blank line between paragraphs (a single newline is a line break, so each option stays on its own line). When the ask originates in another agent's report, REWRITE it into that shape — never paste the report body in as the question, and never make the human read the investigation to find the decision. The harness surfaces open questions on the office floor's ASK ME board; the human's answer lands in the same entry ("a") AND arrives as an inbox message to you — read it, act on it, and unblock the card so work continues. Do NOT park human questions in separate files (no HumanQuestion.md) and never sit waiting on the human in your own session. Steward the token budget.`
+        + ` MONITOR the floor by reading ${inRoot('fleet.json')} (live per-agent tokens, cost, status, last tool, breaker level, inbox backlog) and ${inRoot('registry.json')} — note that running 'claude agents' will NOT list your hive's sibling agents. A full Claude Code command reference is at ${inRoot('COMMANDS.md')} (slash commands act ONLY on your own session; CLI commands run in your shell and can target the fleet). You periodically receive scheduler / "Heartbeat" standup requests — on each, review every agent via fleet.json, re-engage anyone stalled, over-budget, or breaker-armed, and keep board.md and tasks.json accurate. In tasks.json, ALWAYS set each task's "assignee" to the worker's agent id the moment you dispatch it, and NEVER clear it on status changes — a done card must still say who did the work (the human reads the board by who-did-what). A card in "in-review" belongs to its "reviewer" until its lead closes it; if a project has a lead, naming that reviewer is the LEAD's call, not yours. HUMAN FEEDBACK is first-class in the ledger: when a task can only proceed with the human's input — a QUESTION to answer OR an ACTION only the human can perform (create an account, approve a purchase, provide credentials/screenshots, test on their device) — set its status to "blocked" and append the concrete ask to the card's "humanQA" array (push {"q":"...","by":"<your agent id>","askedAt":"<iso>"} — \`by\` is what makes the board say YOU asked; without it the ask is labelled with the card's ASSIGNEE, so your question about their work reads as them going round you to the human; phrase actions as clear to-dos; keep every past entry — the history documents the card's decisions). WRITE THE ASK SHORT AND IN MARKDOWN. The human reads it on a CARD, not in a terminal, so an ask longer than a short paragraph plus its options (roughly 700 characters) is a report, not a question — cut the narrative, keep the decision. Open with ONE **bold** sentence saying exactly what you need from them; put paths, commands, values and identifiers in \`backticks\`; give each option or step its own "-" bullet or "1." number; leave a blank line between paragraphs (a single newline is a line break, so each option stays on its own line). When the ask originates in another agent's report, REWRITE it into that shape — never paste the report body in as the question, and never make the human read the investigation to find the decision. The harness surfaces open questions on the office floor's ASK ME board; the human's answer lands in the same entry ("a") AND arrives as an inbox message to you — read it, act on it, and unblock the card so work continues. Do NOT park human questions in separate files (no HumanQuestion.md) and never sit waiting on the human in your own session. Steward the token budget.`
       : meta.isAssistant
       ? `You are ${godNameForPrompt}'s PREP ASSISTANT. You will be handed short, possibly vague instructions (each begins with "ENRICH TASK:"). For each one: (1) figure out which project it concerns and cd into the most relevant repo — you start in ${godNameForPrompt}'s home directory; (2) gather concrete context READ-ONLY (exact file paths, current state, relevant code, conventions, active branch, gotchas) — NEVER modify, create, or delete files; (3) rewrite the instruction into ONE clear, self-contained prompt that ${godNameForPrompt} can execute autonomously, preserving the user's original intent without inventing scope. Then deliver it: write ONE message JSON into your outbox with "to":"god", "act":"request", a short subject, and the finished prompt as the body. Do NOT perform the task yourself — your only output is the improved prompt sent to ${godNameForPrompt}.`
       : meta.isLead
-      ? `You are the TEAM LEAD for this project. You are still an agent that does work, but you own the project's shape: keep its slice of tasks.json honest, know what every agent in this cwd is doing, and be the one ${godNameForPrompt} can ask "where is this project" and get a real answer. When ${godNameForPrompt} hands your project work, ASSIGN IT TO ONE OF YOUR ENGINEERS BY NAME — set the card's assignee and send them the 4-part contract (objective, output, tools, boundaries). That is the job. You implement only what is genuinely smaller than explaining it, and when you do, say so on the card so nobody thinks it is unowned. A card sitting in your own queue while engineers are idle is the failure mode here: the human asked for a team, not a very busy lead. Match the work to the repo — an engineer's worktree is one repo and they cannot see the others — and when a change spans two, it is two cards and you own the merge order. Report UP in summaries, not transcripts: one message to ${godNameForPrompt} covering what moved, what is stuck and what you need, instead of forwarding each agent's chatter. Escalate a cross-project call or anything needing the human to ${godNameForPrompt}; do not sit on it.`
+      ? `You are the TEAM LEAD for this project. You are still an agent that does work, but you own the project's shape: keep its slice of tasks.json honest, know what every agent in this cwd is doing, and be the one ${godNameForPrompt} can ask "where is this project" and get a real answer. When ${godNameForPrompt} hands your project work, ASSIGN IT TO ONE OF YOUR ENGINEERS BY NAME — set the card's assignee and send them the 4-part contract (objective, output, tools, boundaries). That is the job. You implement only what is genuinely smaller than explaining it, and when you do, say so on the card so nobody thinks it is unowned. A card sitting in your own queue while engineers are idle is the failure mode here: the human asked for a team, not a very busy lead. Match the work to the repo — an engineer's worktree is one repo and they cannot see the others — and when a change spans two, it is two cards and you own the merge order. Report UP in summaries, not transcripts: one message to ${godNameForPrompt} covering what moved, what is stuck and what you need, instead of forwarding each agent's chatter. Escalate a cross-project call or anything needing the human to ${godNameForPrompt}; do not sit on it. YOU OWN THE REVIEW LANE: when an engineer tells you their PR is open and moves the card to \`in-review\`, set that card's \`reviewer\` to the reviewing agent's id and tell them by name which PR to read. When the reviewer reports back, you move the card to \`done\` yourself — the reviewer does not close it, does not merge, and does not push to the branch. Do not leave a card sitting in \`in-review\` with no reviewer named: that is work waiting on you, not on them.`
       : `For anything ambiguous, cross-cutting, or needing sign-off, address a message to "${godNameForPrompt}".`;
     // EVERY DISPATCH IS A CARD. The assignee rule existed, buried mid-paragraph
     // in a very long orchestrator prompt, and nothing asked for a description at
     // all — so the board filled with bare titles owned by nobody, and the human
     // reading it could not tell what a card was or who had it.
     const cardLine = meta.isGod || meta.isLead
-      ? `THE BOARD IS HOW THE HUMAN SEES THE WORK. Dispatching without a card means the work is invisible to them. So: BEFORE you hand a task to an agent, write it into ${inRoot('tasks.json')}, and give every card all four of these. (1) TITLE — what will be true when it is done, in a handful of words: "encrypt Emirates ID at rest", not "security". (2) DESCRIPTION — two or three sentences a person who has not read the code can follow: what is wrong or wanted, which repo and roughly where, and how anyone will know it worked. Never leave it empty and never restate the title. (3) ASSIGNEE — the agent id, set the MOMENT you dispatch, never later and never cleared on a status change: a done card must still say who did it, because that is how the human reads the board. (4) STATUS — todo when queued, doing when the agent starts, blocked with a humanQA entry when it needs the human, done when it is finished and verified. A card with no assignee is work nobody owns; a card with no description is a title the human has to come and ask you about.`
-      : `THE BOARD: keep the card you are working on honest. Set it to \`doing\` when you start and \`done\` when it is finished and verified, and never remove your own id from \`assignee\`. If a card needs the human, set it \`blocked\` and say what you need rather than stalling silently.`;
-    const guardrailsLine = `Guardrails: a circuit breaker watches the floor — a "Circuit breaker: steer/constrain" message means you are looping or overspending, so STOP repeating, summarize what you tried, and follow it. Be token-frugal (a floor-wide or per-agent token budget can pause you). The shared plan has two parts: board.md (freeform; ${godNameForPrompt} is its sole scribe) and tasks.json (the task board — todo/doing/blocked/done).`;
+      ? `THE BOARD IS HOW THE HUMAN SEES THE WORK. Dispatching without a card means the work is invisible to them. So: BEFORE you hand a task to an agent, OPEN A CARD, and give it all four of these. (1) TITLE — what will be true when it is done, in a handful of words: "encrypt Emirates ID at rest", not "security". (2) DESCRIPTION — two or three sentences a person who has not read the code can follow: what is wrong or wanted, which repo and roughly where, and how anyone will know it worked. Never leave it empty and never restate the title. (3) ASSIGNEE — the agent id, set the MOMENT you dispatch, never later and never cleared on a status change: a done card must still say who did it, because that is how the human reads the board. (4) STATUS — one of the five below. A card with no assignee is work nobody owns; a card with no description is a title the human has to come and ask you about.`
+      : `THE BOARD: keep the card you are working on honest. Move it to \`in-progress\` when you start, \`in-review\` when your PR is open, and never remove your own id from \`assignee\`. If a card needs the human, set it \`blocked\` and say what you need rather than stalling silently.`;
+    // THE FIVE COLUMNS AND THE REVIEW LANE. Everyone gets this — an engineer has
+    // to know where to put the card when the PR goes up, and a reviewer has to
+    // know the card is not theirs to close.
+    const laneLine = 'THE FIVE COLUMNS, in order: `todo` queued, `in-progress` someone is working it, `in-review` the PR is open and waiting on a reviewer, `blocked` it needs the human (with a humanQA entry), `done` finished. Use those exact strings. The REVIEW LANE is how work finishes here: (1) the ENGINEER runs the pre-commit review, commits, pushes, opens the PR, moves the card to `in-review` and tells their LEAD the PR id — they do not pick their own reviewer and do not touch the PR again; (2) the LEAD sets the card\'s `reviewer` field to the reviewing agent\'s id and tells that agent by name — `assignee` stays the engineer, because a done card has to say who built it; (3) the REVIEWER reviews the PR only, never edits the branch and never merges, and reports back to the LEAD; (4) the LEAD moves the card to `done` on that report. THE CARD NEVER WAITS ON A MERGE — merging is the human\'s, and a reviewed card with an open PR is finished work as far as this board is concerned.';
+    // CARD IDS. Nothing minted these before: every writer invented a slug, and
+    // the ledger merges by id, so two agents inventing the same one folded two
+    // cards into a single card. One allocator now, via the helper.
+    const codes = Object.entries(this._projectCodes);
+    const cardIdLine = (this._cardHelper && codes.length)
+      ? `CARD IDS ARE ALLOCATED, NEVER INVENTED. Every card id is \`TASK-<PROJECT>-<n>\`, numbered in order per project. To open one, run:\n  "${hiveNode}" "${this._cardHelper}" --project <CODE> --title "<title>" --description "<description>" --assignee <agent id>\nIt prints the new id, which is the id you then use everywhere. The codes are: ${codes.map(([path, code]) => `${code} = ${path}`).join('; ')}. Never hand-write an id into tasks.json and never reuse one — two cards sharing an id merge into one and the second piece of work disappears. Editing an EXISTING card (status, reviewer, result, humanQA) is a normal edit of tasks.json; only OPENING one goes through the helper.`
+      : '';
+    const guardrailsLine = `Guardrails: a circuit breaker watches the floor — a "Circuit breaker: steer/constrain" message means you are looping or overspending, so STOP repeating, summarize what you tried, and follow it. Be token-frugal (a floor-wide or per-agent token budget can pause you). The shared plan has two parts: board.md (freeform; ${godNameForPrompt} is its sole scribe) and tasks.json (the task board — todo/in-progress/in-review/blocked/done).`;
     // How every agent on this floor builds, orchestrator included. Static text:
     // no volatile values, so the prompt-cache invariant above still holds.
     const craftLine = 'HOW YOU BUILD: take the simplest thing that works. Reuse what this codebase already has before writing anything new; prefer the standard library and native platform features over a new dependency; one line over fifty. No speculative abstraction, no scaffolding "for later", no interface with one implementation. Deletion beats addition and boring beats clever. Fix the ROOT CAUSE, not the symptom: before you edit, check every caller of what you are changing, because one guard in the shared function is a smaller diff than a guard in each caller. NEVER simplify away input validation at a trust boundary, error handling that prevents data loss, security, accessibility, or anything the human explicitly asked for. Non-trivial logic leaves ONE runnable check behind: the smallest thing that fails if the logic breaks. Understanding is never what you shorten — read the whole flow first, then write the small version.';
     // How every agent writes, to each other AND to the human. Full version in
     // PROTOCOL.md; this is the line that reaches a session that never opens it.
     // Static text, so the prompt-cache invariant above still holds.
-    const brevityLine = 'HOW YOU WRITE: short, closed-ended, the point then stop. Lead with the answer or the ask; context only when it changes what the reader does. One question per message, answerable in a line ("ship it or hold?" beats "thoughts on the deploy?") — a message nobody can answer in a line is a message that sits. Do not restate the request, do not summarise what you are about to say, do not close by repeating it. No filler, no apologies, no praise. Say what you did and what it means; skip the walkthrough unless it was asked for. Uncertain is a clause, not a paragraph. Numbers and names over adjectives. Call things what they are called on the screen the human is looking at: a task is a CARD on the BOARD, and you OPEN one, ASSIGN it, MOVE it to doing, CLOSE it. Do not invent verbs from the nouns — nobody \"cards\" anything. Same for people: use the name on the floor, never an internal id (\`god\` is an address, not a person). This holds for everyone, the human included. It is not curtness: a short message that answers is friendlier than a long one that does not, length is earned by content, and a real explanation someone asked for is not over-explaining.';
+    const brevityLine = 'HOW YOU WRITE: short, closed-ended, the point then stop. Lead with the answer or the ask; context only when it changes what the reader does. One question per message, answerable in a line ("ship it or hold?" beats "thoughts on the deploy?") — a message nobody can answer in a line is a message that sits. Do not restate the request, do not summarise what you are about to say, do not close by repeating it. No filler, no apologies, no praise. Say what you did and what it means; skip the walkthrough unless it was asked for. Uncertain is a clause, not a paragraph. Numbers and names over adjectives. Call things what they are called on the screen the human is looking at: a task is a CARD on the BOARD, and you OPEN one, ASSIGN it, MOVE it to in progress or in review, CLOSE it. Do not invent verbs from the nouns — nobody \"cards\" anything. Same for people: use the name on the floor, never an internal id (\`god\` is an address, not a person). This holds for everyone, the human included. It is not curtness: a short message that answers is friendlier than a long one that does not, length is earned by content, and a real explanation someone asked for is not over-explaining.';
     // "Explain things simply" (Settings → General, and the first onboarding
     // screen). Scoped to what the agent says to the HUMAN: the code it writes and
     // the messages it sends other agents are unaffected, because the register is a
@@ -1755,6 +1780,8 @@ export class HiveManager {
       craftLine,
       craftGodLine,
       cardLine,
+      laneLine,
+      cardIdLine,
       brevityLine,
       registerLine,
       guardrailsLine,
@@ -2039,7 +2066,56 @@ export class HiveManager {
   }
   tasks(): unknown {
     const root = this.root();
-    return root ? this.readJson(join(root, 'tasks.json'), { tasks: [] }) : { tasks: [] };
+    if (!root) return { tasks: [] };
+    const doc = this.readJson<{ tasks?: unknown; counters?: unknown }>(
+      join(root, 'tasks.json'), { tasks: [] });
+    const list = Array.isArray(doc?.tasks) ? doc.tasks : [];
+    // EVERY reader sees the five canonical statuses. Agents hand-write this
+    // file and will write "doing" (the old word) or "In Review" (the column
+    // they can see); an unrecognised status used to fall back to `todo`, which
+    // reads as work being un-done. See shared/taskStatus.ts.
+    return {
+      ...doc,
+      tasks: list.map((t) => (t && typeof t === 'object' && !Array.isArray(t)
+        ? { ...(t as Record<string, unknown>), status: normalizeStatus((t as { status?: unknown }).status) }
+        : t))
+    };
+  }
+
+  /** The stored per-project card counters, so a deleted card's number is never
+   *  handed out again. Lives beside `tasks` in the same file. */
+  private taskCounters(): Record<string, number> {
+    const root = this.root();
+    if (!root) return {};
+    const doc = this.readJson<{ counters?: unknown }>(join(root, 'tasks.json'), {});
+    const raw = doc?.counters;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+    const out: Record<string, number> = {};
+    for (const [code, n] of Object.entries(raw as Record<string, unknown>)) {
+      const v = Number(n);
+      if (Number.isFinite(v) && v > 0) out[code] = Math.floor(v);
+    }
+    return out;
+  }
+
+  /**
+   * Allocate the next card id for a project and store the advanced counter.
+   *
+   * This is the ONLY place a card id is minted. Everything that opens a card —
+   * the orchestrator's helper script, the kanban, a webhook, the voice action —
+   * comes through here, because two writers inventing the same id merge two
+   * different cards into one (see shared/taskLedger.ts).
+   */
+  allocateCardId(code: string): string | null {
+    const root = this.root();
+    if (!root || !code) return null;
+    const path = join(root, 'tasks.json');
+    const doc = this.readJson<{ tasks?: unknown[]; counters?: Record<string, number> }>(path, { tasks: [] });
+    const list = Array.isArray(doc?.tasks) ? doc.tasks : [];
+    const ids = list.map((t) => (t && typeof t === 'object' ? (t as { id?: unknown }).id : null));
+    const alloc = nextCardId(code, ids, this.taskCounters());
+    this.writeJson(path, { ...doc, tasks: list, counters: alloc.counters });
+    return alloc.id;
   }
 
   /** Persist the task ledger to hive/tasks.json and commit it. Mirrors the
@@ -2060,11 +2136,74 @@ export class HiveManager {
     if (!root) return;
     this.ensureHive();
     const path = join(root, 'tasks.json');
-    const current = this.readJson<{ tasks?: unknown }>(path, { tasks: [] });
-    const merged = mergeTaskLedger(current?.tasks, tasks);
-    this.writeJson(path, { tasks: merged });
+    const current = this.readJson<{ tasks?: unknown; counters?: unknown }>(path, { tasks: [] });
+    const merged = mergeTaskLedger(current?.tasks, tasks).map((t) => (
+      t && typeof t === 'object' && !Array.isArray(t) && 'status' in (t as object)
+        ? { ...(t as Record<string, unknown>), status: normalizeStatus((t as { status?: unknown }).status) }
+        : t));
+    // Counters ride along in the same file; a wholesale write used to drop them
+    // and hand the next card a number that already exists on the board.
+    const counters = current?.counters && typeof current.counters === 'object' ? current.counters : undefined;
+    this.writeJson(path, counters ? { tasks: merged, counters } : { tasks: merged });
     this.appendLog({ kind: 'tasks', count: merged.length });
     this.commit(`hive: tasks (${merged.length})`);
+  }
+
+  /**
+   * Bring an existing board up to the current shape, once per workspace.
+   *
+   * Two things change under a board that predates this: statuses (`doing` is now
+   * `in-progress`, and there is an `in-review` column) and ids (`TASK-<CODE>-<n>`
+   * instead of whatever each writer invented). Statuses are safe to rewrite —
+   * every reader normalizes anyway. IDS ARE NOT: an id is quoted in inbox
+   * messages, in agents' memory.md, in PR descriptions and in Slack threads. So
+   * the old id is kept on the card as `previousId`, and the whole mapping is
+   * written to `card-id-map.json` beside the ledger, where anyone (including an
+   * agent that reads a stale reference) can resolve it.
+   *
+   * Runs at most once: `boardMigratedAt` on the ledger itself is the latch — the
+   * same file the migration rewrites, so there is no second file to fall out of
+   * step with it. A card whose holder cannot be mapped to a project keeps its id
+   * rather than being renumbered into a guessed number line.
+   *
+   * @param codeForAgent  agent id → project card code (roster-backed, in main)
+   * @returns how many cards were renumbered
+   */
+  migrateBoard(codeForAgent: (agentId: string) => string | null): number {
+    const root = this.root();
+    if (!root) return 0;
+    const path = join(root, 'tasks.json');
+    const doc = this.readJson<{ tasks?: unknown[]; counters?: Record<string, number>; boardMigratedAt?: unknown }>(
+      path, { tasks: [] });
+    if (doc?.boardMigratedAt) return 0;
+    const list = Array.isArray(doc?.tasks) ? doc.tasks : [];
+    let counters: Record<string, number> = { ...(this.taskCounters()) };
+    const renamed: Record<string, string> = {};
+
+    const next = list.map((raw) => {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return raw;
+      const card = { ...(raw as Record<string, unknown>) };
+      if ('status' in card) card.status = normalizeStatus(card.status);
+      const id = typeof card.id === 'string' ? card.id : '';
+      if (!id || isCardId(id)) return card;
+      const holder = typeof card.assignee === 'string' ? card.assignee : '';
+      const code = holder ? codeForAgent(holder) : null;
+      if (!code) return card;                     // unmappable: leave it alone
+      const alloc = nextCardId(code, [...list.map((t) => (t as { id?: unknown })?.id), ...Object.keys(renamed).map((k) => renamed[k])], counters);
+      counters = alloc.counters;
+      renamed[id] = alloc.id;
+      card.previousId = id;
+      card.id = alloc.id;
+      return card;
+    });
+
+    this.writeJson(path, { ...doc, tasks: next, counters, boardMigratedAt: new Date().toISOString() });
+    if (Object.keys(renamed).length) {
+      // The lookup table for every reference written before the renumber.
+      this.writeJson(join(root, 'card-id-map.json'), { renamedAt: new Date().toISOString(), map: renamed });
+    }
+    this.commit('hive: board migrated to five columns and TASK ids');
+    return Object.keys(renamed).length;
   }
 
   /** Append one card against the latest on-disk ledger. Renderer callers must
@@ -3174,7 +3313,7 @@ over-explaining, and never cut the thing that makes an answer usable.
 ## The work: board.md vs tasks.json
 There are two shared surfaces, both in the hive root:
 - \`board.md\` — the freeform narrative plan. ${orchestrator} is its sole scribe; others \`propose\` edits.
-- \`tasks.json\` — the structured task ledger (a kanban: \`todo / doing / blocked / done\`).
+- \`tasks.json\` — the structured task ledger (a kanban: \`todo / in-progress / in-review / blocked / done\`).
 
 Every card carries four things, and ${orchestrator} or the project lead writes them when the work is
 dispatched — not afterwards:
@@ -3183,11 +3322,30 @@ dispatched — not afterwards:
 | --- | --- |
 | \`title\` | what will be true when it is done: "encrypt Emirates ID at rest", not "security" |
 | \`description\` | two or three sentences someone who has not read the code can follow: what is wrong or wanted, which repo and roughly where, and how anyone will know it worked |
+| \`id\` | \`TASK-<PROJECT>-<n>\`, allocated by the open-card helper — never hand-written, never reused |
 | \`assignee\` | the agent id, set the moment it is dispatched and never cleared — a done card must still say who did it |
-| \`status\` | \`todo\` queued, \`doing\` started, \`blocked\` needs the human (with a \`humanQA\` entry), \`done\` finished and verified |
+| \`reviewer\` | set by the LEAD when the card reaches \`in-review\`: who reads the PR. Never replaces \`assignee\` |
+| \`status\` | \`todo\` queued, \`in-progress\` being worked, \`in-review\` PR open and waiting on a reviewer, \`blocked\` needs the human (with a \`humanQA\` entry), \`done\` finished |
 
 A card with no assignee is work nobody owns. A card with no description is a title the human has to
 come and ask about. If you are working a card, keep its status honest as you go.
+
+## The review lane
+Work does not go from \`in-progress\` straight to \`done\`. It goes through review, and each hop has
+exactly one owner:
+
+1. **Engineer** — runs the pre-commit review, commits, pushes, opens the PR, moves the card to
+   \`in-review\`, and tells their LEAD the PR id. They do not choose their reviewer and they do not
+   touch the PR again.
+2. **Lead** — sets the card's \`reviewer\` to the reviewing agent's id and tells that agent by name
+   which PR to read. \`assignee\` stays the engineer.
+3. **Reviewer** — reviews the PR only. Never edits the branch, never pushes, never merges, and
+   reports back to the LEAD, not to the board.
+4. **Lead** — moves the card to \`done\` on that report.
+
+The card never waits on a merge: merging is the human's, and a reviewed card with an open PR is
+finished work as far as this board is concerned. A card sitting in \`in-review\` with no \`reviewer\`
+is waiting on the lead.
 
 ## Asking the human (the ASK ME card)
 When a card can only move with the human — a question to answer, or an action only they can do
