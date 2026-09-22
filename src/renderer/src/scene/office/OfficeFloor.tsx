@@ -28,6 +28,7 @@ function glowFor(charName: string, member?: { shirt: string }): number {
 import { pickSoloLine, pickExchange, pickAboutPerson, type BreakSpot } from './cafeteriaLines';
 import { isLaughBeat } from '@shared/gossipPool';
 import { normalizeStatus } from '@shared/taskStatus';
+import { BriefingWindow } from '@shared/briefingWindow';
 import { colors, accentNumber, DEFAULT_ACCENT_HEX } from '@/design/tokens';
 import { loadTheme, resolveThemeMap, themeTilesetUrls } from './themeLoader';
 import {
@@ -2398,19 +2399,19 @@ export function OfficeFloor() {
        * The caller always attends — a meeting without whoever called it is just
        * agents standing around — and everyone else has to be free.
        */
-      const startMeeting = (callerId: string, attendees: string[]): void => {
-        if (meetingCooldown > 0 || meetingTiles.length === 0 || !floorSettled()) return;
+      const startMeeting = (callerId: string, attendees: string[]): boolean => {
+        if (meetingCooldown > 0 || meetingTiles.length === 0 || !floorSettled()) return false;
         const caller = agentById(callerId);
         const crt = runtimes.get(callerId);
-        if (!caller || !crt || crt.brk || crt.err || crt.run || crt.mtg) return;
+        if (!caller || !crt || crt.brk || crt.err || crt.run || crt.mtg) return false;
         // A worker calling the meeting must itself be free; the boss is seated
         // whenever he is idle, so his own status is checked the same way.
-        if (caller.status !== 'idle' && caller.status !== 'success') return;
+        if (caller.status !== 'idle' && caller.status !== 'success') return false;
 
         const free = meetingTiles
           .map((tl, i) => [tl, i] as const)
           .filter(([, i]) => !meetingTaken[i]);
-        if (free.length < 2) return;
+        if (free.length < 2) return false;
 
         const going: Array<[string, Runtime]> = [[callerId, crt]];
         for (const id of attendees) {
@@ -2428,7 +2429,7 @@ export function OfficeFloor() {
         // one-on-one — or, worse, arriving to an empty room because everyone he
         // addressed turned out to be busy — is why this floor had a boardroom
         // nobody used and a boss who kept leaving his desk for nothing.
-        if (going.length < 3) return;
+        if (going.length < 3) return false;
 
         meetingCooldown = 90;
         // Chairs used to be handed out by list position, so the agent nearest
@@ -2450,10 +2451,24 @@ export function OfficeFloor() {
             rt.character.showThought(t(MEETING_LINES[Math.floor(Math.random() * MEETING_LINES.length)]));
           });
         });
+        return true;
       };
+
+      /** Messages waiting to be recognised as a briefing — see shared/briefingWindow.ts. */
+      const briefings = new BriefingWindow();
 
       const updateMeetings = (dt: number): void => {
         if (meetingCooldown > 0) meetingCooldown -= dt;
+        // A lead writing to three engineers in one turn sends THREE messages,
+        // one each, because a hive message has one recipient and a broadcast
+        // would reach crews with nothing to do with the work. That burst is a
+        // meeting. It is offered here every tick rather than once: when the
+        // burst goes quiet its recipients are working on what they were just
+        // briefed about, and a working agent does not leave its desk, so the
+        // briefing waits for the moment they are all free.
+        for (const b of briefings.pending(Date.now())) {
+          if (startMeeting(b.from, b.attendees)) briefings.staged(b.from);
+        }
         for (const [id, rt] of runtimes) {
           const m = rt.mtg;
           if (!m) continue;
@@ -2476,9 +2491,11 @@ export function OfficeFloor() {
       const offMessage = window.cth.onHiveMessage
         ? window.cth.onHiveMessage((e) => {
             for (const target of e.targets) spawnHandoff(e.from, target, e.act, e.needsHuman);
-            // One message to several agents is a briefing (from Atlas) or a
-            // three-way (from a worker). Either fills the boardroom.
-            if (e.targets.length >= 2) startMeeting(e.from, e.targets);
+            // Collect it: two or more people written to in one burst fill the
+            // boardroom, whether that arrived as one broadcast or as a lead
+            // writing to each engineer by name. updateMeetings stages it once
+            // the burst goes quiet.
+            briefings.note(e.from, e.targets, Date.now());
             // One agent → the boss: a question about a task. Walk it over.
             const boss = useStore.getState().agents.find((a) => a.isGod);
             if (boss && e.targets.length === 1 && e.targets[0] === boss.id) startDeskVisit(e.from);
@@ -2493,6 +2510,7 @@ export function OfficeFloor() {
       window.addEventListener('cth:demo-handoff', onDemoHandoff);
       (app as any).__offMessage = () => {
         offMessage();
+        briefings.clear();
         window.removeEventListener('cth:demo-handoff', onDemoHandoff);
       };
 
