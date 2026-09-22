@@ -249,22 +249,42 @@ export async function mainRepoRoot(cwd: string): Promise<string | null> {
   return stripped || gitDir;
 }
 
-/** Derive a safe `agent/<id>` branch name from a worktree path's basename. */
-function agentBranchFor(wtPath: string): string {
-  const base = wtPath.split(/[\\/]/).filter(Boolean).pop() ?? 'agent';
-  const slug = base.toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'agent';
-  return `agent/${slug}`;
+/**
+ * The branch a worktree PARKS on between cards.
+ *
+ * It is not a work branch and it is deliberately named so nobody mistakes it
+ * for one: work goes on `feature/<what-it-is>`, cut from the repo's integration
+ * branch per card. This one exists because a worktree has to be on something
+ * the moment it is created, which is before any card exists.
+ *
+ * Named after the agent when we know the name (`atlas/home/sasuke`), because
+ * `agent/sasuke-mua8z2co` sat in the branch list next to real branches and read
+ * like one. Falls back to the worktree's folder name, which is all a caller
+ * that has no name can offer.
+ */
+function homeBranchFor(wtPath: string, agentName?: string): string {
+  const raw = (agentName ?? '').trim()
+    || (wtPath.split(/[\\/]/).filter(Boolean).pop() ?? 'agent');
+  const slug = raw.toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'agent';
+  return `atlas/home/${slug}`;
 }
 
 /** Provision an isolated git worktree for an agent at `wtPath`, branching off
- *  `baseBranch`. Tries to create a fresh `agent/<id>` branch first; if that
- *  branch already exists, falls back to checking out `baseBranch` directly. */
+ *  `baseBranch`. Creates the agent's home branch (`atlas/home/<name>`); if that
+ *  name is taken — two agents called Sasuke, or a worktree remade after a crash
+ *  — it disambiguates with the worktree's folder name before giving up and
+ *  checking out `baseBranch` directly. */
 export async function addWorktree(
-  cwd: string, wtPath: string, baseBranch: string
+  cwd: string, wtPath: string, baseBranch: string, agentName?: string
 ): Promise<{ ok: boolean; error?: string }> {
-  const branch = agentBranchFor(wtPath);
-  const fresh = await runGit(cwd, ['worktree', 'add', wtPath, '-b', branch, baseBranch]);
+  const fresh = await runGit(cwd,
+    ['worktree', 'add', wtPath, '-b', homeBranchFor(wtPath, agentName), baseBranch]);
   if (fresh.ok) return { ok: true };
+  if (agentName) {
+    const unique = await runGit(cwd,
+      ['worktree', 'add', wtPath, '-b', homeBranchFor(wtPath), baseBranch]);
+    if (unique.ok) return { ok: true };
+  }
   // Branch likely already exists (or the path is taken) — retry without -b.
   const fallback = await runGit(cwd, ['worktree', 'add', wtPath, baseBranch]);
   if (fallback.ok) return { ok: true };

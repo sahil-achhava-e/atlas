@@ -2875,7 +2875,7 @@ async function spawnAgentCore(opts: AgentSpawnOptions, owner: Electron.WebConten
       } else {
         const br = await getBranch(origCwd);
         const baseBranch = 'current' in br && br.current ? br.current : 'main';
-        const wt = await addWorktree(origCwd, wtPath, baseBranch);
+        const wt = await addWorktree(origCwd, wtPath, baseBranch, opts.hive?.name);
         if (wt.ok) {
           opts.cwd = wtPath;
           worktreePaths.set(opts.id, wtPath);

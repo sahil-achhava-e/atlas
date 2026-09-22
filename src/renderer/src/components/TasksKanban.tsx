@@ -51,6 +51,8 @@ export interface HiveTask {
   /** Set by the lead when the card goes to review. The engineer stays in
    *  `assignee`, so a done card still says who built it. */
   reviewer?: string;
+  /** The branch this work is on — named after the card, not the agent. */
+  branch?: string;
   status: TaskStatus;
   dependsOn: string[];
   priority: number;
@@ -118,6 +120,7 @@ export function parseTasks(raw: unknown): HiveTask[] {
       description: typeof t.description === 'string' ? t.description : undefined,
       assignee: typeof t.assignee === 'string' ? t.assignee : undefined,
       reviewer: typeof t.reviewer === 'string' ? t.reviewer : undefined,
+      branch: typeof t.branch === 'string' ? t.branch : undefined,
       // Never a whitelist test. Agents write this file by hand and the old word
       // for in-progress is "doing" — see shared/taskStatus.ts.
       status: normalizeStatus(t.status),

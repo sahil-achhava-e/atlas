@@ -182,6 +182,8 @@ export interface HiveTask {
   /** Who reviews the PR, set by the lead when the card enters `in-review`.
    *  `assignee` stays the engineer who did the work. */
   reviewer?: string;
+  /** The branch this work is on — named after the card, not the agent. */
+  branch?: string;
   status: 'todo' | 'in-progress' | 'in-review' | 'blocked' | 'done';
   dependsOn: string[];
   priority: number;

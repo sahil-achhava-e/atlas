@@ -115,6 +115,10 @@ export interface HiveTask {
   /** Set by the LEAD when the card enters `in-review`: who reviews the PR.
    *  Never replaces `assignee` — a done card still has to say who built it. */
   reviewer?: string;
+  /** The branch the work is on, written by the engineer when they cut it.
+   *  Named after the card, never after the agent — see the branch rule in the
+   *  spawn prompt. */
+  branch?: string;
   status: TaskStatus;
   dependsOn: string[];
   priority: number;
@@ -1740,6 +1744,11 @@ export class HiveManager {
     // to know where to put the card when the PR goes up, and a reviewer has to
     // know the card is not theirs to close.
     const laneLine = 'THE FIVE COLUMNS, in order: `todo` queued, `in-progress` someone is working it, `in-review` the PR is open and waiting on a reviewer, `blocked` it needs the human (with a humanQA entry), `done` finished. Use those exact strings. The REVIEW LANE is how work finishes here: (1) the ENGINEER runs the pre-commit review, commits, pushes, opens the PR, moves the card to `in-review` and tells their LEAD the PR id — they do not pick their own reviewer and do not touch the PR again; (2) the LEAD sets the card\'s `reviewer` field to the reviewing agent\'s id and tells that agent by name — `assignee` stays the engineer, because a done card has to say who built it; (3) the REVIEWER reviews the PR only, never edits the branch and never merges, and reports back to the LEAD; (4) the LEAD moves the card to `done` on that report. THE CARD NEVER WAITS ON A MERGE — merging is the human\'s, and a reviewed card with an open PR is finished work as far as this board is concerned.';
+    // BRANCH NAMES. Nine briefings each said this in their own words, so a new
+    // hire got whatever the person writing the brief remembered — and the
+    // worktree's own parking branch (named after the agent) was being copied as
+    // if it were the convention.
+    const branchLine = 'BRANCHES ARE NAMED AFTER THE WORK, NEVER AFTER YOU. One branch per card: `feature/<short-title>`, lowercase words joined by hyphens, taken from the card\'s title — `feature/pos-empty-category`, `feature/emirates-id-at-rest`. Not your name, not your agent id, not the card id. Cut it from the FRESHLY FETCHED remote integration branch your briefing names (`git fetch origin && git checkout -b feature/<short-title> origin/<base>`) — never from your local copy of that branch, and never from another agent\'s branch. Your worktree sits on `atlas/home/<you>` between cards: that is a parking spot, not a work branch, and nothing is ever committed to it. When you cut the branch, write its name into the card\'s `branch` field so your lead and your reviewer can find the work without asking you.';
     // CARD IDS. Nothing minted these before: every writer invented a slug, and
     // the ledger merges by id, so two agents inventing the same one folded two
     // cards into a single card. One allocator now, via the helper.
@@ -1781,6 +1790,7 @@ export class HiveManager {
       craftGodLine,
       cardLine,
       laneLine,
+      branchLine,
       cardIdLine,
       brevityLine,
       registerLine,
@@ -3325,6 +3335,7 @@ dispatched — not afterwards:
 | \`id\` | \`TASK-<PROJECT>-<n>\`, allocated by the open-card helper — never hand-written, never reused |
 | \`assignee\` | the agent id, set the moment it is dispatched and never cleared — a done card must still say who did it |
 | \`reviewer\` | set by the LEAD when the card reaches \`in-review\`: who reads the PR. Never replaces \`assignee\` |
+| \`branch\` | \`feature/<short-title>\` — named after the work, never after the agent. Written when the branch is cut |
 | \`status\` | \`todo\` queued, \`in-progress\` being worked, \`in-review\` PR open and waiting on a reviewer, \`blocked\` needs the human (with a \`humanQA\` entry), \`done\` finished |
 
 A card with no assignee is work nobody owns. A card with no description is a title the human has to
@@ -3334,9 +3345,13 @@ come and ask about. If you are working a card, keep its status honest as you go.
 Work does not go from \`in-progress\` straight to \`done\`. It goes through review, and each hop has
 exactly one owner:
 
-1. **Engineer** — runs the pre-commit review, commits, pushes, opens the PR, moves the card to
-   \`in-review\`, and tells their LEAD the PR id. They do not choose their reviewer and they do not
-   touch the PR again.
+1. **Engineer** — cuts \`feature/<short-title>\` from the freshly fetched integration branch, runs the
+   pre-commit review, commits, pushes, opens the PR, moves the card to \`in-review\`, and tells their
+   LEAD the PR id. They do not choose their reviewer and they do not touch the PR again.
+
+   The branch is named after the WORK: \`feature/pos-empty-category\`, never \`feature/sasuke\` and
+   never the worktree's own \`atlas/home/<name>\`, which is where a worktree parks between cards and
+   is never committed to. One branch per card, and its name goes on the card's \`branch\` field.
 2. **Lead** — sets the card's \`reviewer\` to the reviewing agent's id and tells that agent by name
    which PR to read. \`assignee\` stays the engineer.
 3. **Reviewer** — reviews the PR only. Never edits the branch, never pushes, never merges, and
