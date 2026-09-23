@@ -250,7 +250,14 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
       if (e.key === 'Escape') {
         // A modal above fullscreen owns the interaction until it closes. Without
         // this guard, Esc from the Add Agent form unexpectedly exits fullscreen.
+        // The title bar's agent menu is the same case: Esc should close the menu
+        // you just opened, not the mode you are working in.
         if (addAgentOpen || editAgentOpen) return;
+        if (useStore.getState().focusMenuOpen) {
+          useStore.getState().setFocusMenuOpen(false);
+          e.preventDefault();
+          return;
+        }
         e.preventDefault();
         setFullscreen(null);
       }

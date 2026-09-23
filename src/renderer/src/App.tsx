@@ -19,6 +19,7 @@ import { QuitWarningModal, type ClosingTimeState } from '@/components/QuitWarnin
 import { CompletionToast } from '@/realtime/CompletionToast';
 import { UpdateToast } from '@/components/UpdateToast';
 import { RestoreTeamOnBoot } from '@/components/RestoreTeamOnBoot';
+import { FocusAgentMenu } from '@/components/FocusAgentMenu';
 import { useAppTheme, toggleAppTheme } from '@/design/theme';
 import { SettingsModal, type Section as SettingsSection } from '@/components/SettingsModal';
 import { PixelPanel } from '@/components/PixelPanel';
@@ -500,11 +501,18 @@ export function App() {
             usefully answer: does anything want me. It is centred against the
             WINDOW rather than the space between the two clusters, so it does
             not drift when the workspace name is long. */}
+        {/* In focus mode this same spot becomes the agent switcher: the row is
+            already here, above both branches of the overlay, and the readout
+            below was pointerEvents:'none'. Out of focus mode nothing changes. */}
+        <FocusAgentMenu />
         <span
           aria-live="polite"
           style={{
             position: 'absolute', left: '50%', transform: 'translateX(-50%)',
-            display: 'inline-flex', alignItems: 'center', gap: 8,
+            // Hidden in focus mode, where FocusAgentMenu above stands in this
+            // exact spot and says the same thing with a switcher attached.
+            display: fullscreenAgentId ? 'none' : 'inline-flex',
+            alignItems: 'center', gap: 8,
             fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 500,
             color: fleet.blocked > 0 ? 'var(--cth-ink-900)' : 'var(--cth-ink-500)',
             pointerEvents: 'none', whiteSpace: 'nowrap'

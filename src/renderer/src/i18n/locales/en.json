@@ -1750,5 +1750,9 @@
     "working": "{{name}} is working",
     "sentWaiting": "sent — waiting for {{name}} to pick it up",
     "ownerLabel": "Owner"
+  },
+  "focusMenu": {
+    "label": "Showing {{name}}. Switch agent",
+    "needsYou": "waiting on you"
   }
 }

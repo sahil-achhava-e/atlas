@@ -205,6 +205,10 @@ interface State {
   selectedId: string | null;
   feeds: Record<string, string[]>;
   addAgentOpen: boolean;
+  /** The focus-mode agent menu in the title bar. In the store, not in the
+   *  component, for one reason: focus mode's Esc handler has to know something
+   *  is open above it — the same guard `addAgentOpen` already earns. */
+  focusMenuOpen: boolean;
   fullscreenAgentId: string | null;
   /** Does the user work in focus mode by default? Persisted as a boolean, and
    *  written ONLY by an explicit toggle. Kept in the store rather than read once
@@ -362,6 +366,7 @@ interface State {
    *  empty floor. Not persisted: a wait does not survive a reload. */
   lastSentAt: Record<string, number>;
   setAddAgentOpen: (open: boolean) => void;
+  setFocusMenuOpen: (open: boolean) => void;
   /** Validated manifests waiting for one-at-a-time human review. */
   hireQueue: HireReviewQueue;
   enqueuePendingHires: (manifests: readonly HireManifest[]) => void;
@@ -708,6 +713,7 @@ export const useStore = create<State>((set, get) => ({
   selectedId: initialSelectedId,
   feeds: {},
   addAgentOpen: false,
+  focusMenuOpen: false,
   ccTab: (() => {
     return getPref(LS_CC_TAB) || 'terminal';
   })(),
@@ -1085,6 +1091,7 @@ export const useStore = create<State>((set, get) => ({
       return { agents, feeds, selectedId, restorableAgents, fullscreenAgentId };
     }),
   setAddAgentOpen: (open) => set({ addAgentOpen: open }),
+  setFocusMenuOpen: (open) => set({ focusMenuOpen: open }),
   hireQueue: EMPTY_HIRE_QUEUE,
   enqueuePendingHires: (manifests) => set((s) => ({
     hireQueue: enqueueHires(s.hireQueue, manifests)

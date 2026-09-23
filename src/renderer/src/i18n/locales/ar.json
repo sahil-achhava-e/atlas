@@ -1750,5 +1750,9 @@
     "working": "{{name}} يعمل",
     "sentWaiting": "أُرسلت — في انتظار أن يلتقطها {{name}}",
     "ownerLabel": "المالك"
+  },
+  "focusMenu": {
+    "label": "يعرض {{name}}. تبديل الوكيل",
+    "needsYou": "بانتظارك"
   }
 }
