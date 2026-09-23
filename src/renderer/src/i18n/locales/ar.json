@@ -89,7 +89,7 @@
     "dismissAria": "تجاهل هذا الطلب",
     "answerPlaceholder": "إجابتك. أو \"تم\"، مع النتيجة… (Ctrl+Enter للإرسال)",
     "sending": "جارٍ الإرسال…",
-    "respond": "أجب وارفع الحظر",
+    "respond": "أرسِل الإجابة",
     "viewAnswers": "عرض {{count}} إجابة سابقة",
     "viewAnswersPlural": "عرض {{count}} إجابات سابقة",
     "viewAnswersHistory": "افتح تفاصيل المهمة مع سجلّ الأسئلة والأجوبة كاملًا",
@@ -103,12 +103,16 @@
     "justNow": "الآن",
     "blockingCount_one": "يعطّل مهمة واحدة",
     "blockingCount_other": "يعطّل {{count}} مهام",
-    "summary_one": "وكيل واحد بانتظارك",
-    "summary_other": "{{count}} وكلاء بانتظارك",
+    "summary_one": "سؤال واحد بانتظارك",
+    "summary_other": "{{count}} أسئلة بانتظارك",
     "asks": "{{name}} يسأل",
     "anAgent": "أحد الوكلاء",
     "openTask": "فتح المهمة",
-    "blocks": "لا يزال {{name}} متوقفًا بانتظاره"
+    "blocks": "لا يزال {{name}} متوقفًا بانتظاره",
+    "asksFor": "بشأن عمل {{name}}",
+    "askIndex": "السؤال {{n}} من {{total}} في هذه المهمة",
+    "stillBlocked_one": "يبقى سؤال واحد مفتوحًا في هذه المهمة بعد هذا.",
+    "stillBlocked_other": "تبقى {{count}} أسئلة مفتوحة في هذه المهمة بعد هذا."
   },
   "agentStrip": {
     "privateNote": "ملاحظة خاصة · {{name}}",

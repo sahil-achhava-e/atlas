@@ -11,6 +11,7 @@ import { TasksIcon } from './TabIcons';
 import { SpritePortrait } from './SpritePortrait';
 import { MarkdownPreview } from '@/markdown/MarkdownPreview';
 import { markdownToPlainText } from '@/markdown/plainText';
+import { openAsks } from '@shared/humanQA';
 import { useRtl } from '@/i18n/useDirection';
 import { getPref, setPref } from '../store/prefs';
 import { normalizeStatus, type TaskStatus } from '@shared/taskStatus';
@@ -63,20 +64,30 @@ export interface HiveTask {
   humanQA?: HumanQA[];
 }
 
-/** The card's currently open question for the human, if any. An entry the human
- *  dismissed (dismissedAt) counts as resolved, same as an answered one. */
-export function openQuestion(t: HiveTask): HumanQA | undefined {
-  if (!Array.isArray(t.humanQA)) return undefined;
-  for (let i = t.humanQA.length - 1; i >= 0; i--) {
-    const e = t.humanQA[i];
-    if (e && typeof e.q === 'string' && !e.a && !e.dismissedAt) return e;
-  }
-  return undefined;
+/** Every unanswered, undismissed question on the card, in ledger order.
+ *  A card can hold more than one, and each is a separate thing the human owes
+ *  an answer to — see src/shared/humanQA.ts for why that matters. */
+export function openQuestions(t: HiveTask): HumanQA[] {
+  return openAsks(t) as HumanQA[];
 }
 
-/** Waiting on the human = blocked with an unanswered question on the card. */
+/** The card's LAST open question, for the one-question-per-card surfaces (the
+ *  kanban badge, the sticky note on an agent's strip card). ASK ME lists them
+ *  all instead — a card with three open asks is three things to answer, and
+ *  showing only the last one is how two of them went unseen. */
+export function openQuestion(t: HiveTask): HumanQA | undefined {
+  const open = openQuestions(t);
+  return open.length ? open[open.length - 1] : undefined;
+}
+
+/** Waiting on the human = an unanswered question on the card.
+ *
+ *  No longer `status === 'blocked' && …`. The status is now DERIVED from the
+ *  open asks on the ledger write path (statusWithOpenAsks), so a card with an
+ *  open ask is blocked by construction and testing the status here only added a
+ *  way for an ask to fall off this board while still open. */
 export function waitsOnHuman(t: HiveTask): boolean {
-  return t.status === 'blocked' && !!openQuestion(t);
+  return openQuestions(t).length > 0;
 }
 
 type Status = HiveTask['status'];

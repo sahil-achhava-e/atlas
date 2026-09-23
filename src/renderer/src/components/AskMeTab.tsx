@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { PixelButton } from './PixelButton';
 import { useStore } from '@/store/store';
 import { MarkdownPreview } from '@/markdown/MarkdownPreview';
-import { type HiveTask, type HumanQA, openQuestion, waitsOnHuman } from './TasksKanban';
+import { type HiveTask, type HumanQA, openQuestions, waitsOnHuman } from './TasksKanban';
+import { openAsks } from '@shared/humanQA';
 import { compareByNewestAsk } from './askMeOrder';
 import { StatusGlyph } from './StatusGlyph';
 import { SpritePortrait } from './SpritePortrait';
@@ -36,6 +37,26 @@ function parse(raw: unknown): HiveTask[] {
     ? (raw as { tasks: HiveTask[] }).tasks
     : [];
   return list.filter((t) => !!t && typeof t === 'object');
+}
+
+/** One row on the board: a single open ask, and the card it sits on. The board
+ *  is a list of QUESTIONS, not of cards — a card with three open asks is three
+ *  rows, because it is three things the human owes an answer to. */
+interface AskRow {
+  task: HiveTask;
+  ask: HumanQA;
+  key: string;
+  position: number;
+  total: number;
+}
+
+/** Where this row's half-typed answer lives in the store.
+ *
+ *  Per ASK, not per task: a card with three open questions needs three drafts,
+ *  and keying them all on the task id meant typing an answer to one appeared in
+ *  the box of the other two and the first Send took the lot. */
+function draftKey(row: AskRow): string {
+  return row.key;
 }
 
 /** All tasks transitively waiting on `id` (dependents chain), cycle-safe. */
@@ -98,14 +119,40 @@ export function AskMeTab() {
   // chronological (see askMeOrder.ts).
   const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
-  const allWaiting = tasks
+  // ONE ROW PER OPEN ASK, not one per card.
+  //
+  // A card can hold three unanswered questions, and before this the board
+  // rendered the card once and showed only the last of them. Answering it made
+  // the next one surface in the same place for a few seconds and then vanish,
+  // because the orchestrator had moved the card off `blocked` by then. Two real
+  // questions went unanswered that way (TASK-EVENTS-13/14, 2026-09-23) and were
+  // unreachable afterwards: not on this board, no way to dismiss them.
+  //
+  // Now each ask is its own row with its own draft, its own Send, and its own
+  // dismiss. The card stays blocked until every one of them is resolved — the
+  // ledger write path enforces that (statusWithOpenAsks), not this view.
+  const now = Date.now();
+  const allWaiting: AskRow[] = tasks
     .filter(waitsOnHuman)
-    .sort((a, b) => compareByNewestAsk(openQuestion(a), openQuestion(b)));
+    .flatMap((task) => {
+      const open = openQuestions(task);
+      return open.map((ask, i) => ({
+        task,
+        ask,
+        // Stable across polls: the question text identifies the entry, and the
+        // index disambiguates the (pathological) case of the same text twice.
+        key: `${task.id}#${i}#${ask.q.slice(0, 40)}`,
+        /** Which of this card's open asks this is, for "1 of 3". */
+        position: i + 1,
+        total: open.length
+      }));
+    })
+    .sort((a, b) => compareByNewestAsk(a.ask, b.ask, now));
   // Search covers the title AND the question, because you remember the wording
   // of what was asked far more often than the name of the card it came from.
   const waiting = q
-    ? allWaiting.filter((t) =>
-        t.title.toLowerCase().includes(q) || (openQuestion(t)?.q ?? '').toLowerCase().includes(q))
+    ? allWaiting.filter((row) =>
+        row.task.title.toLowerCase().includes(q) || row.ask.q.toLowerCase().includes(q))
     : allWaiting;
 
   /**
@@ -120,62 +167,84 @@ export function AskMeTab() {
    * that case nothing is written and the draft is kept.
    */
 
-  const sendAnswer = async (task: HiveTask) => {
-    const text = (drafts[task.id] ?? '').trim();
-    const open = openQuestion(task);
-    if (!text || !open || sending) return;
-    setSending(task.id);
+  const sendAnswer = async (row: AskRow) => {
+    const { task, ask: open } = row;
+    const text = (drafts[draftKey(row)] ?? '').trim();
+    if (!text || sending) return;
+    setSending(row.key);
     try {
       // 1) Document the answer ON the card.
+      //
+      // Matched by IDENTITY first and by text only as a fallback, and the text
+      // fallback answers AT MOST ONE entry (`done`). The old code answered every
+      // open entry whose `q` matched, which on a card holding the same question
+      // twice closed both from one answer.
+      let done = false;
       const next = tasks.map((t) => {
         if (t.id !== task.id) return t;
-        const qa = (t.humanQA ?? []).map((e) =>
-          e === open || (e.q === open.q && !e.a)
-            ? { ...e, a: text, answeredAt: new Date().toISOString() }
-            : e
-        );
+        const qa = (t.humanQA ?? []).map((e) => {
+          if (done) return e;
+          if (e !== open && !(e.q === open.q && !e.a && !e.dismissedAt)) return e;
+          done = true;
+          return { ...e, a: text, answeredAt: new Date().toISOString() };
+        });
         return { ...t, humanQA: qa };
       });
+      if (!done) throw new Error('the question is no longer on the card');
       const updated = next.find((candidate) => candidate.id === task.id);
       const result = updated
         ? await window.cth.hivePatchTask(task.id, { humanQA: updated.humanQA })
         : { ok: false };
       if (!result.ok) throw new Error('task changed before answer could be saved');
       setTasks(next);
-      // 2) Tell the god, so the card gets unblocked and work continues.
+      // 2) Tell the god. How many asks are STILL open on the card decides what
+      //    it should do next, so the mail says — "unblock and continue" on the
+      //    last one, "do not unblock yet" while others are outstanding. Without
+      //    that the god reads every answer as permission to move the card and
+      //    leaves the remaining questions behind, which is how they went unseen.
+      const remaining = openAsks(next.find((c) => c.id === task.id)).length;
       await window.cth.hiveSend({
         to: 'god',
         act: 'inform',
         subject: `HUMAN ANSWER on task "${task.title}"`,
         body: [
-          `The human answered the open question on task ${task.id} ("${task.title}"):`,
+          `The human answered an open question on task ${task.id} ("${task.title}"):`,
           `Q: ${open.q}`,
           `A: ${text}`,
-          'The answer is also recorded in the card\'s humanQA. Act on it, unblock the card, and continue the work.'
+          "The answer is also recorded in the card's humanQA.",
+          remaining > 0
+            ? `${remaining} more question(s) on this card are still unanswered — act on this answer, but do NOT unblock the card until every one of them is answered or dismissed.`
+            : 'That was the last open question. Act on it, unblock the card, and continue the work.'
         ].join('\n')
       }, 'human');
-      setAnswerDraft(task.id, '');
+      setAnswerDraft(draftKey(row), '');
     } catch { /* leave the draft so the user can retry */ }
     setSending(null);
   };
 
-  // Dismiss the open ask off the ASK ME board WITHOUT answering it. We mark the
-  // open humanQA entry `dismissedAt` (no fabricated answer) so openQuestion()
-  // stops returning it and the card leaves this view — the question itself stays
-  // on the card, so the Q&A history is never dropped (protocol). The task stays
-  // blocked on the kanban; the god can re-ask by appending a fresh humanQA entry.
-  const dismiss = async (task: HiveTask) => {
-    const open = openQuestion(task);
-    if (!open || sending === task.id) return;
+  // Dismiss ONE open ask off the board WITHOUT answering it. The entry is
+  // marked `dismissedAt` (no fabricated answer) so it stops counting as open —
+  // the question itself stays on the card, so the Q&A history is never dropped
+  // (protocol). Dismissing the last open ask is also what frees the card to
+  // leave `blocked`, which is the escape hatch for a question that stopped
+  // mattering; the god can re-ask by appending a fresh humanQA entry.
+  const dismiss = async (row: AskRow) => {
+    const { task, ask: open } = row;
+    if (sending) return;
+    // One entry only, same rule as sendAnswer: identity first, text as fallback,
+    // and never more than one.
+    let done = false;
     const next = tasks.map((t) => {
       if (t.id !== task.id) return t;
-      const qa = (t.humanQA ?? []).map((e) =>
-        e === open || (e.q === open.q && !e.a && !e.dismissedAt)
-          ? { ...e, dismissedAt: new Date().toISOString() }
-          : e
-      );
+      const qa = (t.humanQA ?? []).map((e) => {
+        if (done) return e;
+        if (e !== open && !(e.q === open.q && !e.a && !e.dismissedAt)) return e;
+        done = true;
+        return { ...e, dismissedAt: new Date().toISOString() };
+      });
       return { ...t, humanQA: qa };
     });
+    if (!done) return;
     setTasks(next); // optimistic — the card disappears immediately
     try {
       const updated = next.find((candidate) => candidate.id === task.id);
@@ -257,7 +326,7 @@ export function AskMeTab() {
             {translate('askMe.summary', { count: allWaiting.length })}
           </strong>
           <span style={{ display: 'inline-flex', flexShrink: 0 }}>
-            {[...new Set(allWaiting.map((x) => x.assignee))]
+            {[...new Set(allWaiting.map((x) => x.task.assignee))]
               .map((id) => agentFor(id))
               .filter((a): a is NonNullable<typeof a> => !!a)
               .slice(0, 6)
@@ -306,20 +375,28 @@ export function AskMeTab() {
           </div>
         </div>
       )}
-      {waiting.map((t) => {
-        const open = openQuestion(t)!;
+      {waiting.map((row) => {
+        const { task: t, ask: open } = row;
+        const key = draftKey(row);
         const stuck = dependentsTree(t.id, tasks);
-        // The ask's AUTHOR, not the card's owner. Only the orchestrator writes
-        // these, so an entry with no `by` is theirs; the assignee is whoever is
-        // blocked by it, which is a different agent and shown as such.
-        const asker = agentFor(open.by) ?? agents.find((a) => a.isGod);
+        // ATLAS ASKS, ALWAYS. The orchestrator is the human's one counterpart:
+        // workers raise things with it, it decides what is worth your time and
+        // brings it here. Before this the board took the ask's `by` field at
+        // face value, so a worker that wrote its own humanQA entry appeared to
+        // be asking you directly, going round the orchestrator.
+        //
+        // `by` is not thrown away — when it names someone else, the header says
+        // who it is on behalf of. That is the honest version: Atlas is asking,
+        // and this is whose work it is about.
+        const asker = agents.find((a) => a.isGod);
+        const onBehalfOf = open.by && open.by !== asker?.id ? agentFor(open.by) : undefined;
         const blocked = agentFor(t.assignee);
         const age = waited(open.askedAt);
         return (
           // The asker's own colour down the left edge. Thirty identical white
           // cards is a list you have to READ to navigate; a colour you already
           // associate with an agent is one you can scan.
-          <div key={t.id} style={{
+          <div key={row.key} style={{
             background: 'var(--cth-paper-100)',
             borderRadius: 'var(--cth-radius-card)',
             boxShadow: `inset 4px 0 0 0 ${accentCss(asker?.accent ?? 'lilac')}, 0 0 0 1px var(--cth-ink-100), var(--cth-shadow-card)`,
@@ -356,13 +433,25 @@ export function AskMeTab() {
                   minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                 }}>
                   {translate('askMe.asks', {
-                    name: asker?.name ?? nameFor(open.by) ?? translate('askMe.anAgent')
+                    name: asker?.name ?? translate('askMe.anAgent')
                   })}
                 </span>
                 <span style={{
                   display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
                   fontSize: 11.5, lineHeight: '16px', color: 'var(--cth-ink-500)'
                 }}>
+                  {/* Whose work it is about, when the ask was raised by someone
+                      other than the orchestrator. */}
+                  {onBehalfOf && <span>{translate('askMe.asksFor', { name: onBehalfOf.name })}</span>}
+                  {/* Which of this card's open questions this is. Without it two
+                      rows from one task look like a duplicate rather than two
+                      things to answer. */}
+                  {row.total > 1 && (
+                    <span style={{
+                      padding: '0 7px', borderRadius: 'var(--cth-radius-input)',
+                      background: 'var(--cth-cream-100)', color: 'var(--cth-ink-700)', fontWeight: 600
+                    }}>{translate('askMe.askIndex', { n: row.position, total: row.total })}</span>
+                  )}
                   {age && <span>{translate('askMe.waiting', { age })}</span>}
                   {/* Who is stuck, which is the card's owner and usually NOT the
                       agent who asked. Naming both is what stops the board
@@ -383,15 +472,15 @@ export function AskMeTab() {
                   The card's Q&A history is preserved (the question stays on the
                   card, just marked dismissed). */}
               <button
-                onClick={() => void dismiss(t)}
-                disabled={sending === t.id}
+                onClick={() => void dismiss(row)}
+                disabled={sending === row.key}
                 aria-label={translate('askMe.dismissAria')}
                 className="cth-iconbar cth-quiet-danger"
                 data-label={translate('askMe.dismissTitle')}
                 style={{
                   flexShrink: 0, width: 26, height: 26, padding: 0, marginLeft: 2,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: 'none', cursor: sending === t.id ? 'default' : 'pointer',
+                  border: 'none', cursor: sending === row.key ? 'default' : 'pointer',
                   borderRadius: 'var(--cth-radius-btn)',
                   background: 'transparent', color: 'var(--cth-ink-400)',
                   transition: 'background 120ms ease, color 120ms ease'
@@ -456,7 +545,7 @@ export function AskMeTab() {
               {open.choices && open.choices.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {open.choices.map((choice) => {
-                    const draft = drafts[t.id] ?? '';
+                    const draft = drafts[key] ?? '';
                     const picked = open.multi
                       ? draft.split('\n').map((x) => x.trim()).includes(choice)
                       : draft.trim() === choice;
@@ -478,15 +567,15 @@ export function AskMeTab() {
                       >
                         <input
                           type={open.multi ? 'checkbox' : 'radio'}
-                          name={`ask-${t.id}`}
+                          name={`ask-${row.key}`}
                           checked={picked}
                           onChange={(e) => {
-                            if (!open.multi) { setAnswerDraft(t.id, choice); return; }
-                            const lines = (drafts[t.id] ?? '').split('\n').map((x) => x.trim()).filter(Boolean);
+                            if (!open.multi) { setAnswerDraft(key, choice); return; }
+                            const lines = (drafts[key] ?? '').split('\n').map((x) => x.trim()).filter(Boolean);
                             const next = e.target.checked
                               ? [...lines.filter((x) => x !== choice), choice]
                               : lines.filter((x) => x !== choice);
-                            setAnswerDraft(t.id, next.join('\n'));
+                            setAnswerDraft(key, next.join('\n'));
                           }}
                           style={{ marginTop: 2, accentColor: 'var(--cth-lilac)', cursor: 'pointer' }}
                         />
@@ -504,9 +593,9 @@ export function AskMeTab() {
               {/* answer box */}
               <textarea
                 dir={rtl ? 'auto' : undefined}
-                value={drafts[t.id] ?? ''}
-                onChange={(e) => setAnswerDraft(t.id, e.target.value)}
-                onKeyDown={(e) => { if (isComposingKey(e)) return; if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) void sendAnswer(t); }}
+                value={drafts[key] ?? ''}
+                onChange={(e) => setAnswerDraft(key, e.target.value)}
+                onKeyDown={(e) => { if (isComposingKey(e)) return; if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) void sendAnswer(row); }}
                 rows={3}
                 placeholder={translate('askMe.answerPlaceholder')}
                 className="cth-input"
@@ -520,10 +609,10 @@ export function AskMeTab() {
               />
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {(() => {
-                  const ready = !!(drafts[t.id] ?? '').trim() && sending !== t.id;
+                  const ready = !!(drafts[key] ?? '').trim() && sending !== row.key;
                   return (
                     <button
-                      onClick={() => void sendAnswer(t)}
+                      onClick={() => void sendAnswer(row)}
                       disabled={!ready}
                       style={{
                         display: 'inline-flex', alignItems: 'center', gap: 7,
@@ -537,10 +626,20 @@ export function AskMeTab() {
                         transition: 'background 120ms ease, box-shadow 120ms ease, color 120ms ease'
                       }}
                     >
-                      {sending === t.id ? translate('askMe.sending') : translate('askMe.respond')}
+                      {sending === row.key ? translate('askMe.sending') : translate('askMe.respond')}
                     </button>
                   );
                 })()}
+                {/* The button says "Send answer", not "Answer and unblock",
+                    because on a card with more than one open question this one
+                    answer does not unblock it. Say which it is, here, rather
+                    than letting the label promise something that will not
+                    happen. */}
+                {row.total > 1 && (
+                  <span style={{ fontSize: 11.5, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
+                    {translate('askMe.stillBlocked', { count: row.total - 1 })}
+                  </span>
+                )}
                 {(t.humanQA?.filter((e) => e.a).length ?? 0) > 0 && (
                   <button
                     onClick={() => openTaskDetail(t.id)}

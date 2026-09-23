@@ -89,7 +89,7 @@
     "dismissAria": "Dismiss this ask",
     "answerPlaceholder": "Type your answer, or say what you did… (Ctrl+Enter to send)",
     "sending": "sending…",
-    "respond": "Answer and unblock",
+    "respond": "Send answer",
     "viewAnswers": "Show {{count}} earlier answer",
     "viewAnswersPlural": "Show {{count}} earlier answers",
     "viewAnswersHistory": "open the task detail with the full Q&A history",
@@ -103,12 +103,16 @@
     "justNow": "just now",
     "blockingCount_one": "blocking 1 task",
     "blockingCount_other": "blocking {{count}} tasks",
-    "summary_one": "1 agent is waiting on you",
-    "summary_other": "{{count}} agents are waiting on you",
+    "summary_one": "1 question is waiting on you",
+    "summary_other": "{{count}} questions are waiting on you",
     "asks": "{{name}} is asking",
     "anAgent": "An agent",
     "openTask": "Open task",
-    "blocks": "{{name}} is stuck on it"
+    "blocks": "{{name}} is stuck on it",
+    "asksFor": "about {{name}}’s work",
+    "askIndex": "question {{n}} of {{total}} on this task",
+    "stillBlocked_one": "1 more question on this task stays open after this one.",
+    "stillBlocked_other": "{{count}} more questions on this task stay open after this one."
   },
   "agentStrip": {
     "privateNote": "Private note · {{name}}",

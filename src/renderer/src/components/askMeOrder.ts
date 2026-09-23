@@ -23,13 +23,24 @@ export interface AskLike {
   askedAt?: string;
 }
 
-/** `askedAt` as epoch ms, or null when it is missing or unparseable.
- *  Never throws — a hand-edited ledger must not be able to crash the board. */
-export function askedAtMs(open: AskLike | undefined): number | null {
+/**
+ * `askedAt` as epoch ms, or null when it is missing or unparseable.
+ * Never throws — a hand-edited ledger must not be able to crash the board.
+ *
+ * A time in the FUTURE is clamped to now. Agents write this field themselves
+ * and some of them invent it: on 2026-09-23 one wrote `14:52:00.000Z` and
+ * `12:50:00.000Z` onto cards it touched at 08:31, which are round numbers hours
+ * ahead of the clock. Unclamped, a made-up timestamp sorts straight to the top
+ * of the board and reads as "waiting just now" for an ask that is hours old —
+ * so the worst-behaved agent gets the human's attention first. Clamping fixes
+ * both the order and the age, for every agent, without trusting any of them.
+ */
+export function askedAtMs(open: AskLike | undefined, now: number = Date.now()): number | null {
   const raw = open?.askedAt;
   if (!raw) return null;
   const ms = Date.parse(raw);
-  return Number.isNaN(ms) ? null : ms;
+  if (Number.isNaN(ms)) return null;
+  return Math.min(ms, now);
 }
 
 /**
@@ -42,9 +53,16 @@ export function askedAtMs(open: AskLike | undefined): number | null {
  * Cards whose open ask carries no parseable `askedAt` sort LAST, so a bad
  * timestamp costs that one card its position instead of throwing.
  */
-export function compareByNewestAsk(a: AskLike | undefined, b: AskLike | undefined): number {
-  const ax = askedAtMs(a);
-  const bx = askedAtMs(b);
+export function compareByNewestAsk(
+  a: AskLike | undefined,
+  b: AskLike | undefined,
+  now: number = Date.now()
+): number {
+  // One `now` for both sides: two Date.now() calls inside a single comparison
+  // can differ by a millisecond, which would make two future timestamps compare
+  // inconsistently and give Array.sort an incoherent ordering.
+  const ax = askedAtMs(a, now);
+  const bx = askedAtMs(b, now);
   if (ax === null && bx === null) return 0;
   if (ax === null) return 1;  // a has no time -> after b
   if (bx === null) return -1; // b has no time -> after a

@@ -57,8 +57,21 @@ const tab = fs.readFileSync(
   path.resolve(__dirname, '..', 'src/renderer/src/components/AskMeTab.tsx'), 'utf8'
 );
 
-test('AskMeTab sorts the card list by each card open question', () => {
-  assert.match(tab, /\.filter\(waitsOnHuman\)\s*\n\s*\.sort\(\(a, b\) => compareByNewestAsk\(openQuestion\(a\), openQuestion\(b\)\)\)/);
+test('AskMeTab sorts its rows by the ask each one carries', () => {
+  // The board is a list of ASKS now, not of cards: a card holding three open
+  // questions contributes three rows, each sorted on its own askedAt. One
+  // shared `now` is passed in so two future timestamps cannot compare
+  // inconsistently mid-sort.
+  assert.match(tab, /\.filter\(waitsOnHuman\)\s*\n[\s\S]*?\.sort\(\(a, b\) => compareByNewestAsk\(a\.ask, b\.ask, now\)\)/);
+  assert.match(tab, /\.flatMap\(\(task\) => \{/);
+});
+
+test('answering or dismissing targets ONE entry, never every matching question', () => {
+  // A card can carry the same question text twice. Closing both from a single
+  // answer would put words in the human's mouth on a question they never read,
+  // so both paths latch after the first hit.
+  assert.equal((tab.match(/let done = false;/g) || []).length, 2);
+  assert.equal((tab.match(/if \(done\) return e;/g) || []).length, 2);
 });
 
 test('the humanQA history inside a card is never reversed', () => {
