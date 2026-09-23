@@ -10,6 +10,7 @@ import { Dropdown } from './Dropdown';
 import { TasksIcon } from './TabIcons';
 import { SpritePortrait } from './SpritePortrait';
 import { MarkdownPreview } from '@/markdown/MarkdownPreview';
+import { markdownToPlainText } from '@/markdown/plainText';
 import { useRtl } from '@/i18n/useDirection';
 import { getPref, setPref } from '../store/prefs';
 import { normalizeStatus, type TaskStatus } from '@shared/taskStatus';
@@ -471,12 +472,12 @@ function TaskCard({ task, accent, assigneeName, assigneeCharacter, reviewerName,
             opening it. Two lines and then clipped — the full text is one click
             away, and a card that grows with its description stops being
             scannable, which is the only thing a board is for. */}
-        {task.description?.trim() && (
+        {markdownToPlainText(task.description ?? '') && (
           <span style={{
             fontFamily: 'var(--cth-font-ui)', fontSize: 12.5, lineHeight: '18px',
             color: 'var(--cth-ink-500)',
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
-          }}>{task.description.trim()}</span>
+          }}>{markdownToPlainText(task.description ?? '')}</span>
         )}
 
         {/* Who has it, with their own face. A shouted uppercase surname told you
@@ -680,14 +681,25 @@ export function TaskDetail({ task, all, assigneeName, assigneeCharacter, onMove,
 
             </div>
 
-            {/* The contract — preserved line by line */}
+            {/* The contract, rendered as markdown — the same card variant as the
+                Q&A trail below. The god writes these in markdown (the hive
+                protocol tells it to: bold the ask, backtick the paths, bullet
+                the options), and this block used to print the asterisks and
+                backticks raw while the Q&A two blocks down rendered them.
+
+                paper-200 + a hairline, not cream-50: in dark mode cream-50 IS
+                the app ground (#0E1014), so the old fill was the page colour
+                and the contract read as text floating with no panel at all. */}
             <div style={{
-              padding: 14, background: 'var(--cth-cream-50)',
+              padding: 14, background: 'var(--cth-paper-200)',
+              boxShadow: 'inset 0 0 0 1px var(--cth-ink-100)',
               borderRadius: 'var(--cth-radius-input)',
               fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '20px',
-              color: 'var(--cth-ink-700)', whiteSpace: 'pre-wrap', wordBreak: 'break-word'
+              color: 'var(--cth-ink-900)', wordBreak: 'break-word'
             }} dir={rtl ? 'auto' : undefined}>
-              {task.description?.trim() || <span style={{ color: 'var(--cth-ink-400)', fontStyle: 'italic' }}>{t('kanban.noDescription')}</span>}
+              {task.description?.trim()
+                ? <MarkdownPreview source={task.description.trim()} variant="card" />
+                : <span style={{ color: 'var(--cth-ink-400)', fontStyle: 'italic' }}>{t('kanban.noDescription')}</span>}
             </div>
 
             {/* The human Q&A trail — every decision documented on the card.
