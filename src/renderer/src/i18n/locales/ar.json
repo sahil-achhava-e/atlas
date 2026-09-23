@@ -500,7 +500,9 @@
     },
     "restartNoProcess": "لا توجد عملية نشطة لإعادة تشغيلها. شغّل هذا الوكيل أولًا.",
     "restartShort": "إعادة تشغيل",
-    "editShort": "تعديل"
+    "editShort": "تعديل",
+    "openAsks": "{{count}} أسئلة بانتظارك",
+    "openTasks": "{{count}} مهمة ما زالت مفتوحة"
   },
   "addAgent": {
     "title": "إضافة وكيل",

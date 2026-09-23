@@ -71,3 +71,25 @@ export function normalizeStatus(raw: unknown): TaskStatus {
 export function isCanonicalStatus(raw: unknown): raw is TaskStatus {
   return typeof raw === 'string' && (TASK_STATUSES as readonly string[]).includes(raw);
 }
+
+/** The four columns that still hold work: everything but `done`. */
+export const OPEN_STATUSES: readonly TaskStatus[] =
+  TASK_STATUSES.filter((s) => s !== 'done');
+
+/**
+ * Is this card still work?
+ *
+ * Normalized, not compared raw, so the count on the Tasks tab matches the board
+ * card for card. That matters more than it looks: nothing owns `tasks.json`, so
+ * a card can carry any word an agent felt like writing, and `normalizeStatus`
+ * puts an unrecognisable one in `todo` rather than hiding it. A badge that
+ * compared raw strings would skip exactly the cards the board is showing.
+ *
+ * The visible consequence: a card an agent wrote as `cancelled` is not one of
+ * the five, so it reads as `todo` on the board AND counts here. That is the
+ * board's existing behaviour, not a rule invented for the badge — to stop
+ * counting those, `cancelled` has to become a real status first.
+ */
+export function isOpenStatus(raw: unknown): boolean {
+  return normalizeStatus(raw) !== 'done';
+}

@@ -500,7 +500,9 @@
     "restarting": "restarting…",
     "restartNoProcess": "No live process to restart. Start this agent first.",
     "restartShort": "Restart",
-    "editShort": "Edit"
+    "editShort": "Edit",
+    "openAsks": "{{count}} questions waiting on you",
+    "openTasks": "{{count}} tasks still open"
   },
   "addAgent": {
     "title": "Add agent",

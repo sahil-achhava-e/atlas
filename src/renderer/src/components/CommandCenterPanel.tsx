@@ -20,7 +20,7 @@ import {
   MapIcon, EventsIcon, JobsIcon, TriggersIcon, SkillsIcon, EditIcon, CodeIcon
 } from './TabIcons';
 import { ErrorBoundary } from './ErrorBoundary';
-import { useOpenAsks } from '@/hooks/useOpenAsks';
+import { useBoardCounts } from '@/hooks/useBoardCounts';
 import { EditAgentModal } from './EditAgentModal';
 import { MemoryPanel } from './MemoryPanel';
 import { MemoryGraphPanel } from './MemoryGraphPanel';
@@ -116,8 +116,10 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
   // panel and never reaches the Edit button every other agent gets, so his
   // name, one-liner and standing goal were unreachable from the app.
   const [editOpen, setEditOpen] = useState(false);
-  // The one number on this panel that is about the human, not the machines.
-  const openAsks = useOpenAsks();
+  // Two numbers, one read of the ledger. `asks` is the one about the human
+  // (questions nobody has answered); `openTasks` is the one about the work
+  // (every card that is not done).
+  const { asks: openAsks, openTasks } = useBoardCounts();
 
   // External tab requests (the office task board → 'tasks', the boss-room
   // calendar → 'triggers'). seq-keyed so clicking again re-opens the tab even
@@ -290,7 +292,12 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
       }}>
         {tabs.map((d) => {
           const on = d.key === tab;
-          const badge = d.key === 'human' ? openAsks : 0;
+          // Two tabs carry a number, and they mean different things: `human`
+          // is what is waiting on YOU, `tasks` is what is still open at all.
+          // So they are coloured differently below — coral demands an action,
+          // the quieter fill is a running total you are not late for.
+          const badge = d.key === 'human' ? openAsks : d.key === 'tasks' ? openTasks : 0;
+          const urgent = d.key === 'human';
           return (
             <button
               key={d.key}
@@ -331,18 +338,38 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                 // Docked the bar is icons, so the count rides the corner. With
                 // the label on screen it belongs beside the words, where it
                 // reads as part of the name rather than a sticker on a glyph.
-                <span style={{
-                  ...(fullscreen
-                    ? { position: 'relative', marginInlineStart: 2 }
-                    : { position: 'absolute', top: 2, insetInlineEnd: 2 }),
-                  minWidth: 16, height: 16, padding: '0 5px',
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  borderRadius: 999,
-                  background: on ? 'rgba(255,255,255,0.25)' : 'var(--cth-coral)',
-                  color: 'var(--cth-on-accent)',
-                  fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 10.5, lineHeight: 1,
-                  fontVariantNumeric: 'tabular-nums'
-                }}>{badge}</span>
+                //
+                // The count stays while the tab is OPEN, and it has to stay
+                // READABLE. On the selected tab this was white text on 25%
+                // white over the lilac fill, which measured as no number at
+                // all — so opening the tab looked like the badge had been
+                // cleared by reading it. It is not a notification: it is how
+                // many questions are still unanswered, and that is exactly the
+                // thing you want visible while you work through them. Selected,
+                // it inverts to a solid pill instead of dissolving into the fill.
+                <span
+                  aria-label={t(urgent ? 'commandCenter.openAsks' : 'commandCenter.openTasks', { count: badge })}
+                  style={{
+                    ...(fullscreen
+                      ? { position: 'relative', marginInlineStart: 2 }
+                      : { position: 'absolute', top: 2, insetInlineEnd: 2 }),
+                    minWidth: 16, height: 16, padding: '0 5px',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: 999,
+                    // Unselected, the two counts are told apart by fill: coral is
+                    // a thing to do something about, the quiet grey is a running
+                    // total. Selected, both invert to a solid pill — the tab is
+                    // already lilac, and a tinted badge on it was the bug that
+                    // made the number look cleared by opening the tab.
+                    background: on
+                      ? 'var(--cth-paper-100)'
+                      : urgent ? 'var(--cth-coral)' : 'var(--cth-ink-300)',
+                    color: on
+                      ? 'var(--cth-lilac-text)'
+                      : urgent ? 'var(--cth-on-accent)' : 'var(--cth-ink-900)',
+                    fontFamily: 'var(--cth-font-ui)', fontWeight: 700, fontSize: 10.5, lineHeight: 1,
+                    fontVariantNumeric: 'tabular-nums'
+                  }}>{badge}</span>
               )}
             </button>
           );
