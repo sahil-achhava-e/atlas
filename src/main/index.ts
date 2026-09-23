@@ -3652,7 +3652,7 @@ ipcMain.handle('app:homeDir', () => homedir());
 
 /** Every folder an agent can be given as a working directory: each registered
  *  project, plus the repositories directly inside it. A container folder like
- *  Ethara-VMS holds three repos, and the hire dialog could only offer the
+ *  Acme-VMS holds three repos, and the hire dialog could only offer the
  *  container — so an agent for vms-backend could not be pointed at it, and git
  *  isolation had no repo to make a worktree from. */
 ipcMain.handle('projects:tree', () => listProjectTree(readConfig().registeredRepos ?? []));

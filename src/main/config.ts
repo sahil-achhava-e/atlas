@@ -191,7 +191,7 @@ export interface HarnessConfig {
   /** Folders the user registered during onboarding (used as quick-picks). */
   registeredRepos: string[];
   /** Card-id prefix per registered project, keyed by absolute path:
-   *  `{ "/Users/me/Desktop/epicxp-events": "EVENTS" }` → `TASK-EVENTS-1`.
+   *  `{ "/Users/me/Desktop/acme-events": "EVENTS" }` → `TASK-EVENTS-1`.
    *  A project with no entry falls back to a code derived from its folder name
    *  (see shared/cardId.ts), so the board is never without ids. */
   projectCodes?: Record<string, string>;

@@ -53,7 +53,7 @@ See `docs/BROWSER-MODE.md`.
 | Windows (portable) | `Atlas-0.8.2-win-x64-portable.exe` |
 | Linux | `Atlas-0.8.2-linux-x86_64.AppImage` |
 
-Source: <https://github.com/sahilethara/atlas/archive/refs/tags/v0.8.2.tar.gz>
+Source: <https://github.com/sahil-achhava-e/atlas/archive/refs/tags/v0.8.2.tar.gz>
 
 ## Notes
 

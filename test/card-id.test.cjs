@@ -21,8 +21,8 @@ test('the shape is TASK-CODE-n', () => {
 });
 
 test('a folder name gives a usable starting code', () => {
-  assert.equal(defaultCode('/Users/x/Desktop/epicxp-events'), 'EPICXPEVENTS');
-  assert.equal(defaultCode('/Users/x/Desktop/Ethara-VMS/'), 'ETHARAVMS');
+  assert.equal(defaultCode('/Users/x/Desktop/acme-events'), 'ACMEEVENTS');
+  assert.equal(defaultCode('/Users/x/Desktop/Acme-VMS/'), 'ACMEVMS');
   assert.equal(defaultCode('/Users/x/Desktop/visits-outlook-addin'), 'VISITSOUTLOO');
   assert.ok(CARD_ID_RE.test(`TASK-${defaultCode('/tmp/9lives')}-1`), 'a leading digit must still produce a legal code');
 });

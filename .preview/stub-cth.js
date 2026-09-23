@@ -149,7 +149,7 @@
       // Main opens the OS browser. In a browser preview the honest equivalent is
       // a new tab — resolving {ok:true} and doing nothing made the button look
       // broken, which is exactly the bug this stub is supposed to avoid.
-      try { window.open(url || 'https://github.com/sahilethara/atlas/releases/latest', '_blank', 'noopener'); }
+      try { window.open(url || 'https://github.com/sahil-achhava-e/atlas/releases/latest', '_blank', 'noopener'); }
       catch (e) { /* popup blocker */ }
       return Promise.resolve({ ok: true });
     },
@@ -160,7 +160,7 @@
       var notes = opts.notes || DEMO_NOTES;
       if (opts.state === 'downloaded') { pushUpdate({ state: 'downloaded', version: version, notes: notes }); return Promise.resolve({ ok: true }); }
       if (opts.state === 'available-manual') {
-        pushUpdate({ state: 'available-manual', version: version, url: 'https://github.com/sahilethara/atlas/releases', notes: notes });
+        pushUpdate({ state: 'available-manual', version: version, url: 'https://github.com/sahil-achhava-e/atlas/releases', notes: notes });
         return Promise.resolve({ ok: true });
       }
       // The full ride: checking → available → download progress → staged.
@@ -290,7 +290,7 @@
     {
       id: 'vms-1290', title: 'ADO pipeline needs a secret', status: 'blocked',
       agentId: 'atlas', agentName: 'Dwight', updatedAt: Date.now() - 22 * 60_000,
-      dependsOn: [], humanQA: [{ askedAt: new Date().toISOString(), q: 'I cannot add EPICXP_SMTP_PASSWORD myself. Please add it in the ADO library and tell me when it is there.'
+      dependsOn: [], humanQA: [{ askedAt: new Date().toISOString(), q: 'I cannot add ACME_SMTP_PASSWORD myself. Please add it in the ADO library and tell me when it is there.'
       }]
     },
     {
@@ -401,7 +401,7 @@
     if (on) cur.delete(name); else cur.add(name);
     return (window.__skillsOff = [...cur]);
   },
-  skillsLocal: async () => [{"id": "user:azure-devops", "name": "azure-devops", "description": "Azure DevOps plumbing \u2014 work item queries and updates, repro-step parsing, attachments, discussion comments, and pull requests via the az CLI and REST API. Use for any task touching ADO boards, PRs, or work items, and whenever an az command fails with an SSL certificate error. Covers the org-wide TLS interception setup that every az call depends on.", "provider": "claude", "scope": "user", "path": "/Users/mohammed.sahil/.claude/skills/azure-devops"}, {"id": "bundled:capabilities", "name": "capabilities", "description": "Your capability catalog \u2014 read this at boot. Lists the temporal date-range skills and the external integrations (reached via the loopback broker) available to you as a spawned worker, and exactly how to call each. Read-only. Consult it whenever you're unsure what tools/integrations you have or how to invoke them.", "provider": "claude", "scope": "bundled", "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/capabilities"}, {"id": "project:create-migration", "name": "create-migration", "description": "", "provider": "claude", "scope": "project", "path": "/Users/mohammed.sahil/Desktop/epicxp-events/.claude/skills/create-migration"}, {"id": "bundled:md-audit", "name": "md-audit", "description": "Read-only code quality audit \u2014 scan the current working directory for common issues (bugs, dead code, security hotspots, missing error handling) and return a prioritised findings report. No files are edited. Use when asked to \"audit the code\", \"quick audit\", \"find issues\", \"code scan\", or \"what's wrong with this codebase\". (atlas)", "provider": "claude", "scope": "bundled", "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/md-audit"}, {"id": "bundled:ponytail", "name": "ponytail", "description": "Forces the laziest solution that actually works, simplest, shortest, most minimal. Channels a senior dev who has seen everything: question whether the task needs to exist at all (YAGNI), reach for the standard library before custom code, native platform features before dependencies, one line before fifty. Supports intensity levels: lite, full (default), ultra. Use on ANY coding task: writing, adding, refactoring, fixing, reviewing, or designing code, and choosing libraries or dependencies. Also use whenever the user says \"ponytail\", \"be lazy\", \"lazy mode\", \"simplest solution\", \"minimal solution\", \"yagni\", \"do less\", or \"shortest path\", or complains about over-engineering, bloat, boilerplate, or unnecessary dependencies. Do NOT use for non-coding requests (general knowledge, prose, translation, summaries, recipes).", "provider": "claude", "scope": "bundled", "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/ponytail"}, {"id": "bundled:temporal", "name": "temporal", "description": "Resolve ANY named time window \u2014 today, yesterday, thisWeek, lastWeek, last7Days, last30Days, last90Days, thisMonth, lastMonth, thisQuarter, lastQuarter, thisYear, lastYear, last12Months \u2014 or an arbitrary range (lastNdays / lastNweeks / lastNmonths) to a concrete ISO date range relative to your run time. Read-only: no writes, no network. Use whenever a task is time-scoped and you need exact start/end dates without computing them by hand.", "provider": "claude", "scope": "bundled", "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/temporal"}],
+  skillsLocal: async () => [{"id": "user:azure-devops", "name": "azure-devops", "description": "Azure DevOps plumbing \u2014 work item queries and updates, repro-step parsing, attachments, discussion comments, and pull requests via the az CLI and REST API. Use for any task touching ADO boards, PRs, or work items, and whenever an az command fails with an SSL certificate error. Covers the org-wide TLS interception setup that every az call depends on.", "provider": "claude", "scope": "user", "path": "/Users/mohammed.sahil/.claude/skills/azure-devops"}, {"id": "bundled:capabilities", "name": "capabilities", "description": "Your capability catalog \u2014 read this at boot. Lists the temporal date-range skills and the external integrations (reached via the loopback broker) available to you as a spawned worker, and exactly how to call each. Read-only. Consult it whenever you're unsure what tools/integrations you have or how to invoke them.", "provider": "claude", "scope": "bundled", "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/capabilities"}, {"id": "project:create-migration", "name": "create-migration", "description": "", "provider": "claude", "scope": "project", "path": "/Users/mohammed.sahil/Desktop/acme-events/.claude/skills/create-migration"}, {"id": "bundled:md-audit", "name": "md-audit", "description": "Read-only code quality audit \u2014 scan the current working directory for common issues (bugs, dead code, security hotspots, missing error handling) and return a prioritised findings report. No files are edited. Use when asked to \"audit the code\", \"quick audit\", \"find issues\", \"code scan\", or \"what's wrong with this codebase\". (atlas)", "provider": "claude", "scope": "bundled", "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/md-audit"}, {"id": "bundled:ponytail", "name": "ponytail", "description": "Forces the laziest solution that actually works, simplest, shortest, most minimal. Channels a senior dev who has seen everything: question whether the task needs to exist at all (YAGNI), reach for the standard library before custom code, native platform features before dependencies, one line before fifty. Supports intensity levels: lite, full (default), ultra. Use on ANY coding task: writing, adding, refactoring, fixing, reviewing, or designing code, and choosing libraries or dependencies. Also use whenever the user says \"ponytail\", \"be lazy\", \"lazy mode\", \"simplest solution\", \"minimal solution\", \"yagni\", \"do less\", or \"shortest path\", or complains about over-engineering, bloat, boilerplate, or unnecessary dependencies. Do NOT use for non-coding requests (general knowledge, prose, translation, summaries, recipes).", "provider": "claude", "scope": "bundled", "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/ponytail"}, {"id": "bundled:temporal", "name": "temporal", "description": "Resolve ANY named time window \u2014 today, yesterday, thisWeek, lastWeek, last7Days, last30Days, last90Days, thisMonth, lastMonth, thisQuarter, lastQuarter, thisYear, lastYear, last12Months \u2014 or an arbitrary range (lastNdays / lastNweeks / lastNmonths) to a concrete ISO date range relative to your run time. Read-only: no writes, no network. Use whenever a task is time-scoped and you need exact start/end dates without computing them by hand.", "provider": "claude", "scope": "bundled", "path": "/Users/mohammed.sahil/Desktop/atlas/resources/skills/temporal"}],
   // ─── Messages tab ─────────────────────────────────────────────────────────
   // The hive inbox: what other agents and Atlas have sent THIS agent. Shaped to
   // HiveMessage in src/main/hive.ts. ThreadsPanel groups by `conversation`, so
@@ -438,9 +438,9 @@
   // GitStatus / GitCommit in src/preload/index.ts. The numbers are made up, the
   // SHAPE is not — this is what the six calls return for a real worktree.
   gitIsRepo: async () => true,
-  gitMainRepo: async (cwd) => cwd || '/Users/you/code/ethara-vms',
+  gitMainRepo: async (cwd) => cwd || '/Users/you/code/acme-vms',
   // What the copy button joins its relative paths onto.
-  gitRoot: async (cwd) => cwd || '/Users/you/code/ethara-vms',
+  gitRoot: async (cwd) => cwd || '/Users/you/code/acme-vms',
   gitBranch: async () => ({ current: 'agent/receipt-pdf', detached: false }),
   gitAheadBehind: async () => ({ ahead: 3, behind: 1, upstream: 'origin/develop' }),
   gitBranches: async () => ({
@@ -465,7 +465,7 @@
       { shortSha: '4f1c9ab', subject: 'Lay the receipt out for A4, not Letter', author: 'receipt-pdf', ago: 900, refs: ['HEAD -> agent/receipt-pdf'] },
       { shortSha: 'c07e233', subject: 'Render the totals block from the order, not the cart', author: 'receipt-pdf', ago: 3300, refs: [] },
       { shortSha: '9ba4d10', subject: 'A failing test for the VAT line', author: 'receipt-pdf', ago: 5400, refs: [] },
-      { shortSha: '2e88f47', subject: 'Merge pull request #418 from ethara/booking-window', author: 'Mohammed Sahil', ago: 79200, refs: ['origin/develop', 'develop'] },
+      { shortSha: '2e88f47', subject: 'Merge pull request #418 from acme/booking-window', author: 'Mohammed Sahil', ago: 79200, refs: ['origin/develop', 'develop'] },
       { shortSha: 'd53a016', subject: 'Booking window respects the venue timezone', author: 'Mohammed Sahil', ago: 90000, refs: [] }
     ].slice(0, n || 50);
     // The graph keys commits by their FULL sha, so a parent written as a short

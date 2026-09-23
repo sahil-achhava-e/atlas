@@ -147,7 +147,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
 
   /** What to show in an empty field, per credential. */
   const PLACEHOLDER: Record<string, string> = {
-    DATABASE_URL: 'postgresql://user:password@localhost:5432/epicxp_visits'
+    DATABASE_URL: 'postgresql://user:password@localhost:5432/acme_visits'
   };
 
   /** Seeded from config, then owned here: the prop does not change while the
@@ -345,7 +345,7 @@ export function McpDefaultsSettings({ config }: McpDefaultsSettingsProps) {
                                 if (e.key === 'Enter' && (draft[c.id] ?? '').trim()) void saveUrl(c.id);
                                 if (e.key === 'Escape' && set) setEditing((x) => ({ ...x, [c.id]: false }));
                               }}
-                              placeholder="postgresql://user:pass@localhost:5432/epicxp_visits"
+                              placeholder="postgresql://user:pass@localhost:5432/acme_visits"
                               style={{ ...fieldStyle, width: '100%' }}
                             />
                             <div style={{ display: 'flex', gap: 8 }}>

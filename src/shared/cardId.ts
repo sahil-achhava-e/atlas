@@ -29,7 +29,7 @@ export function codeOf(id: unknown): string | null {
 
 /**
  * A usable code from a project folder name, for a project the human has not
- * given one to yet. `epicxp-events` → `EPICXPEVENTS`; it is a starting point,
+ * given one to yet. `acme-events` → `ACMEEVENTS`; it is a starting point,
  * not a good name, and Settings is where it gets shortened to `EVENTS`.
  */
 export function defaultCode(projectPath: string): string {

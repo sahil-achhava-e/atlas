@@ -1,6 +1,6 @@
 'use strict';
 
-// A registered project is not always a repo. ~/Desktop/Ethara-VMS is a folder
+// A registered project is not always a repo. ~/Desktop/Acme-VMS is a folder
 // holding three of them, and the hire dialog offered only the folder the human
 // registered — so an agent meant for vms-backend could not be pointed at
 // vms-backend, and git isolation had no repository to make a worktree from.
@@ -20,14 +20,14 @@ function repo(...parts) { const p = dir(...parts); fs.mkdirSync(path.join(p, '.g
 
 test('a container folder lists itself and the repos inside it', () => {
   const root = tmp();
-  const vms = dir(root, 'Ethara-VMS');
+  const vms = dir(root, 'Acme-VMS');
   repo(vms, 'vms-backend');
   repo(vms, 'vms-frontend');
   repo(vms, 'visits-outlook-addin');
 
   const out = listProjectTree([vms]);
   assert.deepEqual(out.map((e) => e.name),
-    ['Ethara-VMS', 'visits-outlook-addin', 'vms-backend', 'vms-frontend']);
+    ['Acme-VMS', 'visits-outlook-addin', 'vms-backend', 'vms-frontend']);
   assert.equal(out[0].isRepo, false, 'the container is not a repo');
   assert.equal(out[0].parent, undefined);
   for (const child of out.slice(1)) {
@@ -46,7 +46,7 @@ test('the registered folder is always listed, repo or not', () => {
 
 test('a registered repo with no repos inside is one entry', () => {
   const root = tmp();
-  const only = repo(root, 'epicxp-events');
+  const only = repo(root, 'acme-events');
   dir(only, 'backend');       // a normal subdirectory, not a repo
   const out = listProjectTree([only]);
   assert.equal(out.length, 1);

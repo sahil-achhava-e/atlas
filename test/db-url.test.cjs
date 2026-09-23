@@ -11,8 +11,8 @@ const { maskDbUrl } = loadTs('src/shared/dbUrl.ts');
 
 test('the password goes, everything you need to verify stays', () => {
   assert.equal(
-    maskDbUrl('postgresql://vms_ro:hunter2@localhost:5432/epicxp_visits'),
-    'postgresql://vms_ro:•••@localhost:5432/epicxp_visits'
+    maskDbUrl('postgresql://vms_ro:hunter2@localhost:5432/acme_visits'),
+    'postgresql://vms_ro:•••@localhost:5432/acme_visits'
   );
 });
 

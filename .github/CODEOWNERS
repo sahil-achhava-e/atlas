@@ -3,16 +3,16 @@
 #
 # Last match wins, so the specific rules below override the catch-all.
 
-* @sahilethara
+* @sahil-achhava-e
 
 # Release and signing plumbing. Breaking these breaks shipping.
-/electron-builder.yml  @sahilethara
-/build/                @sahilethara
+/electron-builder.yml  @sahil-achhava-e
+/build/                @sahil-achhava-e
 
 # Licensing and attribution. Changes here have legal weight.
-/LICENSE                                  @sahilethara
-/LICENSE-ASSETS                           @sahilethara
-/src/renderer/src/assets/ATTRIBUTION.md    @sahilethara
+/LICENSE                                  @sahil-achhava-e
+/LICENSE-ASSETS                           @sahil-achhava-e
+/src/renderer/src/assets/ATTRIBUTION.md    @sahil-achhava-e
 
 # Security and privacy surface.
-/TELEMETRY.md  @sahilethara
+/TELEMETRY.md  @sahil-achhava-e

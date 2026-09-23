@@ -211,7 +211,7 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
   // quick-pick immediately (the `config` prop is a snapshot taken at open time).
   const [repos, setRepos] = useState<string[]>(config.registeredRepos);
   /** Each registered project AND the repos inside it. A container folder like
-   *  Ethara-VMS holds three, and offering only the container meant an agent for
+   *  Acme-VMS holds three, and offering only the container meant an agent for
    *  vms-backend could not be pointed at vms-backend. */
   const [tree, setTree] = useState<ProjectEntry[]>([]);
   useEffect(() => {

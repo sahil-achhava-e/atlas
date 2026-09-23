@@ -92,7 +92,7 @@
   --cth-status-ghost:    #D6DCE6;   /* offline */
 
 
-  /* Shape and depth — the EpicXP Visits system (admin-frontend/src/theme/adminTheme.ts).
+  /* Shape and depth, lifted from an in-house admin theme.
      Atlas had neither: every surface was a 1px inset outline with square corners, 207
      of them written by hand. These are the two tokens that change how the app feels. */
   --cth-radius-sm: 8px;

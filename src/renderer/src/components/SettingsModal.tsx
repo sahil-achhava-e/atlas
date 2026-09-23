@@ -1021,7 +1021,7 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
                       {/* CARD IDS. Every card is TASK-<CODE>-<n>, and the code
                           is the only part a person chooses. Without this the
                           fallback is the folder name in capitals, which reads
-                          TASK-EPICXPEVENTS-14 — legible, but nobody says that
+                          TASK-ACMEEVENTS-14 — legible, but nobody says that
                           out loud. */}
                       {!simpleMode && (config.registeredRepos ?? []).length > 0 && (
                       <div style={groupCard}>

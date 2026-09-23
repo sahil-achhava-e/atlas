@@ -56,7 +56,7 @@ a different one, set per agent after setup.
 ## Install
 
 ```
-git clone https://github.com/sahilethara/atlas.git
+git clone https://github.com/sahil-achhava-e/atlas.git
 cd atlas
 npm run setup:serve
 ```
@@ -99,7 +99,7 @@ to stop deliberately.
   There is **no update notification** in browser mode. The auto-updater belongs
   to the desktop app; in the tab, nothing tells you a new version exists, so run
   `npm run update` when you want one. Your version is in Settings, and the
-  releases are at `github.com/sahilethara/atlas/releases`.
+  releases are at `github.com/sahil-achhava-e/atlas/releases`.
 
   Restarting does not lose anything. The workspace, the agents, their briefings
   and desks are on disk, and each agent resumes its own CLI session, so a

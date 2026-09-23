@@ -26,8 +26,8 @@ const ENV = {
   defaultModel: 'claude-sonnet-5',
   projects: ['/r/api', '/r/web'],
   mcpEnabled: ['git', 'db'],
-  databases: [{ label: 'epicxp_venue', project: 'epicxp-events' }],
-  skills: [{ name: 'azure-devops' }, { name: 'create-migration', project: 'epicxp-events' }],
+  databases: [{ label: 'acme_venue', project: 'acme-events' }],
+  skills: [{ name: 'azure-devops' }, { name: 'create-migration', project: 'acme-events' }],
   semanticMemory: true,
   knowledgeGraph: false,
   missions: [{ id: 'ops-standup', enabled: true }]
@@ -41,12 +41,12 @@ test('the settings land where the crew is told to look', () => {
   const read = JSON.parse(readFileSync(path, 'utf8'));
   assert.equal(read.defaultModel, 'claude-sonnet-5');
   assert.deepEqual(read.skills,
-    [{ name: 'azure-devops' }, { name: 'create-migration', project: 'epicxp-events' }]);
+    [{ name: 'azure-devops' }, { name: 'create-migration', project: 'acme-events' }]);
   // A skill with a project lives in that repo's .claude/skills and only an agent
   // working there can invoke it. Listed flat, a lead planned around a migration
   // skill that belonged to the other project.
   assert.equal(read.skills[0].project, undefined, 'a machine-wide skill names no project');
-  assert.deepEqual(read.databases, [{ label: 'epicxp_venue', project: 'epicxp-events' }]);
+  assert.deepEqual(read.databases, [{ label: 'acme_venue', project: 'acme-events' }]);
 });
 
 test('it is stamped, so a stale read is detectable', () => {

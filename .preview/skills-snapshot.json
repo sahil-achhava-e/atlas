@@ -21,7 +21,7 @@
     "description": "",
     "provider": "claude",
     "scope": "project",
-    "path": "/Users/mohammed.sahil/Desktop/epicxp-events/.claude/skills/create-migration"
+    "path": "/Users/mohammed.sahil/Desktop/acme-events/.claude/skills/create-migration"
   },
   {
     "id": "bundled:md-audit",

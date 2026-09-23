@@ -78,12 +78,12 @@ test('a card nobody can be mapped to keeps its id', () => {
 test('fields the display model knows nothing about are untouched', () => {
   const { h, root } = hive([{
     id: 'wi-7670', title: 'b', status: 'doing', assignee: 'sasuke',
-    result: 'a slack reply', repo: 'epicxp-events', humanQA: [{ q: 'which venue?' }]
+    result: 'a slack reply', repo: 'acme-events', humanQA: [{ q: 'which venue?' }]
   }]);
   h.migrateBoard(codeFor);
   const card = read(root).tasks[0];
   assert.equal(card.result, 'a slack reply');
-  assert.equal(card.repo, 'epicxp-events');
+  assert.equal(card.repo, 'acme-events');
   assert.equal(card.humanQA[0].q, 'which venue?');
 });
 

@@ -28,7 +28,7 @@ const scan = (dir, scope) => {
 
 const cfgPath = join(homedir(), 'Library/Application Support/atlas/config.json');
 const repos = existsSync(cfgPath) ? (JSON.parse(readFileSync(cfgPath, 'utf8')).registeredRepos ?? []) : [];
-const cwds = [...new Set([...repos, process.cwd(), join(homedir(), 'Desktop/epicxp-events')])];
+const cwds = [...new Set([...repos, process.cwd(), join(homedir(), 'Desktop/acme-events')])];
 
 const found = [
   ...scan(join(process.cwd(), 'resources/skills'), 'bundled'),

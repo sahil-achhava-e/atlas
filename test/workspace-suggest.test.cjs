@@ -41,7 +41,7 @@ test('a name is a folder in the root, never a path out of it', () => {
 const { workspaceNameFromProjects } = loadTs('src/shared/workspaceName.ts');
 
 test('one project names the workspace after itself', () => {
-  assert.equal(workspaceNameFromProjects(['/Users/me/Desktop/epicxp-events']), 'epicxp-events-workspace');
+  assert.equal(workspaceNameFromProjects(['/Users/me/Desktop/acme-events']), 'acme-events-workspace');
   assert.equal(workspaceNameFromProjects(['/Users/me/code/api/']), 'api-workspace');
 });
 

@@ -23,17 +23,17 @@ const withFleet = (agents) => {
 
 test('each agent is listed with the project it works in', () => {
   const hive = withFleet([
-    { id: 'a1', name: 'Dana', role: 'backend', cwd: '/Users/me/Desktop/epicxp-events' },
-    { id: 'a2', name: 'Sam', role: 'frontend', cwd: '/Users/me/Desktop/Ethara-VMS' }
+    { id: 'a1', name: 'Dana', role: 'backend', cwd: '/Users/me/Desktop/acme-events' },
+    { id: 'a2', name: 'Sam', role: 'frontend', cwd: '/Users/me/Desktop/Acme-VMS' }
   ]);
   const roster = hive.rosterContext();
-  assert.match(roster, /a1 "Dana" \(backend, epicxp-events/);
-  assert.match(roster, /a2 "Sam" \(frontend, Ethara-VMS/);
+  assert.match(roster, /a1 "Dana" \(backend, acme-events/);
+  assert.match(roster, /a2 "Sam" \(frontend, Acme-VMS/);
 });
 
 test('the folder name, not the whole path — a roster of paths is unreadable', () => {
-  const hive = withFleet([{ id: 'a1', role: 'backend', cwd: '/Users/me/Desktop/epicxp-events' }]);
-  assert.ok(!hive.rosterContext().includes('/Users/me/Desktop/epicxp-events'));
+  const hive = withFleet([{ id: 'a1', role: 'backend', cwd: '/Users/me/Desktop/acme-events' }]);
+  assert.ok(!hive.rosterContext().includes('/Users/me/Desktop/acme-events'));
 });
 
 test('an agent with its own worktree says so — it can work in parallel', () => {

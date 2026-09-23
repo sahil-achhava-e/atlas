@@ -122,7 +122,7 @@ npm run dist:mac     # dist/Atlas-1.0.0-mac-universal.dmg
 ```
 
 Windows gets an NSIS installer and a portable exe, Linux an AppImage. Updates come
-from releases on `sahilethara/atlas`.
+from releases on `sahil-achhava-e/atlas`.
 
 Needs Node 18+, a C/C++ toolchain for `node-pty`, and at least one agent CLI on
 `PATH`.
@@ -137,7 +137,7 @@ Mac.
 Publishing a release is three steps: bump `version` in `package.json`, run
 `npm run dist:mac` (and `dist:win` / `dist:linux` where you can), then upload the
 installers **together with `latest*.yml` and the `.blockmap` files** to a GitHub
-release on `sahilethara/atlas`. The updater reads those channel files, not the
+release on `sahil-achhava-e/atlas`. The updater reads those channel files, not the
 release body — the toast's "what's new" comes from `build/release-notes.md`, baked
 into `latest*.yml` at package time.
 

@@ -49,7 +49,7 @@ test('only Atlas-created data is named — never the workspace folder itself', (
 // why it was still in the way.
 
 test('a workspace Atlas created is deleted folder and all', () => {
-  assert.equal(isManagedWorkspace('/Users/x/Atlas/epicxp-workspace', '/Users/x'), true);
+  assert.equal(isManagedWorkspace('/Users/x/Atlas/acme-workspace', '/Users/x'), true);
 });
 
 test("a folder the user pointed at keeps its folder", () => {

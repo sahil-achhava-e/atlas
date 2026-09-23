@@ -26,7 +26,7 @@ function floor() {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'atlas-lane-'));
   fs.mkdirSync(path.join(home, 'hive'), { recursive: true });
   const h = new HiveManager(() => home);
-  h.setProjectCodes({ '/Users/me/Desktop/epicxp-events': 'EVENTS' });
+  h.setProjectCodes({ '/Users/me/Desktop/acme-events': 'EVENTS' });
   h.setCardHelper('/Applications/Atlas.app/Contents/Resources/open-card.cjs');
   return h;
 }
@@ -70,7 +70,7 @@ test('card ids are allocated by the helper, with the project codes listed', () =
   assert.match(p, /CARD IDS ARE ALLOCATED, NEVER INVENTED/);
   assert.match(p, /TASK-<PROJECT>-<n>/);
   assert.match(p, /open-card\.cjs" --project <CODE>/);
-  assert.match(p, /EVENTS = \/Users\/me\/Desktop\/epicxp-events/);
+  assert.match(p, /EVENTS = \/Users\/me\/Desktop\/acme-events/);
   assert.match(p, /Never hand-write an id into tasks\.json and never reuse one/);
 });
 

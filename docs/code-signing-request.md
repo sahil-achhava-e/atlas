@@ -22,13 +22,13 @@ App details, for the record:
 | | |
 |---|---|
 | App name | Atlas |
-| Bundle identifier | `io.epicxp.atlas` |
+| Bundle identifier | `io.github.sahil-achhava-e.atlas` |
 | Distribution | internal, direct download. Not the App Store |
 | Platform | macOS, universal (Intel and Apple Silicon) |
 
 ## Step 1. Apple Developer Program membership
 
-If Ethara already has an Apple Developer Program organization account, skip to
+If your company already has an Apple Developer Program organization account, skip to
 step 2 and tell me who the Account Holder is.
 
 If not:

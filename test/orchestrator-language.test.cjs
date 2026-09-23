@@ -111,7 +111,7 @@ test('a retired caption reads as absent, wherever it is stored', () => {
   const { liveRole } = loadTs('src/shared/agentRole.ts');
   assert.equal(liveRole('orchestrator (god)'), undefined);
   assert.equal(liveRole('Orchestrator (God)'), undefined, 'case does not rescue it');
-  assert.equal(liveRole('Lead - EpicXP Events'), 'Lead - EpicXP Events', 'real roles are untouched');
+  assert.equal(liveRole('Lead - Acme Events'), 'Lead - Acme Events', 'real roles are untouched');
 });
 
 test('it cannot come back from the registry or from the floor card', () => {

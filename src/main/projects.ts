@@ -1,7 +1,7 @@
 /**
  * The folders an agent can be given as its working directory.
  *
- * A registered project is not always a repo. `~/Desktop/Ethara-VMS` is a
+ * A registered project is not always a repo. `~/Desktop/Acme-VMS` is a
  * container holding three of them, and the hire dialog offered only the folder
  * the human had registered — so an agent for `vms-backend` could not be pointed
  * at `vms-backend`, and git isolation had nothing to make a worktree from.

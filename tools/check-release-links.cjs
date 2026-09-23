@@ -82,7 +82,7 @@ if (fs.existsSync(llms)) {
 }
 
 async function checkLive() {
-  const base = 'https://github.com/sahilethara/atlas/releases/latest/download/';
+  const base = 'https://github.com/sahil-achhava-e/atlas/releases/latest/download/';
   for (const name of [...assets, 'SHA256SUMS.txt']) {
     let status = 0;
     try {

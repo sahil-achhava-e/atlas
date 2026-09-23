@@ -97,7 +97,7 @@ test("the 'What's new' section wins over the release template's preamble", () =>
     '',
     '**A local hive of agents that run themselves** — the product tagline.',
     '',
-    '### → [**github.com/sahilethara/atlas**](https://github.com/sahilethara/atlas/) — see it in action',
+    '### → [**github.com/sahil-achhava-e/atlas**](https://github.com/sahil-achhava-e/atlas/) — see it in action',
     '',
     '---',
     '',

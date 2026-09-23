@@ -43,8 +43,14 @@ test('they are project-agnostic: coordinates come from config, never hardcoded',
   // wrong everywhere except the project it was written against.
   for (const name of SHIPPED) {
     const { body } = frontmatter(name);
-    assert.doesNotMatch(body, /EtharaSoleProprietorshipLLC/, `${name}: hardcoded Azure DevOps org`);
-    assert.doesNotMatch(body, /epicxp-events|vms-backend|Ethara-VMS/, `${name}: hardcoded repo`);
+    // Matched by SHAPE, not by a list of names. The list used to spell out the
+    // author's own org and repos, which put them in a public repo to assert
+    // they must not be in a public repo. A concrete coordinate is one with
+    // real characters where a placeholder (`{org}`, `<repo>`) would be.
+    assert.doesNotMatch(body, /\b(?:dev\.azure\.com|[a-z0-9-]+\.visualstudio\.com)\/[A-Za-z0-9._-]+/,
+      `${name}: hardcoded Azure DevOps org`);
+    assert.doesNotMatch(body, /\bgithub\.com\/[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+/,
+      `${name}: hardcoded repo`);
     assert.doesNotMatch(body, /\/Volumes\/|\/Users\//, `${name}: hardcoded machine path`);
     assert.match(body, /\.atlas\/project\.json/, `${name}: must read its coordinates from the project config`);
   }
