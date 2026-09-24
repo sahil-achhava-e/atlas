@@ -1076,7 +1076,7 @@ const api = {
   agentActivity: (agentId: string, limit?: number): Promise<Array<{
     kind: 'say' | 'do'; text: string; detail?: string; at?: number;
   }>> => ipcRenderer.invoke('agent:activity', agentId, limit),
-  agentContext: (agentId: string): Promise<number | null> =>
+  agentContext: (agentId: string): Promise<{ tokens: number; limit?: number } | null> =>
     ipcRenderer.invoke('hive:agentContext', agentId),
 
   // ─── Live telemetry (OTel collector — the usage-provider seam + spans) ──────

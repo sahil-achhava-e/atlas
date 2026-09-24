@@ -4591,11 +4591,16 @@ ipcMain.handle('activity:owner', (_evt, payload: unknown) => {
   }
 });
 
+// The status line's last reading when there is one: it carries the real window
+// size, which a reloaded page otherwise guesses from the model name (a Sonnet 5
+// agent guessed at 200k was compacted against the 200k bar in a 1M window).
 ipcMain.handle('hive:agentContext', (_evt, agentId: unknown) => {
   if (typeof agentId !== 'string') return null;
+  const live = hookServer.contextFor(agentId);
+  if (live) return { tokens: live.tokens, limit: live.limit };
   const tp = hookServer.transcriptPath(agentId);
   if (!tp) return null;
-  return readContextTokens(tp) ?? 0;
+  return { tokens: readContextTokens(tp) ?? 0 };
 });
 
 // A consolidated, NON-SENSITIVE per-agent directory for the voice read-layer

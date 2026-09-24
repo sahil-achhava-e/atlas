@@ -299,7 +299,7 @@ function contextFillPct(a: Agent): number | null {
  * notice. An unmetered agent therefore falls back to time-only firing, which is
  * exactly the old behaviour and no worse.
  */
-function passesContextPressure(a: Agent, rule: ContextRule): boolean {
+function passesContextPressure(a: Agent, rule: ContextRule, metered: boolean): boolean {
   // Judge "large" off the SAME window the fill percentage is computed against.
   // Reading `a.contextLimit` raw made the two disagree whenever the status-line
   // shim had not reported a limit: a 1M agent's fill was measured against 1M but
@@ -308,7 +308,10 @@ function passesContextPressure(a: Agent, rule: ContextRule): boolean {
   const bar = large ? rule.minContextPctLargeWindow : rule.minContextPct;
   if (!(bar > 0)) return true;
   const pct = contextFillPct(a);
-  if (pct === null) return true;
+  // Fail open only for a CLI that never reports its context. A metered one
+  // (Claude) with no reading yet has just started or been restored, and
+  // compacting it then is how six near-empty sessions were compacted at once.
+  if (pct === null) return !metered;
   return pct >= bar;
 }
 
@@ -665,6 +668,10 @@ export function useHive(config: HarnessConfig | null): void {
         if (!breakerArmed) updateAgent(e.agentId, { status: 'compacting', action: 'tidying up', carrying: undefined });
       } else if (e.event === 'PostCompact') {
         if (!breakerArmed) updateAgent(e.agentId, { status: 'working', action: 'back at it', carrying: undefined });
+        // The old reading is the pre-compact size, and nothing replaces it until
+        // the agent's next reply. Left in place, the next cycle compacted a
+        // 6k-token session because the gauge still said 250k (2026-09-24).
+        updateAgent(e.agentId, { contextTokens: 0 });
       } else if (e.event === 'PreToolUse' && e.tool) {
         const m = stationForTool(e.tool);
         if (!breakerArmed) updateAgent(e.agentId, { status: 'working', currentStation: m.station, carrying: m.carry, action: toolPhrase(e.tool) });
@@ -751,12 +758,13 @@ export function useHive(config: HarnessConfig | null): void {
         // hasn't fired yet (e.g. freshly restored, no response so far).
         if (a.contextLimit !== undefined) continue;
         try {
-          const ctx = await window.cth.agentContext(a.id);
-          if (ctx === null) continue;
+          const res = await window.cth.agentContext(a.id);
+          if (res === null) continue;
+          const ctx = res.tokens;
           const hinted = /1m/i.test(a.model ?? '') ? 1_000_000 : 200_000;
-          const limit = Math.max(hinted, ctx > 200_000 ? 1_000_000 : 0);
+          const limit = res.limit && res.limit > 0 ? res.limit : Math.max(hinted, ctx > 200_000 ? 1_000_000 : 0);
           const progress = Math.max(0, Math.min(8, Math.round((ctx / limit) * 8)));
-          updateAgent(a.id, { contextTokens: ctx, progress });
+          updateAgent(a.id, { contextTokens: ctx, ...(res.limit && res.limit > 0 ? { contextLimit: res.limit } : {}), progress });
         } catch { /* ignore — try again next tick */ }
       }
     };
@@ -1318,7 +1326,7 @@ export function useHive(config: HarnessConfig | null): void {
         // No trustworthy command for this CLI (Crush's palette-only TUI, Copilot's
         // print mode, an unknown custom binary) — leave its terminal alone.
         if (!command) continue;
-        if (!passesContextPressure(a, rule)) continue;
+        if (!passesContextPressure(a, rule, provider === 'claude')) continue;
         const verb = command.trimStart().split(/\s+/)[0];
         const queued = messageQueues[a.id] ?? [];
         if (queued.some((m) => m.text.trimStart().startsWith(verb))) continue;

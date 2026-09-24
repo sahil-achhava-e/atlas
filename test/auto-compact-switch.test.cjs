@@ -94,3 +94,25 @@ test('(b) no reading at all still fails OPEN, and a 0 bar disables the gate', ()
     true
   );
 });
+
+// ── (c) near-empty sessions are not compacted ────────────────────────────────
+
+test('(c) a Claude agent with no reading yet is left alone; an unmetered CLI still fails open', () => {
+  assert.equal(passesContextPressure({ model: 'claude-sonnet-5' }, RULE, true), false);
+  assert.equal(passesContextPressure({ model: 'crush' }, RULE, false), true);
+});
+
+test('(c) a finished compaction zeroes the stale reading until the next reply', () => {
+  const post = hive.slice(hive.indexOf("e.event === 'PostCompact'"), hive.indexOf("e.event === 'PreToolUse'"));
+  assert.match(post, /updateAgent\(e\.agentId, \{ contextTokens: 0 \}\)/);
+});
+
+// ── (d) a reloaded page learns the real window, not a guess ──────────────────
+
+test('(d) the context backfill carries the status line\'s window size', () => {
+  const main = read('src/main/index.ts');
+  const h = main.slice(main.indexOf("ipcMain.handle('hive:agentContext'"), main.indexOf("ipcMain.handle('hive:agentContext'") + 600);
+  assert.match(h, /hookServer\.contextFor\(agentId\)/);
+  assert.match(h, /limit: live\.limit/);
+  assert.match(hive, /contextLimit: res\.limit/);
+});
