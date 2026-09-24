@@ -18,3 +18,10 @@ test('the orchestrator is told how to write a brief, and only the orchestrator',
   }
   assert.ok(/godLine,\s*briefLine,/.test(src), 'briefLine is in the assembled prompt');
 });
+
+test('every agent gets the token-saving tool rules', () => {
+  const m = /const toolLine = '([^\n]*)';/.exec(src);
+  assert.ok(m, 'toolLine is a static line for every agent');
+  assert.ok(m[1].includes('SEARCH, DO NOT DUMP') && m[1].includes('NEVER RE-READ A FILE YOU JUST WROTE'));
+  assert.ok(/craftLine,\s*toolLine,/.test(src), 'toolLine is in the assembled prompt');
+});

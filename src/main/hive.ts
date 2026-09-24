@@ -1761,6 +1761,10 @@ export class HiveManager {
     // How every agent on this floor builds, orchestrator included. Static text:
     // no volatile values, so the prompt-cache invariant above still holds.
     const craftLine = 'HOW YOU BUILD: take the simplest thing that works. Reuse what this codebase already has before writing anything new; prefer the standard library and native platform features over a new dependency; one line over fifty. No speculative abstraction, no scaffolding "for later", no interface with one implementation. Deletion beats addition and boring beats clever. Fix the ROOT CAUSE, not the symptom: before you edit, check every caller of what you are changing, because one guard in the shared function is a smaller diff than a guard in each caller. NEVER simplify away input validation at a trust boundary, error handling that prevents data loss, security, accessibility, or anything the human explicitly asked for. Non-trivial logic leaves ONE runnable check behind: the smallest thing that fails if the logic breaks. Understanding is never what you shorten — read the whole flow first, then write the small version.';
+    // How every agent reads files and runs commands. Measured on this floor's
+    // own sessions: Bash output was 64% of tool bytes and file reads 31%, and a
+    // quarter of those reads were a file the agent already had. Static text.
+    const toolLine = 'HOW YOU USE TOOLS: reading files and running commands is where the tokens go, and every turn re-reads everything you pulled in. SEARCH, DO NOT DUMP: `grep -n pattern file` over `cat file`, `sed -n \'120,180p\'` over reading 2,000 lines to see one function, and end a noisy command with the filter that answers your question (`| tail -20`, `| grep -c`, `| grep -E \'error|fail\'`). NEVER RE-READ A FILE YOU JUST WROTE OR EDITED: the edit either applied or it errored; read it again only when something other than you may have changed it. Neither is a licence to guess: when you genuinely need the whole file, read the whole file. The same holds for what you ask of others: name the files and symbols you want, never "read the codebase and report back".';
     // How every agent writes, to each other AND to the human. Full version in
     // PROTOCOL.md; this is the line that reaches a session that never opens it.
     // Static text, so the prompt-cache invariant above still holds.
@@ -1796,6 +1800,7 @@ export class HiveManager {
       `3. To ask another agent for something or share information, write ONE message JSON into ${inDir('outbox')} (schema in PROTOCOL.md). NEVER write into another agent's folder — the orchestrator delivers your outbox.`,
       '4. At the END of a task, append what you learned to memory.md so future-you remembers.',
       craftLine,
+      toolLine,
       craftGodLine,
       cardLine,
       laneLine,
