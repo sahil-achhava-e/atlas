@@ -100,7 +100,19 @@ export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {
 
   /** True once the picker holds a different model from the one this agent is
    *  actually running. That is the only case where restarting buys anything. */
-  const modelChanged = (model ?? '') !== (agent.model ?? '');
+  // Compared against the model the process is RUNNING, not the saved one: after
+  // a Save without a restart the two differ, and comparing to the saved model
+  // hid "Save and restart" for good (2026-09-24: Naruto saved as Sonnet, still
+  // on Opus, and the dialog only offered Save).
+  const [runningModel, setRunningModel] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    let alive = true;
+    void window.cth.listPtys().then((ptys) => {
+      if (alive) setRunningModel(ptys.find((p) => p.id === agent.ptyId)?.model);
+    }).catch(() => { /* fall back to the saved model below */ });
+    return () => { alive = false; };
+  }, [agent.ptyId]);
+  const modelChanged = (model ?? '') !== (runningModel ?? agent.model ?? '');
   const canRestart = modelChanged && !!agent.ptyId;
 
   const saveAndRestart = (): void => {

@@ -18,6 +18,7 @@ import { HivePicker } from '@/components/HivePicker';
 import { QuitWarningModal, type ClosingTimeState } from '@/components/QuitWarningModal';
 import { CompletionToast } from '@/realtime/CompletionToast';
 import { UpdateToast } from '@/components/UpdateToast';
+import { AuthLoginDialog } from '@/components/AuthLoginDialog';
 import { RestoreTeamOnBoot } from '@/components/RestoreTeamOnBoot';
 import { FocusAgentMenu } from '@/components/FocusAgentMenu';
 import { useAppTheme, toggleAppTheme } from '@/design/theme';
@@ -33,10 +34,33 @@ import { StatusGlyph } from '@/components/StatusGlyph';
 import { MoonIcon, SunIcon, GearIcon, ExpandIcon, CollapseIcon } from '@/components/ChromeIcons';
 import { TaskDetailOverlay } from '@/components/TaskDetailOverlay';
 import { IdePanel } from '@/ide/IdePanel';
+import { installRestartListener } from '@/components/restartAgent';
 import { agentSlug, go, parseRoute, tabFromSlug, tabSlug, type Route, type TabKey } from '@/routes';
 
 // Injected at build time from package.json (see electron.vite.config.ts).
 declare const __APP_VERSION__: string;
+
+/**
+ * The store mirrors that shadow a config field.
+ *
+ * Each of these exists so a surface can read one value instead of reaching for
+ * the config: the office floor's theme and palette, the "explain things simply"
+ * register, and the trigger lists that Settings → Connections and the Command
+ * Center's Triggers tab both render. Applied on load AND on every save, because
+ * a mirror that is only filled once is a mirror that goes stale.
+ *
+ * No extra IPC for the triggers: main deep-fills both fields on every config
+ * read (withTriggerDefaults), so getConfig() already serves what
+ * listWebhooks()/getOrgTrigger() would.
+ */
+function applyConfigMirrors(c: HarnessConfig): void {
+  const store = useStore.getState();
+  store.setOfficeTheme(c.tvShowOffices ? (c.officeTheme ?? 'office') : 'office');
+  store.setTilePalette(c.tilePalette ?? 'original');
+  store.setSimpleMode(c.audience === 'non-technical');
+  store.setWebhookTriggers(c.webhookTriggers ?? []);
+  store.setOrgTrigger(c.orgTrigger ?? DEFAULT_ORG_TRIGGER);
+}
 
 export function App() {
   const { t } = useTranslation();
@@ -46,6 +70,8 @@ export function App() {
   useDirectionSync();
   // Let terminals that are ALREADY open follow a language switch too.
   useArabicTerminalSync();
+  // Edit agent's "Save & restart" asks by event; answer it whatever screen is open.
+  useEffect(() => installRestartListener(t('commandCenter.restartNoProcess')), [t]);
   const agent = useStore(selectedAgent);
   const agents = useStore(s => s.agents);
   const agentCount = agents.length;
@@ -127,23 +153,7 @@ export function App() {
     window.cth.getConfig().then(c => {
       if (cancelled) return;
       setConfig(c);
-      // Mirror the active office theme so OfficeFloor renders it (gated on the
-      // tvShowOffices flag; off = always the office). Settings keeps this synced.
-      useStore.getState().setOfficeTheme(c.tvShowOffices ? (c.officeTheme ?? 'office') : 'office');
-      useStore.getState().setTilePalette(c.tilePalette ?? 'original');
-      // Mirror "Explain things simply" so the surfaces that hide in simple mode
-      // can read one boolean instead of each reaching for the config.
-      useStore.getState().setSimpleMode((c as HarnessConfig).audience === 'non-technical');
-      // Mirror the triggers so Settings → Connections and the Command Center's
-      // Triggers tab read one list, not two copies that drift — whichever surface
-      // saves calls these same setters and the other repaints. No extra IPC: main
-      // deep-fills both fields on every config read (withTriggerDefaults), so
-      // getConfig() already serves what listWebhooks()/getOrgTrigger() would.
-      // `c` is typed as the PRELOAD's HarnessConfig, which hasn't picked the two
-      // fields up yet (another lane's file); the renderer mirror type declares them.
-      const withTriggers = c as HarnessConfig;
-      useStore.getState().setWebhookTriggers(withTriggers.webhookTriggers ?? []);
-      useStore.getState().setOrgTrigger(withTriggers.orgTrigger ?? DEFAULT_ORG_TRIGGER);
+      applyConfigMirrors(c as HarnessConfig);
     });
     // Mirror BYOK OpenAI key presence (boolean only; the key never leaves main) so the
     // Realtime Michael voice toggle can gate on it. Lives in the secret broker, not
@@ -158,8 +168,14 @@ export function App() {
   // for whichever agent the user is viewing; gated on the flag, terminal-safe
 
   // Config subscription — the copy loaded above would otherwise go stale the
-  // moment anything saves a setting.
-  useEffect(() => window.cth.onConfigChanged(setConfig), []);
+  // moment anything saves a setting. The MIRRORS have to be re-applied too, and
+  // for a long time they were not: they were set once, in the load above, so a
+  // setting changed in another window, by a voice action or by main itself
+  // repainted nothing until the next launch.
+  useEffect(() => window.cth.onConfigChanged((c) => {
+    setConfig(c);
+    applyConfigMirrors(c as HarnessConfig);
+  }), []);
 
   // Quit warning subscription
   useEffect(() => window.cth.onCloseRequested((info) => setQuitWarn(info)), []);
@@ -406,6 +422,9 @@ export function App() {
       {/* v0.3.4: background-update toast ("restart to update"); renders null until
           main's updater pushes a status. */}
       <UpdateToast />
+      {/* Signed out of the Claude CLI: agents spawn and then sit on "Not logged
+          in" forever. Renders null until main says so. */}
+      <AuthLoginDialog />
       {/* Draws nothing. It holds the mount for the automatic restore, which is
           an effect inside useRestoreTeam and therefore only runs while
           something has that hook mounted — for a while the only other mount was

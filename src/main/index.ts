@@ -89,6 +89,7 @@ import {
   type AgentProvider
 } from '../shared/agentProvider';
 import { buildMissingCliScript, chooseInstallRung } from './cliInstall';
+import { buildLoginScript, checkAuth, clearAuthCache } from './authGate';
 import { detectNodeVersion, nodeIsUsable, resolveNodeInstaller } from './nodeInstall';
 import { toolCatalog, type ToolStatus } from '../shared/toolCatalog';
 import { listLocalSkills, loadCatalog, installSkill, uninstallSkill, type LocalSkill , addLocalSkill, atlasSkillsDir, syncAtlasSkills } from './skills';
@@ -312,6 +313,14 @@ const ptyToAgent = new Map<string, string>();
  *  install disabled) so the freshly-installed CLI launches in the SAME pty/window —
  *  no user click. Cleared the moment it's consumed, so it can never loop installs. */
 const pendingInstallRelaunch = new Map<string, { opts: AgentSpawnOptions; owner: Electron.WebContents | null; bin: string; rung: string }>();
+/** Spawns parked behind a Claude sign-in, and the PTY showing it.
+ *
+ *  One sign-in serves every blocked agent: `authLoginPtyId` is the terminal it
+ *  is running in, and everything in the map is respawned when that PTY exits
+ *  signed in. Both are cleared together — a stale id here would make the next
+ *  logged-out spawn park forever behind a terminal that no longer exists. */
+const pendingAuthRelaunch = new Map<string, { opts: AgentSpawnOptions; owner: Electron.WebContents | null }>();
+let authLoginPtyId: string | null = null;
 const hive = new HiveManager(
   () => readConfig().harnessHome,
   (channel, payload) => {
@@ -350,6 +359,21 @@ const breaker = new CircuitBreaker(() => {
 // Michael reads + the breaker beat, so guardrails + monitoring work even when the
 // heartbeat mission is disabled (it ships off).
 let fleetTimer: ReturnType<typeof setInterval> | null = null;
+let authTimer: ReturnType<typeof setInterval> | null = null;
+/** Last state pushed, so the poll only speaks when the answer changes. */
+let lastAuthState: 'in' | 'out' | 'unknown' = 'unknown';
+
+/** Tell the renderer where the Claude CLI stands. Mirrors how breaker state is
+ *  emitted (`control:breakerState`): one `send` on the live window, swallowed
+ *  when there isn't one. `unknown` is reported as signed IN — a probe that
+ *  failed is not a reason to put a sign-in dialog over someone's work. */
+function pushAuthStatus(): { loggedIn: boolean; state: string; checkedAt: number } {
+  const state = checkAuth(ptyManager.commandPath('claude'));
+  lastAuthState = state;
+  const payload = { loggedIn: state !== 'out', state, checkedAt: Date.now() };
+  try { liveWebContents()?.send('auth:status', payload); } catch { /* window tore down */ }
+  return payload;
+}
 let breakerBeatTimer: ReturnType<typeof setInterval> | null = null;
 // Feed the breaker's api_error-storm trip from Oscar's OTel api_error spans —
 // Jim's one breaker input with no on-branch source (telemetry.onApiError seam).
@@ -756,6 +780,30 @@ ptyManager.setExitHandler((id, exitCode, info) => {
     }
   } catch (e) { console.error('[pty] recordAgentExit failed:', e); }
 
+  // A sign-in PTY finished. The script asks the CLI whether the sign-in
+  // actually took and exits non-zero if it did not, so a cancelled browser flow
+  // never respawns an agent onto the same "Not logged in" screen.
+  if (authLoginPtyId === id) {
+    authLoginPtyId = null;
+    clearAuthCache();
+    const parked = [...pendingAuthRelaunch.values()];
+    pendingAuthRelaunch.clear();
+    if (exitCode === 0) {
+      const wc = liveWebContents();
+      for (const p of parked) {
+        // Re-arm the renderer's pooled terminal for the one that showed the
+        // sign-in; the others never started a PTY of their own.
+        if (p.opts.id === id) { try { wc?.send(`pty:relaunch:${id}`); } catch { /* window gone */ } }
+        void spawnAgentCore({ ...p.opts, noAutoInstall: true }, p.owner);
+      }
+      pushAuthStatus();
+      return; // a sign-in PTY has no agent or worktree to tear down
+    }
+    // Signed in it is not. Leave the script's own message on screen and tell
+    // the renderer, so the dialog can say so rather than spinning.
+    pushAuthStatus();
+    return;
+  }
   const pending = pendingInstallRelaunch.get(id);
   if (pending) {
     pendingInstallRelaunch.delete(id);
@@ -1065,9 +1113,8 @@ function ensureDefaultMissions(): void {
       opsStandupSeeded: true
     });
   }
-  // Seed the built-in heartbeat (Lane A #1) once. Shipped DISABLED, so it just
-  // appears in the SCHEDULES panel for the user to turn on; lastFiredAt = now so
-  // it doesn't fire on the very first launch after a user enables it.
+  // Seed the built-in heartbeat (Lane A #1) once. Shipped enabled; lastFiredAt =
+  // now so it doesn't fire on the very first launch.
   const cfg2 = readConfig();
   if (!cfg2.heartbeatSeeded) {
     const missions = cfg2.missions ?? [];
@@ -1096,7 +1143,13 @@ function ensureDefaultMissions(): void {
   const retiring = missions3.find((m) => m.id === COMPACT_MAINTENANCE_MISSION.id);
   if (retiring) {
     const current = cfg3.contextTrigger ?? DEFAULT_CONTEXT_TRIGGER;
-    writeConfig({
+    // A trigger that is already configured wins. An old renderer build can
+    // re-create this mission after the trigger was set, and carrying its values
+    // over then undid the operator's edit (seen 2026-09-24: 30m reset to 2h).
+    writeConfig(cfg3.contextTrigger ? {
+      missions: missions3.filter((m) => m.id !== COMPACT_MAINTENANCE_MISSION.id),
+      compactMaintenanceSeeded: true
+    } : {
       missions: missions3.filter((m) => m.id !== COMPACT_MAINTENANCE_MISSION.id),
       contextTrigger: {
         ...current,
@@ -2851,6 +2904,54 @@ async function spawnAgentCore(opts: AgentSpawnOptions, owner: Electron.WebConten
       return res;
     }
   }
+  // ── Claude CLI signed out → run the sign-in visibly (pre-spawn) ─────────────
+  // The binary is there, the PTY opens, and then the TUI sits on "Not logged in
+  // · Please run /login" forever. Nothing noticed, so the only way out was a
+  // terminal outside the app and a restart by hand (2026-09-23: fifteen agents
+  // stuck behind a token that had expired the day before).
+  //
+  // Same shape as the missing-CLI ladder above, and deliberately AFTER it: a
+  // binary that is not installed cannot be asked whether it is signed in.
+  // `out` is the only state that gates — a probe that failed is not evidence of
+  // being signed out, and must never strand an agent behind a sign-in screen.
+  //
+  // SINGLE FLIGHT. Fifteen blocked agents must produce ONE sign-in and one
+  // browser tab, not fifteen. The first blocked spawn runs it; the rest park in
+  // `pendingAuthRelaunch` and are respawned by the same handler that already
+  // relaunches after an install.
+  {
+    const bin = opts.command.trim().split(/\s+/)[0] || opts.command;
+    if (claudeProvider && !opts.noAutoInstall && checkAuth(ptyManager.commandPath(bin)) === 'out') {
+      if (authLoginPtyId) {
+        // A sign-in is already on screen. Park this one; the PTY-exit handler
+        // respawns the whole set when it lands.
+        pendingAuthRelaunch.set(opts.id, { opts, owner });
+        analytics.track('agent_spawn_failed', { provider, reason: 'auth_waiting' });
+        return { ok: false, error: 'waiting for Claude sign-in' };
+      }
+      const res = ptyManager.spawn(
+        {
+          id: opts.id,
+          cwd: opts.cwd,
+          command: bin,
+          cols: opts.cols,
+          rows: opts.rows,
+          shellScript: buildLoginScript(bin, process.platform)
+        },
+        owner
+      );
+      if (res.ok) {
+        authLoginPtyId = opts.id;
+        pendingAuthRelaunch.set(opts.id, { opts, owner });
+        clearAuthCache();   // whatever it said, it is about to be wrong
+        analytics.track('agent_install_started', { provider, rung: 'auth-login' });
+      } else {
+        analytics.track('agent_spawn_failed', { provider, reason: spawnFailReason(res.error) });
+      }
+      syncKeepAwake();
+      return res;
+    }
+  }
   // Git isolation: when requested and the cwd is a real repo, give this agent
   // its own worktree on an `agent/<id>` branch so it can't clobber other agents'
   // (or the user's) working tree. Best-effort — a failure falls back to the
@@ -3857,6 +3958,32 @@ ipcMain.handle('hive:setAgentHold', (_evt, id: unknown, hold: unknown) => {
 });
 ipcMain.handle('hive:board', () => hive.board());
 ipcMain.handle('hive:tasks', () => hive.tasks());
+
+// ─── Claude sign-in ──────────────────────────────────────────────────────────
+/** The current state, for a renderer that mounted after the last push. */
+ipcMain.handle('auth:current', () => pushAuthStatus());
+/** Run `claude auth login` where the user can watch it, and say where.
+ *
+ *  The script is built HERE from a trusted constant — the renderer never hands
+ *  a shell string across the bridge. The reply carries the pty id so the dialog
+ *  can show that terminal; everything after (the agents parked behind it, the
+ *  respawn) is the PTY-exit handler's job, the same one the installer uses. */
+ipcMain.handle('auth:login', (evt) => {
+  if (authLoginPtyId) return { ok: true, ptyId: authLoginPtyId, already: true };
+  const id = `auth-login-${Date.now().toString(36)}`;
+  const res = ptyManager.spawn(
+    // Resolved off PATH by the pty manager, the same as any agent's command.
+    // `home` rather than a project: signing in is not work on a repo.
+    { id, cwd: app.getPath('home'), command: 'claude', cols: 100, rows: 28,
+      shellScript: buildLoginScript('claude', process.platform) },
+    evt.sender
+  );
+  if (!res.ok) return { ok: false, error: res.error };
+  authLoginPtyId = id;
+  clearAuthCache();
+  syncKeepAwake();
+  return { ok: true, ptyId: id };
+});
 ipcMain.handle('hive:log', (_evt, n: unknown) => hive.logTail(typeof n === 'number' ? n : 200));
 ipcMain.handle('hive:memory', (_evt, id: unknown) => (typeof id === 'string' ? hive.memory(id) : ''));
 ipcMain.handle('hive:inbox', (_evt, id: unknown) => (typeof id === 'string' ? hive.inbox(id) : []));
@@ -5943,8 +6070,18 @@ function runWorkerWakeBeat(): void {
  *  handles that freeze during true system sleep and must be re-armed on wake. */
 function armAlwaysOnBeats(): void {
   if (fleetTimer) clearInterval(fleetTimer);
+  if (authTimer) clearInterval(authTimer);
   writeFleetSnapshot();
   fleetTimer = setInterval(writeFleetSnapshot, 8_000);
+  // Claude sign-in, every 60s. The probe is a 3s-capped subprocess with a 30s
+  // cache, so this is one `claude auth status` a minute and nothing when a
+  // spawn has already asked. Pushed only on a CHANGE: the renderer keeps the
+  // last value, and a dialog that re-renders every minute for the same answer
+  // is a flicker nobody asked for.
+  authTimer = setInterval(() => {
+    const now = checkAuth(ptyManager.commandPath('claude'));
+    if (now !== lastAuthState) pushAuthStatus();
+  }, 60_000);
   if (breakerBeatTimer) clearInterval(breakerBeatTimer);
   breakerBeatTimer = setInterval(() => { try { runBreakerBeat(300_000); } catch (e) { console.error('[breaker beat]', e); } }, 30_000);
   if (workerWakeTimer) clearInterval(workerWakeTimer);
@@ -6204,6 +6341,14 @@ app.on('before-quit', (e) => {
 // Every window loads the config once at start-up, so tell them all when a
 // setting is saved — a floor left out would keep showing what it opened with.
 onConfigWritten((config) => {
+  // `strongKeepalive` decides the blocker MODE, and syncKeepAwake is the only
+  // thing that reads it. Every other call site is a PTY lifecycle event, so
+  // flipping the switch under a running floor changed nothing until an agent
+  // next spawned or exited — the function's own comment promises the opposite
+  // ("toggling the flag while agents run swaps the blocker mode live"). It
+  // early-returns when the mode is unchanged, so every other setting save costs
+  // one comparison.
+  try { syncKeepAwake(); } catch (e) { console.error('[power] syncKeepAwake on config write', e); }
   for (const w of allWindows) {
     if (w.isDestroyed() || w.webContents.isDestroyed()) continue;
     w.webContents.send('config:changed', config);

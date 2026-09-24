@@ -115,16 +115,12 @@ export interface ContextTriggerConfig {
  * as the default so upgrading users see no behaviour change beyond the cadence.
  */
 export const DEFAULT_COMPACTION_FOCUS =
-  'Keep the current task, recent decisions, open questions, and file paths in play. Drop resolved tangents.';
+  'Keep the current task and its next step, decisions made and why, exact error messages, commands that worked, ' +
+  'approaches already tried and ruled out, and every file path being edited. Drop finished work and resolved tangents.';
 
 /**
- * Defaults are deliberately TWICE the old cadence and TWICE the previously
- * documented pressure bar.
- *
- * History: `main/config.ts` documented a 30% / 20% context gate that was never
- * actually implemented — every live agent got compacted on every tick, hourly.
- * This makes the gate real and sets it at 2x, so compaction now costs an agent
- * half as many interruptions.
+ * Compaction defaults: every 30 minutes, gated at 60% context (20% on large
+ * ~1M-token windows), so an agent that is nowhere near full is left alone.
  *
  * Auto-clear ships DISABLED. `/clear` is destructive — it discards context rather
  * than summarising it, and the codebase already gates the manual verb behind a
@@ -133,9 +129,9 @@ export const DEFAULT_COMPACTION_FOCUS =
 export const DEFAULT_CONTEXT_TRIGGER: ContextTriggerConfig = {
   compact: {
     enabled: true,
-    everyMs: 7_200_000, // 2h — was 1h
-    minContextPct: 60, // was a documented-but-unenforced 30
-    minContextPctLargeWindow: 40, // was a documented-but-unenforced 20
+    everyMs: 1_800_000, // 30m
+    minContextPct: 60,
+    minContextPctLargeWindow: 20,
     message: DEFAULT_COMPACTION_FOCUS
   },
   clear: {

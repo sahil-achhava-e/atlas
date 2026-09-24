@@ -70,6 +70,9 @@ interface PtySession {
   /** True after the child has emitted at least one frame. Automation waits for
    *  this before typing, so startup prompts cannot outrun the TUI subscription. */
   hasOutput: boolean;
+  /** The --model this process was launched with, if any. The saved model can
+   *  differ (saved without a restart); Edit agent compares against this one. */
+  model?: string;
 }
 
 export interface SpawnOptions {
@@ -132,6 +135,12 @@ export interface SpawnOptions {
  * `argsToCommandLine` runs and no shell parser is involved). This function remains
  * the fallback for every target we cannot decode — strictly no worse than before.
  */
+/** The value after `--model` in a launch's args, or undefined. */
+export function modelArg(args: string[] | undefined): string | undefined {
+  const i = (args ?? []).indexOf('--model');
+  return i >= 0 ? args![i + 1] : undefined;
+}
+
 export function buildCmdCommandLine(resolved: string, args: string[]): string {
   const quoteToken = (s: string): string => {
     // Escape any embedded double-quote, then quote the token if it needs it.
@@ -731,7 +740,8 @@ export class PtyManager {
         lastOutputAt: Date.now(),
         hasOutput: false,
         tail: '',
-        owner
+        owner,
+        model: modelArg(opts.args)
       };
       this.sessions.set(opts.id, session);
 
@@ -828,14 +838,15 @@ export class PtyManager {
     }
   }
 
-  list(): Array<{ id: string; cwd: string; command: string; pid: number; lastOutputAt: number; hasOutput: boolean }> {
+  list(): Array<{ id: string; cwd: string; command: string; pid: number; lastOutputAt: number; hasOutput: boolean; model?: string }> {
     return Array.from(this.sessions.values()).map(s => ({
       id: s.id,
       cwd: s.cwd,
       command: s.command,
       pid: s.proc.pid,
       lastOutputAt: s.lastOutputAt,
-      hasOutput: s.hasOutput
+      hasOutput: s.hasOutput,
+      model: s.model
     }));
   }
 

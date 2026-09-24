@@ -29,8 +29,14 @@ test('the one writer is saveAll, and it sends a single merged patch', () => {
   const body = MODAL.slice(i, MODAL.indexOf('\n  };', i));
   assert.match(body, /window\.cth\.updateConfig\(patch\)/,
     'saveAll must write one patch, not several calls');
-  for (const part of ['maxTurnsPatch()', 'budgetPatch()', '...pending']) {
-    assert.ok(body.includes(part), `saveAll does not include ${part}`);
+  // The patch is the staged values and nothing else. It used to fold in
+  // maxTurnsPatch() and budgetPatch() as well — fields this dialog has had no
+  // control for since the Autonomy & Budgets tab went — which meant saving any
+  // setting rewrote a mount-time snapshot of the token cap over whatever had
+  // been set since. See settings-persistence.test.cjs.
+  assert.ok(body.includes('...pending'), 'saveAll does not send the staged values');
+  for (const gone of ['maxTurnsPatch()', 'budgetPatch()']) {
+    assert.ok(!body.includes(gone), `saveAll writes ${gone}, a field it has no control for`);
   }
 });
 
@@ -39,7 +45,9 @@ test('toggles stage their change instead of writing it', () => {
   // the ones this modal still owns: semanticMemory moved to the Memory tab with
   // its own switch, and auto-update and telemetry were removed in 3ff81c2
   // because neither governed anything in this build.
-  for (const key of ['strongKeepalive', 'autoMode', 'orchestratorMaySpawn']) {
+  // `notifications` joined them: it wrote straight to disk on click, so it was
+  // the one switch here that Discard could not put back.
+  for (const key of ['strongKeepalive', 'autoMode', 'orchestratorMaySpawn', 'notifications']) {
     const re = new RegExp(`stage\\(\\{ ${key}:`);
     assert.match(MODAL, re, `${key} is not staged`);
   }
@@ -55,8 +63,12 @@ test('closing with staged changes asks first, instead of dropping them', () => {
   // this pins the same INTENT against the mechanism that replaced it.
   assert.match(body, /setUnsavedOpen\(true\)/, 'the guard does not actually ask');
   assert.match(MODAL, /<ConfirmDialog/, 'the guard opens nothing');
-  assert.match(MODAL, /onConfirm=\{\(\) => \{ setUnsavedOpen\(false\); onClose\(\); \}\}/,
+  // Confirming goes through `discard`, not straight to onClose: the office
+  // theme applies live as you pick it, so throwing the change away has to
+  // repaint the floor back to what is stored.
+  assert.match(MODAL, /onConfirm=\{\(\) => \{ setUnsavedOpen\(false\); discard\(\); \}\}/,
     'confirming does not close the modal');
+  assert.match(MODAL, /const discard = \(\): void => \{/, 'there is no discard path');
   // And the footer button must use it, not raw onClose.
   assert.match(MODAL, /onClick=\{requestClose\}/, 'the footer Close bypasses the guard');
 });

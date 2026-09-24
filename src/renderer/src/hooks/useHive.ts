@@ -19,7 +19,7 @@ import { DEFAULT_CONTEXT_TRIGGER, type ContextRule } from '../../../shared/trigg
 import type { AgentProvider } from '../../../shared/agentProvider';
 import { bridgeOf, providerPreset } from '../../../shared/agentProvider';
 import { isDurableRole, liveRole, preferredAgentRole, roleForHiveSpawn } from '../../../shared/agentRole';
-import { inboxNudgeText } from '../../../shared/hiveNudge';
+import { inboxNudgeText, releaseHeldMail, type HeldMail } from '../../../shared/hiveNudge';
 import { resolveGodName } from '../../../shared/godIdentity';
 import { planFloor } from '../../../shared/floorReconcile';
 import { acquireTerminal, resetTerminal, isTerminalAutomationSafe } from '@/components/terminalPool';
@@ -276,12 +276,15 @@ const LARGE_CONTEXT_WINDOW = 500_000;
  * without knowing its window — infer the window the same way 2c does rather
  * than throwing the token reading away.
  */
-function contextFillPct(a: Agent): number | null {
-  if (a.contextTokens === undefined || !Number.isFinite(a.contextTokens)) return null;
-  const limit = a.contextLimit && a.contextLimit > 0
+function contextLimitOf(a: Agent): number {
+  return a.contextLimit && a.contextLimit > 0
     ? a.contextLimit
     : (/1m/i.test(a.model ?? '') ? 1_000_000 : 200_000);
-  return (a.contextTokens / limit) * 100;
+}
+
+function contextFillPct(a: Agent): number | null {
+  if (a.contextTokens === undefined || !Number.isFinite(a.contextTokens)) return null;
+  return (a.contextTokens / contextLimitOf(a)) * 100;
 }
 
 /**
@@ -297,7 +300,11 @@ function contextFillPct(a: Agent): number | null {
  * exactly the old behaviour and no worse.
  */
 function passesContextPressure(a: Agent, rule: ContextRule): boolean {
-  const large = (a.contextLimit ?? 0) >= LARGE_CONTEXT_WINDOW;
+  // Judge "large" off the SAME window the fill percentage is computed against.
+  // Reading `a.contextLimit` raw made the two disagree whenever the status-line
+  // shim had not reported a limit: a 1M agent's fill was measured against 1M but
+  // its bar was the 200k one, so it sat at 500k tokens waiting for 60%.
+  const large = contextLimitOf(a) >= LARGE_CONTEXT_WINDOW;
   const bar = large ? rule.minContextPctLargeWindow : rule.minContextPct;
   if (!(bar > 0)) return true;
   const pct = contextFillPct(a);
@@ -334,6 +341,8 @@ export function useHive(config: HarnessConfig | null): void {
   // negligible next to a stalled agent. Evicting ids that have left the inbox would
   // bound it exactly; deliberately not done here to keep this fix minimal.
   const nudged = useRef<Record<string, Set<string>>>({});
+  // God's mail waiting to settle before one nudge covers all of it (releaseHeldMail).
+  const godHeld = useRef<HeldMail>({ ids: [], firstAt: 0, lastAt: 0 });
   // Per-agent context size at the last auto-/compact queued. See the latch note
   // in the context-trigger effect: an idle agent's token count is frozen, so
   // without this the pressure gate re-fires on the identical number every cycle.
@@ -872,6 +881,15 @@ export function useHive(config: HarnessConfig | null): void {
           // on the floor when the agent is god.
           const seen = nudged.current[a.id] ?? (nudged.current[a.id] = new Set());
           const fresh = inbox.filter((m) => m.id && !seen.has(m.id));
+          if (a.isGod) {
+            for (const m of fresh) seen.add(m.id);
+            const ids = releaseHeldMail(godHeld.current, fresh.map((m) => m.id), Date.now());
+            if (ids) {
+              useStore.getState().enqueueMessage(a.id, inboxNudgeText(ids), { precondition: 'inbox-nonempty' });
+              godHeld.current = { ids: [], firstAt: 0, lastAt: 0 };
+            }
+            continue;
+          }
           if (fresh.length) {
             // Name the ids: the nudge is queued now and typed whenever the agent
             // next goes idle, so it can arrive long after the agent drained and

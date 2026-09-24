@@ -200,10 +200,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
   // Permissions & reliability toggles. These apply IMMEDIATELY on change (their
   // own IPC / OS state) "— they are NOT part of finish()'s config write. First-run
-  // defaults: notifications off (config default), login-item off (fresh install);
+  // defaults: notifications and strong keepalive on (config defaults), login-item off (fresh install);
   // each reconciles to the real state the IPC returns.
-  const [strongKeepalive, setStrongKeepalive] = useState(draft.strongKeepalive ?? false);
-  const [notifications, setNotifications] = useState(draft.notifications ?? false);
+  const [strongKeepalive, setStrongKeepalive] = useState(draft.strongKeepalive ?? true);
+  const [notifications, setNotifications] = useState(draft.notifications ?? true);
   const [openAtLogin, setOpenAtLogin] = useState(false);
 
   // Keep the draft current. Cheap, and it means a reload at any point in setup

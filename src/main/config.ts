@@ -63,7 +63,7 @@ export interface ScheduledMission {
 
 /** The built-in hourly ops standup: god reviews who's doing what + whether tasks
  *  are on track and agents are running, and every terminal's context is compacted.
- *  Shipped enabled by default; users can toggle it off in the Command Center. */
+ *  Shipped disabled by default; users can turn it on in the Command Center. */
 export const OPS_STANDUP_MISSION: ScheduledMission = {
   id: 'ops-standup',
   label: 'Hourly ops standup',
@@ -78,7 +78,7 @@ export const OPS_STANDUP_MISSION: ScheduledMission = {
     'next step, then compact and resume from the same point — so terminal ' +
     'contexts stay bounded without losing work. The compaction is queued and ' +
     'runs when an agent is idle, so it never interrupts work mid-step.)',
-  enabled: true
+  enabled: false
   // NO autoCompact. Compaction belongs to contextTrigger.compact and nothing else.
   // This flag used to live here as well, which meant a default install asked for
   // compaction on TWO cadences — hourly from this standup and 2-hourly from the
@@ -92,9 +92,8 @@ export const OPS_STANDUP_MISSION: ScheduledMission = {
  *  digest into god's inbox and (if god's PTY is genuinely idle) nudges it to
  *  re-engage anyone stalled. The same beat ticks the circuit breaker.
  *
- *  Shipped DISABLED by default (opt-in): unlike the standup, which only sends a
- *  hive message, the heartbeat types into god's PTY, so the user turns it on
- *  explicitly in the Command Center once they want active re-engagement.
+ *  Shipped ENABLED by default. It types into god's PTY; the user can turn it
+ *  off in the Command Center.
  *  `intervalMs` is the normal-cadence base; the scheduler derives a tighter beat
  *  when an agent looks stuck and a slower one right after a re-engage. */
 export const HEARTBEAT_MISSION: ScheduledMission = {
@@ -106,7 +105,7 @@ export const HEARTBEAT_MISSION: ScheduledMission = {
     'Floor heartbeat: the team has gone quiet. Review the digest in your inbox, ' +
     're-engage anyone stalled or blocked, and keep the board accurate — or rest ' +
     'if the work is genuinely done.',
-  enabled: false,
+  enabled: true,
   kind: 'heartbeat',
   quietThresholdMs: 300_000
 };
@@ -452,8 +451,8 @@ const DEFAULTS: HarnessConfig = {
   godModel: 'claude-opus-4-8[1m]',
   // Global default model for every agent that hasn't picked one explicitly — wins
   // over the role-based tiers (modelForRole) in the spawn handler, so all agents
-  // (incl. god) default to Fable 5. A per-agent model choice still overrides it.
-  defaultModel: 'claude-fable-5',
+  // (incl. god) default to Sonnet 5. A per-agent model choice still overrides it.
+  defaultModel: 'claude-sonnet-5',
   // Seeded from the MCP catalog so the consent defaults never drift from it
   // (safe-readonly ON, write/secret OFF).
   mcpDefaults: defaultMcpDefaults(),
@@ -465,8 +464,8 @@ const DEFAULTS: HarnessConfig = {
   gossipWriter: true,
   embeddingModel: 'minilm',
   missions: [OPS_STANDUP_MISSION],
-  notifications: false,
-  strongKeepalive: false,
+  notifications: true,
+  strongKeepalive: true,
   autoUpdate: true,
   telemetryEnabled: true,
   multiWindow: true,
@@ -582,17 +581,38 @@ export function closeConfigDb(): void {
   configDb = null;
 }
 
-/** The stored document, or null when this install has never saved one. */
+/** The document as last read or written successfully. This module is the only
+ *  writer of the row, so it matches the database whenever it is set. */
+let lastStored: Partial<HarnessConfig> | null = null;
+
+/** A read that failed (database busy or locked, unparseable row). Serving
+ *  defaults here used to be the worst possible answer: the next save merged its
+ *  one change onto them and stored that over every setting the user had. */
+function failedRead(e: unknown): Partial<HarnessConfig> {
+  console.error('[config] read failed:', e);
+  if (lastStored) return lastStored;
+  throw new Error(`config unreadable: ${e instanceof Error ? e.message : String(e)}`);
+}
+
+/** The stored document, or null when this install has never saved one. Throws
+ *  when the row exists but cannot be read and there is no good copy to serve. */
 function readStored(): Partial<HarnessConfig> | null {
   const db = conn();
-  if (!db) return null;
+  if (!db || !configRead) return failedRead(new Error('no config database'));
   try {
-    const row = configRead?.get(CONFIG_KEY) as { value: string } | undefined;
+    const row = configRead.get(CONFIG_KEY) as { value: string } | undefined;
     if (row) {
-      try { return JSON.parse(row.value) as Partial<HarnessConfig>; } catch { return null; }
+      const parsed = JSON.parse(row.value) as Partial<HarnessConfig>;
+      if (!parsed || typeof parsed !== 'object') throw new Error('config row is not an object');
+      return (lastStored = parsed);
     }
-    // Nothing stored: take the old file in, once, and save it straight away so
-    // the import cannot run twice with different results.
+  } catch (e) {
+    return failedRead(e);
+  }
+  // Nothing stored: take the old file in, once, and save it straight away so
+  // the import cannot run twice with different results. An unreadable legacy
+  // file is a first run, not an outage.
+  try {
     const p = configPath();
     if (!existsSync(p)) return null;
     const parsed = JSON.parse(readFileSync(p, 'utf8')) as Partial<HarnessConfig>;
@@ -601,7 +621,7 @@ function readStored(): Partial<HarnessConfig> | null {
     console.log('[config] imported config.json into the database');
     return parsed;
   } catch (e) {
-    console.error('[config] read failed:', e);
+    console.error('[config] config.json import failed:', e);
     return null;
   }
 }
@@ -610,6 +630,7 @@ function writeStored(next: Partial<HarnessConfig>): void {
   const db = conn();
   if (!db || !configWrite) throw new Error('no config database');
   configWrite.run(CONFIG_KEY, JSON.stringify(next), Date.now());
+  lastStored = next;
 }
 
 /**
@@ -706,14 +727,23 @@ function migrateTriggersV1(cfg: HarnessConfig): HarnessConfig {
   }
 }
 
-export function readConfig(): HarnessConfig {
+/** The config as stored, or throws when it cannot be read. Every save builds on
+ *  this, never on readConfig: a save must fail rather than store its change on
+ *  top of stand-in defaults. */
+function loadConfig(): HarnessConfig {
   // Nothing stored = a first run with nothing to migrate; the defaults ARE the
   // post-migration shape. Deliberately does not persist — a bare read must not
   // conjure a config before onboarding has written one.
   const stored = readStored();
   if (!stored) return withTriggerDefaults({ ...DEFAULTS });
+  return normalizeStoredHomes(migrateTriggersV1(withTriggerDefaults({ ...DEFAULTS, ...stored })));
+}
+
+/** For reading only. Never throws: an unreadable store shows defaults, and
+ *  nothing is saved from them because every writer goes through loadConfig. */
+export function readConfig(): HarnessConfig {
   try {
-    return normalizeStoredHomes(migrateTriggersV1(withTriggerDefaults({ ...DEFAULTS, ...stored })));
+    return loadConfig();
   } catch {
     return withTriggerDefaults({ ...DEFAULTS });
   }
@@ -771,7 +801,7 @@ function persistConfig(next: HarnessConfig): HarnessConfig {
 }
 
 export function writeConfig(patch: Partial<HarnessConfig>): HarnessConfig {
-  const current = readConfig();
+  const current = loadConfig();
   const next: HarnessConfig = { ...current, ...patch };
   // Project INGESTION — a registered repo is typed by hand ("~/dev/foo") as often
   // as it is picked from the folder dialog. Expand `~` here so the persisted list
@@ -842,7 +872,7 @@ export function setAgentTokenCap(agentId: unknown, tokenCap: unknown): HarnessCo
     )
   ) throw new Error('invalid agent token cap');
 
-  const current = readConfig();
+  const current = loadConfig();
   const agentTokenCaps = { ...(current.agentTokenCaps ?? {}) };
   if (tokenCap === undefined) delete agentTokenCaps[agentId];
   else agentTokenCaps[agentId] = tokenCap;

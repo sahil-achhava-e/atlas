@@ -137,7 +137,13 @@ export function acquireTerminal(ptyId: string, theme?: ThemeMap, fontSize = 14):
     lineHeight: 1.0,
     cursorBlink: true,
     cursorStyle: 'block',
-    scrollback: 100000,
+    // Every agent's terminal lives in the tab at once, and 15 of them at 100,000
+    // lines each made the page stall on the busiest agent (2026-09-24). Measured
+    // on a working agent's transcript, the last 50 messages render in ~160 lines
+    // and 2,000 lines held ~418 of them, so 300 keeps roughly the last 50-90.
+    // The full conversation is in Claude Code's transcript, and the agent's own
+    // context is untouched by this.
+    scrollback: 300,
     // Guarantee legible text no matter what colors a running program sets.
     // When a program paints a coloured cell background (e.g. a git-diff add line
     // with a green bg, or a yellow-highlighted line) while leaving the default

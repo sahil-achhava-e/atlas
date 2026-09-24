@@ -4,7 +4,7 @@ import { osStringKey } from '@/platformCopy';
 import { ConfirmDialog } from './ConfirmDialog';
 import { workingAgents, nameList } from './restartWarning';
 import { useTranslation } from 'react-i18next';
-import { COMPACT_MAINTENANCE_MISSION, agentModels, type HarnessConfig } from '@/store/config';
+import { agentModels, type HarnessConfig } from '@/store/config';
 import { TILE_PALETTES, type PaletteId } from '@/scene/office/tilePalette';
 import type { UpdateStatus } from '@shared/updateState';
 import { useStore } from '@/store/store';
@@ -17,6 +17,7 @@ import {
   type TriggerMode,
   type WebhookTrigger
 } from '@shared/triggers';
+import { getContextTrigger, setContextTrigger } from './triggers/api';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { Dropdown } from './Dropdown';
@@ -179,12 +180,14 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
 
   const toggleNotifications = async () => {
     const next = !notifications;
-    setNotifications(next); // optimistic
+    setNotifications(next);
     // Browser mode: Chrome's own permission is the real gate, and it only
-    // answers a prompt raised from a gesture — this click.
+    // answers a prompt raised from a gesture — this click. So the PERMISSION is
+    // asked for now; the SETTING is staged like every other one, which is what
+    // makes Discard put it back. It used to write straight to disk, so the one
+    // switch in the dialog that could not be discarded was this one.
     if (next && !(await ensureNotificationPermission())) { setNotifications(false); return; }
-    try { await window.cth.setNotifications(next); }
-    catch { setNotifications(!next); /* revert on failure */ }
+    stage({ notifications: next } as Partial<HarnessConfig>);
   };
 
   // ─── v0.3.4 redesign: settings that were onboarding-trapped or UI-less ────
@@ -212,15 +215,12 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
    * disconnect live rather than storing a preference.
    */
   const [pending, setPending] = useState<Partial<HarnessConfig>>({});
-  /** Auto-compact lives inside the missions array, so it is resolved at save
-   *  time against the config on disk rather than staged as a whole array. */
+  /** Auto-compact is `contextTrigger.compact.enabled`, so it is resolved at save
+   *  time against the trigger on disk rather than staged into this form's patch. */
   const [autoCompactPending, setAutoCompactPending] = useState<boolean | null>(null);
   const [saveBusy, setSaveBusy] = useState(false);
   const [unsavedOpen, setUnsavedOpen] = useState(false);
   const [saveNote, setSaveNote] = useState('');
-  /** True once a control that USED to persist on click has been changed. Only
-   *  those need the close guard: the text fields always needed a Save. */
-  const dirty = Object.keys(pending).length > 0 || autoCompactPending !== null;
   const stage = (patch: Partial<HarnessConfig>): void =>
     setPending((prev) => ({ ...prev, ...patch }));
 
@@ -317,67 +317,29 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
     setDefaultModelSel(id);
     stage({ defaultModel: id } as Partial<HarnessConfig>);
   };
-  const [maxTurnsVal, setMaxTurnsVal] = useState<string>(cfgX.maxTurns != null ? String(cfgX.maxTurns) : '');
-  const maxTurnsPatch = (): Partial<HarnessConfig> => {
-    const n = maxTurnsVal.trim() === '' ? undefined : Number(maxTurnsVal);
-    return { maxTurns: Number.isFinite(n as number) && (n as number) > 0 ? Math.round(n as number) : undefined } as Partial<HarnessConfig>;
-  };
-  // --- circuit-breaker config (Lane A #6 canonical fields, widened view) ---
-  // Drives Jim's real breaker: floor-wide TOKEN budget (costCapTokens) + output-
-  // token velocity ceiling (circuitBreaker.tokenVelocityPerMin). The token cap
-  // replaced the old dollar cap as the user-facing budget.
-  type BreakerCfgView = HarnessConfig & {
-    costCapTokens?: number;
-    circuitBreaker?: { tokenVelocityPerMin?: number; enabled?: boolean; hardStop?: boolean; repeatedToolLimit?: number; errorStormLimit?: number };
-  };
-  const breakerCfg = config as BreakerCfgView;
-  const [agentBudget, setAgentBudget] = useState(breakerCfg.costCapTokens != null ? String(breakerCfg.costCapTokens) : '');
-  const [velocityCeiling, setVelocityCeiling] = useState(breakerCfg.circuitBreaker?.tokenVelocityPerMin != null ? String(breakerCfg.circuitBreaker.tokenVelocityPerMin) : '');
-  // v0.3.4: the four previously UI-less breaker fields get controls.
-  const [brkEnabled, setBrkEnabled] = useState<boolean>(breakerCfg.circuitBreaker?.enabled !== false);
-  const [brkHardStop, setBrkHardStop] = useState<boolean>(breakerCfg.circuitBreaker?.hardStop === true);
-  const [brkRepeated, setBrkRepeated] = useState(breakerCfg.circuitBreaker?.repeatedToolLimit != null ? String(breakerCfg.circuitBreaker.repeatedToolLimit) : '');
-  const [brkErrStorm, setBrkErrStorm] = useState(breakerCfg.circuitBreaker?.errorStormLimit != null ? String(breakerCfg.circuitBreaker.errorStormLimit) : '');
-  const budgetPatch = (): Partial<HarnessConfig> => {
-    const tokens = agentBudget.trim() === '' ? undefined : Number(agentBudget);
-    const vel = velocityCeiling.trim() === '' ? undefined : Number(velocityCeiling);
-    const rep = brkRepeated.trim() === '' ? undefined : Number(brkRepeated);
-    const storm = brkErrStorm.trim() === '' ? undefined : Number(brkErrStorm);
-    return {
-      costCapTokens: Number.isFinite(tokens as number) ? (tokens as number) : undefined,
-      circuitBreaker: {
-        ...(breakerCfg.circuitBreaker ?? {}),
-        enabled: brkEnabled,
-        hardStop: brkHardStop,
-        tokenVelocityPerMin: Number.isFinite(vel as number) ? (vel as number) : undefined,
-        repeatedToolLimit: Number.isFinite(rep as number) ? Math.round(rep as number) : undefined,
-        errorStormLimit: Number.isFinite(storm as number) ? Math.round(storm as number) : undefined
-      }
-    } as Partial<HarnessConfig>;
-  };
+  /** NO maxTurns / costCapTokens / circuitBreaker HERE. The Autonomy & Budgets
+   *  tab is gone (see the NAV_SECTIONS note), so this dialog has no control for
+   *  any of them — but it kept the state and rebuilt both patches into every
+   *  save, from a `config` prop captured when the dialog opened. Saving an
+   *  unrelated setting therefore wrote a stale token cap back over a newer one,
+   *  and the voice action that sets `costCapTokens` is exactly the thing that
+   *  makes it newer. Settings does not own these fields; it no longer writes
+   *  them. */
+  /** True once something has been changed but not saved. Everything the dialog
+   *  writes goes through `stage`, so this is the whole of it. */
+  const dirty = Object.keys(pending).length > 0 || autoCompactPending !== null;
+
   /** The one writer. Commits what the form currently shows, in a single
    *  updateConfig, so a half-applied save is not a state the app can reach. */
   const saveAll = async (): Promise<void> => {
     setSaveBusy(true); setSaveNote('');
     try {
-      const patch: Partial<HarnessConfig> = {
-        ...maxTurnsPatch(),
-        ...budgetPatch(),
-        ...pending
-      };
+      const patch: Partial<HarnessConfig> = { ...pending };
       if (autoCompactPending !== null) {
-        // Read-modify-write against disk, not against a stale copy: another
-        // window (or main) may have edited a different mission meanwhile.
-        const cfg = await window.cth.getConfig();
-        const missions = cfg.missions ?? [];
-        // The mission is not in main's DEFAULTS.missions, so on most configs
-        // there is nothing here to flip: mapping alone turned the switch on and
-        // scheduled nothing. Create it when it is missing.
-        patch.missions = missions.some((m) => m.id === COMPACT_MAINTENANCE_MISSION.id)
-          ? missions.map((m) => (
-              m.id === COMPACT_MAINTENANCE_MISSION.id ? { ...m, enabled: autoCompactPending } : m
-            ))
-          : [...missions, { ...COMPACT_MAINTENANCE_MISSION, enabled: autoCompactPending }];
+        // Read-modify-write against disk, not against a stale copy: the Triggers
+        // tab edits the same rule's cadence, gate and message.
+        const ctx = await getContextTrigger();
+        setContextTrigger({ ...ctx, compact: { ...ctx.compact, enabled: autoCompactPending } });
       }
       await window.cth.updateConfig(patch);
       // Mirror the mode for the surfaces that hide in it (sidebar, panel, this
@@ -401,18 +363,26 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
     onClose();
   };
 
-  const fmtBudgetTokens = (raw: string): string => {
-    const n = Number(raw);
-    if (!raw.trim() || !Number.isFinite(n) || n <= 0) return '';
-    if (n >= 1e9) return `${+(n / 1e9).toFixed(2)}B`;
-    if (n >= 1e6) return `${+(n / 1e6).toFixed(2)}M`;
-    if (n >= 1e3) return `${+(n / 1e3).toFixed(1)}K`;
-    return String(n);
+  /** Throw the staged changes away and close.
+   *
+   *  The office theme is the one setting that applies BEFORE it is saved — the
+   *  floor repaints as you scroll the dropdown, which is the point of it. That
+   *  made discarding a lie: the config kept the old palette while the floor kept
+   *  the new one, and the two only agreed again after a restart. Put the mirror
+   *  back to what is actually stored. */
+  const discard = (): void => {
+    setTilePalette(config.tilePalette ?? 'original');
+    onClose();
   };
 
-  const [autoCompactOn, setAutoCompactOn] = useState<boolean>(
-    (config.missions ?? []).some((m) => m.id === 'compact-maintenance' && m.enabled)
-  );
+  /** The switch IS `contextTrigger.compact.enabled`. It used to write a
+   *  `compact-maintenance` mission, but main retired that mission: its migration
+   *  DELETES the mission on the next launch and folds `enabled` into the trigger.
+   *  So the switch forgot its own state on every restart (the mission it read was
+   *  gone), and turning it off silently disabled a trigger the Triggers tab had
+   *  configured — the clobber that migration's comment claims cannot happen. */
+  const [autoCompactOn, setAutoCompactOn] = useState(false);
+  useEffect(() => { void getContextTrigger().then((c) => setAutoCompactOn(c.compact.enabled)); }, []);
   const toggleAutoCompact = async () => {
     const next = !autoCompactOn;
     setAutoCompactOn(next);
@@ -492,16 +462,13 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
   );
 
   // Re-seed every editable field from the on-disk config when the modal opens.
-  // App's `config` prop is loaded once and never refreshed after a save, so
-  // without this the saved budget and velocity show blank on reopen.
+  // The `config` prop is seeded into local state at MOUNT, so anything saved
+  // since — by another window, by a voice action — would show stale here.
   useEffect(() => {
     let alive = true;
     window.cth.getConfig().then((c) => {
       if (!alive) return;
-      const cc = c as BreakerCfgView;
-      setNotifications(cc.notifications === true);
-      setAgentBudget(cc.costCapTokens != null ? String(cc.costCapTokens) : '');
-      setVelocityCeiling(cc.circuitBreaker?.tokenVelocityPerMin != null ? String(cc.circuitBreaker.tokenVelocityPerMin) : '');
+      setNotifications((c as HarnessConfig & { notifications?: boolean }).notifications === true);
       setIdleDisconnectMs((c as HarnessConfig).realtimeIdleDisconnectMs ?? 60_000);
     }).catch(() => { /* keep prop-seeded values */ });
     // Triggers: re-read main and push the result into the shared mirror. App
@@ -978,7 +945,7 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
                       </div>
 
 
-                      {/* Scheduled auto-compact (compact-maintenance mission).
+                      {/* Scheduled auto-compact (contextTrigger.compact).
                           Hidden in simple mode: the row is about queueing
                           /compact so an agent's context window does not
                           overflow, and it sends you to the Triggers tab for the
@@ -1337,7 +1304,7 @@ export function SettingsModal({ config, onClose, initialSection, onSwitchWorkspa
           confirmLabel={t('settings.unsavedAction')}
           destructive
           onCancel={() => setUnsavedOpen(false)}
-          onConfirm={() => { setUnsavedOpen(false); onClose(); }}
+          onConfirm={() => { setUnsavedOpen(false); discard(); }}
         />
       )}
       {confirmRestart && (

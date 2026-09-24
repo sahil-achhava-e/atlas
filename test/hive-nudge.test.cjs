@@ -84,3 +84,28 @@ test('no ids, and no nudge at all, both read as an empty list', () => {
   assert.deepEqual(inboxNudgeIds('check the booking window on develop'), []);
   assert.deepEqual(inboxNudgeIds(''), []);
 });
+
+// — god's mail settles before one nudge covers the burst (2026-09-24: ten reports, ten 500k-token turns) —
+
+test('a burst of mail to god releases once, after it goes quiet, naming every id', () => {
+  const { releaseHeldMail, GOD_MAIL_SETTLE_MS } = loadTs('src/shared/hiveNudge.ts');
+  const held = { ids: [], firstAt: 0, lastAt: 0 };
+  assert.equal(releaseHeldMail(held, ['a'], 0), null);
+  assert.equal(releaseHeldMail(held, ['b'], 30_000), null);
+  assert.equal(releaseHeldMail(held, [], 30_000 + GOD_MAIL_SETTLE_MS - 1), null);
+  assert.deepEqual(releaseHeldMail(held, [], 30_000 + GOD_MAIL_SETTLE_MS), ['a', 'b']);
+});
+
+test('mail that never stops still reaches god within the max hold', () => {
+  const { releaseHeldMail, GOD_MAIL_MAX_HOLD_MS } = loadTs('src/shared/hiveNudge.ts');
+  const held = { ids: [], firstAt: 0, lastAt: 0 };
+  let out = null;
+  for (let t = 0; t <= GOD_MAIL_MAX_HOLD_MS && !out; t += 20_000) out = releaseHeldMail(held, [`m${t}`], t);
+  assert.ok(out, 'released');
+  assert.equal(out.length, GOD_MAIL_MAX_HOLD_MS / 20_000 + 1);
+});
+
+test('an empty hold never releases', () => {
+  const { releaseHeldMail } = loadTs('src/shared/hiveNudge.ts');
+  assert.equal(releaseHeldMail({ ids: [], firstAt: 0, lastAt: 0 }, [], 10 ** 9), null);
+});

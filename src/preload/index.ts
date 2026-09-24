@@ -632,6 +632,8 @@ const api = {
     pid: number;
     lastOutputAt: number;
     hasOutput: boolean;
+    /** The --model the running process was launched with. */
+    model?: string;
   }>> =>
     ipcRenderer.invoke('pty:list'),
   /** Resolve a Claude session id to the cwd it originally ran in (Add Agent
@@ -1496,6 +1498,23 @@ const api = {
    *  delete one is to list its id in `removes`. */
   rosterWrite: (patch: RosterSave): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke('roster:write', patch),
+
+  // ─── Claude sign-in ─────────────────────────────────────────────────────────
+  /** Push channel from main: whether the Claude CLI is signed in. Only fires on
+   *  a CHANGE, so a dialog does not re-render every minute for the same answer. */
+  onAuthStatus: (cb: (s: { loggedIn: boolean; state: string; checkedAt: number }) => void): (() => void) => {
+    const listener = (_e: IpcRendererEvent, payload: { loggedIn: boolean; state: string; checkedAt: number }) => cb(payload);
+    ipcRenderer.on('auth:status', listener);
+    return () => ipcRenderer.removeListener('auth:status', listener);
+  },
+  /** The state now — a window that mounted after the last push would otherwise
+   *  wait up to a minute to learn it is signed out. */
+  authCurrent: (): Promise<{ loggedIn: boolean; state: string; checkedAt: number }> =>
+    ipcRenderer.invoke('auth:current'),
+  /** Start `claude auth login` in a visible terminal; resolves with its pty id.
+   *  Main builds the script — no shell string crosses this bridge. */
+  authLogin: (): Promise<{ ok: boolean; ptyId?: string; already?: boolean; error?: string }> =>
+    ipcRenderer.invoke('auth:login'),
 
   // ─── Auto-update (v0.3.4; full state model v0.3.7) ──────────────────────────
   /** Push channel from main's updater — every stage of the pipeline, so the

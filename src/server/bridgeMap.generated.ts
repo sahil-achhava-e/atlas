@@ -174,6 +174,8 @@ export const INVOKE: Record<string, string> = {
   gossipPool: 'gossip:pool',
   prefsSet: 'prefs:set',
   rosterWrite: 'roster:write',
+  authCurrent: 'auth:current',
+  authLogin: 'auth:login',
   updateCurrent: 'update:current',
   updateRestartAndInstall: 'update:restartAndInstall',
   updateCheckNow: 'update:checkNow',
@@ -217,6 +219,7 @@ export const EVENTS: Record<string, string> = {
   onRealtimeCompletion: 'realtime:completion',
   onRealtimeFloorDelta: 'realtime:floorDelta',
   onRealtimeEnqueue: 'realtime:enqueue',
+  onAuthStatus: 'auth:status',
   onUpdateStatus: 'update:status'
 };
 

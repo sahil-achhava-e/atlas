@@ -274,6 +274,10 @@ interface State {
   setCcTab: (tab: string) => void;
   ccTabRequest: { tab: string; seq: number } | null;
   requestCommandCenterTab: (tab: string) => void;
+  /** The agent restartAgent is restarting right now, and the last restart
+   *  failure per agent ('' once it succeeds). Written only by restartAgent. */
+  restartingId: string | null;
+  restartErrors: Record<string, string>;
   /** The task whose detail overlay is open (rendered app-wide over the office
    *  floor — the card content grows: contracts, deps, the human Q&A trail). */
   taskDetailId: string | null;
@@ -676,7 +680,7 @@ const initialSidebarTab: SidebarTab = (() => {
  *  in focus mode", so on load we resolve it against whoever is selected now. */
 const initialPrefersFocusMode = (() => {
   try {
-    return getPref(LS_FOCUS_MODE) === '1';
+    return getPref(LS_FOCUS_MODE) !== '0';
   } catch { /* noop */ }
   return false;
 })();
@@ -722,6 +726,8 @@ export const useStore = create<State>((set, get) => ({
     set({ ccTab: tab });
   },
   ccTabRequest: null,
+  restartingId: null,
+  restartErrors: {},
   requestCommandCenterTab: (tab) =>
     set((s) => ({ ccTabRequest: { tab, seq: (s.ccTabRequest?.seq ?? 0) + 1 } })),
   fullscreenAgentId: focusOnLoad(initialPrefersFocusMode, initialSelectedId),

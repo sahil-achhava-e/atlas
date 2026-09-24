@@ -499,6 +499,7 @@
     "editAgent": "Edit agent",
     "restarting": "restarting…",
     "restartNoProcess": "No live process to restart. Start this agent first.",
+    "restartFailedWhy": "Restart failed: {{error}}",
     "restartShort": "Restart",
     "editShort": "Edit",
     "openAsks": "{{count}} questions waiting on you",
@@ -1754,5 +1755,14 @@
   "focusMenu": {
     "label": "Showing {{name}}. Switch agent",
     "needsYou": "waiting on you"
+  },
+  "authLogin": {
+    "title": "Claude Code is signed out",
+    "body": "Your agents will start and then sit waiting, because the CLI they run has no credentials. Signing in here fixes it, and anything blocked will start on its own.",
+    "running": "Finish the sign-in in the browser window that just opened, then come back here. This closes on its own once it works.",
+    "signIn": "Sign in to Claude Code",
+    "starting": "starting…",
+    "failed": "The sign-in could not be started.",
+    "terminalLabel": "claude auth login"
   }
 }

@@ -45,6 +45,36 @@ export function inboxNudgeIds(text: string): string[] {
 }
 
 /**
+ * God's mail is held until it settles, so a burst of worker reports costs one god
+ * turn instead of one each. Every god turn re-reads god's whole context, and on
+ * 2026-09-24 ten reports landing a minute or two apart cost ten turns at 500k+
+ * tokens apiece. Workers are nudged at once; their turns are cheap and they are
+ * the ones doing the work.
+ */
+export const GOD_MAIL_SETTLE_MS = 60_000;
+/** Never hold god's mail longer than this, however steadily it keeps arriving. */
+export const GOD_MAIL_MAX_HOLD_MS = 180_000;
+
+export interface HeldMail { ids: string[]; firstAt: number; lastAt: number }
+
+/**
+ * Add fresh mail to god's hold and say whether to nudge now. Returns the ids to
+ * name when the hold is released (quiet for GOD_MAIL_SETTLE_MS, or held for
+ * GOD_MAIL_MAX_HOLD_MS), else null. Mutates `held`; the caller resets it on release.
+ */
+export function releaseHeldMail(held: HeldMail, freshIds: string[], now: number): string[] | null {
+  if (freshIds.length) {
+    if (!held.ids.length) held.firstAt = now;
+    held.ids.push(...freshIds);
+    held.lastAt = now;
+  }
+  if (!held.ids.length) return null;
+  const quiet = now - held.lastAt >= GOD_MAIL_SETTLE_MS;
+  const tooLong = now - held.firstAt >= GOD_MAIL_MAX_HOLD_MS;
+  return quiet || tooLong ? held.ids : null;
+}
+
+/**
  * Is this queued text an inbox-wake nudge?
  *
  * Matches the fixed head only, since every nudge carries different ids — the
