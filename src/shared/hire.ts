@@ -21,7 +21,7 @@
  *     auto-enabled (consistent with "import only pre-fills; human clicks spawn").
  */
 
-import { mcpCatalogEntry } from './mcpCatalog';
+import { mcpCatalogEntry, RETIRED_MCP_IDS } from './mcpCatalog';
 import { MAX_AGENT_TOKEN_CAP } from './tokenCaps';
 
 export const HIRE_SPEC_V1 = 'atlas/hire@1';
@@ -292,6 +292,7 @@ export function validateHireManifest(raw: unknown): HireValidation {
       for (const s of o.mcpServers) {
         if (!str(s) || !s.trim()) { errors.push('"mcpServers" entries must be non-empty strings'); continue; }
         const id = s.trim();
+        if (RETIRED_MCP_IDS.has(id)) continue;
         const entry = mcpCatalogEntry(id);
         if (!entry) {
           errors.push(`"mcpServers" entry ${JSON.stringify(id)} is not a known catalog id — a hire may only reference built-in MCP servers`);

@@ -50,61 +50,11 @@ export interface McpCatalogEntry {
 /** The default MCP bundle. Safe/read-only servers are ON; anything that writes
  *  beyond the workspace or needs a secret is OFF until the user consents. */
 export const MCP_CATALOG: McpCatalogEntry[] = [
-  // ─── Safe, read-only, no-secret — shipped ON ──────────────────────────────
-  {
-    id: 'sequential-thinking',
-    label: 'Sequential Thinking',
-    description: 'Structured step-by-step reasoning scratchpad. No I/O, no secrets.',
-    spec: { command: 'npx', args: ['-y', '@modelcontextprotocol/server-sequential-thinking'] },
-    tier: 'safe-readonly',
-    defaultEnabled: true
-  },
-  {
-    id: 'time',
-    label: 'Time',
-    description: 'Current time and timezone conversions.',
-    // Reference time server ships as Python. // TODO-verify transport (uvx vs an npm port)
-    spec: { command: 'uvx', args: ['mcp-server-time'] },
-    tier: 'safe-readonly',
-    defaultEnabled: true
-  },
-  {
-    id: 'fetch',
-    label: 'Fetch',
-    description: 'Fetch a URL and return its content as markdown (read-only HTTP GET).',
-    // Reference fetch server ships as Python. // TODO-verify transport (uvx vs an npm port)
-    spec: { command: 'uvx', args: ['mcp-server-fetch'] },
-    tier: 'safe-readonly',
-    defaultEnabled: true
-  },
-  {
-    id: 'context7',
-    label: 'Context7 Docs',
-    description: 'Up-to-date library/framework documentation lookups.',
-    spec: { command: 'npx', args: ['-y', '@upstash/context7-mcp'] },
-    tier: 'safe-readonly',
-    defaultEnabled: true
-  },
-  {
-    id: 'filesystem',
-    label: 'Filesystem (cwd)',
-    description: 'Read/edit files within the agent workspace only (scoped to cwd at spawn).',
-    // The trailing arg is the allowed root — Workstream 3 replaces this placeholder
-    // with the agent cwd at merge time so it is NEVER whole-disk.
-    spec: { command: 'npx', args: ['-y', '@modelcontextprotocol/server-filesystem', '<cwd>'] },
-    tier: 'safe-readonly',
-    defaultEnabled: true
-  },
-  {
-    id: 'git',
-    label: 'Git (cwd)',
-    description: 'Inspect git status/log/diff for the workspace repo (scoped to cwd at spawn).',
-    // Reference git server ships as Python; `--repository <cwd>` is set at merge time.
-    // TODO-verify transport (uvx vs an npm port).
-    spec: { command: 'uvx', args: ['mcp-server-git', '--repository', '<cwd>'] },
-    tier: 'safe-readonly',
-    defaultEnabled: true
-  },
+  // No safe-readonly servers ship any more. sequential-thinking, time, fetch,
+  // context7, filesystem and git were here, ON by default, and in 19,692 agent
+  // turns not one of their tools was called: each duplicated something Claude
+  // Code has built in (thinking, the date, WebFetch, Read/Edit, Bash git).
+  // RETIRED_MCP_IDS keeps an old hire manifest that names one from failing.
 
   // ─── Write / secret — shipped OFF, consent-gated ──────────────────────────
   //
@@ -155,6 +105,12 @@ export function mcpSecretEnvKeys(id: string): string[] {
   const e = MCP_CATALOG.find((x) => x.id === id);
   return e?.spec.env ? Object.keys(e.spec.env) : [];
 }
+
+/** Ids that were in the catalog once. A hire manifest naming one is accepted
+ *  and the id dropped, rather than the whole hire refused. */
+export const RETIRED_MCP_IDS: ReadonlySet<string> = new Set([
+  'sequential-thinking', 'time', 'fetch', 'context7', 'filesystem', 'git'
+]);
 
 /** Look up a catalog entry by id. */
 export function mcpCatalogEntry(id: string): McpCatalogEntry | undefined {

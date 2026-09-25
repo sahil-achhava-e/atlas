@@ -286,7 +286,7 @@ function shortRand(): string {
 const PROXY_BIND_ATTEMPTS = 3;
 const PROXY_BIND_BACKOFF_MS = [250, 750];
 
-const MINE_IGNORE_LINES = ['settings.json', 'cursor.json', 'inbox/', 'outbox/', '.codex/'];
+const MINE_IGNORE_LINES = ['settings.json', 'mcp.json', 'cursor.json', 'inbox/', 'outbox/', '.codex/'];
 
 /** Idempotently ensure `<agentDir>/.gitignore` excludes the non-memory files.
  *  Append-only: writes only the missing lines, leaving any existing entries. */
@@ -1107,8 +1107,20 @@ export class HiveManager {
     if (sock && shim) {
       env.HIVE_SOCK = sock;
       const settingsPath = join(dir, 'settings.json');
-      this.writeJson(settingsPath, this.hookSettings(shim, meta.cwd, opts.mcpDefaults, opts.theme, this.sandboxWritableDirs(meta, dir, root, opts.extraWritableDirs), opts.dbConnections ?? [], opts.disabledSkills ?? []));
+      this.writeJson(settingsPath, this.hookSettings(shim, meta.cwd, opts.theme, this.sandboxWritableDirs(meta, dir, root, opts.extraWritableDirs), opts.disabledSkills ?? []));
       args.push('--settings', settingsPath);
+    }
+    // MCP servers go in their own file behind --mcp-config. They used to ride in
+    // settings.json under `mcpServers`, a key Claude Code does not read there:
+    // checked on 2.1.282, a server declared that way never appears in the
+    // session's server list at all, so no agent ever got one.
+    const mcpServers = this.buildDefaultMcpServers(meta.cwd, opts.mcpDefaults, opts.dbConnections ?? []);
+    const mcpPath = join(dir, 'mcp.json');
+    if (Object.keys(mcpServers).length) {
+      this.writeJson(mcpPath, { mcpServers });
+      args.push('--mcp-config', mcpPath);
+    } else {
+      try { rmSync(mcpPath, { force: true }); } catch { /* nothing to remove */ }
     }
     return { args, env };
   }
@@ -1302,7 +1314,7 @@ export class HiveManager {
     return Array.from(new Set(out));
   }
 
-  private hookSettings(shim: string, cwd: string, cfg: McpDefaultsMap, theme?: 'light' | 'dark', writableDirs: string[] = [], dbConns: DbConnEnv = [], disabledSkills: string[] = []): unknown {
+  private hookSettings(shim: string, cwd: string, theme?: 'light' | 'dark', writableDirs: string[] = [], disabledSkills: string[] = []): unknown {
     // Bundled node, NOT bare `node` — see nodeLauncherPath(). Claude runs each of
     // these through `sh -c` with a stripped PATH, where `node` is often absent.
     const cmd = this.nodeRun(shim);
@@ -1310,7 +1322,6 @@ export class HiveManager {
       ...(matcher ? { matcher } : {}),
       hooks: [{ type: 'command', command: cmd }]
     });
-    const mcpServers = this.buildDefaultMcpServers(cwd, cfg, dbConns);
     return {
       // Match the TUI's truecolor palette to the harness terminal theme —
       // PER SESSION, so the user's global Claude theme (their own terminals
@@ -1324,11 +1335,6 @@ export class HiveManager {
       // listens. The terminal reports the current theme the moment the CLI enables
       // 2031, so startup still matches without pinning anything.
       ...(theme ? { theme: 'auto' } : {}),
-      // W3 — default skills/MCP bundle. Written into the PER-SESSION settings file
-      // only (never ~/.claude), so the user's own MCP servers are never clobbered;
-      // Claude merges this additively. Omitted entirely when empty so a settings
-      // file with no enabled servers is unchanged from before.
-      ...(Object.keys(mcpServers).length ? { mcpServers } : {}),
       // The status line gets the session status JSON after every response —
       // including context_window.{total_input_tokens,context_window_size},
       // the only clean programmatic source for the session's REAL context

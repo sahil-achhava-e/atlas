@@ -36,7 +36,7 @@ import { join } from 'node:path';
  *  MUST STAY IN SYNC with the same list in hive.ts (which writes it at spawn;
  *  this one reaches agents that are not currently running). A test pins them
  *  together, because drift here has no symptom until a repo bloats. */
-const MINE_IGNORE_LINES = ['settings.json', 'cursor.json', 'inbox/', 'outbox/', '.codex/'];
+const MINE_IGNORE_LINES = ['settings.json', 'mcp.json', 'cursor.json', 'inbox/', 'outbox/', '.codex/'];
 
 function ensureMineIgnore(agentDir: string): void {
   const path = join(agentDir, '.gitignore');
