@@ -76,3 +76,9 @@ test('a custom ask survives the round trip', () => {
 test('the project sentence names the folder', () => {
   assert.match(projectLine('vms-frontend'), /^You work only in vms-frontend\./);
 });
+
+test('a job pasted with the project sentence on the end gets it once', () => {
+  const project = 'epicxp-events';
+  const goal = composeBrief({ job: `Do the thing.\n\n${projectLine(project)}`, project, done: 'a PR' });
+  assert.equal(goal.split(projectLine(project)).length - 1, 1);
+});

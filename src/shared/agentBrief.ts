@@ -45,8 +45,14 @@ export interface AgentBrief {
 
 /** The three answers, as the one string the engine is given. */
 export function composeBrief(brief: AgentBrief): string {
+  // A briefing pasted in whole already ends with the project sentence; adding
+  // it again is how the 2026-09-25 Events briefs got it twice.
+  let job = brief.job.trim();
+  if (brief.project && job.endsWith(projectLine(brief.project))) {
+    job = job.slice(0, -projectLine(brief.project).length).trim();
+  }
   return [
-    brief.job.trim(),
+    job,
     brief.project ? projectLine(brief.project) : '',
     brief.done?.trim() ? `${DONE_PREFIX}${brief.done.trim()}` : '',
     `${ASK_PREFIX}${brief.ask?.trim() || DEFAULT_ASK}`
