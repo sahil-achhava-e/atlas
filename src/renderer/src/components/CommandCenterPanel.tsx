@@ -132,15 +132,6 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
     if (!TABS.some((t) => t.key === key)) return;
     setTab(key);
   }, [ccTabRequest]);
-  // A task-detail "assign" pre-fills the Floor dispatch box and jumps to it.
-  // Seeded via the store one-shot (the detail overlay lives app-wide now);
-  // { seq } makes every assign distinct so identical text re-seeds.
-  const [dispatchSeed, setDispatchSeed] = useState<{ text: string; seq: number }>({ text: '', seq: 0 });
-  const dispatchSeedRequest = useStore((s) => s.dispatchSeedRequest);
-  useEffect(() => {
-    if (!dispatchSeedRequest) return;
-    setDispatchSeed({ text: dispatchSeedRequest.text, seq: dispatchSeedRequest.seq });
-  }, [dispatchSeedRequest]);
   // Lifted so the memory-graph tab can jump to a specific agent's memory file.
   const [selectedMemoryAgent, setSelectedMemoryAgent] = useState<string | null>(null);
   const updateAgent = useStore((s) => s.updateAgent);
@@ -180,7 +171,7 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
                   <Centered>{t('commandCenter.noTerminal', { name: agent.name })}</Centered>
                 )
               )}
-              {key === 'floor' && <FloorTab seed={dispatchSeed} />}
+              {key === 'floor' && <FloorTab />}
               {key === 'tasks' && <TasksKanban />}
               {key === 'human' && <AskMeTab />}
               {key === 'triggers' && <TriggersTab />}
@@ -390,13 +381,11 @@ export function CommandCenterPanel({ agent, fullscreen = false }: { agent: Agent
   );
 }
 
-// ─── Floor tab — roster, model, dispatch, dirs, assistant ────────────────────
+// ─── Floor tab — roster, model, restart, dirs, assistant ─────────────────────
 
-function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
+function FloorTab() {
   const { t } = useTranslation();
-  const rtl = useRtl();
   const agents = useStore((s) => s.agents);
-  const godName = agents.find((a) => a.isGod)?.name ?? 'the orchestrator';
   const select = useStore((s) => s.select);
   const updateAgent = useStore((s) => s.updateAgent);
   const toolCounts = useStore((s) => s.toolCounts);
@@ -419,9 +408,6 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
   // new agent spawn on this, so the picker marks it — otherwise the only entry
   // reading "default" was the CLI's, which is a different thing entirely.
   const [defaultModel, setDefaultModel] = useState<string | undefined>(undefined);
-  const [dispatchTo, setDispatchTo] = useState<string>(''); // '' = Michael decides
-  const [dispatchText, setDispatchText] = useState('');
-  const [dispatchMsg, setDispatchMsg] = useState<string | null>(null);
   useEffect(() => {
     window.cth.getConfig().then((c) => {
       setTokenCap(c.costCapTokens);
@@ -432,41 +418,28 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
     }).catch(() => { /* noop */ });
   }, []);
 
-  // Seed the dispatch box from a task-card "assign" (keyed on seq so repeat
-  // assigns re-prefill). seq === 0 is the untouched initial state — skip it.
-  useEffect(() => {
-    if (seed.seq > 0) setDispatchText(seed.text);
-  }, [seed.seq, seed.text]);
-
-
-
-  // ALL human dispatch flows through the god — never directly into a worker's
-  // inbox. Direct dispatch bypassed the orchestrator's whole job: no 4-part
-  // contract, no card in tasks.json, no board awareness — and the old
-  // 'broadcast' DEFAULT sent the same task to every worker at once. A worker
-  // picked in the dropdown is forwarded as a SUGGESTION the god may follow.
-  const dispatch = async () => {
-    const body = dispatchText.trim();
-    if (!body) return;
-    const suggested = dispatchTo ? agents.find((a) => a.id === dispatchTo) : undefined;
-    const full = suggested
-      ? `${body}\n\n${t('commandCenter.dispatchSuggestion', { name: suggested.name, id: suggested.id })}`
-      : body;
-    const res = await window.cth.hiveSend(
-      { to: 'god', act: 'request', subject: t('commandCenter.taskFromHuman'), body: full },
-      'human'
-    );
-    setDispatchText('');
-    setDispatchMsg(res.ok
-      ? suggested
-        ? t('commandCenter.sentToWithSuggestion', { godName, name: suggested.name })
-        : t('commandCenter.sentToMichael', { godName })
-      : t('commandCenter.dispatchFailed', { error: res.error ?? '?' }));
-    setTimeout(() => setDispatchMsg(null), 4000);
+  // One at a time, the orchestrator last: restarts share the one restartingId,
+  // and the floor should not lose its orchestrator while the rest come back.
+  const [restartAll, setRestartAll] = useState<
+    { current: string; done: number; total: number; failed: string[]; finished: boolean } | null
+  >(null);
+  const runRestartAll = async () => {
+    const queue = useStore.getState().agents
+      .filter((a) => a.ptyId)
+      .sort((a, b) => Number(!!a.isGod) - Number(!!b.isGod))
+      .map((a) => a.id);
+    const failed: string[] = [];
+    for (let i = 0; i < queue.length; i++) {
+      // Re-read each time: every restart patches the agent it just replaced.
+      const a = useStore.getState().agents.find((x) => x.id === queue[i]);
+      if (!a) continue;
+      setRestartAll({ current: a.name, done: i, total: queue.length, failed: [...failed], finished: false });
+      await restartAgent(a, a.model, { resume: true });
+      if (useStore.getState().restartErrors[a.id]) failed.push(a.name);
+    }
+    setRestartAll({ current: '', done: queue.length, total: queue.length, failed, finished: true });
   };
-
-
-
+  const restartAllRunning = !!restartAll && !restartAll.finished;
 
   // The token meter is scaled to the agent's own limit when set, else the floor
   // token budget — so each bar reads as "tokens used vs budget" with the remaining
@@ -476,75 +449,47 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
 
   return (
     <Scroll>
-      <Section title={t('commandCenter.dispatchViaMichael', { godName })}>
-        <div style={{
-          padding: 14, borderRadius: 'var(--cth-radius-card)',
-          background: 'var(--cth-paper-100)',
-          boxShadow: '0 0 0 1px var(--cth-ink-100), var(--cth-shadow-sm)',
-          display: 'flex', flexDirection: 'column', gap: 10
-        }}>
-          <textarea
-            className="cth-input"
-            dir={rtl ? 'auto' : undefined}
-            value={dispatchText}
-            onChange={(e) => setDispatchText(e.target.value)}
-            rows={3}
-            placeholder={t('commandCenter.dispatchPlaceholder', { godName })}
-            style={{
-              width: '100%', boxSizing: 'border-box', resize: 'vertical',
-              padding: '11px 13px', border: 'none',
-              borderRadius: 'var(--cth-radius-input)',
-              background: 'var(--cth-paper-100)',
-              fontFamily: 'var(--cth-font-ui)', fontSize: 13, lineHeight: '20px',
-              color: 'var(--cth-ink-900)', outline: 'none'
-            }}
-          />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span style={{
-              fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-500)', flexShrink: 0
-            }}>{t('commandCenter.suggestedOwner')}</span>
-            <Dropdown
-              value={dispatchTo}
-              ariaLabel={t('commandCenter.suggestedOwner')}
-              onChange={setDispatchTo}
-              width={160}
-              align="top"
-              options={[
-                { value: '', label: t('commandCenter.michaelDecides', { godName }) },
-                ...agents.filter((a) => !a.isGod).map((a) => ({
-                  value: a.id, label: a.name, tone: `var(--cth-${a.accent})`
-                }))
-              ]}
-            />
-            <span style={{ flex: 1 }} />
-            <button
-              onClick={dispatch}
-              disabled={!dispatchText.trim()}
-              style={{
-                height: 34, padding: '0 16px', flexShrink: 0,
-                border: 'none', borderRadius: 'var(--cth-radius-btn)',
-                cursor: dispatchText.trim() ? 'pointer' : 'not-allowed',
-                background: dispatchText.trim() ? 'var(--cth-lilac)' : 'transparent',
-                boxShadow: dispatchText.trim() ? 'var(--cth-shadow-btn)' : 'inset 0 0 0 1px var(--cth-ink-100)',
-                color: dispatchText.trim() ? 'var(--cth-on-accent)' : 'var(--cth-ink-500)',
-                fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 600,
-                transition: 'background 120ms ease, box-shadow 120ms ease, color 120ms ease'
-              }}
-            >{t('commandCenter.dispatch')}</button>
-          </div>
-          {dispatchMsg && (
-            <div style={{
-              fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-status-success)'
-            }}>{dispatchMsg}</div>
-          )}
-        </div>
-      </Section>
-
       {editAgent && (
         <EditAgentModal agent={editAgent} onClose={() => setEditAgent(null)} />
       )}
 
       <Section title={t('commandCenter.agents')}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+          {restartAll && (
+            <span role="status" style={{
+              fontFamily: 'var(--cth-font-ui)', fontSize: 12,
+              color: !restartAll.finished ? 'var(--cth-ink-500)'
+                : restartAll.failed.length ? 'var(--cth-coral-text)' : 'var(--cth-status-success)'
+            }}>
+              {!restartAll.finished
+                ? t('commandCenter.restartAllProgress', { name: restartAll.current, n: restartAll.done + 1, total: restartAll.total })
+                : restartAll.failed.length
+                  ? t('commandCenter.restartAllFailed', { ok: restartAll.total - restartAll.failed.length, total: restartAll.total, names: restartAll.failed.join(', ') })
+                  : t('commandCenter.restartAllDone', { total: restartAll.total })}
+            </span>
+          )}
+          <button
+            onClick={() => void runRestartAll()}
+            disabled={restartAllRunning || !!restarting}
+            className="cth-ghost-btn"
+            style={{
+              height: 30, padding: '0 12px', border: 'none', flexShrink: 0, marginInlineStart: 'auto',
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              borderRadius: 'var(--cth-radius-btn)',
+              background: 'var(--cth-mint-light)', color: 'var(--cth-ink-800)',
+              fontFamily: 'var(--cth-font-ui)', fontWeight: 600, fontSize: 12,
+              cursor: restartAllRunning || restarting ? 'default' : 'pointer',
+              opacity: restartAllRunning || restarting ? 0.6 : 1
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true"
+              style={{ color: 'var(--cth-mint-text)' }}>
+              <path d="M16 10a6 6 0 1 1-1.8-4.3M16 3.4V7h-3.6"
+                stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {t('commandCenter.restartAll')}
+          </button>
+        </div>
         {/* One row per agent, carrying only what is NOT available elsewhere:
             live usage, the token limit, and restart. Identity is the floor (a
             character click selects) and the panel header; engine and model are

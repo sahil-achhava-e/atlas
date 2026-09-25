@@ -135,10 +135,11 @@ test('content direction in components is gated, never content-sniffed', () => {
     }
     gated += g.length;
   }
-  // 16, not the original 17: AgentStrip carried one and was deleted when the
-  // left panel redesign left it unrendered. The number is a floor against sites
-  // being quietly dropped, so it moves only when a FILE goes.
-  assert.ok(gated >= 16, `expected the PR's dir sites to be carried over, found ${gated}`);
+  // 15, not the original 17: AgentStrip carried one and was deleted when the
+  // left panel redesign left it unrendered, and the Team tab's dispatch box
+  // carried another. The number is a floor against sites being quietly
+  // dropped, so it moves only when the thing that carried one goes.
+  assert.ok(gated >= 15, `expected the PR's dir sites to be carried over, found ${gated}`);
 });
 
 test('the markdown auto-direction plugin only runs for an RTL language', () => {

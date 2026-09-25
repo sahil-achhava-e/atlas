@@ -158,7 +158,7 @@ export function SetupPanel(
   const askMichael = () => {
     if (missingEssential.length === 0) return;
     requestDispatchSeed(setupPrompt(missingEssential));
-    requestCommandCenterTab('floor'); // the dispatch box lives on the monitor tab
+    requestCommandCenterTab('terminal'); // the orchestrator's composer
     // This panel lives in a modal now — leaving it open would hide the very box
     // we just filled in.
     onDone?.();

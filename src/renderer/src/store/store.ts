@@ -283,9 +283,8 @@ interface State {
   taskDetailId: string | null;
   openTaskDetail: (id: string) => void;
   closeTaskDetail: () => void;
-  /** One-shot prefill for the Command Center's dispatch box (a task detail's
-   *  "assign" from anywhere in the app). seq-keyed like ccTabRequest. */
-  dispatchSeedRequest: { text: string; seq: number } | null;
+  /** Prefill the orchestrator's own composer (a task detail's "assign", Setup's
+   *  "ask"), so the human reads and sends it rather than it going out unseen. */
   requestDispatchSeed: (text: string) => void;
   /** Unsent ASK ME answer drafts, keyed by task id — so switching tabs (which
    *  unmounts the ask-me view) doesn't eat a half-typed answer. */
@@ -940,9 +939,11 @@ export const useStore = create<State>((set, get) => ({
   taskDetailId: null,
   openTaskDetail: (id) => set({ taskDetailId: id }),
   closeTaskDetail: () => set({ taskDetailId: null }),
-  dispatchSeedRequest: null,
   requestDispatchSeed: (text) =>
-    set((s) => ({ dispatchSeedRequest: { text, seq: (s.dispatchSeedRequest?.seq ?? 0) + 1 } })),
+    set((s) => {
+      const god = s.agents.find((a) => a.isGod);
+      return god ? { drafts: { ...s.drafts, [god.id]: text } } : {};
+    }),
   answerDrafts: {},
   setAnswerDraft: (taskId, text) =>
     set((s) => ({ answerDrafts: { ...s.answerDrafts, [taskId]: text } })),

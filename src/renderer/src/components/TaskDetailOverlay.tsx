@@ -59,14 +59,14 @@ export function TaskDetailOverlay() {
   };
 
   const assign = () => {
-    // Route through the Command Center's dispatch box (which mails the god —
-    // the human never writes into a worker's inbox directly).
+    // Prefill the orchestrator's composer: the human never writes into a
+    // worker's inbox directly, and reads the message before it goes.
     const st = useStore.getState();
     const god = st.agents.find((a) => a.isGod);
     if (god) st.select(god.id);
     const desc = task.description?.trim() ? task.description.trim() : '(no description)';
     st.requestDispatchSeed(`Task: ${task.title}\nContext: ${desc}\n`);
-    st.requestCommandCenterTab('floor');
+    st.requestCommandCenterTab('terminal');
     closeTaskDetail();
   };
 
