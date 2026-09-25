@@ -653,7 +653,10 @@ function withTriggerDefaults(cfg: HarnessConfig): HarnessConfig {
     ...cfg,
     contextTrigger: {
       compact: { ...DEFAULT_CONTEXT_TRIGGER.compact, ...cfg.contextTrigger?.compact },
-      clear: { ...DEFAULT_CONTEXT_TRIGGER.clear, ...cfg.contextTrigger?.clear }
+      clear: { ...DEFAULT_CONTEXT_TRIGGER.clear, ...cfg.contextTrigger?.clear },
+      clearOnDone: typeof cfg.contextTrigger?.clearOnDone === 'boolean'
+        ? cfg.contextTrigger.clearOnDone
+        : DEFAULT_CONTEXT_TRIGGER.clearOnDone
     },
     orgTrigger: { ...DEFAULT_ORG_TRIGGER, ...cfg.orgTrigger },
     webhookTriggers: Array.isArray(cfg.webhookTriggers)

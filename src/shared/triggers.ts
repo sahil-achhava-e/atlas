@@ -108,6 +108,10 @@ export interface ContextRule {
 export interface ContextTriggerConfig {
   compact: ContextRule;
   clear: ContextRule;
+  /** Clear an engineer's (and reviewer's) session when their card reaches
+   *  `done` and they have no other live card. Separate from `clear`, which runs
+   *  on the clock; see shared/clearOnDone.ts for who is spared. */
+  clearOnDone: boolean;
 }
 
 /**
@@ -140,7 +144,8 @@ export const DEFAULT_CONTEXT_TRIGGER: ContextTriggerConfig = {
     minContextPct: 90,
     minContextPctLargeWindow: 80,
     message: ''
-  }
+  },
+  clearOnDone: true
 };
 
 /* ──────────────────────────── webhook triggers ───────────────────────────── */

@@ -1087,7 +1087,9 @@
     "contextBar": "Context bar",
     "contextBarHint": "How full the window must be before this may run. 0% = time alone.",
     "bigWindows": "Bar on big windows",
-    "bigWindowsHint": "Used on ~1M-token windows, where a smaller slice is still an enormous amount of text."
+    "bigWindowsHint": "Used on ~1M-token windows, where a smaller slice is still an enormous amount of text.",
+    "clearOnDone": "Clear when a card is done",
+    "clearOnDoneBlurb": "When a card moves to done, its engineer and reviewer save what they learned to memory.md, then their session is cleared. Anyone with another card in progress, in review or blocked is left alone, and so are leads and the orchestrator."
   },
   "schedulesSection": {
     "justNow": "just now",

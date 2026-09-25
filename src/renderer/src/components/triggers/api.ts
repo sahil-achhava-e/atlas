@@ -44,7 +44,8 @@ export async function getContextTrigger(): Promise<ContextTriggerConfig> {
     const cfg: Partial<ContextTriggerConfig> | null = await window.cth.getContextTrigger();
     return {
       compact: fillRule(cfg?.compact, DEFAULT_CONTEXT_TRIGGER.compact),
-      clear: fillRule(cfg?.clear, DEFAULT_CONTEXT_TRIGGER.clear)
+      clear: fillRule(cfg?.clear, DEFAULT_CONTEXT_TRIGGER.clear),
+      clearOnDone: typeof cfg?.clearOnDone === 'boolean' ? cfg.clearOnDone : DEFAULT_CONTEXT_TRIGGER.clearOnDone
     };
   } catch {
     return DEFAULT_CONTEXT_TRIGGER;

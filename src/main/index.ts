@@ -76,6 +76,8 @@ import { ControlRegistry } from './control';
 import { WorkerWakeWatchdog, type WorkerWakeFacts } from './workerWake';
 import { inboxNudgeText } from '../shared/hiveNudge';
 import { resolveGodName } from '../shared/godIdentity';
+import { agentsToClearOnDone, saveBeforeClearNote } from '../shared/clearOnDone';
+import { clearCommandForProvider } from '../shared/providerAutomation';
 import { fetchHireManifest, readHireManifestFiles } from './hire';
 import { parseHireDeepLink, type HireManifest } from '../shared/hire';
 import { ClosingTimeController } from './closingTime';
@@ -1083,6 +1085,35 @@ function syncContextTriggers(): void {
       entry.interval = setInterval(fire, rule.everyMs);
     }, remaining);
     contextTimers.set(action, entry);
+  }
+}
+
+/** Card ids seen done so far this session; null until the first look. */
+let clearOnDoneSeen: Set<string> | null = null;
+
+/** One look at the board: an agent whose card just reached `done`, with nothing
+ *  else live, is asked to save what it learned and then cleared. Both go through
+ *  the renderer queue, so each lands only at an idle prompt, in order. */
+function pollClearOnDone(): void {
+  let tasks: HiveTask[];
+  try {
+    const ledger = hive.tasks() as { tasks?: HiveTask[] };
+    tasks = Array.isArray(ledger?.tasks) ? ledger.tasks : [];
+  } catch { return; } // no board yet
+  const agents = hive.registry().agents ?? {};
+  const { clear, seen } = agentsToClearOnDone(clearOnDoneSeen, tasks, agents);
+  const newlyDone = tasks.filter((t) => t.status === 'done' && clearOnDoneSeen && !clearOnDoneSeen.has(t.id));
+  clearOnDoneSeen = seen;
+  if (!clear.length || !(readConfig().contextTrigger ?? DEFAULT_CONTEXT_TRIGGER).clearOnDone) return;
+  for (const id of clear) {
+    const command = clearCommandForProvider(inferAgentProvider(undefined, agents[id]?.provider));
+    if (!command) continue; // no clear verb this CLI understands
+    const card = newlyDone.find((t) => t.assignee === id || t.reviewer === id);
+    try {
+      liveWebContents()?.send('realtime:enqueue', { agentId: id, text: saveBeforeClearNote(card?.id ?? 'Your card') });
+      liveWebContents()?.send('realtime:enqueue', { agentId: id, text: command });
+      console.log('[clear-on-done] queued a clear for', id, 'after', card?.id);
+    } catch { /* window gone; the next card will try again */ }
   }
 }
 
@@ -4880,7 +4911,8 @@ ipcMain.handle('triggers:setContext', (_evt, arg: unknown) => {
   const p = (arg ?? {}) as Partial<ContextTriggerConfig>;
   const next: ContextTriggerConfig = {
     compact: sanitizeContextRule(p.compact, current.compact),
-    clear: sanitizeContextRule(p.clear, current.clear)
+    clear: sanitizeContextRule(p.clear, current.clear),
+    clearOnDone: typeof p.clearOnDone === 'boolean' ? p.clearOnDone : current.clearOnDone
   };
   writeConfig({ contextTrigger: next });
   // The timers ARE the setting — a cadence saved but not re-armed would keep
@@ -5981,6 +6013,7 @@ function bootstrapHiveServices(): void {
   ensureDefaultMissions(); // one-time: seed the built-in hourly ops standup
   syncMissions(); // arm recurring auto-dispatch missions now the router is live
   syncContextTriggers(); // …and the context trigger's own compact/clear cadences
+  setInterval(pollClearOnDone, 5000); // …and the clear that follows a finished card
   // Pair replies to inbound webhook messages in the ledger. Tied to the FEATURE
   // (any endpoint configured), not to the server: an approved message's card can
   // finish long after the operator switched the public surface back off, and its

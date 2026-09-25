@@ -80,6 +80,17 @@ export function ContextSection({ onSummary }: { onSummary?: (s: string) => void 
         caution={t('contextSection.clearCaution')}
         onPatch={(fields) => patch('clear', fields)}
       />
+
+      {/* Not a RuleCard: it has no cadence or bar, it fires on the board. */}
+      <SubCard>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 600 }}>{t('contextSection.clearOnDone')}</div>
+            <Hint>{t('contextSection.clearOnDoneBlurb')}</Hint>
+          </div>
+          <Toggle on={cfg.clearOnDone} onClick={() => commit({ ...cfg, clearOnDone: !cfg.clearOnDone })} />
+        </div>
+      </SubCard>
     </>
   );
 }
